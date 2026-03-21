@@ -59,10 +59,39 @@ function getEmptyCalculationMessage(slot) {
   return 'Select weapon attack(s) to see calculations';
 }
 
+function isValidZoneIndex(zones, zoneIndex) {
+  return Number.isInteger(zoneIndex) && zoneIndex >= 0 && zoneIndex < zones.length;
+}
+
+function resolveFocusZoneIndex({
+  enemy,
+  selectedAttacks = [],
+  projectileZoneIndex,
+  explosiveZoneIndices = []
+}) {
+  const zones = enemy?.zones || [];
+  const normalizedProjectileZoneIndex = isValidZoneIndex(zones, projectileZoneIndex)
+    ? projectileZoneIndex
+    : null;
+  const normalizedExplosiveZoneIndices = [...new Set(
+    (explosiveZoneIndices || []).filter((zoneIndex) => isValidZoneIndex(zones, zoneIndex))
+  )];
+  const { directAttacks, explosiveAttacks } = splitAttacksByApplication(selectedAttacks);
+
+  if (directAttacks.length > 0 && normalizedProjectileZoneIndex !== null) {
+    return normalizedProjectileZoneIndex;
+  }
+
+  if (explosiveAttacks.length > 0 && normalizedExplosiveZoneIndices.length > 0) {
+    return normalizedExplosiveZoneIndices[normalizedExplosiveZoneIndices.length - 1];
+  }
+
+  return normalizedProjectileZoneIndex;
+}
+
 export function calculateDamage(slot = 'A') {
   const weapon = getWeaponForSlot(slot);
   const enemy = calculatorState.selectedEnemy;
-  const zone = getSelectedZone();
 
   if (!weapon || !enemy || !enemy.zones) {
     return null;
@@ -74,21 +103,34 @@ export function calculateDamage(slot = 'A') {
   }
 
   const hitCounts = getAttackHitCounts(slot, selectedAttacks);
+  const explosiveZoneIndices = getSelectedExplosiveZoneIndices();
+  const focusZoneIndex = resolveFocusZoneIndex({
+    enemy,
+    selectedAttacks,
+    projectileZoneIndex: calculatorState.selectedZoneIndex,
+    explosiveZoneIndices
+  });
+  const zone = Number.isInteger(focusZoneIndex)
+    ? enemy.zones[focusZoneIndex] || null
+    : getSelectedZone();
   const scenario = summarizeEnemyTargetScenario({
     enemy,
     selectedAttacks,
     hitCounts,
     rpm: weapon?.rpm,
     projectileZoneIndex: calculatorState.selectedZoneIndex,
-    explosiveZoneIndices: getSelectedExplosiveZoneIndices()
+    explosiveZoneIndices
   });
-  const focusZoneSummary = scenario?.zoneSummaries?.[calculatorState.selectedZoneIndex] || null;
+  const focusZoneSummary = Number.isInteger(focusZoneIndex)
+    ? scenario?.zoneSummaries?.[focusZoneIndex] || null
+    : null;
 
   return {
     slot,
     weapon,
     enemy,
     zone,
+    focusZoneIndex,
     selectedAttacks,
     attackKeys: selectedAttacks.map((attack) => getAttackRowKey(attack)),
     hitCounts,
