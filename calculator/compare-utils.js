@@ -6,6 +6,10 @@ import {
   summarizeZoneDamage
 } from './zone-damage.js';
 import { getExplosiveDisplayInfo } from './explosive-display.js';
+import {
+  getEnemyZoneConDisplayInfo,
+  getEnemyZoneHealthDisplayInfo
+} from './enemy-zone-display.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
@@ -690,9 +694,9 @@ export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
     case 'zone_name':
       return normalizeText(row.zone?.zone_name);
     case 'health':
-      return toFiniteNumber(row.zone?.health);
+      return getEnemyZoneHealthDisplayInfo(row.zone).sortValue;
     case 'Con':
-      return toFiniteNumber(row.zone?.Con);
+      return getEnemyZoneConDisplayInfo(row.zone).sortValue;
     case 'Dur%':
       return toFiniteNumber(row.zone?.['Dur%']);
     case 'AV':

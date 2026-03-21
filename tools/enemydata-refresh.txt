@@ -89,6 +89,17 @@ PowerShell:
     Set-Location C:\GitHub\supercalc
     python .\tools\parser_faction_units.py --input C:\temp\entity-component-settings-flat.json --output C:\temp\enemydata-from-filediver.json
 
+The parser now preserves Constitution bleed-rate metadata from the raw health
+component:
+
+- `ConRate` comes from `constitution_changerate` for `Main`
+- `ConRate` comes from `zone_bleedout_changerate` for Constitution-bearing zones
+- `ConNoBleed: true` is only derived when that parsed bleed rate is `0`
+
+This is important because zone-level `bleedout_enabled` is not reliable enough
+on its own for cases like Voteless arms, which have Constitution and do bleed
+despite carrying `bleedout_enabled: false` in the raw zone record.
+
 
 Step 4: review before checking in
 ---------------------------------
@@ -380,6 +391,7 @@ Recommended workflow for future refreshes
 5. Run `tools\compare_enemydata.py`
 6. Manually review:
    - `Factory Strider Gatling Gun`
+   - zero-bleed Constitution zones whose names or signatures changed during the refresh
    - any newly surfaced units
    - `stat_changed_units`
    - `name_only_units`

@@ -2,6 +2,12 @@
 import { enemyState } from './data.js';
 import { durPercentageColor, armorValueColor } from '../colors.js';
 import { applyExplosiveDisplayToCell, getExplosiveDisplayInfo } from '../calculator/explosive-display.js';
+import {
+  applyEnemyZoneConDisplayToCell,
+  applyEnemyZoneHealthDisplayToCell,
+  getEnemyZoneConDisplayInfo,
+  getEnemyZoneHealthDisplayInfo
+} from '../calculator/enemy-zone-display.js';
 
 export function setupEnemyTableSorting() {
   const sortableHeaders = document.querySelectorAll('#enemyTable th.sortable');
@@ -50,9 +56,17 @@ export function renderEnemyTable() {
       zones.sort((a, b) => {
         const aVal = enemyState.sortKey === 'ExMult'
           ? getExplosiveDisplayInfo(a).sortValue
+          : enemyState.sortKey === 'health'
+            ? getEnemyZoneHealthDisplayInfo(a).sortValue
+            : enemyState.sortKey === 'Con'
+              ? getEnemyZoneConDisplayInfo(a).sortValue
           : a[enemyState.sortKey];
         const bVal = enemyState.sortKey === 'ExMult'
           ? getExplosiveDisplayInfo(b).sortValue
+          : enemyState.sortKey === 'health'
+            ? getEnemyZoneHealthDisplayInfo(b).sortValue
+            : enemyState.sortKey === 'Con'
+              ? getEnemyZoneConDisplayInfo(b).sortValue
           : b[enemyState.sortKey];
         
         // Handle different data types
@@ -93,18 +107,12 @@ export function renderEnemyTable() {
       
       // Health
       const healthTd = document.createElement('td');
-      healthTd.textContent = zone.health === -1 ? '-' : zone.health;
+      applyEnemyZoneHealthDisplayToCell(healthTd, zone);
       tr.appendChild(healthTd);
       
       // Con
       const constitutionTd = document.createElement('td');
-      if (zone.Con === 0) {
-        constitutionTd.textContent = '-';
-        constitutionTd.style.color = 'var(--muted)';
-        constitutionTd.style.opacity = '0.6';
-      } else {
-        constitutionTd.textContent = zone.Con;
-      }
+      applyEnemyZoneConDisplayToCell(constitutionTd, zone);
       tr.appendChild(constitutionTd);
       
       // Dur%

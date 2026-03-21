@@ -46,6 +46,10 @@ import {
   EXPLOSIVE_DISPLAY_COLUMN_LABEL
 } from './explosive-display.js';
 import { buildCompareTtkTooltip } from './compare-tooltips.js';
+import {
+  applyEnemyZoneConDisplayToCell,
+  applyEnemyZoneHealthDisplayToCell
+} from './enemy-zone-display.js';
 
 const DEFAULT_WEAPON_HEADERS = ['Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const ENEMY_BASE_COLUMNS = [
@@ -637,19 +641,12 @@ function formatEnemyBaseCell(td, zone, header) {
   }
 
   if (header === 'health') {
-    td.textContent = value === -1 ? '-' : value;
+    applyEnemyZoneHealthDisplayToCell(td, zone);
     return;
   }
 
   if (header === 'Con') {
-    if (value === 0) {
-      td.textContent = '-';
-      td.style.color = 'var(--muted)';
-      td.style.opacity = '0.6';
-      return;
-    }
-
-    td.textContent = value;
+    applyEnemyZoneConDisplayToCell(td, zone);
     return;
   }
 

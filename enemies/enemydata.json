@@ -4,7 +4,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -14,7 +13,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -30,7 +28,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.2,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -40,7 +37,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -50,7 +46,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.45,
           "ExTarget": "Part",
@@ -61,7 +56,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.45,
           "ExTarget": "Part",
@@ -72,7 +66,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -82,7 +75,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -93,7 +85,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -104,7 +95,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -115,7 +105,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -126,7 +115,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -137,7 +125,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -148,7 +135,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -159,7 +145,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -170,7 +155,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -186,7 +170,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -196,7 +179,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -207,7 +189,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -218,7 +199,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -229,7 +209,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -241,7 +220,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -251,7 +229,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -266,7 +243,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -276,7 +252,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -287,7 +262,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -298,7 +272,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -308,7 +281,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -318,7 +290,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -329,7 +300,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -345,7 +315,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -355,7 +324,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -371,7 +339,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -381,7 +348,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -397,7 +363,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -407,7 +372,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -418,7 +382,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -429,7 +392,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -440,7 +402,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -452,7 +413,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -462,7 +422,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -477,7 +436,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -487,7 +445,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -498,7 +455,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -509,7 +465,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -520,7 +475,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -531,7 +485,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -541,7 +494,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -551,7 +503,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -561,7 +512,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -571,7 +521,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -582,7 +531,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -598,7 +546,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -608,7 +555,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -619,7 +565,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -630,7 +575,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -640,7 +584,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -650,7 +593,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -661,7 +603,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -677,7 +618,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -687,7 +627,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -703,7 +642,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -713,7 +651,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -724,7 +661,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -740,7 +676,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -750,7 +685,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -761,7 +695,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -772,7 +705,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -782,7 +714,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -792,7 +723,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -803,7 +733,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -819,7 +748,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -829,7 +757,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -840,7 +767,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -851,7 +777,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -862,7 +787,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -873,7 +797,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -883,7 +806,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -893,7 +815,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -903,7 +824,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -913,7 +833,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -924,7 +843,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -935,7 +853,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -946,7 +863,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -962,7 +878,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -972,7 +887,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -983,7 +897,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -994,7 +907,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1005,7 +917,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1016,7 +927,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1026,7 +936,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1036,7 +945,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -1046,7 +954,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -1056,7 +963,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1067,7 +973,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1078,7 +983,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1089,7 +993,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1100,7 +1003,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1116,7 +1018,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1126,7 +1027,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1136,7 +1036,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1146,7 +1045,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1157,7 +1055,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1168,7 +1065,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1179,7 +1075,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1195,7 +1090,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -1205,7 +1099,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1221,7 +1114,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Main",
@@ -1232,7 +1124,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1243,7 +1134,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1254,7 +1144,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1273,11 +1162,12 @@
           "MainCap": 0,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "right_front_leg"
+          "zone_name": "right_front_leg",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1288,7 +1178,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1299,7 +1188,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1318,11 +1206,12 @@
           "MainCap": 1,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "right_back_leg"
+          "zone_name": "right_back_leg",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1333,7 +1222,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1344,7 +1232,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1363,11 +1250,12 @@
           "MainCap": 1,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "left_front_leg"
+          "zone_name": "left_front_leg",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1378,7 +1266,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1389,7 +1276,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1408,11 +1294,12 @@
           "MainCap": 1,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "left_back_leg"
+          "zone_name": "left_back_leg",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1423,7 +1310,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1435,7 +1321,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1446,7 +1331,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1458,7 +1342,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1469,7 +1352,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1480,7 +1362,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1491,7 +1372,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -1501,7 +1381,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1512,7 +1391,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1523,7 +1401,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.75,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1534,7 +1411,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1553,7 +1429,9 @@
           "MainCap": 0,
           "ToMain%": 0.5,
           "health": 1200,
-          "zone_name": "front_body"
+          "zone_name": "front_body",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 3,
@@ -1565,7 +1443,9 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "right_body"
+          "zone_name": "right_body",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 3,
@@ -1577,7 +1457,9 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "left_body"
+          "zone_name": "left_body",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 3,
@@ -1589,11 +1471,12 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "back_body"
+          "zone_name": "back_body",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1609,7 +1492,6 @@
       "damageable_zones": [
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0,
           "ExTarget": "Main",
@@ -1625,7 +1507,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1635,7 +1516,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1646,7 +1526,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1662,7 +1541,6 @@
       "damageable_zones": [
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1677,7 +1555,6 @@
       "damageable_zones": [
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1687,7 +1564,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1698,7 +1574,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.85,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -1708,7 +1583,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.85,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -1718,7 +1592,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -1728,7 +1601,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -1743,7 +1615,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1753,7 +1624,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1764,7 +1634,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1775,7 +1644,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1786,7 +1654,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1797,7 +1664,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1807,7 +1673,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1817,7 +1682,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -1827,7 +1691,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -1837,7 +1700,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1848,7 +1710,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1859,7 +1720,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1870,7 +1730,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1881,7 +1740,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1897,7 +1755,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1907,7 +1764,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -1918,7 +1774,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -1934,7 +1789,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1944,7 +1798,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -1960,7 +1813,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -1970,7 +1822,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -1980,7 +1831,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -1997,7 +1847,8 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg"
+          "zone_name": "left_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
@@ -2008,11 +1859,11 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg"
+          "zone_name": "right_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2039,7 +1890,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2049,7 +1899,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2059,7 +1908,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2076,7 +1924,8 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg"
+          "zone_name": "left_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
@@ -2087,11 +1936,11 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg"
+          "zone_name": "right_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2118,7 +1967,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2128,7 +1976,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2138,7 +1985,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2155,7 +2001,8 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg"
+          "zone_name": "left_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
@@ -2166,11 +2013,11 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg"
+          "zone_name": "right_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2197,7 +2044,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2207,7 +2053,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2217,7 +2062,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2234,7 +2078,8 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg"
+          "zone_name": "left_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
@@ -2245,11 +2090,11 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg"
+          "zone_name": "right_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2276,7 +2121,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2286,7 +2130,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2296,7 +2139,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2313,7 +2155,8 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg"
+          "zone_name": "left_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
@@ -2324,11 +2167,11 @@
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg"
+          "zone_name": "right_leg",
+          "ConRate": 50
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2355,7 +2198,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2365,7 +2207,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2376,7 +2217,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2387,7 +2227,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2398,7 +2237,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2409,7 +2247,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2419,7 +2256,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2429,7 +2265,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2439,7 +2274,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2449,7 +2283,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2460,7 +2293,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2471,7 +2303,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2482,7 +2313,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2493,7 +2323,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2509,7 +2338,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2519,7 +2347,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2530,7 +2357,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2541,7 +2367,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2551,7 +2376,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2561,7 +2385,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2572,7 +2395,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2588,7 +2410,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2598,7 +2419,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2609,7 +2429,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2620,7 +2439,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2630,7 +2448,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2640,7 +2457,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2651,7 +2467,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2667,7 +2482,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2677,7 +2491,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2688,7 +2501,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2699,7 +2511,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2709,7 +2520,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2719,7 +2529,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2730,7 +2539,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2746,7 +2554,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.2,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -2756,7 +2563,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2766,7 +2572,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.45,
           "ExTarget": "Part",
@@ -2777,7 +2582,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.45,
           "ExTarget": "Part",
@@ -2788,7 +2592,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2798,7 +2601,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2809,7 +2611,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2820,7 +2621,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2831,7 +2631,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2842,7 +2641,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2853,7 +2651,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -2864,7 +2661,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -2875,7 +2671,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -2886,7 +2681,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.35,
           "ExTarget": "Part",
@@ -2902,7 +2696,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2912,7 +2705,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2923,7 +2715,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2934,7 +2725,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2944,7 +2734,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -2954,7 +2743,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2965,7 +2753,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -2981,7 +2768,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -2991,7 +2777,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -3002,7 +2787,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -3013,7 +2797,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3024,7 +2807,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3040,7 +2822,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3050,7 +2831,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3061,7 +2841,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3072,7 +2851,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3083,7 +2861,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3094,7 +2871,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3104,7 +2880,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3114,7 +2889,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3124,7 +2898,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3134,7 +2907,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3145,7 +2917,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3156,7 +2927,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3167,7 +2937,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3178,7 +2947,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3188,7 +2956,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3203,7 +2970,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3213,7 +2979,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3224,7 +2989,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3235,7 +2999,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3245,7 +3008,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3256,7 +3018,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3267,7 +3028,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3283,7 +3043,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3293,7 +3052,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3304,7 +3062,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3315,7 +3072,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3325,7 +3081,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3335,7 +3090,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3346,7 +3100,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3362,7 +3115,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3372,7 +3124,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -3383,7 +3134,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -3394,7 +3144,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3405,7 +3154,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3421,7 +3169,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3431,7 +3178,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -3442,7 +3188,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -3453,7 +3198,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -3464,7 +3208,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -3476,7 +3219,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3486,7 +3228,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3501,7 +3242,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3511,7 +3251,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3522,7 +3261,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3533,7 +3271,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3543,7 +3280,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3553,7 +3289,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3564,7 +3299,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3580,17 +3314,17 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 11000,
-          "zone_name": "Main"
+          "zone_name": "Main",
+          "Con": 50000,
+          "ConRate": 10000
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3601,7 +3335,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3611,7 +3344,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3621,7 +3353,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3632,7 +3363,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3643,7 +3373,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3654,7 +3383,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3665,7 +3393,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3676,7 +3403,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3687,7 +3413,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3698,7 +3423,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3709,7 +3433,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3720,7 +3443,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3731,7 +3453,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3741,7 +3462,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3751,7 +3471,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3761,7 +3480,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3771,7 +3489,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3782,7 +3499,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3792,7 +3508,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3802,7 +3517,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3812,7 +3526,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -3822,7 +3535,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3832,7 +3544,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3842,7 +3553,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.4,
           "ExTarget": "Part",
@@ -3853,7 +3563,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3868,7 +3577,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3878,7 +3586,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -3890,7 +3597,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3901,7 +3607,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3911,7 +3616,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3921,7 +3625,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -3933,7 +3636,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3944,7 +3646,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 1,
           "ExTarget": "Part",
@@ -3956,7 +3657,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3966,7 +3666,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -3976,7 +3675,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3987,7 +3685,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -3998,7 +3695,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4009,7 +3705,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4027,7 +3722,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4042,7 +3736,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4052,7 +3745,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4063,7 +3755,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4074,7 +3765,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4085,7 +3775,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4095,7 +3784,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4105,7 +3793,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4115,7 +3802,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4125,7 +3811,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4135,7 +3820,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4145,7 +3829,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4155,7 +3838,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4165,7 +3847,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4175,7 +3856,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4185,7 +3865,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4195,7 +3874,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4205,7 +3883,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4215,7 +3892,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4225,7 +3901,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4235,7 +3910,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4245,7 +3919,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4255,7 +3928,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4265,7 +3937,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4275,7 +3946,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4285,7 +3955,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4295,7 +3964,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4305,7 +3973,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4320,7 +3987,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4330,7 +3996,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4341,7 +4006,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4352,7 +4016,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4363,7 +4026,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4373,7 +4035,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4383,7 +4044,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4393,7 +4053,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4403,7 +4062,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4413,7 +4071,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4423,7 +4080,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4433,7 +4089,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4443,7 +4098,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4453,7 +4107,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4463,7 +4116,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4473,7 +4125,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4483,7 +4134,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4493,7 +4143,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4503,7 +4152,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4513,7 +4161,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4523,7 +4170,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4533,7 +4179,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4543,7 +4188,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4553,7 +4197,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4563,7 +4206,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4573,7 +4215,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4583,7 +4224,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4593,7 +4233,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4609,7 +4248,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4619,7 +4257,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4630,7 +4267,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4641,7 +4277,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4652,7 +4287,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4663,7 +4297,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4674,7 +4307,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4685,7 +4317,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4696,7 +4327,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4707,7 +4337,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4718,7 +4347,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -4729,7 +4357,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4739,7 +4366,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4749,7 +4375,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4759,7 +4384,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4774,7 +4398,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4784,7 +4407,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.5,
           "ExTarget": "Main",
@@ -4796,7 +4418,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4807,7 +4428,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4818,7 +4438,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4828,7 +4447,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4838,7 +4456,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4848,7 +4465,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4859,7 +4475,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4870,7 +4485,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4881,7 +4495,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -4892,7 +4505,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4902,7 +4514,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4912,7 +4523,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4922,7 +4532,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4932,7 +4541,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4942,7 +4550,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4952,7 +4559,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4962,7 +4568,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -4972,7 +4577,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4982,7 +4586,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -4992,7 +4595,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5003,7 +4605,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5014,7 +4615,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5024,7 +4624,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5034,7 +4633,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5045,7 +4643,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5056,7 +4653,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5066,7 +4662,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5076,7 +4671,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5087,7 +4681,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5098,7 +4691,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5108,7 +4700,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5118,7 +4709,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5133,7 +4723,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -5143,7 +4732,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -5154,7 +4742,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5165,7 +4752,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -5181,7 +4767,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5191,7 +4776,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -5202,7 +4786,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5212,7 +4795,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5223,7 +4805,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5233,7 +4814,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5243,7 +4823,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5253,7 +4832,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5263,7 +4841,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5273,7 +4850,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5283,7 +4859,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5293,7 +4868,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -5304,7 +4878,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5314,7 +4887,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -5325,7 +4897,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5336,7 +4907,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5346,7 +4916,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5356,7 +4925,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5366,7 +4934,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5376,7 +4943,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5387,7 +4953,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5398,7 +4963,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5409,7 +4973,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5419,7 +4982,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5429,7 +4991,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5439,7 +5000,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5449,7 +5009,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5460,7 +5019,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5471,7 +5029,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5482,7 +5039,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5492,7 +5048,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5502,7 +5057,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5512,7 +5066,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5522,7 +5075,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5533,7 +5085,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5549,7 +5100,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5559,7 +5109,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5570,7 +5119,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5581,7 +5129,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5592,7 +5139,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5603,7 +5149,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5614,7 +5159,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5625,7 +5169,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5636,7 +5179,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5647,7 +5189,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5658,7 +5199,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5669,7 +5209,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5680,7 +5219,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5691,7 +5229,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.65,
           "ExTarget": "Part",
@@ -5702,7 +5239,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5717,7 +5253,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5732,7 +5267,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5742,7 +5276,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5753,7 +5286,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5763,7 +5295,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5773,7 +5304,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5783,7 +5313,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5793,7 +5322,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5808,7 +5336,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5818,7 +5345,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5829,7 +5355,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5840,7 +5365,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5851,7 +5375,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5861,7 +5384,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5871,7 +5393,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -5881,7 +5402,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5891,7 +5411,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5901,7 +5420,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5911,7 +5429,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5921,7 +5438,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5931,7 +5447,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5941,7 +5456,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5951,7 +5465,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5961,7 +5474,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5971,7 +5483,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5981,7 +5492,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -5991,7 +5501,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6001,7 +5510,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6011,7 +5519,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6021,7 +5528,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6031,7 +5537,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6041,7 +5546,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6051,7 +5555,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6061,7 +5564,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6071,7 +5573,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6086,7 +5587,6 @@
       "damageable_zones": [
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6096,7 +5596,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6106,7 +5605,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6116,7 +5614,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6126,7 +5623,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6136,7 +5632,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6146,7 +5641,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6161,7 +5655,6 @@
       "damageable_zones": [
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6171,7 +5664,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6182,7 +5674,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6193,7 +5684,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6204,7 +5694,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6214,7 +5703,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6224,7 +5712,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6234,7 +5721,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6245,7 +5731,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6256,7 +5741,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6267,7 +5751,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6277,7 +5760,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6287,7 +5769,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6297,7 +5778,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6307,7 +5787,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6317,7 +5796,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6327,7 +5805,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6337,7 +5814,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6347,7 +5823,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6358,7 +5833,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6369,7 +5843,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6380,7 +5853,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6391,7 +5863,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6402,7 +5873,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6413,7 +5883,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6424,7 +5893,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6435,7 +5903,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6450,17 +5917,17 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 160,
-          "zone_name": "Main"
+          "zone_name": "Main",
+          "Con": 100,
+          "ConRate": 5
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6477,11 +5944,11 @@
           "MainCap": 0,
           "ToMain%": 0.4,
           "health": 80,
-          "zone_name": "arm_r"
+          "zone_name": "arm_r",
+          "ConRate": 40
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6497,11 +5964,11 @@
           "MainCap": 0,
           "ToMain%": 0.4,
           "health": 80,
-          "zone_name": "arm_l"
+          "zone_name": "arm_l",
+          "ConRate": 40
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6511,7 +5978,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6522,7 +5988,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6538,7 +6003,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6548,7 +6012,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6558,7 +6021,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6568,7 +6030,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6585,11 +6046,12 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1000,
-          "zone_name": "beamer"
+          "zone_name": "beamer",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6599,7 +6061,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6609,7 +6070,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6619,7 +6079,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6634,7 +6093,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6644,7 +6102,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6655,7 +6112,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6665,7 +6121,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6675,7 +6130,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6685,7 +6139,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6695,7 +6148,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6710,7 +6162,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6720,7 +6171,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6731,7 +6181,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6742,7 +6191,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6753,7 +6201,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6763,7 +6210,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6773,7 +6219,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6783,7 +6228,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6793,7 +6237,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6803,7 +6246,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6813,7 +6255,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6823,7 +6264,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6833,7 +6273,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6843,7 +6282,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6853,7 +6291,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6863,7 +6300,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6873,7 +6309,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6883,7 +6318,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6893,7 +6327,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6903,7 +6336,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6913,7 +6345,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6923,7 +6354,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6933,7 +6363,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6943,7 +6372,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6953,7 +6381,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6963,7 +6390,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6973,7 +6399,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6990,7 +6415,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -7007,11 +6431,11 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 250,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 100
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7021,7 +6445,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7031,7 +6454,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7041,7 +6463,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7051,7 +6472,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7061,7 +6481,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7076,7 +6495,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -7086,7 +6504,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7097,7 +6514,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7108,7 +6524,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -7119,7 +6534,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -7130,7 +6544,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7140,7 +6553,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7150,7 +6562,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7160,7 +6571,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7175,7 +6585,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -7185,7 +6594,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7196,7 +6604,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7207,7 +6614,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7218,7 +6624,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7229,7 +6634,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7240,7 +6644,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7251,7 +6654,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7267,7 +6669,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Main",
@@ -7278,7 +6679,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7289,7 +6689,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7300,7 +6699,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7323,7 +6721,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7334,7 +6731,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7345,7 +6741,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7368,7 +6763,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7379,7 +6773,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7390,7 +6783,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7413,7 +6805,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7424,7 +6815,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7435,7 +6825,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7458,7 +6847,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.95,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7470,7 +6858,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7481,7 +6868,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7492,7 +6878,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7504,7 +6889,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7515,7 +6899,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7526,7 +6909,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 1,
           "ExTarget": "Part",
@@ -7538,7 +6920,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7549,7 +6930,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7560,7 +6940,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7576,7 +6955,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.2,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -7593,11 +6971,11 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 65
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7607,7 +6985,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7617,7 +6994,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7627,7 +7003,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7637,7 +7012,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7647,7 +7021,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7662,7 +7035,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.6,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -7679,11 +7051,11 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 200,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 75
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7693,7 +7065,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7703,7 +7074,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7713,7 +7083,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7723,7 +7092,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7733,7 +7101,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7748,18 +7115,18 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 2400,
-          "zone_name": "Main"
+          "zone_name": "Main",
+          "Con": 750,
+          "ConRate": 100
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7771,7 +7138,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -7782,7 +7148,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7793,7 +7158,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7804,7 +7168,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7815,7 +7178,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7826,7 +7188,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7837,7 +7198,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7848,7 +7208,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7859,7 +7218,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7870,7 +7228,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7881,7 +7238,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7893,7 +7249,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7905,7 +7260,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7917,7 +7271,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7929,7 +7282,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7939,7 +7291,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -7954,18 +7305,18 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3000,
-          "zone_name": "Main"
+          "zone_name": "Main",
+          "Con": 1000,
+          "ConRate": 100
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -7977,7 +7328,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -7988,7 +7338,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -7999,7 +7348,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -8010,7 +7358,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -8021,7 +7368,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8032,7 +7378,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8043,7 +7388,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8054,7 +7398,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8065,7 +7408,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8076,7 +7418,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8087,7 +7428,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8099,7 +7439,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8111,7 +7450,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8123,7 +7461,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8135,7 +7472,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8145,7 +7481,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8160,7 +7495,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Main",
@@ -8171,7 +7505,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8182,7 +7515,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8193,7 +7525,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8216,7 +7547,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8227,7 +7557,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8238,7 +7567,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8261,7 +7589,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8272,7 +7599,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8283,7 +7609,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8306,7 +7631,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8317,7 +7641,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8328,7 +7651,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8351,7 +7673,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.95,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8363,7 +7684,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8374,7 +7694,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8385,7 +7704,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8397,7 +7715,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8408,7 +7725,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8419,7 +7735,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.8,
           "ExMult": 1,
           "ExTarget": "Part",
@@ -8431,7 +7746,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8442,7 +7756,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8453,7 +7766,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8472,7 +7784,9 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "rb_wing"
+          "zone_name": "rb_wing",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 0,
@@ -8484,7 +7798,9 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "lb_wing"
+          "zone_name": "lb_wing",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 0,
@@ -8496,7 +7812,9 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "lf_wing"
+          "zone_name": "lf_wing",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 0,
@@ -8508,7 +7826,9 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "rf_wing"
+          "zone_name": "rf_wing",
+          "ConRate": 0,
+          "ConNoBleed": true
         }
       ],
       "health": 6500
@@ -8517,7 +7837,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -8534,11 +7853,11 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 250,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 75
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8548,7 +7867,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8558,7 +7876,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8568,7 +7885,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8578,7 +7894,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8588,7 +7903,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8603,7 +7917,6 @@
       "damageable_zones": [
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -8614,7 +7927,6 @@
         },
         {
           "AV": 6,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8624,7 +7936,6 @@
         },
         {
           "AV": 10,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8640,7 +7951,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine5"
+          "zone_name": "spine5",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8650,7 +7963,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine4"
+          "zone_name": "spine4",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8660,7 +7975,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine3"
+          "zone_name": "spine3",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8670,7 +7987,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine2"
+          "zone_name": "spine2",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8680,7 +7999,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine1"
+          "zone_name": "spine1",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8690,7 +8011,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine0"
+          "zone_name": "spine0",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8700,7 +8023,9 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 20000,
-          "zone_name": "boss"
+          "zone_name": "boss",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 5,
@@ -8760,11 +8085,12 @@
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "boss_back"
+          "zone_name": "boss_back",
+          "ConRate": 0,
+          "ConNoBleed": true
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8774,7 +8100,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8784,7 +8109,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8794,7 +8118,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8804,7 +8127,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8814,7 +8136,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8824,7 +8145,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8834,7 +8154,6 @@
         },
         {
           "AV": 6,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8844,7 +8163,6 @@
         },
         {
           "AV": 6,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -8854,7 +8172,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8865,7 +8182,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8876,7 +8192,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8887,7 +8202,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8898,7 +8212,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8909,7 +8222,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8920,7 +8232,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8931,7 +8242,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8942,7 +8252,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8953,7 +8262,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8964,7 +8272,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8975,7 +8282,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8986,7 +8292,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -8997,7 +8302,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -9013,7 +8317,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9023,7 +8326,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9034,7 +8336,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9044,7 +8345,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9054,7 +8354,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9064,7 +8363,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9074,7 +8372,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9084,7 +8381,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9094,7 +8390,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9104,7 +8399,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9119,7 +8413,6 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9129,7 +8422,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9140,7 +8432,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.9,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9150,7 +8441,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9160,7 +8450,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9170,7 +8459,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9181,7 +8469,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9191,7 +8478,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9202,7 +8488,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9212,7 +8497,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9222,7 +8506,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9233,7 +8516,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9244,7 +8526,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9254,7 +8535,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9264,7 +8544,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9274,7 +8553,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9284,7 +8562,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.85,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9294,7 +8571,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0.9,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9304,7 +8580,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9314,7 +8589,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9324,7 +8598,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Part",
           "MainCap": 0,
@@ -9334,7 +8607,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9344,7 +8616,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9354,7 +8625,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -9369,7 +8639,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -9379,7 +8648,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -9394,7 +8662,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9404,7 +8671,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9415,7 +8681,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9426,7 +8691,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9437,7 +8701,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9448,7 +8711,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9458,7 +8720,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9468,7 +8729,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9478,7 +8738,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9493,7 +8752,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9503,7 +8761,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9514,7 +8771,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9525,7 +8781,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9536,7 +8791,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9547,7 +8801,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9558,7 +8811,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9569,7 +8821,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9585,7 +8836,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9595,7 +8845,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9606,7 +8855,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9616,7 +8864,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9626,7 +8873,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9636,7 +8882,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9646,7 +8891,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9656,7 +8900,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9666,7 +8909,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9676,7 +8918,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9691,7 +8932,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9701,7 +8941,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9711,7 +8950,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9721,7 +8959,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9731,7 +8968,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9741,7 +8977,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9751,7 +8986,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -9761,7 +8995,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9771,7 +9004,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9782,7 +9014,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9792,7 +9023,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -9807,18 +9037,18 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 2400,
-          "zone_name": "Main"
+          "zone_name": "Main",
+          "Con": 750,
+          "ConRate": 100
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0.75,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9830,7 +9060,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -9841,7 +9070,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9852,7 +9080,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9863,7 +9090,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -9874,7 +9100,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9885,7 +9110,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9896,7 +9120,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9907,7 +9130,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9918,7 +9140,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9929,7 +9150,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9940,7 +9160,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9951,7 +9170,6 @@
         },
         {
           "AV": 5,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9962,7 +9180,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9974,7 +9191,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9986,7 +9202,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -9998,7 +9213,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10010,7 +9224,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10020,7 +9233,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10035,7 +9247,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10045,7 +9256,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10056,7 +9266,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10067,7 +9276,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -10078,7 +9286,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -10089,7 +9296,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10099,7 +9305,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10109,7 +9314,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10119,7 +9323,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.3,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10134,7 +9337,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.2,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -10151,11 +9353,11 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 110,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 70
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10165,7 +9367,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10175,7 +9376,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10185,7 +9385,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10195,7 +9394,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10205,7 +9403,6 @@
         },
         {
           "AV": 3,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10220,7 +9417,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10230,7 +9426,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10241,7 +9436,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10252,7 +9446,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10263,7 +9456,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10274,7 +9466,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10285,7 +9476,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10296,7 +9486,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10312,7 +9501,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10322,7 +9510,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10332,7 +9519,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10343,7 +9529,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10354,7 +9539,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10370,7 +9554,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -10380,7 +9563,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -10395,7 +9577,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.35,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10405,7 +9586,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10416,7 +9596,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10426,7 +9605,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10436,7 +9614,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10446,7 +9623,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10456,7 +9632,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10466,7 +9641,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10476,7 +9650,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10486,7 +9659,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10501,7 +9673,6 @@
       "damageable_zones": [
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10511,7 +9682,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10522,7 +9692,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10533,7 +9702,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10544,7 +9712,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10555,7 +9722,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10566,7 +9732,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10577,7 +9742,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10593,7 +9757,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -10610,11 +9773,11 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 65
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.35,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10624,7 +9787,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.35,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10634,7 +9796,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.35,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10644,7 +9805,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.35,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10654,7 +9814,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10664,7 +9823,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.25,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10679,18 +9837,18 @@
       "damageable_zones": [
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 2400,
-          "zone_name": "Main"
+          "zone_name": "Main",
+          "Con": 750,
+          "ConRate": 100
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10702,7 +9860,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -10713,7 +9870,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.75,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10724,7 +9880,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10735,7 +9890,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -10746,7 +9900,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10757,7 +9910,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.85,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10768,7 +9920,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10779,7 +9930,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10790,7 +9940,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10801,7 +9950,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10812,7 +9960,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10824,7 +9971,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10836,7 +9982,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10848,7 +9993,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.7,
           "ExMult": 0.75,
           "ExTarget": "Part",
@@ -10860,7 +10004,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10870,7 +10013,6 @@
         },
         {
           "AV": 4,
-          "Con": 0,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -10880,7 +10022,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10890,7 +10031,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10900,7 +10040,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10910,7 +10049,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10920,7 +10058,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10930,7 +10067,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10940,7 +10076,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.85,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10955,7 +10090,6 @@
       "damageable_zones": [
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": true,
@@ -10970,7 +10104,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10980,7 +10113,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -10990,7 +10122,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11000,7 +10131,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11010,7 +10140,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11020,7 +10149,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11030,7 +10158,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11040,7 +10167,6 @@
         },
         {
           "AV": 2,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11050,7 +10176,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -11061,7 +10186,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11071,7 +10195,6 @@
         },
         {
           "AV": 0,
-          "Con": 0,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -11086,7 +10209,6 @@
       "damageable_zones": [
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0.2,
           "ExTarget": "Part",
           "MainCap": 1,
@@ -11103,11 +10225,11 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "face"
+          "zone_name": "face",
+          "ConRate": 65
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -11117,7 +10239,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -11127,7 +10248,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -11137,7 +10257,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -11147,7 +10266,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -11157,7 +10275,6 @@
         },
         {
           "AV": 1,
-          "Con": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,

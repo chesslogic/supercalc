@@ -1,5 +1,6 @@
 import { isExplosiveAttack } from './attack-types.js';
 import { buildKillSummary } from './summary.js';
+import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 
 function toNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -81,7 +82,8 @@ function buildZoneSummary({
       enemyMainHealth: normalizedEnemyMainHealth,
       totalDamagePerCycle,
       totalDamageToMainPerCycle,
-      rpm
+      rpm,
+      zoneUsesConAsHealth: hasZeroBleedConstitution(zone)
     })
   };
 }
@@ -449,6 +451,7 @@ export function summarizeEnemyTargetScenario({
 export function getZoneOutcomeKind({ zone, totalDamagePerCycle, totalDamageToMainPerCycle, killSummary }) {
   const hasZoneDamage = totalDamagePerCycle > 0;
   const hasMainDamage = totalDamageToMainPerCycle > 0 && killSummary?.mainShotsToKill !== null;
+  const zoneShotsToKill = killSummary?.zoneEffectiveShotsToKill ?? killSummary?.zoneShotsToKill ?? null;
 
   if (!hasZoneDamage && !hasMainDamage) {
     return null;
@@ -461,8 +464,8 @@ export function getZoneOutcomeKind({ zone, totalDamagePerCycle, totalDamageToMai
   if (hasMainDamage) {
     if (
       hasZoneDamage &&
-      killSummary?.zoneShotsToKill !== null &&
-      killSummary.zoneShotsToKill < killSummary.mainShotsToKill
+      zoneShotsToKill !== null &&
+      zoneShotsToKill < killSummary.mainShotsToKill
     ) {
       return 'limb';
     }
@@ -518,8 +521,10 @@ export function getZoneDisplayedShotsToKill(kind, killSummary) {
     return null;
   }
 
+  const zoneShotsToKill = killSummary.zoneEffectiveShotsToKill ?? killSummary.zoneShotsToKill ?? null;
+
   if (kind === 'fatal') {
-    return killSummary.zoneShotsToKill;
+    return zoneShotsToKill;
   }
 
   if (kind === 'main') {
@@ -527,7 +532,7 @@ export function getZoneDisplayedShotsToKill(kind, killSummary) {
   }
 
   if (kind === 'limb' || kind === 'utility') {
-    return killSummary.zoneShotsToKill;
+    return zoneShotsToKill;
   }
 
   return null;
@@ -538,8 +543,10 @@ export function getZoneDisplayedTtkSeconds(kind, killSummary) {
     return null;
   }
 
+  const zoneTtkSeconds = killSummary.zoneEffectiveTtkSeconds ?? killSummary.zoneTtkSeconds ?? null;
+
   if (kind === 'fatal') {
-    return killSummary.zoneTtkSeconds;
+    return zoneTtkSeconds;
   }
 
   if (kind === 'main') {
@@ -547,7 +554,7 @@ export function getZoneDisplayedTtkSeconds(kind, killSummary) {
   }
 
   if (kind === 'limb' || kind === 'utility') {
-    return killSummary.zoneTtkSeconds;
+    return zoneTtkSeconds;
   }
 
   return null;

@@ -8,6 +8,11 @@ import {
   getExplosiveDisplayInfo
 } from '../calculator/explosive-display.js';
 import { buildCompareTtkTooltip } from '../calculator/compare-tooltips.js';
+import {
+  getEnemyZoneConDisplayInfo,
+  getEnemyZoneHealthDisplayInfo,
+  ZERO_BLEED_CON_TOOLTIP
+} from '../calculator/enemy-zone-display.js';
 
 test('enemy dropdown keeps real enemies visible when overview is the current compare selection', () => {
   const state = getEnemyDropdownQueryState('Overview', {
@@ -97,6 +102,44 @@ test('explosive display applies routed markers without line-through styling', ()
   assert.match(td.title, /Automaton Trooper/i);
   assert.notEqual(td.style.textDecoration, 'line-through');
   assert.equal(td.style.color, 'var(--muted)');
+});
+
+test('enemy zone health display folds zero-bleed Constitution into effective health', () => {
+  const info = getEnemyZoneHealthDisplayInfo({
+    health: 1200,
+    Con: 1200,
+    ConRate: 0
+  });
+
+  assert.equal(info.text, '2400');
+  assert.equal(info.sortValue, 2400);
+  assert.equal(info.usesConAsHealth, true);
+});
+
+test('enemy zone Constitution display shows a starred tooltip for zero-bleed Constitution', () => {
+  const info = getEnemyZoneConDisplayInfo({
+    health: 1200,
+    Con: 1200,
+    ConRate: 0
+  });
+
+  assert.equal(info.text, '*');
+  assert.equal(info.sortValue, 1200);
+  assert.equal(info.usesConAsHealth, true);
+  assert.equal(info.title, ZERO_BLEED_CON_TOOLTIP);
+});
+
+test('enemy zone Constitution display keeps ordinary bleeding Constitution numeric', () => {
+  const info = getEnemyZoneConDisplayInfo({
+    health: 80,
+    Con: 1000,
+    ConRate: 40
+  });
+
+  assert.equal(info.text, '1000');
+  assert.equal(info.sortValue, 1000);
+  assert.equal(info.usesConAsHealth, false);
+  assert.equal(info.title, '');
 });
 
 test('compare TTK tooltip identifies the faster weapon when shots are equal but RPM differs', () => {

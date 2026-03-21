@@ -11,6 +11,7 @@ import {
 import { tokenizeFormattedTtk } from '../calculator/ttk-formatting.js';
 import {
   calculateAttackAgainstZone,
+  getZoneDisplayedShotsToKill,
   getZoneDisplayedTtkSeconds,
   getZoneOutcomeDescription,
   getZoneOutcomeLabel,
@@ -18,6 +19,10 @@ import {
   summarizeEnemyTargetScenario,
   summarizeZoneDamage
 } from '../calculator/zone-damage.js';
+import {
+  getEnemyZoneConDisplayInfo,
+  getEnemyZoneHealthDisplayInfo
+} from '../calculator/enemy-zone-display.js';
 
 const ENEMY_DATA = JSON.parse(
   readFileSync(new URL('../enemies/enemydata.json', import.meta.url), 'utf8')
@@ -736,6 +741,46 @@ test('zone outcome labels expose fixed badge text and row ttk semantics', () => 
   assert.equal(getZoneDisplayedTtkSeconds('utility', { zoneTtkSeconds: 0, mainTtkSeconds: null }), 0);
 });
 
+test('zero-bleed Constitution fatal zones use combined health for displayed shots and ttk', () => {
+  const zone = {
+    zone_name: 'panel',
+    health: 1200,
+    Con: 1200,
+    ConRate: 0,
+    AV: 1,
+    'Dur%': 0,
+    'ToMain%': 0,
+    ExTarget: 'Part',
+    IsFatal: true
+  };
+  const summary = summarizeZoneDamage({
+    zone,
+    enemyMainHealth: 500,
+    selectedAttacks: [{
+      'Atk Name': 'Burst',
+      'Atk Type': 'projectile',
+      DMG: 600,
+      DUR: 0,
+      AP: 2
+    }],
+    hitCounts: [1],
+    rpm: 60
+  });
+  const outcomeKind = getZoneOutcomeKind({
+    zone,
+    totalDamagePerCycle: summary.totalDamagePerCycle,
+    totalDamageToMainPerCycle: summary.totalDamageToMainPerCycle,
+    killSummary: summary.killSummary
+  });
+
+  assert.equal(summary.killSummary.zoneShotsToKill, 2);
+  assert.equal(summary.killSummary.zoneShotsToKillWithCon, 4);
+  assert.equal(summary.killSummary.zoneEffectiveShotsToKill, 4);
+  assert.equal(outcomeKind, 'fatal');
+  assert.equal(getZoneDisplayedShotsToKill(outcomeKind, summary.killSummary), 4);
+  assert.equal(getZoneDisplayedTtkSeconds(outcomeKind, summary.killSummary), 3);
+});
+
 test('AP4 explosive against real Hulk Bruiser Main yields finite main shots and ttk', () => {
   const enemy = getEnemyByName('Hulk Bruiser');
   const summary = summarizeEnemyTargetScenario({
@@ -772,6 +817,51 @@ test('routed Hulk Bruiser arm explosive damage hits Main directly without damagi
   assert.equal(summary.totalDamageToMainPerCycle, 26);
   assert.equal(summary.zoneSummaries[leftArmIndex].totalDamagePerCycle, 0);
   assert.equal(summary.zoneSummaries[summary.mainZoneIndex].totalDamagePerCycle, 26);
+});
+
+test('real Factory Strider front body uses zero-bleed Constitution display metadata', () => {
+  const enemy = getEnemyByName('Factory Strider');
+  const frontBody = enemy.zones.find((zone) => zone.zone_name === 'front_body');
+  assert.ok(frontBody);
+
+  assert.equal(frontBody.health, 1200);
+  assert.equal(frontBody.Con, 1200);
+  assert.equal(frontBody.ConRate, 0);
+  assert.equal(frontBody.ConNoBleed, true);
+
+  const healthInfo = getEnemyZoneHealthDisplayInfo(frontBody);
+  const conInfo = getEnemyZoneConDisplayInfo(frontBody);
+  assert.equal(healthInfo.text, '2400');
+  assert.equal(healthInfo.sortValue, 2400);
+  assert.equal(conInfo.text, '*');
+  assert.equal(conInfo.sortValue, 1200);
+});
+
+test('real Voteless arm keeps Constitution bleed rate and does not use zero-bleed display', () => {
+  const enemy = getEnemyByName('Voteless');
+  const rightArm = enemy.zones.find((zone) => zone.zone_name === 'arm_r');
+  assert.ok(rightArm);
+
+  assert.equal(rightArm.health, 80);
+  assert.equal(rightArm.Con, 1000);
+  assert.equal(rightArm.ConRate, 40);
+  assert.ok(!rightArm.ConNoBleed);
+
+  const healthInfo = getEnemyZoneHealthDisplayInfo(rightArm);
+  const conInfo = getEnemyZoneConDisplayInfo(rightArm);
+  assert.equal(healthInfo.text, '80');
+  assert.equal(conInfo.text, '1000');
+});
+
+test('real Voteless Main keeps parsed body Constitution and bleed rate', () => {
+  const enemy = getEnemyByName('Voteless');
+  const main = enemy.zones.find((zone) => zone.zone_name === 'Main');
+  assert.ok(main);
+
+  assert.equal(main.health, 160);
+  assert.equal(main.Con, 100);
+  assert.equal(main.ConRate, 5);
+  assert.ok(!main.ConNoBleed);
 });
 
 test('real Factory Strider Gatling Gun keeps 100% ExDR and blocks direct explosive damage', () => {

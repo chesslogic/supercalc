@@ -52,7 +52,8 @@ export function buildKillSummary({
   enemyMainHealth,
   totalDamagePerCycle,
   totalDamageToMainPerCycle,
-  rpm
+  rpm,
+  zoneUsesConAsHealth = false
 }) {
   const normalizedZoneHealth = toFiniteNumber(zoneHealth);
   const normalizedZoneCon = toFiniteNumber(zoneCon) ?? 0;
@@ -64,6 +65,9 @@ export function buildKillSummary({
     ? calculateShotsToKill((normalizedZoneHealth ?? 0) + normalizedZoneCon, totalDamagePerCycle)
     : null;
   const mainShotsToKill = calculateShotsToKill(normalizedEnemyMainHealth, totalDamageToMainPerCycle);
+  const zoneEffectiveShotsToKill = zoneUsesConAsHealth && zoneShotsToKillWithCon !== null
+    ? zoneShotsToKillWithCon
+    : zoneShotsToKill;
 
   return {
     hasRpm: normalizedRpm !== null,
@@ -72,6 +76,8 @@ export function buildKillSummary({
     zoneTtkSeconds: calculateTtkSeconds(zoneShotsToKill, normalizedRpm),
     zoneShotsToKillWithCon,
     zoneTtkSecondsWithCon: calculateTtkSeconds(zoneShotsToKillWithCon, normalizedRpm),
+    zoneEffectiveShotsToKill,
+    zoneEffectiveTtkSeconds: calculateTtkSeconds(zoneEffectiveShotsToKill, normalizedRpm),
     mainShotsToKill,
     mainTtkSeconds: calculateTtkSeconds(mainShotsToKill, normalizedRpm),
   };

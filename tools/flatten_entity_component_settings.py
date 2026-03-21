@@ -155,8 +155,13 @@ def flatten_entity_component_settings(src: Dict[str, Any]) -> Dict[str, Dict[str
         flattened[output_key] = {
             "loc_name": loc_name,
             "health": health.get("health"),
+            "constitution": health.get("constitution"),
+            "constitution_changerate": health.get("constitution_changerate"),
+            "constitution_disables_interactions": health.get("constitution_disables_interactions"),
+            "decay": health.get("decay"),
             "default_damageable_zone_info": health.get("default_damageable_zone_info"),
             "damageable_zones": health.get("damageable_zones"),
+            "zone_bleedout_changerate": health.get("zone_bleedout_changerate"),
         }
 
     return flattened

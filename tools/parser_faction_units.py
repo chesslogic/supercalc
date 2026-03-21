@@ -26,7 +26,7 @@ Deduping:
     keeps the one with the most damageable_zones; if tied, the higher health wins.
 
 Zone field filtering/renames:
-  - ignore: affected_by_collision_impact, armor_angle_check, bleedout_enabled, child_zones,
+  - ignore: affected_by_collision_impact, armor_angle_check, child_zones,
             damage_multiplier, damage_multiplier_dps, explosion_verification_mode,
             hit_effect_receiver_type, ignore_armor_on_self, immortal,
             kill_children_on_death, max_armor, regeneration_enabled
@@ -36,6 +36,8 @@ Zone field filtering/renames:
             projectile_durable_resistance → Dur%,
             armor → AV,
             constitution → Con
+  - derive: payload bleed-rate fields → ConRate (absolute bleed rate)
+  - derive: Constitution-bearing zones with ConRate 0 → ConNoBleed: true
   - transform: explosive_damage_percentage → ExMult (keep finite values as-is,
                 including 0 and >1; omit the large unset sentinel)
   - aggregate: if any of [causes_death_on_death, causes_death_on_downed,
@@ -168,7 +170,56 @@ def should_serialize_ex_mult(value: float) -> bool:
         abs_tol=0.0,
     )
 
-def transform_zone(zone: Dict[str, Any]) -> Dict[str, Any]:
+def is_positive_number(value: Any) -> bool:
+    try:
+        return float(value) > 0
+    except (ValueError, TypeError):
+        return False
+
+def get_constitution_bleed_rate(
+    payload: Dict[str, Any],
+    *,
+    is_main_zone: bool,
+) -> Union[int, float, None]:
+    if not isinstance(payload, dict):
+        return None
+
+    key = "constitution_changerate" if is_main_zone else "zone_bleedout_changerate"
+    value = payload.get(key)
+    try:
+        numeric = abs(float(value))
+    except (ValueError, TypeError):
+        return None
+
+    if not math.isfinite(numeric):
+        return None
+
+    return round_float(numeric)
+
+def apply_constitution_fields(
+    out: Dict[str, Any],
+    constitution_value: Any,
+    payload: Dict[str, Any],
+    *,
+    is_main_zone: bool,
+) -> None:
+    if constitution_value is None:
+        return
+
+    out["Con"] = constitution_value
+    if is_positive_number(constitution_value):
+        con_rate = get_constitution_bleed_rate(payload, is_main_zone=is_main_zone)
+        if con_rate is not None:
+            out["ConRate"] = con_rate
+            if con_rate == 0:
+                out["ConNoBleed"] = True
+
+def transform_zone(
+    zone: Dict[str, Any],
+    payload: Dict[str, Any] | None = None,
+    *,
+    is_main_zone: bool = False,
+) -> Dict[str, Any]:
     """Filter/rename a single zone dict according to spec; strings are sanitized.
     Accepts either a zone dict or a wrapper with an 'info' dict.
     Returns an empty dict if nothing relevant remains (caller may drop it)."""
@@ -189,7 +240,12 @@ def transform_zone(zone: Dict[str, Any]) -> Dict[str, Any]:
         out["health"] = src["health"]
     
     if "constitution" in src and src["constitution"] is not None:
-        out["Con"] = src["constitution"]
+        apply_constitution_fields(
+            out,
+            src["constitution"],
+            payload or {},
+            is_main_zone=is_main_zone,
+        )
     
     # Rename armor to AV (Armor Value)
     if "armor" in src and src["armor"] is not None:
@@ -269,20 +325,28 @@ def parse_enemy_units(src: dict) -> dict:
         if isinstance(raw_zones, list):
             for z in raw_zones:
                 if isinstance(z, dict):
-                    tz = transform_zone(z)
+                    tz = transform_zone(z, payload)
                     if tz:  # drop empty dicts
                         zones.append(tz)
 
         # Process default_damageable_zone_info into a zone named "Main"
         default_zone_info = payload.get("default_damageable_zone_info")
         if isinstance(default_zone_info, dict):
-            main_zone = transform_zone(default_zone_info)
+            main_zone = transform_zone(default_zone_info, payload, is_main_zone=True)
             if main_zone:
                 main_zone["zone_name"] = "Main"
                 # Override health with unit's main health
                 unit_health = payload.get("health")
                 if unit_health is not None:
                     main_zone["health"] = unit_health
+                payload_constitution = payload.get("constitution")
+                if is_positive_number(payload_constitution) and not is_positive_number(main_zone.get("Con")):
+                    apply_constitution_fields(
+                        main_zone,
+                        payload_constitution,
+                        payload,
+                        is_main_zone=True,
+                    )
                 zones.insert(0, main_zone)
 
         # Build a trimmed view of the payload we care about
