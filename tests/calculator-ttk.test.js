@@ -199,7 +199,7 @@ test('explosive damage uses ExMult directly, so ExMult 0 means immunity', () => 
   assert.equal(attack.damage, 0);
 });
 
-test('explosions always apply one direct main hit per AoE target using main defenses', () => {
+test('explosions apply one direct main hit per explosion using main defenses', () => {
   const summary = summarizeEnemyTargetScenario({
     enemy: {
       health: 500,
@@ -257,7 +257,40 @@ test('explosive limb damage adds passthrough main damage without rechecking main
   assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 150);
 });
 
-test('explosive AoE aggregates direct and passthrough damage across multiple hit zones', () => {
+test('charger-style BFGL head hit applies direct main damage and passthrough from the struck limb', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 1500,
+      zones: [
+        { zone_name: 'Main', health: 1500, Con: 0, AV: 4, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Main', ExMult: 0.75, IsFatal: false },
+        { zone_name: 'Head', health: 500, Con: 0, AV: 4, 'Dur%': 0, 'ToMain%': 0.7, ExTarget: 'Part', ExMult: 0.75, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [{
+      'Atk Name': 'BFGL',
+      'Atk Type': 'Explosion',
+      DMG: 150,
+      DUR: 150,
+      AP: 4
+    }],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1]
+  });
+
+  const expectedDirectMainDamage = 150 * 0.75 * 0.65;
+  const expectedPassthroughDamage = expectedDirectMainDamage * 0.7;
+  const expectedTotalMainDamage = expectedDirectMainDamage + expectedPassthroughDamage;
+
+  assert.ok(Math.abs(summary.totalDirectMainDamagePerCycle - expectedDirectMainDamage) < 1e-9);
+  assert.ok(Math.abs(summary.totalPassthroughMainDamagePerCycle - expectedPassthroughDamage) < 1e-9);
+  assert.ok(Math.abs(summary.totalDamageToMainPerCycle - expectedTotalMainDamage) < 1e-9);
+  assert.ok(Math.abs(summary.zoneSummaries[1].totalDamagePerCycle - expectedDirectMainDamage) < 1e-9);
+  assert.ok(Math.abs(summary.zoneSummaries[0].totalDamagePerCycle - expectedTotalMainDamage) < 1e-9);
+});
+
+test('explosive AoE applies one direct main hit and adds passthrough from every struck limb', () => {
   const summary = summarizeEnemyTargetScenario({
     enemy: {
       health: 600,
@@ -280,12 +313,42 @@ test('explosive AoE aggregates direct and passthrough damage across multiple hit
     explosiveZoneIndices: [1, 2]
   });
 
-  assert.equal(summary.totalDirectMainDamagePerCycle, 200);
+  assert.equal(summary.totalDirectMainDamagePerCycle, 100);
   assert.equal(summary.totalPassthroughMainDamagePerCycle, 75);
-  assert.equal(summary.totalDamageToMainPerCycle, 275);
+  assert.equal(summary.totalDamageToMainPerCycle, 175);
   assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 100);
   assert.equal(summary.zoneSummaries[2].totalDamagePerCycle, 100);
-  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 275);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 175);
+  assert.equal(
+    summary.attackDetails[0].zoneApplications.filter((application) => application.directMainDamage > 0).length,
+    1
+  );
+  assert.equal(
+    summary.attackDetails[0].zoneApplications.reduce((sum, application) => sum + application.directMainDamage, 0),
+    100
+  );
+});
+
+test('real Trooper AoE still checks Main once even when the struck part takes no explosive part damage', () => {
+  const enemy = getEnemyByName('Trooper');
+  const leftArmIndex = enemy.zones.findIndex((zone) => zone.zone_name === 'left_arm');
+  assert.notEqual(leftArmIndex, -1);
+
+  const summary = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks: [makeExplosionAttackRow('Synthetic AP4 Explosive', 100, 4)],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 0,
+    explosiveZoneIndices: [leftArmIndex]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 100);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 0);
+  assert.equal(summary.totalDamageToMainPerCycle, 100);
+  assert.equal(summary.zoneSummaries[leftArmIndex].totalDamagePerCycle, 0);
+  assert.equal(summary.zoneSummaries[summary.mainZoneIndex].totalDamagePerCycle, 100);
+  assert.equal(summary.zoneSummaries[summary.mainZoneIndex].killSummary.mainShotsToKill, 2);
 });
 
 test('mixed projectile and explosive cycles share one scenario summary', () => {

@@ -23,7 +23,7 @@ function buildReductionTitle({ resistancePercent, receivedPercent, rawValue, isI
 }
 
 function buildRoutedTitle() {
-  return 'The app currently treats direct explosive hits on this part as routed to Main, so it shows 100%* here and uses Main for the direct explosive calculation. The asterisk marks current calculator handling for this special case rather than a confirmed separate in-game ExDR value for the part.';
+  return 'The app currently treats this as a special explosive-handling case: direct explosive part damage and explosive passthrough from this part are suppressed, but if an AoE ray hits the enemy the calculator still performs one direct Main explosive check using Main defenses. The asterisk marks current calculator handling for this special case rather than a confirmed separate in-game ExDR value for the part.';
 }
 
 export function getExplosiveDisplayInfo(zone) {

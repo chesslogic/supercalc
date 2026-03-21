@@ -260,6 +260,12 @@ function buildProjectileAttackScenario({
   return scenario;
 }
 
+// Explosion model:
+// - if any AoE ray hits the enemy, resolve one direct Main explosive hit using Main AV / ExDR
+// - each struck zone also resolves its own part damage using that zone's AV / ExDR
+// - only actual part damage contributes % To Main passthrough
+// - current special-case non-main ExTarget: Main zones suppress direct explosive part damage/passthrough,
+//   but they do not suppress the one direct Main explosive check for the explosion
 function buildExplosionAttackScenario({
   attack,
   hits,
@@ -279,9 +285,14 @@ function buildExplosionAttackScenario({
   const mainAttackResult = mainZone
     ? calculateAttackAgainstZone(attack, mainZone, hits)
     : null;
-  const directMainDamagePerTarget = mainAttackResult
+  const directMainDamagePerExplosion = mainAttackResult
     ? mainAttackResult.damage * mainAttackResult.hits
     : 0;
+  const directMainApplicationZoneIndex = explosiveZoneIndices.includes(mainZoneIndex)
+    ? mainZoneIndex
+    : explosiveZoneIndices[0];
+
+  scenario.totalDirectMainDamagePerCycle = directMainDamagePerExplosion;
 
   explosiveZoneIndices.forEach((zoneIndex) => {
     if (!isValidZoneIndex(zones, zoneIndex)) {
@@ -296,10 +307,13 @@ function buildExplosionAttackScenario({
     let zoneDamage = 0;
     let passthroughMainDamage = 0;
     let appliesToZone = false;
+    const directMainDamage = zoneIndex === directMainApplicationZoneIndex
+      ? directMainDamagePerExplosion
+      : 0;
 
     if (zoneIndex === mainZoneIndex) {
       attackResult = mainAttackResult;
-      zoneDamage = directMainDamagePerTarget;
+      zoneDamage = directMainDamagePerExplosion;
       appliesToZone = zoneDamage > 0;
     } else if (!targetsMainOnly) {
       attackResult = calculateAttackAgainstZone(attack, zone, hits);
@@ -315,13 +329,12 @@ function buildExplosionAttackScenario({
       mode: 'explosion',
       hits,
       zoneDamage,
-      directMainDamage: directMainDamagePerTarget,
+      directMainDamage,
       passthroughMainDamage,
       appliesToZone,
       attackResult
     }));
     scenario.totalZoneDamagePerCycle += zoneDamage;
-    scenario.totalDirectMainDamagePerCycle += directMainDamagePerTarget;
     scenario.totalPassthroughMainDamagePerCycle += passthroughMainDamage;
   });
 

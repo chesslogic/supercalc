@@ -66,7 +66,7 @@ test('explosive display converts direct multipliers into user-facing reduction p
   assert.match(info.title, /ExMult 0\.45/i);
 });
 
-test('explosive display flags routed non-main zones as bypassed', () => {
+test('explosive display flags special non-main zones that suppress part explosive damage', () => {
   const info = getExplosiveDisplayInfo({
     zone_name: 'left_arm',
     ExTarget: 'Main'
@@ -75,8 +75,9 @@ test('explosive display flags routed non-main zones as bypassed', () => {
   assert.equal(info.text, '100%*');
   assert.equal(info.sortValue, 1);
   assert.equal(info.isRouted, true);
-  assert.match(info.title, /app currently treats direct explosive hits on this part as routed to Main/i);
-  assert.match(info.title, /100%\*/i);
+  assert.match(info.title, /direct explosive part damage and explosive passthrough from this part are suppressed/i);
+  assert.match(info.title, /one direct Main explosive check using Main defenses/i);
+  assert.match(info.title, /asterisk marks current calculator handling/i);
 });
 
 test('explosive display applies routed markers without line-through styling', () => {
