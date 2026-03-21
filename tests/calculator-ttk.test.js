@@ -21,7 +21,8 @@ import {
 } from '../calculator/zone-damage.js';
 import {
   getEnemyZoneConDisplayInfo,
-  getEnemyZoneHealthDisplayInfo
+  getEnemyZoneHealthDisplayInfo,
+  MAIN_CON_ANY_DEATH_TOOLTIP
 } from '../calculator/enemy-zone-display.js';
 
 const ENEMY_DATA = JSON.parse(
@@ -862,6 +863,11 @@ test('real Voteless Main keeps parsed body Constitution and bleed rate', () => {
   assert.equal(main.Con, 100);
   assert.equal(main.ConRate, 5);
   assert.ok(!main.ConNoBleed);
+  assert.equal(main.ConAppliesAnyDeath, true);
+
+  const conInfo = getEnemyZoneConDisplayInfo(main);
+  assert.equal(conInfo.text, '100*');
+  assert.equal(conInfo.title, MAIN_CON_ANY_DEATH_TOOLTIP);
 });
 
 test('real Factory Strider Gatling Gun keeps 100% ExDR and blocks direct explosive damage', () => {

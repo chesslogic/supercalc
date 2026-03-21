@@ -30,11 +30,17 @@ function toBoolean(value) {
 }
 
 export const ZERO_BLEED_CON_TOOLTIP = 'This enemy has a Constitution with 0 Bleed, effectively a second health bar.';
+export const MAIN_CON_ANY_DEATH_TOOLTIP = 'This Main Constitution still applies even when the enemy dies through a fatal or downing part rather than by depleting Main.';
 
 export function hasZeroBleedConstitution(zone) {
   const con = toFiniteNumber(zone?.Con) ?? 0;
   const conRate = toFiniteNumber(zone?.ConRate);
   return con > 0 && (toBoolean(zone?.ConNoBleed) || conRate === 0);
+}
+
+function hasAnyDeathConstitutionNote(zone) {
+  const con = toFiniteNumber(zone?.Con) ?? 0;
+  return con > 0 && toBoolean(zone?.ConAppliesAnyDeath);
 }
 
 export function getEnemyZoneHealthDisplayInfo(zone) {
@@ -96,6 +102,16 @@ export function getEnemyZoneConDisplayInfo(zone) {
     };
   }
 
+  if (hasAnyDeathConstitutionNote(zone)) {
+    return {
+      text: `${con}*`,
+      sortValue: con,
+      title: MAIN_CON_ANY_DEATH_TOOLTIP,
+      usesConAsHealth: false,
+      isEmpty: false
+    };
+  }
+
   return {
     text: String(con),
     sortValue: con,
@@ -125,7 +141,7 @@ export function applyEnemyZoneConDisplayToCell(td, zone) {
   td.style.color = '';
   td.style.opacity = '';
 
-  if (info.usesConAsHealth) {
+  if (info.title) {
     td.style.cursor = 'help';
     return;
   }

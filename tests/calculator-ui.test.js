@@ -11,6 +11,7 @@ import { buildCompareTtkTooltip } from '../calculator/compare-tooltips.js';
 import {
   getEnemyZoneConDisplayInfo,
   getEnemyZoneHealthDisplayInfo,
+  MAIN_CON_ANY_DEATH_TOOLTIP,
   ZERO_BLEED_CON_TOOLTIP
 } from '../calculator/enemy-zone-display.js';
 
@@ -140,6 +141,20 @@ test('enemy zone Constitution display keeps ordinary bleeding Constitution numer
   assert.equal(info.sortValue, 1000);
   assert.equal(info.usesConAsHealth, false);
   assert.equal(info.title, '');
+});
+
+test('enemy zone Constitution display can mark main Constitution that applies on any death', () => {
+  const info = getEnemyZoneConDisplayInfo({
+    health: 160,
+    Con: 100,
+    ConRate: 5,
+    ConAppliesAnyDeath: true
+  });
+
+  assert.equal(info.text, '100*');
+  assert.equal(info.sortValue, 100);
+  assert.equal(info.usesConAsHealth, false);
+  assert.equal(info.title, MAIN_CON_ANY_DEATH_TOOLTIP);
 });
 
 test('compare TTK tooltip identifies the faster weapon when shots are equal but RPM differs', () => {

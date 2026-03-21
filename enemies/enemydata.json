@@ -5924,7 +5924,8 @@
           "health": 160,
           "zone_name": "Main",
           "Con": 100,
-          "ConRate": 5
+          "ConRate": 5,
+          "ConAppliesAnyDeath": true
         },
         {
           "AV": 1,
