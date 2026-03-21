@@ -34,6 +34,7 @@ export const calculatorState = {
   weaponB: null,
   selectedEnemy: null,
   selectedZoneIndex: null,
+  selectedExplosiveZoneIndices: [],
   selectedAttackKeys: {
     A: [],
     B: []
@@ -187,7 +188,11 @@ export function adjustAttackHitCount(slot, attackKey, delta) {
 
 export function setSelectedEnemy(enemy) {
   calculatorState.selectedEnemy = enemy || null;
-  calculatorState.selectedZoneIndex = getPreferredZoneIndex(enemy);
+  const preferredZoneIndex = getPreferredZoneIndex(enemy);
+  calculatorState.selectedZoneIndex = preferredZoneIndex;
+  calculatorState.selectedExplosiveZoneIndices = Number.isInteger(preferredZoneIndex)
+    ? [preferredZoneIndex]
+    : [];
   if (enemy) {
     calculatorState.compareView = 'focused';
   }
@@ -208,6 +213,43 @@ export function getSelectedZone() {
   }
 
   return calculatorState.selectedEnemy.zones[calculatorState.selectedZoneIndex] || null;
+}
+
+export function getSelectedExplosiveZoneIndices() {
+  return [...calculatorState.selectedExplosiveZoneIndices];
+}
+
+export function setSelectedExplosiveZone(zoneIndex, selected) {
+  if (!Number.isInteger(zoneIndex) || zoneIndex < 0) {
+    return;
+  }
+
+  const existingIndex = calculatorState.selectedExplosiveZoneIndices.indexOf(zoneIndex);
+  if (selected) {
+    if (existingIndex === -1) {
+      calculatorState.selectedExplosiveZoneIndices.push(zoneIndex);
+    }
+    return;
+  }
+
+  if (existingIndex !== -1) {
+    calculatorState.selectedExplosiveZoneIndices.splice(existingIndex, 1);
+  }
+}
+
+export function toggleSelectedExplosiveZone(zoneIndex) {
+  const isSelected = calculatorState.selectedExplosiveZoneIndices.includes(zoneIndex);
+  setSelectedExplosiveZone(zoneIndex, !isSelected);
+}
+
+export function getSelectedExplosiveZones() {
+  if (!calculatorState.selectedEnemy?.zones) {
+    return [];
+  }
+
+  return getSelectedExplosiveZoneIndices()
+    .map((zoneIndex) => calculatorState.selectedEnemy.zones[zoneIndex] || null)
+    .filter(Boolean);
 }
 
 export function toggleEnemySort(sortKey) {

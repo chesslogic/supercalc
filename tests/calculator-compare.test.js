@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildAttackUnionRows,
+  buildFocusedZoneComparisonRows,
   buildHallOfFameEntries,
   buildOverviewRows,
   buildZoneComparisonMetrics,
@@ -23,6 +24,13 @@ function makeAttackRow(name, damage, ap = 2) {
     DF: 10,
     ST: 10,
     PF: 10
+  };
+}
+
+function makeExplosionAttackRow(name, damage, ap = 2) {
+  return {
+    ...makeAttackRow(name, damage, ap),
+    'Atk Type': 'Explosion'
   };
 }
 
@@ -97,7 +105,7 @@ function makeZone(zoneName, {
     'Dur%': 0,
     'ToMain%': toMainPercent,
     ExTarget: 'Part',
-    ExMult: 1,
+    ExMult: 0,
     IsFatal: isFatal
   };
 }
@@ -263,6 +271,36 @@ test('buildZoneComparisonMetrics marks one-sided damage wins as infinite diff se
   assert.equal(metrics.diffTtkSeconds.winner, 'B');
   assert.equal(metrics.diffTtkSeconds.displayValue, 2);
   assert.equal(metrics.diffTtkSeconds.percentSortValue, Number.NEGATIVE_INFINITY);
+});
+
+test('buildFocusedZoneComparisonRows uses one shared projectile and AoE target scenario for A and B', () => {
+  const rows = buildFocusedZoneComparisonRows({
+    enemy: {
+      health: 500,
+      zones: [
+        makeZone('Main'),
+        makeZone('Head', { health: 150, toMainPercent: 1 }),
+        makeZone('Leg', { health: 300, toMainPercent: 0.5 })
+      ]
+    },
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('Projectile A', 50), makeExplosionAttackRow('Explosion A', 100)],
+    selectedAttacksB: [makeAttackRow('Projectile B', 100), makeExplosionAttackRow('Explosion B', 50)],
+    hitCountsA: [1, 1],
+    hitCountsB: [1, 1],
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [2]
+  });
+
+  assert.equal(rows.length, 3);
+  assert.equal(rows[1].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 50);
+  assert.equal(rows[1].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 100);
+  assert.equal(rows[2].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 100);
+  assert.equal(rows[2].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 50);
+  assert.equal(rows[0].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 200);
+  assert.equal(rows[0].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 175);
+  assert.equal(rows[0].metrics.diffTtkSeconds.kind, 'numeric');
 });
 
 test('getDiffDisplayMetric returns percent values when available', () => {

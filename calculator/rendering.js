@@ -8,6 +8,7 @@ import {
   durPercentageColor
 } from '../colors.js';
 import {
+  getSelectedExplosiveZoneIndices,
   getOverviewScopeOptions,
   getAttackHitCounts,
   calculatorState,
@@ -19,18 +20,20 @@ import {
   setEnemyGroupMode,
   setOverviewScope,
   setSelectedAttack,
+  setSelectedExplosiveZone,
   setSelectedZoneIndex,
   toggleEnemySort
 } from './data.js';
 import {
+  buildFocusedZoneComparisonRows,
   buildOverviewRows,
   buildAttackUnionRows,
-  buildZoneComparisonMetrics,
   getDiffDisplayMetric,
   getAttackRowKey,
   getOutcomeGroupingSlot,
   sortEnemyZoneRows
 } from './compare-utils.js';
+import { splitAttacksByApplication } from './attack-types.js';
 import { renderCalculation } from './calculation.js';
 import { formatTtkSeconds } from './summary.js';
 import { tokenizeFormattedTtk } from './ttk-formatting.js';
@@ -508,6 +511,18 @@ function appendToolbarButtonGroup(toolbar, labelText, items, isActive, onClick) 
   toolbar.appendChild(group);
 }
 
+function getFocusedTargetingModes(selectedAttacksA, selectedAttacksB) {
+  const activeAttacks = calculatorState.mode === 'compare'
+    ? [...selectedAttacksA, ...selectedAttacksB]
+    : [...selectedAttacksA];
+  const { directAttacks, explosiveAttacks } = splitAttacksByApplication(activeAttacks);
+
+  return {
+    hasProjectileTargets: directAttacks.length > 0,
+    hasExplosiveTargets: explosiveAttacks.length > 0
+  };
+}
+
 function renderEnemyControls(enemy) {
   const controlsContainer = document.getElementById('calculator-enemy-controls');
   if (!controlsContainer) {
@@ -813,7 +828,7 @@ function buildDiffMetricCell(value, valueType, diffDisplayMode = 'absolute') {
   return td;
 }
 
-function appendEnemyRadioCell(tr, enemyName, zoneIndex) {
+function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowClick = false) {
   const radioTd = document.createElement('td');
   radioTd.style.padding = '4px 10px';
   radioTd.style.borderBottom = '1px solid var(--border)';
@@ -828,20 +843,57 @@ function appendEnemyRadioCell(tr, enemyName, zoneIndex) {
   radio.checked = calculatorState.selectedZoneIndex === zoneIndex;
   radio.addEventListener('change', () => {
     setSelectedZoneIndex(zoneIndex);
+    renderEnemyDetails();
     renderCalculation();
   });
 
-  tr.style.cursor = 'pointer';
-  tr.addEventListener('click', (event) => {
-    if (event.target !== radio) {
-      radio.checked = true;
-      setSelectedZoneIndex(zoneIndex);
-      renderCalculation();
-    }
-  });
+  if (enableRowClick) {
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', (event) => {
+      if (event.target !== radio) {
+        radio.checked = true;
+        setSelectedZoneIndex(zoneIndex);
+        renderEnemyDetails();
+        renderCalculation();
+      }
+    });
+  }
 
   radioTd.appendChild(radio);
   tr.appendChild(radioTd);
+}
+
+function appendEnemyExplosionCell(tr, zoneIndex, enableRowClick = false) {
+  const checkboxTd = document.createElement('td');
+  checkboxTd.style.padding = '4px 10px';
+  checkboxTd.style.borderBottom = '1px solid var(--border)';
+  checkboxTd.style.width = '30px';
+  checkboxTd.style.textAlign = 'center';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.value = zoneIndex;
+  checkbox.checked = getSelectedExplosiveZoneIndices().includes(zoneIndex);
+  checkbox.addEventListener('change', () => {
+    setSelectedExplosiveZone(zoneIndex, checkbox.checked);
+    renderEnemyDetails();
+    renderCalculation();
+  });
+
+  if (enableRowClick) {
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', (event) => {
+      if (event.target !== checkbox) {
+        checkbox.checked = !checkbox.checked;
+        setSelectedExplosiveZone(zoneIndex, checkbox.checked);
+        renderEnemyDetails();
+        renderCalculation();
+      }
+    });
+  }
+
+  checkboxTd.appendChild(checkbox);
+  tr.appendChild(checkboxTd);
 }
 
 export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
@@ -869,16 +921,42 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
   table.style.borderCollapse = 'collapse';
   table.className = 'calculator-table';
 
+  const weaponA = getWeaponForSlot('A');
+  const weaponB = getWeaponForSlot('B');
+  const selectedAttacksA = getSelectedAttacks('A');
+  const selectedAttacksB = getSelectedAttacks('B');
+  const hitCountsA = getAttackHitCounts('A', selectedAttacksA);
+  const hitCountsB = getAttackHitCounts('B', selectedAttacksB);
+  const {
+    hasProjectileTargets,
+    hasExplosiveTargets
+  } = getFocusedTargetingModes(selectedAttacksA, selectedAttacksB);
+  const targetColumnCount = Number(hasProjectileTargets) + Number(hasExplosiveTargets);
+
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-  const radioTh = document.createElement('th');
-  radioTh.style.padding = '4px 10px';
-  radioTh.style.textAlign = 'center';
-  radioTh.style.borderBottom = '2px solid var(--border)';
-  radioTh.style.color = 'var(--muted)';
-  radioTh.style.width = '30px';
-  headerRow.appendChild(radioTh);
+  if (hasProjectileTargets) {
+    const projectileTh = document.createElement('th');
+    projectileTh.textContent = 'Proj';
+    projectileTh.style.padding = '4px 10px';
+    projectileTh.style.textAlign = 'center';
+    projectileTh.style.borderBottom = '2px solid var(--border)';
+    projectileTh.style.color = 'var(--muted)';
+    projectileTh.style.width = '30px';
+    headerRow.appendChild(projectileTh);
+  }
+
+  if (hasExplosiveTargets) {
+    const explosiveTh = document.createElement('th');
+    explosiveTh.textContent = 'AoE';
+    explosiveTh.style.padding = '4px 10px';
+    explosiveTh.style.textAlign = 'center';
+    explosiveTh.style.borderBottom = '2px solid var(--border)';
+    explosiveTh.style.color = 'var(--muted)';
+    explosiveTh.style.width = '30px';
+    headerRow.appendChild(explosiveTh);
+  }
 
   const columns = getEnemyColumns();
   columns.forEach((column) => {
@@ -898,28 +976,17 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  const weaponA = getWeaponForSlot('A');
-  const weaponB = getWeaponForSlot('B');
-  const selectedAttacksA = getSelectedAttacks('A');
-  const selectedAttacksB = getSelectedAttacks('B');
-  const hitCountsA = getAttackHitCounts('A', selectedAttacksA);
-  const hitCountsB = getAttackHitCounts('B', selectedAttacksB);
-  const enemyMainHealth = parseInt(enemy.health, 10) || 0;
-
-  const zoneRows = enemy.zones.map((zone, zoneIndex) => ({
-    zone,
-    zoneIndex,
-    metrics: buildZoneComparisonMetrics({
-      zone,
-      enemyMainHealth,
-      weaponA,
-      weaponB,
-      selectedAttacksA,
-      selectedAttacksB,
-      hitCountsA,
-      hitCountsB
-    })
-  }));
+  const zoneRows = buildFocusedZoneComparisonRows({
+    enemy,
+    weaponA,
+    weaponB,
+    selectedAttacksA,
+    selectedAttacksB,
+    hitCountsA,
+    hitCountsB,
+    projectileZoneIndex: calculatorState.selectedZoneIndex,
+    explosiveZoneIndices: getSelectedExplosiveZoneIndices()
+  });
 
   const sortedRows = sortEnemyZoneRows(zoneRows, {
     mode: calculatorState.mode,
@@ -938,7 +1005,13 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
       tr.classList.add('group-start');
     }
 
-    appendEnemyRadioCell(tr, enemy.name, zoneIndex);
+    if (hasProjectileTargets) {
+      appendEnemyProjectileCell(tr, enemy.name, zoneIndex, targetColumnCount === 1 && !hasExplosiveTargets);
+    }
+
+    if (hasExplosiveTargets) {
+      appendEnemyExplosionCell(tr, zoneIndex, targetColumnCount === 1 && !hasProjectileTargets);
+    }
 
     columns.forEach((column) => {
       if (column.key === 'shots') {

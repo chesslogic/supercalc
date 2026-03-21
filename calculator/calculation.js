@@ -5,12 +5,14 @@ import {
   getAttackHitCounts,
   getEnemyOptions,
   getSelectedAttacks,
+  getSelectedExplosiveZoneIndices,
   getSelectedZone,
   getWeaponForSlot
 } from './data.js';
 import { buildHallOfFameEntries, buildOverviewRows, getAttackRowKey } from './compare-utils.js';
+import { splitAttacksByApplication } from './attack-types.js';
 import { formatTtkSeconds } from './summary.js';
-import { summarizeZoneDamage } from './zone-damage.js';
+import { summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
 
 function appendTtkLine(resultWrapper, ttkSeconds, hasRpm) {
@@ -32,6 +34,7 @@ function getEmptyCalculationMessage(slot) {
   const enemy = calculatorState.selectedEnemy;
   const zone = getSelectedZone();
   const selectedAttacks = getSelectedAttacks(slot);
+  const { directAttacks } = splitAttacksByApplication(selectedAttacks);
 
   if (!weapon) {
     return calculatorState.mode === 'compare'
@@ -43,17 +46,17 @@ function getEmptyCalculationMessage(slot) {
     return 'Select an enemy to see calculations';
   }
 
-  if (!zone) {
-    return 'Select an enemy zone to see calculations';
-  }
-
   if (selectedAttacks.length === 0) {
     return calculatorState.mode === 'compare'
       ? `Select one or more attack rows for weapon ${slot}`
       : 'Select weapon attack(s) to see calculations';
   }
 
-  return 'Select weapon attack(s) and an enemy zone to see calculations';
+  if (directAttacks.length > 0 && !zone) {
+    return 'Select an enemy zone to see calculations';
+  }
+
+  return 'Select weapon attack(s) to see calculations';
 }
 
 export function calculateDamage(slot = 'A') {
@@ -61,7 +64,7 @@ export function calculateDamage(slot = 'A') {
   const enemy = calculatorState.selectedEnemy;
   const zone = getSelectedZone();
 
-  if (!weapon || !enemy || !enemy.zones || !zone) {
+  if (!weapon || !enemy || !enemy.zones) {
     return null;
   }
 
@@ -70,6 +73,17 @@ export function calculateDamage(slot = 'A') {
     return null;
   }
 
+  const hitCounts = getAttackHitCounts(slot, selectedAttacks);
+  const scenario = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks,
+    hitCounts,
+    rpm: weapon?.rpm,
+    projectileZoneIndex: calculatorState.selectedZoneIndex,
+    explosiveZoneIndices: getSelectedExplosiveZoneIndices()
+  });
+  const focusZoneSummary = scenario?.zoneSummaries?.[calculatorState.selectedZoneIndex] || null;
+
   return {
     slot,
     weapon,
@@ -77,14 +91,71 @@ export function calculateDamage(slot = 'A') {
     zone,
     selectedAttacks,
     attackKeys: selectedAttacks.map((attack) => getAttackRowKey(attack)),
-    ...summarizeZoneDamage({
-      zone,
-      enemyMainHealth: parseInt(enemy.health, 10) || 0,
-      selectedAttacks,
-      hitCounts: getAttackHitCounts(slot, selectedAttacks),
-      rpm: weapon?.rpm
-    })
+    hitCounts,
+    projectileTargetZone: scenario?.projectileTargetZone || null,
+    explosiveTargetZones: scenario?.explosiveTargetZones || [],
+    hasProjectileAttacks: splitAttacksByApplication(selectedAttacks).directAttacks.length > 0,
+    hasExplosiveAttacks: splitAttacksByApplication(selectedAttacks).explosiveAttacks.length > 0,
+    focusZoneSummary,
+    totalDamagePerCycle: focusZoneSummary?.totalDamagePerCycle || 0,
+    totalDamageToMainPerCycle: scenario?.totalDamageToMainPerCycle || 0,
+    zoneHealth: focusZoneSummary?.zoneHealth || 0,
+    zoneCon: focusZoneSummary?.zoneCon || 0,
+    enemyMainHealth: scenario?.enemyMainHealth || 0,
+    killSummary: focusZoneSummary?.killSummary || null,
+    attackDetails: scenario?.attackDetails || [],
+    ...scenario
   };
+}
+
+function buildDamageFormulaText(attackResult) {
+  const apMultiText = attackResult.ap < attackResult.av ? '0 (AP < AV)' :
+    attackResult.ap === attackResult.av ? '0.65 (AP = AV)' :
+      '1.0 (AP > AV)';
+  const dmgMultiplied = attackResult.dmg * (1 - attackResult.durPercent);
+  const durMultiplied = attackResult.dur * attackResult.durPercent;
+  const exMultValue = attackResult.isExplosion ? attackResult.explosionModifier : 1.0;
+  const exMultTextExpanded = attackResult.isExplosion
+    ? (attackResult.explosionModifier === 0 ? '0 (immune)' : `${attackResult.explosionModifier} (1 - ExDR)`)
+    : '1.0';
+
+  return `= (${dmgMultiplied.toFixed(2)} + ${durMultiplied.toFixed(2)}) × ${exMultValue} × ${attackResult.damageMultiplier} = ((${attackResult.dmg} × (1 - ${attackResult.durPercent})) + (${attackResult.dur} × ${attackResult.durPercent})) × ${exMultTextExpanded} × ${apMultiText}`;
+}
+
+function appendAttackApplication(leftContent, application) {
+  const applicationLine = document.createElement('div');
+  applicationLine.className = 'calc-damage-line';
+
+  const damageValue = document.createElement('span');
+  const hasZoneDamage = application.zoneDamage > 0;
+  damageValue.className = hasZoneDamage ? 'calc-damage-value' : 'calc-damage-value muted';
+  damageValue.textContent = `${application.zoneName}: ${application.zoneDamage.toFixed(2)} zone`;
+  applicationLine.appendChild(damageValue);
+
+  if (application.attackResult) {
+    const damageCalc = document.createElement('span');
+    damageCalc.className = 'calc-formula';
+    damageCalc.textContent = buildDamageFormulaText(application.attackResult);
+    applicationLine.appendChild(damageCalc);
+  } else if (application.exTarget === 'Main' && application.directMainDamage > 0) {
+    const damageCalc = document.createElement('span');
+    damageCalc.className = 'calc-formula';
+    damageCalc.textContent = '= no part damage (ExTarget Main)';
+    applicationLine.appendChild(damageCalc);
+  }
+
+  leftContent.appendChild(applicationLine);
+
+  if (application.totalMainDamage > 0) {
+    const mainDamageResult = document.createElement('div');
+    mainDamageResult.className = 'calc-main-damage-line';
+
+    const mainDamageValue = document.createElement('span');
+    mainDamageValue.className = 'calc-main-damage-value';
+    mainDamageValue.textContent = `Main: ${application.totalMainDamage.toFixed(2)} (${application.directMainDamage.toFixed(2)} direct + ${application.passthroughMainDamage.toFixed(2)} passthrough)`;
+    mainDamageResult.appendChild(mainDamageValue);
+    leftContent.appendChild(mainDamageResult);
+  }
 }
 
 function appendAttackCard(container, slot, attack, attackKey, index) {
@@ -100,57 +171,20 @@ function appendAttackCard(container, slot, attack, attackKey, index) {
   attackName.textContent = attack.name;
   leftContent.appendChild(attackName);
 
-  const apMultiText = attack.ap < attack.av ? '0 (AP < AV)' :
-    attack.ap === attack.av ? '0.65 (AP = AV)' :
-      '1.0 (AP > AV)';
+  const targetSummary = document.createElement('div');
+  targetSummary.className = 'calc-result-text muted';
+  targetSummary.textContent = attack.mode === 'explosion'
+    ? `AoE targets: ${attack.explosiveTargetZoneNames.length > 0 ? attack.explosiveTargetZoneNames.join(', ') : 'none'}`
+    : `Projectile target: ${attack.projectileTargetZoneName || 'none'}`;
+  leftContent.appendChild(targetSummary);
 
-  const damageResult = document.createElement('div');
-  damageResult.className = 'calc-damage-line';
+  attack.zoneApplications.forEach((application) => appendAttackApplication(leftContent, application));
 
-  const damageValue = document.createElement('span');
-  damageValue.className = attack.damage > 0 ? 'calc-damage-value' : 'calc-damage-value muted';
-  damageValue.textContent = `Zone damage: ${attack.damage.toFixed(2)}`;
-  damageResult.appendChild(damageValue);
-
-  const damageCalc = document.createElement('span');
-  damageCalc.className = 'calc-formula';
-
-  const dmgMultiplied = attack.dmg * (1 - attack.durPercent);
-  const durMultiplied = attack.dur * attack.durPercent;
-  const apMultiplier = attack.ap < attack.av ? 0 : attack.ap === attack.av ? 0.65 : 1.0;
-  const exMultValue = attack.isExplosion ? (attack.explosionModifier === 0 ? 0 : attack.explosionModifier) : 1.0;
-  const exMultTextExpanded = attack.isExplosion
-    ? (attack.explosionModifier === 0 ? '0 (immune)' : `${attack.explosionModifier} (ExMult)`)
-    : '1.0';
-
-  damageCalc.textContent = `= (${dmgMultiplied.toFixed(2)} + ${durMultiplied.toFixed(2)}) × ${apMultiplier} × ${exMultValue} = ((${attack.dmg} × (1 - ${attack.durPercent})) + (${attack.dur} × ${attack.durPercent})) × ${apMultiText} × ${exMultTextExpanded}`;
-  damageResult.appendChild(damageCalc);
-  leftContent.appendChild(damageResult);
-
-  const mainDamageResult = document.createElement('div');
-  mainDamageResult.className = 'calc-main-damage-line';
-
-  const mainDamageValue = document.createElement('span');
-  mainDamageValue.className = attack.damageToMain > 0 ? 'calc-main-damage-value' : 'calc-main-damage-value muted';
-  mainDamageValue.textContent = `Main health damage: ${(attack.damageToMain || 0).toFixed(2)}`;
-  mainDamageResult.appendChild(mainDamageValue);
-
-  if (attack.damageToMain > 0) {
-    const mainDamageCalc = document.createElement('span');
-    mainDamageCalc.className = 'calc-formula';
-
-    let mainCalcText = '';
-    if (attack.isExplosion && attack.exTarget === 'Main') {
-      mainCalcText = `= ${attack.damage.toFixed(2)} × ${attack.toMainPercent.toFixed(2)}`;
-    } else if (!attack.isExplosion) {
-      mainCalcText = `= ${attack.damage.toFixed(2)} × ${attack.toMainPercent.toFixed(2)}`;
-    }
-
-    mainDamageCalc.textContent = mainCalcText;
-    mainDamageResult.appendChild(mainDamageCalc);
-  }
-
-  leftContent.appendChild(mainDamageResult);
+  const attackTotals = document.createElement('div');
+  attackTotals.className = 'calc-main-damage-line';
+  attackTotals.textContent = `Cycle total: ${attack.totalZoneDamagePerCycle.toFixed(2)} zone • ${attack.totalDamageToMainPerCycle.toFixed(2)} main`;
+  attackTotals.classList.add('calc-damage-value', 'muted');
+  leftContent.appendChild(attackTotals);
   attackCard.appendChild(leftContent);
 
   const inputContainer = document.createElement('div');
@@ -199,7 +233,7 @@ function appendAttackCard(container, slot, attack, attackKey, index) {
   if (attack.hits !== 1) {
     const totalDamageForAttack = document.createElement('div');
     totalDamageForAttack.className = 'calc-main-damage-line';
-    totalDamageForAttack.textContent = `Total: ${(attack.damage * attack.hits).toFixed(2)} damage`;
+    totalDamageForAttack.textContent = `Hits configured: ${attack.hits}`;
     totalDamageForAttack.classList.add('calc-damage-value', 'muted');
     leftContent.appendChild(totalDamageForAttack);
   }
@@ -214,7 +248,11 @@ function appendTotalCard(container, results) {
     zoneHealth,
     zoneCon,
     enemyMainHealth,
-    killSummary
+    killSummary,
+    projectileTargetZone,
+    explosiveTargetZones,
+    hasProjectileAttacks,
+    hasExplosiveAttacks
   } = results;
 
   const totalCard = document.createElement('div');
@@ -225,6 +263,22 @@ function appendTotalCard(container, results) {
   totalDamage.textContent = 'Total Combined Damage per Cycle';
   totalCard.appendChild(totalDamage);
 
+  if (hasProjectileAttacks || hasExplosiveAttacks) {
+    const targetSummary = document.createElement('div');
+    targetSummary.className = 'calc-result-text muted';
+
+    const targetParts = [];
+    if (hasProjectileAttacks) {
+      targetParts.push(`Proj: ${projectileTargetZone?.zone_name || 'none'}`);
+    }
+    if (hasExplosiveAttacks) {
+      targetParts.push(`AoE: ${explosiveTargetZones.length > 0 ? explosiveTargetZones.map((zone) => zone.zone_name).join(', ') : 'none'}`);
+    }
+
+    targetSummary.textContent = targetParts.join(' • ');
+    totalCard.appendChild(targetSummary);
+  }
+
   const combinedDamage = document.createElement('div');
   combinedDamage.className = 'calc-combined-display';
 
@@ -233,7 +287,7 @@ function appendTotalCard(container, results) {
 
   const zoneLabel = document.createElement('div');
   zoneLabel.className = 'calc-section-label';
-  zoneLabel.textContent = 'Zone:';
+  zoneLabel.textContent = 'Focus zone:';
   zoneDamageContainer.appendChild(zoneLabel);
 
   const zoneDamageDisplay = document.createElement('div');

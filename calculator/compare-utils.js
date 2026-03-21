@@ -1,4 +1,9 @@
-import { getZoneDisplayedTtkSeconds, getZoneOutcomeKind, summarizeZoneDamage } from './zone-damage.js';
+import {
+  getZoneDisplayedTtkSeconds,
+  getZoneOutcomeKind,
+  summarizeEnemyTargetScenario,
+  summarizeZoneDamage
+} from './zone-damage.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
@@ -222,6 +227,31 @@ function summarizeZoneForSlot({ zone, enemyMainHealth, weapon, selectedAttacks =
   };
 }
 
+function buildSlotMetricsFromZoneSummary({
+  zone,
+  weapon,
+  selectedAttacks = [],
+  zoneSummary
+}) {
+  const outcomeKind = getZoneOutcomeKind({
+    zone,
+    totalDamagePerCycle: zoneSummary?.totalDamagePerCycle || 0,
+    totalDamageToMainPerCycle: zoneSummary?.totalDamageToMainPerCycle || 0,
+    killSummary: zoneSummary?.killSummary
+  });
+
+  return {
+    weapon,
+    selectedAttackCount: selectedAttacks.length,
+    zoneSummary,
+    outcomeKind,
+    damagesZone: (zoneSummary?.totalDamagePerCycle || 0) > 0,
+    shotsToKill: zoneSummary?.killSummary?.zoneShotsToKill ?? null,
+    ttkSeconds: getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary),
+    hasRpm: zoneSummary?.killSummary?.hasRpm ?? false
+  };
+}
+
 function hasOneSidedDiff(metrics) {
   return metrics?.diffShots?.kind === 'one-sided' || metrics?.diffTtkSeconds?.kind === 'one-sided';
 }
@@ -419,6 +449,77 @@ export function buildZoneComparisonMetrics({
       valueB: slotB.ttkSeconds
     })
   };
+}
+
+export function buildFocusedZoneComparisonRows({
+  enemy,
+  weaponA,
+  weaponB,
+  selectedAttacksA = [],
+  selectedAttacksB = [],
+  hitCountsA = [],
+  hitCountsB = [],
+  projectileZoneIndex = null,
+  explosiveZoneIndices = []
+}) {
+  if (!enemy?.zones || enemy.zones.length === 0) {
+    return [];
+  }
+
+  const scenarioA = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks: selectedAttacksA,
+    hitCounts: hitCountsA,
+    rpm: weaponA?.rpm,
+    projectileZoneIndex,
+    explosiveZoneIndices
+  });
+  const scenarioB = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks: selectedAttacksB,
+    hitCounts: hitCountsB,
+    rpm: weaponB?.rpm,
+    projectileZoneIndex,
+    explosiveZoneIndices
+  });
+
+  return enemy.zones.map((zone, zoneIndex) => {
+    const slotA = buildSlotMetricsFromZoneSummary({
+      zone,
+      weapon: weaponA,
+      selectedAttacks: selectedAttacksA,
+      zoneSummary: scenarioA?.zoneSummaries?.[zoneIndex] || null
+    });
+    const slotB = buildSlotMetricsFromZoneSummary({
+      zone,
+      weapon: weaponB,
+      selectedAttacks: selectedAttacksB,
+      zoneSummary: scenarioB?.zoneSummaries?.[zoneIndex] || null
+    });
+
+    return {
+      zone,
+      zoneIndex,
+      metrics: {
+        bySlot: {
+          A: slotA,
+          B: slotB
+        },
+        diffShots: buildDiffMetric({
+          slotA,
+          slotB,
+          valueA: slotA.shotsToKill,
+          valueB: slotB.shotsToKill
+        }),
+        diffTtkSeconds: buildDiffMetric({
+          slotA,
+          slotB,
+          valueA: slotA.ttkSeconds,
+          valueB: slotB.ttkSeconds
+        })
+      }
+    };
+  });
 }
 
 export function buildOverviewRows({

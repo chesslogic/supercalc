@@ -1,3 +1,4 @@
+import { isExplosiveAttack } from './attack-types.js';
 import { buildKillSummary } from './summary.js';
 
 function toNumber(value, fallback = 0) {
@@ -8,6 +9,131 @@ function toNumber(value, fallback = 0) {
 function toPositiveInteger(value, fallback = 1) {
   const numeric = Number(value);
   return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : fallback;
+}
+
+function normalizeZoneName(zone) {
+  return String(zone?.zone_name || '').trim().toLowerCase();
+}
+
+function isValidZoneIndex(zones, zoneIndex) {
+  return Number.isInteger(zoneIndex) && zoneIndex >= 0 && zoneIndex < zones.length;
+}
+
+function normalizeResistanceFraction(value) {
+  if (value === '-') {
+    return 1;
+  }
+
+  if (value === null || value === undefined || value === '') {
+    return 0;
+  }
+
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+
+  const normalized = numeric > 1 ? numeric / 100 : numeric;
+  return Math.min(1, Math.max(0, normalized));
+}
+
+export function getExplosionDamageMultiplier(zone) {
+  return 1 - normalizeResistanceFraction(zone?.ExMult);
+}
+
+export function findMainZoneIndex(enemy) {
+  if (!enemy?.zones || enemy.zones.length === 0) {
+    return null;
+  }
+
+  const explicitMainIndex = enemy.zones.findIndex((zone) => normalizeZoneName(zone) === 'main');
+  if (explicitMainIndex >= 0) {
+    return explicitMainIndex;
+  }
+
+  return 0;
+}
+
+function buildZoneSummary({
+  zone,
+  zoneAttackDetails = [],
+  totalDamagePerCycle = 0,
+  totalDamageToMainPerCycle = 0,
+  totalDirectMainDamagePerCycle = 0,
+  totalPassthroughMainDamagePerCycle = 0,
+  enemyMainHealth = 0,
+  rpm,
+  hasSelectedAttacks = false
+}) {
+  const zoneHealth = toNumber(zone?.health, -1);
+  const zoneCon = toNumber(zone?.Con);
+  const normalizedEnemyMainHealth = toNumber(enemyMainHealth);
+
+  return {
+    attackDetails: zoneAttackDetails,
+    totalDamagePerCycle,
+    totalDamageToMainPerCycle,
+    totalDirectMainDamagePerCycle,
+    totalPassthroughMainDamagePerCycle,
+    zoneHealth,
+    zoneCon,
+    enemyMainHealth: normalizedEnemyMainHealth,
+    hasSelectedAttacks,
+    killSummary: buildKillSummary({
+      zoneHealth,
+      zoneCon,
+      enemyMainHealth: normalizedEnemyMainHealth,
+      totalDamagePerCycle,
+      totalDamageToMainPerCycle,
+      rpm
+    })
+  };
+}
+
+function createZoneApplication({
+  attack,
+  zone,
+  zoneIndex,
+  mode,
+  hits,
+  zoneDamage = 0,
+  directMainDamage = 0,
+  passthroughMainDamage = 0,
+  appliesToZone = false,
+  attackResult = null
+}) {
+  return {
+    attackName: attack?.['Atk Name'] || attack?.Name || 'Unknown',
+    zoneName: zone?.zone_name || 'Unknown',
+    zoneIndex,
+    mode,
+    hits,
+    isExplosion: isExplosiveAttack(attack),
+    appliesToZone,
+    zoneDamage,
+    directMainDamage,
+    passthroughMainDamage,
+    totalMainDamage: directMainDamage + passthroughMainDamage,
+    exTarget: zone?.ExTarget || '',
+    attackResult
+  };
+}
+
+function buildEmptyAttackScenario(attack, hits, mode) {
+  return {
+    attack,
+    name: attack?.['Atk Name'] || attack?.Name || 'Unknown',
+    hits,
+    mode,
+    isExplosion: isExplosiveAttack(attack),
+    projectileTargetZoneName: null,
+    explosiveTargetZoneNames: [],
+    zoneApplications: [],
+    totalZoneDamagePerCycle: 0,
+    totalDirectMainDamagePerCycle: 0,
+    totalPassthroughMainDamagePerCycle: 0,
+    totalDamageToMainPerCycle: 0
+  };
 }
 
 export function calculateAttackAgainstZone(attack, zone, hits = 1) {
@@ -23,17 +149,8 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
     damageMultiplier = 1.0;
   }
 
-  const attackType = String(attack?.['Atk Type'] || '');
-  const isExplosion = attackType.toLowerCase().includes('explosion');
-
-  let explosionModifier = 1.0;
-  if (isExplosion) {
-    if (zone?.ExMult === '-' || zone?.ExMult === null || zone?.ExMult === undefined) {
-      explosionModifier = 0;
-    } else {
-      explosionModifier = toNumber(zone.ExMult, 1.0);
-    }
-  }
+  const isExplosion = isExplosiveAttack(attack);
+  const explosionModifier = isExplosion ? getExplosionDamageMultiplier(zone) : 1.0;
 
   const dmg = toNumber(attack?.DMG);
   const dur = toNumber(attack?.DUR);
@@ -41,7 +158,6 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
   const rawBaseDamage = (dmg * (1 - durPercent)) + (dur * durPercent);
   const damagePerAttack = rawBaseDamage * damageMultiplier * explosionModifier;
 
-  // Current calculator logic applies ToMain% transfer for both projectile and explosion damage.
   const toMainPercent = toNumber(zone?.['ToMain%']);
   const damageToMain = damagePerAttack * toMainPercent;
 
@@ -56,6 +172,7 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
     av,
     damageMultiplier,
     explosionModifier,
+    explosionResistanceFraction: normalizeResistanceFraction(zone?.ExMult),
     isExplosion,
     rawBaseDamage,
     toMainPercent,
@@ -94,26 +211,227 @@ export function summarizeZoneDamage({
     totalDamageToMainPerCycle += attack.damageToMain * attack.hits;
   });
 
-  const zoneHealth = toNumber(zone.health, -1);
-  const zoneCon = toNumber(zone.Con);
-  const normalizedEnemyMainHealth = toNumber(enemyMainHealth);
-
-  return {
-    attackDetails,
+  return buildZoneSummary({
+    zone,
+    zoneAttackDetails: attackDetails,
     totalDamagePerCycle,
     totalDamageToMainPerCycle,
-    zoneHealth,
-    zoneCon,
-    enemyMainHealth: normalizedEnemyMainHealth,
-    hasSelectedAttacks: selectedAttacks.length > 0,
-    killSummary: buildKillSummary({
-      zoneHealth,
-      zoneCon,
-      enemyMainHealth: normalizedEnemyMainHealth,
+    enemyMainHealth,
+    rpm,
+    hasSelectedAttacks: selectedAttacks.length > 0
+  });
+}
+
+function buildProjectileAttackScenario({
+  attack,
+  hits,
+  enemy,
+  projectileZoneIndex,
+  mainZoneIndex
+}) {
+  const scenario = buildEmptyAttackScenario(attack, hits, 'projectile');
+  const zones = enemy?.zones || [];
+  if (!isValidZoneIndex(zones, projectileZoneIndex)) {
+    return scenario;
+  }
+
+  const targetZone = zones[projectileZoneIndex];
+  const attackResult = calculateAttackAgainstZone(attack, targetZone, hits);
+  const zoneDamage = attackResult.damage * attackResult.hits;
+  const directMainDamage = projectileZoneIndex === mainZoneIndex ? zoneDamage : 0;
+  const passthroughMainDamage = projectileZoneIndex === mainZoneIndex
+    ? 0
+    : attackResult.damageToMain * attackResult.hits;
+
+  scenario.projectileTargetZoneName = targetZone?.zone_name || null;
+  scenario.zoneApplications.push(createZoneApplication({
+    attack,
+    zone: targetZone,
+    zoneIndex: projectileZoneIndex,
+    mode: 'projectile',
+    hits: attackResult.hits,
+    zoneDamage,
+    directMainDamage,
+    passthroughMainDamage,
+    appliesToZone: true,
+    attackResult
+  }));
+  scenario.totalZoneDamagePerCycle = zoneDamage;
+  scenario.totalDirectMainDamagePerCycle = directMainDamage;
+  scenario.totalPassthroughMainDamagePerCycle = passthroughMainDamage;
+  scenario.totalDamageToMainPerCycle = directMainDamage + passthroughMainDamage;
+  return scenario;
+}
+
+function buildExplosionAttackScenario({
+  attack,
+  hits,
+  enemy,
+  explosiveZoneIndices,
+  mainZoneIndex
+}) {
+  const scenario = buildEmptyAttackScenario(attack, hits, 'explosion');
+  const zones = enemy?.zones || [];
+  if (zones.length === 0 || explosiveZoneIndices.length === 0) {
+    return scenario;
+  }
+
+  const mainZone = isValidZoneIndex(zones, mainZoneIndex)
+    ? zones[mainZoneIndex]
+    : null;
+  const mainAttackResult = mainZone
+    ? calculateAttackAgainstZone(attack, mainZone, hits)
+    : null;
+  const directMainDamagePerTarget = mainAttackResult
+    ? mainAttackResult.damage * mainAttackResult.hits
+    : 0;
+
+  explosiveZoneIndices.forEach((zoneIndex) => {
+    if (!isValidZoneIndex(zones, zoneIndex)) {
+      return;
+    }
+
+    const zone = zones[zoneIndex];
+    const targetsMainOnly = zoneIndex !== mainZoneIndex
+      && normalizeZoneName({ zone_name: zone?.ExTarget }) === 'main';
+
+    let attackResult = null;
+    let zoneDamage = 0;
+    let passthroughMainDamage = 0;
+    let appliesToZone = false;
+
+    if (zoneIndex === mainZoneIndex) {
+      zoneDamage = directMainDamagePerTarget;
+      appliesToZone = zoneDamage > 0;
+    } else if (!targetsMainOnly) {
+      attackResult = calculateAttackAgainstZone(attack, zone, hits);
+      zoneDamage = attackResult.damage * attackResult.hits;
+      passthroughMainDamage = attackResult.damageToMain * attackResult.hits;
+      appliesToZone = zoneDamage > 0;
+    }
+
+    scenario.zoneApplications.push(createZoneApplication({
+      attack,
+      zone,
+      zoneIndex,
+      mode: 'explosion',
+      hits,
+      zoneDamage,
+      directMainDamage: directMainDamagePerTarget,
+      passthroughMainDamage,
+      appliesToZone,
+      attackResult
+    }));
+    scenario.totalZoneDamagePerCycle += zoneDamage;
+    scenario.totalDirectMainDamagePerCycle += directMainDamagePerTarget;
+    scenario.totalPassthroughMainDamagePerCycle += passthroughMainDamage;
+  });
+
+  scenario.explosiveTargetZoneNames = scenario.zoneApplications.map((application) => application.zoneName);
+  scenario.totalDamageToMainPerCycle = scenario.totalDirectMainDamagePerCycle + scenario.totalPassthroughMainDamagePerCycle;
+  return scenario;
+}
+
+export function summarizeEnemyTargetScenario({
+  enemy,
+  selectedAttacks = [],
+  hitCounts = [],
+  rpm,
+  projectileZoneIndex,
+  explosiveZoneIndices = []
+}) {
+  if (!enemy?.zones || enemy.zones.length === 0) {
+    return null;
+  }
+
+  const mainZoneIndex = findMainZoneIndex(enemy);
+  const normalizedProjectileZoneIndex = isValidZoneIndex(enemy.zones, projectileZoneIndex)
+    ? projectileZoneIndex
+    : null;
+  const normalizedExplosiveZoneIndices = [...new Set(
+    (explosiveZoneIndices || []).filter((zoneIndex) => isValidZoneIndex(enemy.zones, zoneIndex))
+  )];
+
+  const zoneAccumulators = enemy.zones.map((zone, zoneIndex) => ({
+    zone,
+    zoneIndex,
+    totalZoneDamagePerCycle: 0,
+    attackDetails: []
+  }));
+
+  const attackDetails = [];
+  let totalDirectMainDamagePerCycle = 0;
+  let totalPassthroughMainDamagePerCycle = 0;
+
+  selectedAttacks.forEach((attack, index) => {
+    const hits = toPositiveInteger(hitCounts[index], 1);
+    const attackScenario = isExplosiveAttack(attack)
+      ? buildExplosionAttackScenario({
+        attack,
+        hits,
+        enemy,
+        explosiveZoneIndices: normalizedExplosiveZoneIndices,
+        mainZoneIndex
+      })
+      : buildProjectileAttackScenario({
+        attack,
+        hits,
+        enemy,
+        projectileZoneIndex: normalizedProjectileZoneIndex,
+        mainZoneIndex
+      });
+
+    totalDirectMainDamagePerCycle += attackScenario.totalDirectMainDamagePerCycle;
+    totalPassthroughMainDamagePerCycle += attackScenario.totalPassthroughMainDamagePerCycle;
+
+    attackScenario.zoneApplications.forEach((application) => {
+      const zoneAccumulator = zoneAccumulators[application.zoneIndex];
+      if (!zoneAccumulator) {
+        return;
+      }
+
+      zoneAccumulator.totalZoneDamagePerCycle += application.zoneDamage;
+      zoneAccumulator.attackDetails.push(application);
+    });
+
+    attackDetails.push(attackScenario);
+  });
+
+  const totalDamageToMainPerCycle = totalDirectMainDamagePerCycle + totalPassthroughMainDamagePerCycle;
+  const zoneSummaries = enemy.zones.map((zone, zoneIndex) => {
+    const totalDamagePerCycle = zoneIndex === mainZoneIndex
+      ? totalDamageToMainPerCycle
+      : zoneAccumulators[zoneIndex].totalZoneDamagePerCycle;
+
+    return buildZoneSummary({
+      zone,
+      zoneAttackDetails: zoneAccumulators[zoneIndex].attackDetails,
       totalDamagePerCycle,
       totalDamageToMainPerCycle,
-      rpm
-    })
+      totalDirectMainDamagePerCycle,
+      totalPassthroughMainDamagePerCycle,
+      enemyMainHealth: enemy.health,
+      rpm,
+      hasSelectedAttacks: selectedAttacks.length > 0
+    });
+  });
+
+  return {
+    enemy,
+    mainZoneIndex,
+    projectileZoneIndex: normalizedProjectileZoneIndex,
+    explosiveZoneIndices: normalizedExplosiveZoneIndices,
+    projectileTargetZone: normalizedProjectileZoneIndex === null
+      ? null
+      : enemy.zones[normalizedProjectileZoneIndex],
+    explosiveTargetZones: normalizedExplosiveZoneIndices.map((zoneIndex) => enemy.zones[zoneIndex]),
+    attackDetails,
+    zoneSummaries,
+    totalDamageToMainPerCycle,
+    totalDirectMainDamagePerCycle,
+    totalPassthroughMainDamagePerCycle,
+    enemyMainHealth: toNumber(enemy.health),
+    hasSelectedAttacks: selectedAttacks.length > 0
   };
 }
 

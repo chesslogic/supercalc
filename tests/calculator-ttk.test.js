@@ -9,10 +9,12 @@ import {
 } from '../calculator/summary.js';
 import { tokenizeFormattedTtk } from '../calculator/ttk-formatting.js';
 import {
+  calculateAttackAgainstZone,
   getZoneDisplayedTtkSeconds,
   getZoneOutcomeDescription,
   getZoneOutcomeLabel,
   getZoneOutcomeKind,
+  summarizeEnemyTargetScenario,
   summarizeZoneDamage
 } from '../calculator/zone-damage.js';
 
@@ -144,6 +146,158 @@ test('summarizeZoneDamage keeps shots but omits ttk without rpm', () => {
 
   assert.equal(summary.killSummary.zoneShotsToKill, 3);
   assert.equal(summary.killSummary.zoneTtkSeconds, null);
+});
+
+test('explosive resistance values behave as resistance, so ExMult 1 means immunity', () => {
+  const attack = calculateAttackAgainstZone(
+    {
+      'Atk Name': 'Explosion',
+      'Atk Type': 'Explosion',
+      DMG: 100,
+      DUR: 0,
+      AP: 2
+    },
+    {
+      AV: 1,
+      'Dur%': 0,
+      'ToMain%': 0,
+      ExTarget: 'Part',
+      ExMult: 1
+    }
+  );
+
+  assert.equal(attack.explosionModifier, 0);
+  assert.equal(attack.damage, 0);
+});
+
+test('explosions always apply one direct main hit per AoE target using main defenses', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 500,
+      zones: [
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
+        { zone_name: 'Arm', health: 300, Con: 0, AV: 5, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [{
+      'Atk Name': 'Explosion',
+      'Atk Type': 'Explosion',
+      DMG: 100,
+      DUR: 0,
+      AP: 2
+    }],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 100);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 0);
+  assert.equal(summary.totalDamageToMainPerCycle, 100);
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 0);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 100);
+});
+
+test('explosive limb damage adds passthrough main damage without rechecking main armor', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 500,
+      zones: [
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
+        { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [{
+      'Atk Name': 'Explosion',
+      'Atk Type': 'Explosion',
+      DMG: 100,
+      DUR: 0,
+      AP: 2
+    }],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 100);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 50);
+  assert.equal(summary.totalDamageToMainPerCycle, 150);
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 100);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 150);
+});
+
+test('explosive AoE aggregates direct and passthrough damage across multiple hit zones', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 600,
+      zones: [
+        { zone_name: 'Main', health: 600, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
+        { zone_name: 'Left Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false },
+        { zone_name: 'Right Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.25, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [{
+      'Atk Name': 'Explosion',
+      'Atk Type': 'Explosion',
+      DMG: 100,
+      DUR: 0,
+      AP: 2
+    }],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1, 2]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 200);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 75);
+  assert.equal(summary.totalDamageToMainPerCycle, 275);
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 100);
+  assert.equal(summary.zoneSummaries[2].totalDamagePerCycle, 100);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 275);
+});
+
+test('mixed projectile and explosive cycles share one scenario summary', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 500,
+      zones: [
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
+        { zone_name: 'Head', health: 150, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Part', ExMult: 0, IsFatal: false },
+        { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [
+      {
+        'Atk Name': 'Burst',
+        'Atk Type': 'Projectile',
+        DMG: 50,
+        DUR: 0,
+        AP: 2
+      },
+      {
+        'Atk Name': 'Explosion',
+        'Atk Type': 'Explosion',
+        DMG: 100,
+        DUR: 0,
+        AP: 2
+      }
+    ],
+    hitCounts: [1, 1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [2]
+  });
+
+  assert.equal(summary.attackDetails.length, 2);
+  assert.equal(summary.attackDetails[0].mode, 'projectile');
+  assert.equal(summary.attackDetails[1].mode, 'explosion');
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 50);
+  assert.equal(summary.zoneSummaries[2].totalDamagePerCycle, 100);
+  assert.equal(summary.totalDamageToMainPerCycle, 200);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 200);
 });
 
 test('getZoneOutcomeKind marks parts that break before a main kill as limb-relevant', () => {
