@@ -3321,7 +3321,8 @@
           "health": 11000,
           "zone_name": "Main",
           "Con": 50000,
-          "ConRate": 10000
+          "ConRate": 10000,
+          "ConAppliesAnyDeath": true
         },
         {
           "AV": 5,
@@ -7124,7 +7125,8 @@
           "health": 2400,
           "zone_name": "Main",
           "Con": 750,
-          "ConRate": 100
+          "ConRate": 100,
+          "ConAppliesAnyDeath": true
         },
         {
           "AV": 4,
@@ -7314,7 +7316,8 @@
           "health": 3000,
           "zone_name": "Main",
           "Con": 1000,
-          "ConRate": 100
+          "ConRate": 100,
+          "ConAppliesAnyDeath": true
         },
         {
           "AV": 4,
@@ -9046,7 +9049,8 @@
           "health": 2400,
           "zone_name": "Main",
           "Con": 750,
-          "ConRate": 100
+          "ConRate": 100,
+          "ConAppliesAnyDeath": true
         },
         {
           "AV": 5,
@@ -9846,7 +9850,8 @@
           "health": 2400,
           "zone_name": "Main",
           "Con": 750,
-          "ConRate": 100
+          "ConRate": 100,
+          "ConAppliesAnyDeath": true
         },
         {
           "AV": 4,

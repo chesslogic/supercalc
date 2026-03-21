@@ -870,6 +870,25 @@ test('real Voteless Main keeps parsed body Constitution and bleed rate', () => {
   assert.equal(conInfo.title, MAIN_CON_ANY_DEATH_TOOLTIP);
 });
 
+test('confirmed unit-level Main Constitution cases show the any-death note', () => {
+  for (const enemyName of [
+    'Charger',
+    'Charger Behemoth',
+    'Rupture Charger',
+    'Spore Charger',
+    'Vox Engine'
+  ]) {
+    const enemy = getEnemyByName(enemyName);
+    const main = enemy.zones.find((zone) => zone.zone_name === 'Main');
+    assert.ok(main, `${enemyName} should have a Main zone`);
+    assert.equal(main.ConAppliesAnyDeath, true, `${enemyName} Main should be flagged`);
+
+    const conInfo = getEnemyZoneConDisplayInfo(main);
+    assert.match(conInfo.text, /\*$/u, `${enemyName} Main Con should show a marker`);
+    assert.equal(conInfo.title, MAIN_CON_ANY_DEATH_TOOLTIP, `${enemyName} Main tooltip should match`);
+  }
+});
+
 test('real Factory Strider Gatling Gun keeps 100% ExDR and blocks direct explosive damage', () => {
   const enemy = getEnemyByName('Factory Strider Gatling Gun');
   const mainZone = enemy.zones[0];
