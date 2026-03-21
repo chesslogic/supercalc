@@ -168,6 +168,114 @@ function buildDamageFormulaText(attackResult) {
   return `= (${dmgMultiplied.toFixed(2)} + ${durMultiplied.toFixed(2)}) × ${exMultValue} × ${attackResult.damageMultiplier} = ((${attackResult.dmg} × (1 - ${attackResult.durPercent})) + (${attackResult.dur} × ${attackResult.durPercent})) × ${exMultTextExpanded} × ${apMultiText}`;
 }
 
+function normalizeZoneName(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function buildBlockedDamageReason(application) {
+  const attackResult = application?.attackResult;
+  if (!attackResult) {
+    return null;
+  }
+
+  if (attackResult.damageMultiplier === 0) {
+    return `AP ${attackResult.ap} is below AV ${attackResult.av}`;
+  }
+
+  if (attackResult.isExplosion && attackResult.explosionModifier === 0) {
+    return 'ExDR is 100%';
+  }
+
+  return null;
+}
+
+function uniqueLines(lines = []) {
+  return [...new Set(lines.filter(Boolean))];
+}
+
+function buildFocusZoneExplanationLines(results) {
+  if (!Number.isInteger(results?.focusZoneIndex)) {
+    return [];
+  }
+
+  const focusZoneName = results?.zone?.zone_name || 'the focus zone';
+  const lines = [];
+
+  (results?.attackDetails || []).forEach((attackScenario) => {
+    const application = attackScenario?.zoneApplications?.find(
+      (entry) => entry.zoneIndex === results.focusZoneIndex
+    );
+    if (!application || application.zoneDamage > 0) {
+      return;
+    }
+
+    const reason = buildBlockedDamageReason(application);
+    if (reason) {
+      lines.push(`${attackScenario.name} does 0 damage to ${focusZoneName} because ${reason}.`);
+    }
+  });
+
+  return uniqueLines(lines);
+}
+
+function buildMainExplanationLines(results) {
+  const lines = [];
+
+  (results?.attackDetails || []).forEach((attackScenario) => {
+    if ((attackScenario?.totalDamageToMainPerCycle || 0) > 0) {
+      return;
+    }
+
+    const blockedApplication = attackScenario?.zoneApplications?.find((application) => {
+      if ((application?.directMainDamage || 0) > 0 || (application?.passthroughMainDamage || 0) > 0) {
+        return false;
+      }
+
+      return Boolean(buildBlockedDamageReason(application));
+    });
+    if (blockedApplication) {
+      const reason = buildBlockedDamageReason(blockedApplication);
+      if (reason) {
+        lines.push(`${attackScenario.name} does 0 damage to Main because ${reason} on ${blockedApplication.zoneName}.`);
+        return;
+      }
+    }
+
+    const noTransferApplication = attackScenario?.zoneApplications?.find((application) =>
+      (application?.zoneDamage || 0) > 0
+      && (application?.directMainDamage || 0) === 0
+      && (application?.passthroughMainDamage || 0) === 0
+      && (application?.attackResult?.toMainPercent || 0) === 0
+    );
+    if (noTransferApplication) {
+      lines.push(`${attackScenario.name} damages ${noTransferApplication.zoneName} but transfers 0% to Main.`);
+    }
+  });
+
+  return uniqueLines(lines);
+}
+
+export function getCalculationExplanationLines(results) {
+  if (!results) {
+    return [];
+  }
+
+  const lines = [];
+  const focusZoneName = normalizeZoneName(results?.zone?.zone_name);
+  const focusLines = (results.totalDamagePerCycle || 0) <= 0
+    ? buildFocusZoneExplanationLines(results)
+    : [];
+  lines.push(...focusLines);
+
+  const shouldExplainMainSeparately = (results.totalDamageToMainPerCycle || 0) <= 0
+    && focusZoneName !== 'main';
+  if (shouldExplainMainSeparately) {
+    lines.push(...buildMainExplanationLines(results));
+  }
+
+  return uniqueLines(lines);
+}
+
 function appendAttackApplication(leftContent, application) {
   const applicationLine = document.createElement('div');
   applicationLine.className = 'calc-damage-line';
@@ -466,6 +574,26 @@ function appendTotalCard(container, results) {
 
   combinedDamage.appendChild(mainDamageContainer);
   totalCard.appendChild(combinedDamage);
+
+  const explanationLines = getCalculationExplanationLines(results);
+  if (explanationLines.length > 0) {
+    const explanationBox = document.createElement('div');
+    explanationBox.className = 'calc-explanation-box';
+
+    const explanationTitle = document.createElement('div');
+    explanationTitle.className = 'calc-explanation-title';
+    explanationTitle.textContent = 'Why 0 damage?';
+    explanationBox.appendChild(explanationTitle);
+
+    explanationLines.forEach((line) => {
+      const explanationLine = document.createElement('div');
+      explanationLine.className = 'calc-explanation-line';
+      explanationLine.textContent = line;
+      explanationBox.appendChild(explanationLine);
+    });
+
+    totalCard.appendChild(explanationBox);
+  }
 
   container.appendChild(totalCard);
 }

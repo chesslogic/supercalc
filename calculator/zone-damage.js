@@ -298,6 +298,7 @@ function buildExplosionAttackScenario({
     let appliesToZone = false;
 
     if (zoneIndex === mainZoneIndex) {
+      attackResult = mainAttackResult;
       zoneDamage = directMainDamagePerTarget;
       appliesToZone = zoneDamage > 0;
     } else if (!targetsMainOnly) {

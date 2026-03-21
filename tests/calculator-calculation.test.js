@@ -99,3 +99,71 @@ test('calculateDamage uses the selected explosive target as the focus zone when 
     resetCalculatorState(calculatorState);
   }
 });
+
+test('getCalculationExplanationLines explains AP below AV for a blocked explosive main hit', async () => {
+  const dataModule = await import('../calculator/data.js');
+  const calculationModule = await import('../calculator/calculation.js');
+  const { calculatorState, setSelectedEnemy, setSelectedWeapon, setSelectedExplosiveZone } = dataModule;
+  const { calculateDamage, getCalculationExplanationLines } = calculationModule;
+
+  resetCalculatorState(calculatorState);
+
+  try {
+    const enemy = getEnemyByName('Hulk Bruiser');
+    const mainZoneIndex = enemy.zones.findIndex((zone) => zone.zone_name === 'Main');
+    assert.notEqual(mainZoneIndex, -1);
+
+    setSelectedWeapon('A', {
+      name: 'Eruptor Explosion Sample',
+      rpm: 32,
+      rows: [makeExplosionAttackRow('15x100mm HIGH EXPLOSIVE_P_IE', 225, 3, 225)]
+    });
+    setSelectedEnemy(enemy);
+    calculatorState.selectedExplosiveZoneIndices = [];
+    setSelectedExplosiveZone(mainZoneIndex, true);
+
+    const result = calculateDamage('A');
+    const lines = getCalculationExplanationLines(result);
+
+    assert.equal(result.totalDamagePerCycle, 0);
+    assert.deepEqual(lines, [
+      '15x100mm HIGH EXPLOSIVE_P_IE does 0 damage to Main because AP 3 is below AV 4.'
+    ]);
+  } finally {
+    resetCalculatorState(calculatorState);
+  }
+});
+
+test('getCalculationExplanationLines explains when damage does not transfer to main', async () => {
+  const { getCalculationExplanationLines } = await import('../calculator/calculation.js');
+
+  const lines = getCalculationExplanationLines({
+    zone: { zone_name: 'side_plate' },
+    focusZoneIndex: 1,
+    totalDamagePerCycle: 60,
+    totalDamageToMainPerCycle: 0,
+    attackDetails: [
+      {
+        name: 'Burst',
+        totalDamageToMainPerCycle: 0,
+        zoneApplications: [
+          {
+            attackName: 'Burst',
+            zoneName: 'side_plate',
+            zoneIndex: 1,
+            zoneDamage: 60,
+            directMainDamage: 0,
+            passthroughMainDamage: 0,
+            attackResult: {
+              toMainPercent: 0
+            }
+          }
+        ]
+      }
+    ]
+  });
+
+  assert.deepEqual(lines, [
+    'Burst damages side_plate but transfers 0% to Main.'
+  ]);
+});
