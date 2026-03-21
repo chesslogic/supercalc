@@ -103,7 +103,7 @@ input, not the checked-in source of truth.
 The comparison helper:
 
 - normalizes `MainCap` bool vs int noise
-- treats missing `ExMult` as default `1`
+- preserves missing `ExMult` instead of defaulting it to `1`
 - reports added units, missing/manual-only units, and stat-changed units
 - reports name-only zone churn separately
 - carries forward existing readable zone names only when a generated hashed zone
@@ -185,7 +185,7 @@ Known overlap differences that need review
 Most overlapping units differ only in serialization details such as:
 
 - `MainCap: 1` versus `MainCap: true`
-- omitted default `ExMult: 1`
+- explicit `ExMult: 1` versus an omitted implicit/default explosive multiplier
 
 The verified runs found a small number of meaningful differences:
 
@@ -222,8 +222,9 @@ The verified runs found a small number of meaningful differences:
   - hybrid output zones: `4`
 
 Most other overlapping differences observed in the reruns were zone label noise or
-missing `ExMult` values in the generated output. Those should be treated as
-adapter/source-shape differences until proven otherwise.
+checked-in `ExMult: 1` values where the generated output omitted an unset
+explosive multiplier. Those should be reviewed carefully before copying
+generated data back into the repository.
 
 These meaningful stat or zone-count changes need a human decision before
 replacing the checked-in data.

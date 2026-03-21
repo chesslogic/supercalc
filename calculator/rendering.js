@@ -37,7 +37,11 @@ import { splitAttacksByApplication } from './attack-types.js';
 import { renderCalculation } from './calculation.js';
 import { formatTtkSeconds } from './summary.js';
 import { tokenizeFormattedTtk } from './ttk-formatting.js';
-import { getZoneOutcomeDescription, getZoneOutcomeLabel } from './zone-damage.js';
+import {
+  getZoneOutcomeDescription,
+  getZoneOutcomeLabel,
+  normalizeExplosionDamageMultiplier
+} from './zone-damage.js';
 
 const DEFAULT_WEAPON_HEADERS = ['Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const ENEMY_BASE_COLUMNS = [
@@ -650,14 +654,7 @@ function formatEnemyBaseCell(td, zone, header) {
   }
 
   if (header === 'ExMult') {
-    if (value === '-') {
-      td.textContent = '-';
-      td.style.color = 'var(--muted)';
-      td.style.opacity = '0.6';
-      return;
-    }
-
-    td.textContent = `${(value * 100).toFixed(0)}%`;
+    td.textContent = `${(normalizeExplosionDamageMultiplier(value) * 100).toFixed(0)}%`;
     return;
   }
 

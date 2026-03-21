@@ -116,7 +116,11 @@ function buildDamageFormulaText(attackResult) {
   const durMultiplied = attackResult.dur * attackResult.durPercent;
   const exMultValue = attackResult.isExplosion ? attackResult.explosionModifier : 1.0;
   const exMultTextExpanded = attackResult.isExplosion
-    ? (attackResult.explosionModifier === 0 ? '0 (immune)' : `${attackResult.explosionModifier} (1 - ExDR)`)
+    ? (
+      attackResult.explosionModifier === 0
+        ? '0 (ExMult: immune)'
+        : `${attackResult.explosionModifier} (${attackResult.hasExplicitExplosionMultiplier ? 'ExMult' : 'implicit ExMult'})`
+    )
     : '1.0';
 
   return `= (${dmgMultiplied.toFixed(2)} + ${durMultiplied.toFixed(2)}) × ${exMultValue} × ${attackResult.damageMultiplier} = ((${attackResult.dmg} × (1 - ${attackResult.durPercent})) + (${attackResult.dur} × ${attackResult.durPercent})) × ${exMultTextExpanded} × ${apMultiText}`;
@@ -140,7 +144,7 @@ function appendAttackApplication(leftContent, application) {
   } else if (application.exTarget === 'Main' && application.directMainDamage > 0) {
     const damageCalc = document.createElement('span');
     damageCalc.className = 'calc-formula';
-    damageCalc.textContent = '= no part damage (ExTarget Main)';
+    damageCalc.textContent = '= no part damage (ExTarget Main routes to main)';
     applicationLine.appendChild(damageCalc);
   }
 

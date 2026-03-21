@@ -148,7 +148,7 @@ test('summarizeZoneDamage keeps shots but omits ttk without rpm', () => {
   assert.equal(summary.killSummary.zoneTtkSeconds, null);
 });
 
-test('explosive resistance values behave as resistance, so ExMult 1 means immunity', () => {
+test('explosive damage uses ExMult directly, so ExMult 0 means immunity', () => {
   const attack = calculateAttackAgainstZone(
     {
       'Atk Name': 'Explosion',
@@ -162,7 +162,7 @@ test('explosive resistance values behave as resistance, so ExMult 1 means immuni
       'Dur%': 0,
       'ToMain%': 0,
       ExTarget: 'Part',
-      ExMult: 1
+      ExMult: 0
     }
   );
 
@@ -175,8 +175,8 @@ test('explosions always apply one direct main hit per AoE target using main defe
     enemy: {
       health: 500,
       zones: [
-        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
-        { zone_name: 'Arm', health: 300, Con: 0, AV: 5, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+        { zone_name: 'Arm', health: 300, Con: 0, AV: 5, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 1, IsFatal: false }
       ]
     },
     selectedAttacks: [{
@@ -204,8 +204,8 @@ test('explosive limb damage adds passthrough main damage without rechecking main
     enemy: {
       health: 500,
       zones: [
-        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
-        { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+        { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 1, IsFatal: false }
       ]
     },
     selectedAttacks: [{
@@ -233,9 +233,9 @@ test('explosive AoE aggregates direct and passthrough damage across multiple hit
     enemy: {
       health: 600,
       zones: [
-        { zone_name: 'Main', health: 600, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
-        { zone_name: 'Left Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false },
-        { zone_name: 'Right Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.25, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+        { zone_name: 'Main', health: 600, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+        { zone_name: 'Left Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 1, IsFatal: false },
+        { zone_name: 'Right Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.25, ExTarget: 'Part', ExMult: 1, IsFatal: false }
       ]
     },
     selectedAttacks: [{
@@ -264,9 +264,9 @@ test('mixed projectile and explosive cycles share one scenario summary', () => {
     enemy: {
       health: 500,
       zones: [
-        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 0, IsFatal: false },
-        { zone_name: 'Head', health: 150, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Part', ExMult: 0, IsFatal: false },
-        { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0, IsFatal: false }
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+        { zone_name: 'Head', health: 150, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Part', ExMult: 1, IsFatal: false },
+        { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 1, IsFatal: false }
       ]
     },
     selectedAttacks: [

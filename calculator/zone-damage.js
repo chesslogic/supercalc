@@ -19,26 +19,22 @@ function isValidZoneIndex(zones, zoneIndex) {
   return Number.isInteger(zoneIndex) && zoneIndex >= 0 && zoneIndex < zones.length;
 }
 
-function normalizeResistanceFraction(value) {
-  if (value === '-') {
+// ExMult is a direct explosive damage multiplier. Missing/sentinel values mean full damage.
+export function normalizeExplosionDamageMultiplier(value) {
+  if (value === '-' || value === null || value === undefined || value === '') {
     return 1;
-  }
-
-  if (value === null || value === undefined || value === '') {
-    return 0;
   }
 
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) {
-    return 0;
+    return 1;
   }
 
-  const normalized = numeric > 1 ? numeric / 100 : numeric;
-  return Math.min(1, Math.max(0, normalized));
+  return Math.max(0, numeric);
 }
 
 export function getExplosionDamageMultiplier(zone) {
-  return 1 - normalizeResistanceFraction(zone?.ExMult);
+  return normalizeExplosionDamageMultiplier(zone?.ExMult);
 }
 
 export function findMainZoneIndex(enemy) {
@@ -151,6 +147,7 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
 
   const isExplosion = isExplosiveAttack(attack);
   const explosionModifier = isExplosion ? getExplosionDamageMultiplier(zone) : 1.0;
+  const hasExplicitExplosionMultiplier = !(['-', null, undefined, ''].includes(zone?.ExMult));
 
   const dmg = toNumber(attack?.DMG);
   const dur = toNumber(attack?.DUR);
@@ -172,7 +169,7 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
     av,
     damageMultiplier,
     explosionModifier,
-    explosionResistanceFraction: normalizeResistanceFraction(zone?.ExMult),
+    hasExplicitExplosionMultiplier,
     isExplosion,
     rawBaseDamage,
     toMainPercent,
@@ -436,16 +433,20 @@ export function summarizeEnemyTargetScenario({
 }
 
 export function getZoneOutcomeKind({ zone, totalDamagePerCycle, totalDamageToMainPerCycle, killSummary }) {
-  if (!(totalDamagePerCycle > 0)) {
+  const hasZoneDamage = totalDamagePerCycle > 0;
+  const hasMainDamage = totalDamageToMainPerCycle > 0 && killSummary?.mainShotsToKill !== null;
+
+  if (!hasZoneDamage && !hasMainDamage) {
     return null;
   }
 
-  if (zone?.IsFatal) {
+  if (zone?.IsFatal && hasZoneDamage) {
     return 'fatal';
   }
 
-  if (totalDamageToMainPerCycle > 0 && killSummary?.mainShotsToKill !== null) {
+  if (hasMainDamage) {
     if (
+      hasZoneDamage &&
       killSummary?.zoneShotsToKill !== null &&
       killSummary.zoneShotsToKill < killSummary.mainShotsToKill
     ) {
@@ -493,6 +494,26 @@ export function getZoneOutcomeDescription(kind) {
 
   if (kind === 'utility') {
     return 'This part can be removed, but destroying it does not kill the enemy';
+  }
+
+  return null;
+}
+
+export function getZoneDisplayedShotsToKill(kind, killSummary) {
+  if (!killSummary) {
+    return null;
+  }
+
+  if (kind === 'fatal') {
+    return killSummary.zoneShotsToKill;
+  }
+
+  if (kind === 'main') {
+    return killSummary.mainShotsToKill;
+  }
+
+  if (kind === 'limb' || kind === 'utility') {
+    return killSummary.zoneShotsToKill;
   }
 
   return null;

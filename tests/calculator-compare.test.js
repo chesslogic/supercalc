@@ -105,7 +105,7 @@ function makeZone(zoneName, {
     'Dur%': 0,
     'ToMain%': toMainPercent,
     ExTarget: 'Part',
-    ExMult: 0,
+    ExMult: 1,
     IsFatal: isFatal
   };
 }

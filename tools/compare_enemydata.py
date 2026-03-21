@@ -4,7 +4,7 @@ Compare generated enemy data against the checked-in enemy dataset.
 
 The goal is review, not blind application:
 
-- normalize noise such as MainCap bool/int and default ExMult
+- normalize noise such as MainCap bool/int without inventing missing ExMult
 - preserve existing readable zone names only when a unique, safe alias match
   exists for a generated zone
 - report added units, missing/manual-only units, and overlapping stat changes
@@ -49,7 +49,6 @@ def normalize_zone(zone: Dict[str, Any]) -> Dict[str, Any]:
         normalized[key] = value
 
     normalized.setdefault("MainCap", False)
-    normalized.setdefault("ExMult", 1)
     return normalized
 
 

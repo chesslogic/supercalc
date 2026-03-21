@@ -30,13 +30,14 @@ Zone field filtering/renames:
             damage_multiplier, damage_multiplier_dps, explosion_verification_mode,
             hit_effect_receiver_type, ignore_armor_on_self, immortal,
             kill_children_on_death, max_armor, regeneration_enabled
-  - rename: affected_by_explosions → ExTarget (0 → "Main", non‑zero → "Part"),
+  - rename: affected_by_explosions → ExTarget (false/0 → "Main", true/non‑zero → "Part"),
             affects_main_health → ToMain%,
             main_health_affect_capped_by_zone_health → MainCap,
             projectile_durable_resistance → Dur%,
             armor → AV,
             constitution → Con
-  - transform: explosion_damage_multiplier → ExMult (if -1.0 then "-"; if non‑zero keep value; if 0 or null omit)
+  - transform: explosive_damage_percentage → ExMult (keep finite values as-is,
+                including 0 and >1; omit the large unset sentinel)
   - aggregate: if any of [causes_death_on_death, causes_death_on_downed,
                           causes_downed_on_death, causes_downed_on_downed] == 1,
                set IsFatal: true (and drop the individual flags)
@@ -47,6 +48,7 @@ Run:
 """
 
 import json
+import math
 import os
 import re
 import argparse
@@ -141,11 +143,30 @@ FATAL_KEYS = [
     "causes_downed_on_downed",
 ]
 
+EXPLOSIVE_UNSET_SENTINEL = 3.4028235e+38
+
 def normalize_ex_target(v: Any):
+    if isinstance(v, bool):
+        return "Part" if v else "Main"
+    if isinstance(v, str):
+        lowered = v.strip().lower()
+        if lowered in {"false", "0"}:
+            return "Main"
+        if lowered in {"true", "1"}:
+            return "Part"
     try:
         return "Main" if int(v) == 0 else "Part"
     except Exception:
         return "Part"
+
+
+def should_serialize_ex_mult(value: float) -> bool:
+    return math.isfinite(value) and not math.isclose(
+        value,
+        EXPLOSIVE_UNSET_SENTINEL,
+        rel_tol=1e-6,
+        abs_tol=0.0,
+    )
 
 def transform_zone(zone: Dict[str, Any]) -> Dict[str, Any]:
     """Filter/rename a single zone dict according to spec; strings are sanitized.
@@ -188,17 +209,14 @@ def transform_zone(zone: Dict[str, Any]) -> Dict[str, Any]:
     if "projectile_durable_resistance" in src:
         out["Dur%"] = round_float(src["projectile_durable_resistance"])
 
-    if "explosion_damage_multiplier" in src:
-        edm = src["explosion_damage_multiplier"]
+    explosive_damage = src.get("explosive_damage_percentage")
+    if explosive_damage is not None:
         try:
-            edm_val = float(edm)
-            if edm_val == -1.0:
-                out["ExMult"] = "-"
-            elif edm_val != 0.0:
-                out["ExMult"] = round_float(edm_val)
-            # 0.0 → omit
+            ex_mult = float(explosive_damage)
+            if should_serialize_ex_mult(ex_mult):
+                out["ExMult"] = round_float(ex_mult)
         except Exception:
-            s = sanitize_string(str(edm))
+            s = sanitize_string(str(explosive_damage))
             if s:
                 out["ExMult"] = s
 

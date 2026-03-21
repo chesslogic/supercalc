@@ -1,6 +1,8 @@
 import {
+  getZoneDisplayedShotsToKill,
   getZoneDisplayedTtkSeconds,
   getZoneOutcomeKind,
+  normalizeExplosionDamageMultiplier,
   summarizeEnemyTargetScenario,
   summarizeZoneDamage
 } from './zone-damage.js';
@@ -200,14 +202,35 @@ function compareNullableValues(a, b, direction = 'asc') {
   return direction === 'desc' ? -comparison : comparison;
 }
 
-function summarizeZoneForSlot({ zone, enemyMainHealth, weapon, selectedAttacks = [], hitCounts = [] }) {
-  const zoneSummary = summarizeZoneDamage({
-    zone,
-    enemyMainHealth,
-    selectedAttacks,
-    hitCounts,
-    rpm: weapon?.rpm
-  });
+function hasDamagePath(zoneSummary) {
+  return (zoneSummary?.totalDamagePerCycle || 0) > 0 || (zoneSummary?.totalDamageToMainPerCycle || 0) > 0;
+}
+
+function summarizeZoneForSlot({
+  zone,
+  enemy = null,
+  zoneIndex = null,
+  enemyMainHealth,
+  weapon,
+  selectedAttacks = [],
+  hitCounts = []
+}) {
+  const zoneSummary = enemy?.zones && Number.isInteger(zoneIndex)
+    ? summarizeEnemyTargetScenario({
+      enemy,
+      selectedAttacks,
+      hitCounts,
+      rpm: weapon?.rpm,
+      projectileZoneIndex: zoneIndex,
+      explosiveZoneIndices: [zoneIndex]
+    })?.zoneSummaries?.[zoneIndex] || null
+    : summarizeZoneDamage({
+      zone,
+      enemyMainHealth,
+      selectedAttacks,
+      hitCounts,
+      rpm: weapon?.rpm
+    });
   const outcomeKind = getZoneOutcomeKind({
     zone,
     totalDamagePerCycle: zoneSummary?.totalDamagePerCycle || 0,
@@ -220,8 +243,8 @@ function summarizeZoneForSlot({ zone, enemyMainHealth, weapon, selectedAttacks =
     selectedAttackCount: selectedAttacks.length,
     zoneSummary,
     outcomeKind,
-    damagesZone: (zoneSummary?.totalDamagePerCycle || 0) > 0,
-    shotsToKill: zoneSummary?.killSummary?.zoneShotsToKill ?? null,
+    damagesZone: hasDamagePath(zoneSummary),
+    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary),
     ttkSeconds: getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary),
     hasRpm: zoneSummary?.killSummary?.hasRpm ?? false
   };
@@ -245,8 +268,8 @@ function buildSlotMetricsFromZoneSummary({
     selectedAttackCount: selectedAttacks.length,
     zoneSummary,
     outcomeKind,
-    damagesZone: (zoneSummary?.totalDamagePerCycle || 0) > 0,
-    shotsToKill: zoneSummary?.killSummary?.zoneShotsToKill ?? null,
+    damagesZone: hasDamagePath(zoneSummary),
+    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary),
     ttkSeconds: getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary),
     hasRpm: zoneSummary?.killSummary?.hasRpm ?? false
   };
@@ -407,6 +430,8 @@ export function calculateDiffValue(aValue, bValue) {
 }
 
 export function buildZoneComparisonMetrics({
+  enemy = null,
+  zoneIndex = null,
   zone,
   enemyMainHealth,
   weaponA,
@@ -418,6 +443,8 @@ export function buildZoneComparisonMetrics({
 }) {
   const slotA = summarizeZoneForSlot({
     zone,
+    enemy,
+    zoneIndex,
     enemyMainHealth,
     weapon: weaponA,
     selectedAttacks: selectedAttacksA,
@@ -425,6 +452,8 @@ export function buildZoneComparisonMetrics({
   });
   const slotB = summarizeZoneForSlot({
     zone,
+    enemy,
+    zoneIndex,
     enemyMainHealth,
     weapon: weaponB,
     selectedAttacks: selectedAttacksB,
@@ -543,6 +572,8 @@ export function buildOverviewRows({
         zone,
         zoneIndex,
         metrics: buildZoneComparisonMetrics({
+          enemy: unit,
+          zoneIndex,
           zone,
           enemyMainHealth,
           weaponA,
@@ -732,7 +763,7 @@ export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
     case 'ExTarget':
       return normalizeText(row.zone?.ExTarget);
     case 'ExMult':
-      return row.zone?.ExMult === '-' ? null : toFiniteNumber(row.zone?.ExMult);
+      return normalizeExplosionDamageMultiplier(row.zone?.ExMult);
     case 'ToMain%':
       return toFiniteNumber(row.zone?.['ToMain%']);
     case 'MainCap':
