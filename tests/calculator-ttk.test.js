@@ -257,6 +257,74 @@ test('explosive limb damage adds passthrough main damage without rechecking main
   assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 150);
 });
 
+test('fictive shoulder hit applies one direct main hit plus passthrough from the damaged shoulder', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 500,
+      zones: [
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+        { zone_name: 'Shoulder', health: 200, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0.5, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [{
+      'Atk Name': 'Explosion',
+      'Atk Type': 'Explosion',
+      DMG: 100,
+      DUR: 0,
+      AP: 2
+    }],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 100);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 25);
+  assert.equal(summary.totalDamageToMainPerCycle, 125);
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 50);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 125);
+});
+
+test('two fictive shoulder hits still apply only one direct main hit but add passthrough from both shoulders', () => {
+  const summary = summarizeEnemyTargetScenario({
+    enemy: {
+      health: 500,
+      zones: [
+        { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+        { zone_name: 'Left Shoulder', health: 200, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0.5, IsFatal: false },
+        { zone_name: 'Right Shoulder', health: 200, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 0.5, IsFatal: false }
+      ]
+    },
+    selectedAttacks: [{
+      'Atk Name': 'Explosion',
+      'Atk Type': 'Explosion',
+      DMG: 100,
+      DUR: 0,
+      AP: 2
+    }],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1, 2]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 100);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 50);
+  assert.equal(summary.totalDamageToMainPerCycle, 150);
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, 50);
+  assert.equal(summary.zoneSummaries[2].totalDamagePerCycle, 50);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 150);
+  assert.equal(
+    summary.attackDetails[0].zoneApplications.filter((application) => application.directMainDamage > 0).length,
+    1
+  );
+  assert.equal(
+    summary.attackDetails[0].zoneApplications.reduce((sum, application) => sum + application.directMainDamage, 0),
+    100
+  );
+});
+
 test('charger-style BFGL head hit applies direct main damage and passthrough from the struck limb', () => {
   const summary = summarizeEnemyTargetScenario({
     enemy: {
