@@ -7,6 +7,7 @@ import {
   EXPLOSIVE_DISPLAY_COLUMN_LABEL,
   getExplosiveDisplayInfo
 } from '../calculator/explosive-display.js';
+import { buildCompareTtkTooltip } from '../calculator/compare-tooltips.js';
 
 test('enemy dropdown keeps real enemies visible when overview is the current compare selection', () => {
   const state = getEnemyDropdownQueryState('Overview', {
@@ -96,4 +97,40 @@ test('explosive display applies routed markers without line-through styling', ()
   assert.match(td.title, /current calculator handling/i);
   assert.notEqual(td.style.textDecoration, 'line-through');
   assert.equal(td.style.color, 'var(--muted)');
+});
+
+test('compare TTK tooltip identifies the faster weapon when shots are equal but RPM differs', () => {
+  const tooltip = buildCompareTtkTooltip(
+    {
+      weapon: { name: 'Tenderizer', rpm: 600 },
+      shotsToKill: 5,
+      ttkSeconds: 0.4
+    },
+    {
+      weapon: { name: 'Liberator Carbine', rpm: 920 },
+      shotsToKill: 5,
+      ttkSeconds: 0.2608695652173913
+    }
+  );
+
+  assert.match(tooltip, /Weapon B \(Liberator Carbine\) has a shorter TTK/i);
+  assert.match(tooltip, /Equal shots to kill, but Weapon B has higher RPM \(920 vs 600\)\./i);
+});
+
+test('compare TTK tooltip explains when lower shots beat higher RPM', () => {
+  const tooltip = buildCompareTtkTooltip(
+    {
+      weapon: { name: 'Weapon A', rpm: 900 },
+      shotsToKill: 5,
+      ttkSeconds: 0.26666666666666666
+    },
+    {
+      weapon: { name: 'Weapon B', rpm: 600 },
+      shotsToKill: 4,
+      ttkSeconds: 0.3
+    }
+  );
+
+  assert.match(tooltip, /Weapon A \(Weapon A\) has a shorter TTK/i);
+  assert.match(tooltip, /Weapon A has higher RPM \(900 vs 600\), which outweighs Weapon B's lower shot count \(4 vs 5\)\./i);
 });

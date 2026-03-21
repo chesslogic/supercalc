@@ -45,6 +45,7 @@ import {
   applyExplosiveDisplayToCell,
   EXPLOSIVE_DISPLAY_COLUMN_LABEL
 } from './explosive-display.js';
+import { buildCompareTtkTooltip } from './compare-tooltips.js';
 
 const DEFAULT_WEAPON_HEADERS = ['Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const ENEMY_BASE_COLUMNS = [
@@ -166,7 +167,14 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
   return diffValue;
 }
 
-function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'absolute') {
+function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'absolute', metrics = null) {
+  if (calculatorState.mode === 'compare' && valueType === 'ttk') {
+    const compareTitle = buildCompareTtkTooltip(metrics?.bySlot?.A, metrics?.bySlot?.B);
+    if (compareTitle) {
+      return compareTitle;
+    }
+  }
+
   const displayMetric = getDiffDisplayMetric(diffMetric, diffDisplayMode);
   if (displayMetric.kind === 'unavailable') {
     if (diffDisplayMode === 'percent') {
@@ -188,7 +196,7 @@ function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'absolute')
     : 'Diff = B - A';
 }
 
-function getMetricTitle(slot, slotMetrics, valueType) {
+function getMetricTitle(slot, slotMetrics, valueType, metrics = null) {
   if (!slotMetrics?.weapon) {
     return calculatorState.mode === 'compare'
       ? `Select weapon ${slot}`
@@ -222,6 +230,16 @@ function getMetricTitle(slot, slotMetrics, valueType) {
   }
 
   const outcomeDescription = getZoneOutcomeDescription(slotMetrics.outcomeKind);
+  if (calculatorState.mode === 'compare' && valueType === 'ttk') {
+    const compareTitle = buildCompareTtkTooltip(metrics?.bySlot?.A, metrics?.bySlot?.B);
+    if (compareTitle && outcomeDescription) {
+      return `${compareTitle}\n${outcomeDescription}`;
+    }
+    if (compareTitle) {
+      return compareTitle;
+    }
+  }
+
   return outcomeDescription || null;
 }
 
@@ -757,32 +775,32 @@ function renderOverviewDetails(container) {
 
     columns.forEach((column) => {
       if (column.key === 'shotsA') {
-        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'shots'));
+        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'shots', row.metrics));
         return;
       }
 
       if (column.key === 'shotsB') {
-        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'shots'));
+        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'shots', row.metrics));
         return;
       }
 
       if (column.key === 'shotsDiff') {
-        tr.appendChild(buildDiffMetricCell(row.metrics.diffShots, 'shots', calculatorState.diffDisplayMode));
+        tr.appendChild(buildDiffMetricCell(row.metrics.diffShots, 'shots', calculatorState.diffDisplayMode, row.metrics));
         return;
       }
 
       if (column.key === 'ttkA') {
-        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'ttk'));
+        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'ttk', row.metrics));
         return;
       }
 
       if (column.key === 'ttkB') {
-        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'ttk'));
+        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'ttk', row.metrics));
         return;
       }
 
       if (column.key === 'ttkDiff') {
-        tr.appendChild(buildDiffMetricCell(row.metrics.diffTtkSeconds, 'ttk', calculatorState.diffDisplayMode));
+        tr.appendChild(buildDiffMetricCell(row.metrics.diffTtkSeconds, 'ttk', calculatorState.diffDisplayMode, row.metrics));
         return;
       }
 
@@ -798,7 +816,7 @@ function renderOverviewDetails(container) {
   container.appendChild(table);
 }
 
-function buildSingleMetricCell(slot, slotMetrics, type) {
+function buildSingleMetricCell(slot, slotMetrics, type, metrics = null) {
   const td = document.createElement('td');
   td.classList.add('calc-derived-cell');
 
@@ -807,7 +825,7 @@ function buildSingleMetricCell(slot, slotMetrics, type) {
     if (slotMetrics.shotsToKill === null) {
       td.classList.add('muted');
     }
-    td.title = getMetricTitle(slot, slotMetrics, 'shots') || '';
+    td.title = getMetricTitle(slot, slotMetrics, 'shots', metrics) || '';
     return td;
   }
 
@@ -816,15 +834,15 @@ function buildSingleMetricCell(slot, slotMetrics, type) {
   ttkContent.appendChild(createTtkValueNode(slotMetrics.ttkSeconds));
   appendOutcomeBadge(ttkContent, slotMetrics.outcomeKind);
   td.appendChild(ttkContent);
-  td.title = getMetricTitle(slot, slotMetrics, 'ttk') || '';
+  td.title = getMetricTitle(slot, slotMetrics, 'ttk', metrics) || '';
   return td;
 }
 
-function buildDiffMetricCell(value, valueType, diffDisplayMode = 'absolute') {
+function buildDiffMetricCell(value, valueType, diffDisplayMode = 'absolute', metrics = null) {
   const td = document.createElement('td');
   td.classList.add('calc-derived-cell', 'calc-diff-cell');
   td.appendChild(createDiffValueNode(value, valueType, diffDisplayMode));
-  td.title = getDiffMetricTitle(value, valueType, diffDisplayMode);
+  td.title = getDiffMetricTitle(value, valueType, diffDisplayMode, metrics);
   return td;
 }
 
@@ -1013,42 +1031,42 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
 
     columns.forEach((column) => {
       if (column.key === 'shots') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'shots'));
+        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'shots', metrics));
         return;
       }
 
       if (column.key === 'ttk') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk'));
+        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk', metrics));
         return;
       }
 
       if (column.key === 'shotsA') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'shots'));
+        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'shots', metrics));
         return;
       }
 
       if (column.key === 'shotsB') {
-        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'shots'));
+        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'shots', metrics));
         return;
       }
 
       if (column.key === 'shotsDiff') {
-        tr.appendChild(buildDiffMetricCell(metrics.diffShots, 'shots', 'absolute'));
+        tr.appendChild(buildDiffMetricCell(metrics.diffShots, 'shots', 'absolute', metrics));
         return;
       }
 
       if (column.key === 'ttkA') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk'));
+        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk', metrics));
         return;
       }
 
       if (column.key === 'ttkB') {
-        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'ttk'));
+        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'ttk', metrics));
         return;
       }
 
       if (column.key === 'ttkDiff') {
-        tr.appendChild(buildDiffMetricCell(metrics.diffTtkSeconds, 'ttk', 'absolute'));
+        tr.appendChild(buildDiffMetricCell(metrics.diffTtkSeconds, 'ttk', 'absolute', metrics));
         return;
       }
 

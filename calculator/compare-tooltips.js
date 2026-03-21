@@ -1,0 +1,159 @@
+import { formatTtkSeconds } from './summary.js';
+
+const EPSILON = 1e-9;
+
+function isFiniteNumber(value) {
+  return Number.isFinite(value);
+}
+
+function areEqualNumbers(a, b) {
+  return isFiniteNumber(a) && isFiniteNumber(b) && Math.abs(a - b) <= EPSILON;
+}
+
+function toFiniteNumber(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function getSlotLabel(slot, slotMetrics) {
+  const weaponName = String(slotMetrics?.weapon?.name || '').trim();
+  return weaponName
+    ? `Weapon ${slot} (${weaponName})`
+    : `Weapon ${slot}`;
+}
+
+function getShortSlotLabel(slot) {
+  return `Weapon ${slot}`;
+}
+
+function getCompareWinner(slotA, slotB, winnerSlot) {
+  return winnerSlot === 'B'
+    ? {
+      slot: 'B',
+      label: getSlotLabel('B', slotB),
+      shortLabel: getShortSlotLabel('B'),
+      metrics: slotB
+    }
+    : {
+      slot: 'A',
+      label: getSlotLabel('A', slotA),
+      shortLabel: getShortSlotLabel('A'),
+      metrics: slotA
+    };
+}
+
+function getCompareLoser(slotA, slotB, winnerSlot) {
+  return winnerSlot === 'B'
+    ? {
+      slot: 'A',
+      label: getSlotLabel('A', slotA),
+      shortLabel: getShortSlotLabel('A'),
+      metrics: slotA
+    }
+    : {
+      slot: 'B',
+      label: getSlotLabel('B', slotB),
+      shortLabel: getShortSlotLabel('B'),
+      metrics: slotB
+    };
+}
+
+function buildWinnerReason(slotA, slotB, winnerSlot) {
+  const winner = getCompareWinner(slotA, slotB, winnerSlot);
+  const loser = getCompareLoser(slotA, slotB, winnerSlot);
+  const winnerShots = toFiniteNumber(winner.metrics?.shotsToKill);
+  const loserShots = toFiniteNumber(loser.metrics?.shotsToKill);
+  const winnerRpm = toFiniteNumber(winner.metrics?.weapon?.rpm);
+  const loserRpm = toFiniteNumber(loser.metrics?.weapon?.rpm);
+
+  const shotsComparable = winnerShots !== null && loserShots !== null;
+  const rpmComparable = winnerRpm !== null && loserRpm !== null;
+  const shotsEqual = shotsComparable && areEqualNumbers(winnerShots, loserShots);
+  const rpmEqual = rpmComparable && areEqualNumbers(winnerRpm, loserRpm);
+  const winnerHasFewerShots = shotsComparable && winnerShots < loserShots && !shotsEqual;
+  const winnerHasHigherRpm = rpmComparable && winnerRpm > loserRpm && !rpmEqual;
+
+  if (shotsComparable && shotsEqual && rpmComparable && !rpmEqual) {
+    return `Equal shots to kill, but ${winner.shortLabel} has higher RPM (${winnerRpm} vs ${loserRpm}).`;
+  }
+
+  if (shotsComparable && !shotsEqual && rpmComparable && rpmEqual) {
+    return `${winner.shortLabel} needs fewer shots to kill (${winnerShots} vs ${loserShots}).`;
+  }
+
+  if (shotsComparable && !shotsEqual && rpmComparable && !rpmEqual) {
+    if (winnerHasFewerShots && winnerHasHigherRpm) {
+      return `${winner.shortLabel} needs fewer shots to kill (${winnerShots} vs ${loserShots}) and has higher RPM (${winnerRpm} vs ${loserRpm}).`;
+    }
+
+    if (winnerHasFewerShots) {
+      return `${winner.shortLabel} needs fewer shots to kill (${winnerShots} vs ${loserShots}), which outweighs ${loser.shortLabel}'s higher RPM (${loserRpm} vs ${winnerRpm}).`;
+    }
+
+    if (winnerHasHigherRpm) {
+      return `${winner.shortLabel} has higher RPM (${winnerRpm} vs ${loserRpm}), which outweighs ${loser.shortLabel}'s lower shot count (${loserShots} vs ${winnerShots}).`;
+    }
+  }
+
+  return null;
+}
+
+function buildEqualTtkReason(slotA, slotB) {
+  const shotsA = toFiniteNumber(slotA?.shotsToKill);
+  const shotsB = toFiniteNumber(slotB?.shotsToKill);
+  const rpmA = toFiniteNumber(slotA?.weapon?.rpm);
+  const rpmB = toFiniteNumber(slotB?.weapon?.rpm);
+
+  const shotsComparable = shotsA !== null && shotsB !== null;
+  const rpmComparable = rpmA !== null && rpmB !== null;
+
+  if (shotsComparable && areEqualNumbers(shotsA, shotsB) && rpmComparable && areEqualNumbers(rpmA, rpmB)) {
+    return 'Equal shots to kill and equal RPM.';
+  }
+
+  if (shotsComparable && rpmComparable) {
+    return 'Different shot counts and RPM cancel out to the same displayed TTK.';
+  }
+
+  return null;
+}
+
+export function buildCompareTtkTooltip(slotA, slotB) {
+  const ttkA = toFiniteNumber(slotA?.ttkSeconds);
+  const ttkB = toFiniteNumber(slotB?.ttkSeconds);
+  const labelA = getSlotLabel('A', slotA);
+  const labelB = getSlotLabel('B', slotB);
+
+  if (ttkA === null && ttkB === null) {
+    return null;
+  }
+
+  if (ttkA !== null && ttkB === null) {
+    return `${labelA} has a finite TTK with the current selection; ${labelB} does not.`;
+  }
+
+  if (ttkA === null && ttkB !== null) {
+    return `${labelB} has a finite TTK with the current selection; ${labelA} does not.`;
+  }
+
+  if (areEqualNumbers(ttkA, ttkB)) {
+    const lines = [`${labelA} and ${labelB} have equal TTK (${formatTtkSeconds(ttkA)}).`];
+    const reason = buildEqualTtkReason(slotA, slotB);
+    if (reason) {
+      lines.push(reason);
+    }
+    return lines.join('\n');
+  }
+
+  const winnerSlot = ttkA < ttkB ? 'A' : 'B';
+  const winner = getCompareWinner(slotA, slotB, winnerSlot);
+  const loser = getCompareLoser(slotA, slotB, winnerSlot);
+  const lines = [
+    `${winner.label} has a shorter TTK (${formatTtkSeconds(winner.metrics?.ttkSeconds)} vs ${formatTtkSeconds(loser.metrics?.ttkSeconds)}).`
+  ];
+  const reason = buildWinnerReason(slotA, slotB, winnerSlot);
+  if (reason) {
+    lines.push(reason);
+  }
+  return lines.join('\n');
+}
