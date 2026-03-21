@@ -872,6 +872,7 @@ test('real Voteless Main keeps parsed body Constitution and bleed rate', () => {
 
 test('confirmed unit-level Main Constitution cases show the any-death note', () => {
   for (const enemyName of [
+    'Voteless',
     'Charger',
     'Charger Behemoth',
     'Rupture Charger',
