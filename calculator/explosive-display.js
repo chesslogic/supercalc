@@ -22,16 +22,20 @@ function buildReductionTitle({ resistancePercent, receivedPercent, rawValue, isI
   return `${valueSource} -> ${formatPercent(resistancePercent)} ExDR (${formatPercent(receivedPercent)} explosive damage received).`;
 }
 
+function buildRoutedTitle() {
+  return 'The app currently treats direct explosive hits on this part as routed to Main, so it shows 100%* here and uses Main for the direct explosive calculation. The asterisk marks current calculator handling for this special case rather than a confirmed separate in-game ExDR value for the part.';
+}
+
 export function getExplosiveDisplayInfo(zone) {
   const isMainZone = normalizeZoneName(zone) === 'main';
   const isRouted = !isMainZone && String(zone?.ExTarget || '').trim().toLowerCase() === 'main';
 
   if (isRouted) {
     return {
-      text: '100%',
-      title: 'Direct explosive hits on this part route directly to Main, so the part behaves as 100% ExDR for direct explosive damage.',
+      text: '100%*',
+      title: buildRoutedTitle(),
       sortValue: 1,
-      strike: true,
+      strike: false,
       isImplicit: zone?.ExMult === null || zone?.ExMult === undefined || zone?.ExMult === '',
       isRouted: true
     };
@@ -74,9 +78,8 @@ export function applyExplosiveDisplayToCell(td, zone) {
   td.title = info.title;
 
   if (info.isRouted) {
-    td.style.textDecoration = 'line-through';
-    td.style.textDecorationColor = 'var(--muted)';
-    td.style.opacity = '0.75';
+    td.style.color = 'var(--muted)';
+    td.style.opacity = '0.85';
     return td;
   }
 

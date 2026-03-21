@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
 import {
+  applyExplosiveDisplayToCell,
   EXPLOSIVE_DISPLAY_COLUMN_LABEL,
   getExplosiveDisplayInfo
 } from '../calculator/explosive-display.js';
@@ -71,8 +72,27 @@ test('explosive display flags routed non-main zones as bypassed', () => {
     ExTarget: 'Main'
   });
 
-  assert.equal(info.text, '100%');
+  assert.equal(info.text, '100%*');
   assert.equal(info.sortValue, 1);
   assert.equal(info.isRouted, true);
-  assert.match(info.title, /route directly to Main/i);
+  assert.match(info.title, /app currently treats direct explosive hits on this part as routed to Main/i);
+  assert.match(info.title, /100%\*/i);
+});
+
+test('explosive display applies routed markers without line-through styling', () => {
+  const td = {
+    textContent: '',
+    title: '',
+    style: {}
+  };
+
+  applyExplosiveDisplayToCell(td, {
+    zone_name: 'left_arm',
+    ExTarget: 'Main'
+  });
+
+  assert.equal(td.textContent, '100%*');
+  assert.match(td.title, /current calculator handling/i);
+  assert.notEqual(td.style.textDecoration, 'line-through');
+  assert.equal(td.style.color, 'var(--muted)');
 });
