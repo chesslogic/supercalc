@@ -273,34 +273,87 @@ test('buildZoneComparisonMetrics marks one-sided damage wins as infinite diff se
   assert.equal(metrics.diffTtkSeconds.percentSortValue, Number.NEGATIVE_INFINITY);
 });
 
-test('buildFocusedZoneComparisonRows uses one shared projectile and AoE target scenario for A and B', () => {
+test('buildFocusedZoneComparisonRows evaluates each row as its own direct-hit scenario', () => {
+  const enemy = {
+    health: 500,
+    zones: [
+      makeZone('Main', { health: 500 }),
+      makeZone('Head', { health: 150, av: 2, toMainPercent: 1 }),
+      makeZone('Leg', { health: 300, toMainPercent: 0.5 })
+    ]
+  };
+  const weaponA = { rpm: 60 };
+  const weaponB = { rpm: 60 };
+  const selectedAttacksA = [makeAttackRow('Projectile A', 100, 2), makeExplosionAttackRow('Explosion A', 60, 2)];
+  const selectedAttacksB = [makeAttackRow('Projectile B', 80, 2), makeExplosionAttackRow('Explosion B', 40, 1)];
+  const hitCountsA = [1, 1];
+  const hitCountsB = [1, 1];
   const rows = buildFocusedZoneComparisonRows({
-    enemy: {
-      health: 500,
-      zones: [
-        makeZone('Main'),
-        makeZone('Head', { health: 150, toMainPercent: 1 }),
-        makeZone('Leg', { health: 300, toMainPercent: 0.5 })
-      ]
-    },
-    weaponA: { rpm: 60 },
-    weaponB: { rpm: 60 },
-    selectedAttacksA: [makeAttackRow('Projectile A', 50), makeExplosionAttackRow('Explosion A', 100)],
-    selectedAttacksB: [makeAttackRow('Projectile B', 100), makeExplosionAttackRow('Explosion B', 50)],
-    hitCountsA: [1, 1],
-    hitCountsB: [1, 1],
-    projectileZoneIndex: 1,
-    explosiveZoneIndices: [2]
+    enemy,
+    weaponA,
+    weaponB,
+    selectedAttacksA,
+    selectedAttacksB,
+    hitCountsA,
+    hitCountsB,
+    projectileZoneIndex: 0,
+    explosiveZoneIndices: [0]
   });
 
   assert.equal(rows.length, 3);
-  assert.equal(rows[1].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 50);
-  assert.equal(rows[1].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 100);
-  assert.equal(rows[2].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 100);
-  assert.equal(rows[2].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 50);
-  assert.equal(rows[0].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 200);
-  assert.equal(rows[0].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 175);
-  assert.equal(rows[0].metrics.diffTtkSeconds.kind, 'numeric');
+  rows.forEach((row, zoneIndex) => {
+    assert.deepEqual(row.metrics, buildZoneComparisonMetrics({
+      enemy,
+      zoneIndex,
+      zone: enemy.zones[zoneIndex],
+      enemyMainHealth: enemy.health,
+      weaponA,
+      weaponB,
+      selectedAttacksA,
+      selectedAttacksB,
+      hitCountsA,
+      hitCountsB
+    }));
+  });
+  assert.equal(rows[1].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 104);
+  assert.equal(rows[2].metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 160);
+  assert.equal(rows[1].metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 52);
+});
+
+test('buildFocusedZoneComparisonRows ignores lower summary target selection inputs', () => {
+  const enemy = {
+    health: 500,
+    zones: [
+      makeZone('Main', { health: 500 }),
+      makeZone('Head', { health: 150, av: 2, toMainPercent: 1 }),
+      makeZone('Leg', { health: 300, toMainPercent: 0.5 })
+    ]
+  };
+  const baseArgs = {
+    enemy,
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 120 },
+    selectedAttacksA: [makeAttackRow('Projectile A', 100, 2), makeExplosionAttackRow('Explosion A', 60, 2)],
+    selectedAttacksB: [makeAttackRow('Projectile B', 80, 2)],
+    hitCountsA: [1, 1],
+    hitCountsB: [1]
+  };
+
+  const headTargetRows = buildFocusedZoneComparisonRows({
+    ...baseArgs,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: [1]
+  });
+  const legTargetRows = buildFocusedZoneComparisonRows({
+    ...baseArgs,
+    projectileZoneIndex: 2,
+    explosiveZoneIndices: [2]
+  });
+
+  assert.deepEqual(
+    headTargetRows.map((row) => row.metrics),
+    legTargetRows.map((row) => row.metrics)
+  );
 });
 
 test('getDiffDisplayMetric returns percent values when available', () => {

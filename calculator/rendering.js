@@ -980,9 +980,7 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
     selectedAttacksA,
     selectedAttacksB,
     hitCountsA,
-    hitCountsB,
-    projectileZoneIndex: calculatorState.selectedZoneIndex,
-    explosiveZoneIndices: getSelectedExplosiveZoneIndices()
+    hitCountsB
   });
 
   const sortedRows = sortEnemyZoneRows(zoneRows, {

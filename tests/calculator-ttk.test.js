@@ -300,6 +300,46 @@ test('mixed projectile and explosive cycles share one scenario summary', () => {
   assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, 200);
 });
 
+test('summarizeEnemyTargetScenario still changes with lower projectile target selection', () => {
+  const enemy = {
+    health: 500,
+    zones: [
+      { zone_name: 'Main', health: 500, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0, ExTarget: 'Main', ExMult: 1, IsFatal: false },
+      { zone_name: 'Head', health: 150, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 1, ExTarget: 'Part', ExMult: 1, IsFatal: false },
+      { zone_name: 'Leg', health: 300, Con: 0, AV: 1, 'Dur%': 0, 'ToMain%': 0.5, ExTarget: 'Part', ExMult: 1, IsFatal: false }
+    ]
+  };
+  const selectedAttacks = [{
+    'Atk Name': 'Burst',
+    'Atk Type': 'Projectile',
+    DMG: 100,
+    DUR: 0,
+    AP: 2
+  }];
+
+  const headSummary = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks,
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 1,
+    explosiveZoneIndices: []
+  });
+  const legSummary = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks,
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 2,
+    explosiveZoneIndices: []
+  });
+
+  assert.equal(headSummary.zoneSummaries[1].totalDamagePerCycle, 100);
+  assert.equal(headSummary.zoneSummaries[2].totalDamagePerCycle, 0);
+  assert.equal(legSummary.zoneSummaries[1].totalDamagePerCycle, 0);
+  assert.equal(legSummary.zoneSummaries[2].totalDamagePerCycle, 100);
+});
+
 test('getZoneOutcomeKind marks parts that break before a main kill as limb-relevant', () => {
   const summary = summarizeZoneDamage({
     zone: {
