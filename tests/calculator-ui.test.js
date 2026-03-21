@@ -77,8 +77,8 @@ test('explosive display flags special non-main zones that suppress part explosiv
   assert.equal(info.sortValue, 1);
   assert.equal(info.isRouted, true);
   assert.match(info.title, /direct explosive part damage and explosive passthrough from this part are suppressed/i);
-  assert.match(info.title, /one direct Main explosive check using Main defenses/i);
-  assert.match(info.title, /asterisk marks current calculator handling/i);
+  assert.match(info.title, /one direct Main explosive check uses Main defenses/i);
+  assert.match(info.title, /Automaton Trooper/i);
 });
 
 test('explosive display applies routed markers without line-through styling', () => {
@@ -94,7 +94,7 @@ test('explosive display applies routed markers without line-through styling', ()
   });
 
   assert.equal(td.textContent, '100%*');
-  assert.match(td.title, /current calculator handling/i);
+  assert.match(td.title, /Automaton Trooper/i);
   assert.notEqual(td.style.textDecoration, 'line-through');
   assert.equal(td.style.color, 'var(--muted)');
 });
