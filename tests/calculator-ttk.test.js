@@ -773,3 +773,30 @@ test('routed Hulk Bruiser arm explosive damage hits Main directly without damagi
   assert.equal(summary.zoneSummaries[leftArmIndex].totalDamagePerCycle, 0);
   assert.equal(summary.zoneSummaries[summary.mainZoneIndex].totalDamagePerCycle, 26);
 });
+
+test('real Factory Strider Gatling Gun keeps 100% ExDR and blocks direct explosive damage', () => {
+  const enemy = getEnemyByName('Factory Strider Gatling Gun');
+  const mainZone = enemy.zones[0];
+
+  assert.equal(mainZone.AV, 3);
+  assert.equal(mainZone.health, 300);
+  assert.equal(mainZone.ExTarget, 'Main');
+  assert.equal(mainZone.ExMult, 0);
+
+  const summary = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks: [makeExplosionAttackRow('Synthetic AP4 Explosive', 100, 4)],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 0,
+    explosiveZoneIndices: [0]
+  });
+
+  const mainSummary = summary.zoneSummaries[summary.mainZoneIndex];
+  assert.equal(summary.totalDirectMainDamagePerCycle, 0);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 0);
+  assert.equal(summary.totalDamageToMainPerCycle, 0);
+  assert.equal(mainSummary.totalDamagePerCycle, 0);
+  assert.equal(mainSummary.killSummary.mainShotsToKill, null);
+  assert.equal(mainSummary.killSummary.mainTtkSeconds, null);
+});

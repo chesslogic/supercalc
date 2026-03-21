@@ -1611,7 +1611,7 @@
           "AV": 3,
           "Con": 0,
           "Dur%": 1,
-          "ExMult": 1,
+          "ExMult": 0,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
