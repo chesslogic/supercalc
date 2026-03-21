@@ -2,10 +2,10 @@ import {
   getZoneDisplayedShotsToKill,
   getZoneDisplayedTtkSeconds,
   getZoneOutcomeKind,
-  normalizeExplosionDamageMultiplier,
   summarizeEnemyTargetScenario,
   summarizeZoneDamage
 } from './zone-damage.js';
+import { getExplosiveDisplayInfo } from './explosive-display.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
@@ -702,7 +702,7 @@ export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
     case 'ExTarget':
       return normalizeText(row.zone?.ExTarget);
     case 'ExMult':
-      return normalizeExplosionDamageMultiplier(row.zone?.ExMult);
+      return getExplosiveDisplayInfo(row.zone).sortValue;
     case 'ToMain%':
       return toFiniteNumber(row.zone?.['ToMain%']);
     case 'MainCap':

@@ -1,6 +1,7 @@
 // enemies/table.js — enemy table rendering and sorting
 import { enemyState } from './data.js';
 import { durPercentageColor, armorValueColor } from '../colors.js';
+import { applyExplosiveDisplayToCell, getExplosiveDisplayInfo } from '../calculator/explosive-display.js';
 
 export function setupEnemyTableSorting() {
   const sortableHeaders = document.querySelectorAll('#enemyTable th.sortable');
@@ -47,8 +48,12 @@ export function renderEnemyTable() {
     let zones = [...unit.zones];
     if (enemyState.sortKey) {
       zones.sort((a, b) => {
-        const aVal = a[enemyState.sortKey];
-        const bVal = b[enemyState.sortKey];
+        const aVal = enemyState.sortKey === 'ExMult'
+          ? getExplosiveDisplayInfo(a).sortValue
+          : a[enemyState.sortKey];
+        const bVal = enemyState.sortKey === 'ExMult'
+          ? getExplosiveDisplayInfo(b).sortValue
+          : b[enemyState.sortKey];
         
         // Handle different data types
         if (aVal === null || aVal === undefined) return 1;
@@ -135,13 +140,7 @@ export function renderEnemyTable() {
       
       // ExMult
       const exMultTd = document.createElement('td');
-      if (zone.ExMult === '-') {
-        exMultTd.textContent = '-';
-        exMultTd.style.color = 'var(--muted)';
-        exMultTd.style.opacity = '0.6';
-      } else {
-        exMultTd.textContent = (zone.ExMult * 100).toFixed(0) + '%';
-      }
+      applyExplosiveDisplayToCell(exMultTd, zone);
       tr.appendChild(exMultTd);
       
       // ToMain%

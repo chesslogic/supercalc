@@ -39,9 +39,12 @@ import { formatTtkSeconds } from './summary.js';
 import { tokenizeFormattedTtk } from './ttk-formatting.js';
 import {
   getZoneOutcomeDescription,
-  getZoneOutcomeLabel,
-  normalizeExplosionDamageMultiplier
+  getZoneOutcomeLabel
 } from './zone-damage.js';
+import {
+  applyExplosiveDisplayToCell,
+  EXPLOSIVE_DISPLAY_COLUMN_LABEL
+} from './explosive-display.js';
 
 const DEFAULT_WEAPON_HEADERS = ['Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const ENEMY_BASE_COLUMNS = [
@@ -52,7 +55,7 @@ const ENEMY_BASE_COLUMNS = [
   { key: 'AV', label: 'AV' },
   { key: 'IsFatal', label: 'IsFatal' },
   { key: 'ExTarget', label: 'ExTarget' },
-  { key: 'ExMult', label: 'ExMult' },
+  { key: 'ExMult', label: EXPLOSIVE_DISPLAY_COLUMN_LABEL },
   { key: 'ToMain%', label: 'ToMain%' },
   { key: 'MainCap', label: 'MainCap' }
 ];
@@ -654,7 +657,7 @@ function formatEnemyBaseCell(td, zone, header) {
   }
 
   if (header === 'ExMult') {
-    td.textContent = `${(normalizeExplosionDamageMultiplier(value) * 100).toFixed(0)}%`;
+    applyExplosiveDisplayToCell(td, zone);
     return;
   }
 

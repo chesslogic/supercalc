@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   buildKillSummary,
@@ -17,6 +18,34 @@ import {
   summarizeEnemyTargetScenario,
   summarizeZoneDamage
 } from '../calculator/zone-damage.js';
+
+const ENEMY_DATA = JSON.parse(
+  readFileSync(new URL('../enemies/enemydata.json', import.meta.url), 'utf8')
+);
+
+function getEnemyByName(name) {
+  for (const factionUnits of Object.values(ENEMY_DATA)) {
+    const unit = factionUnits?.[name];
+    if (unit) {
+      return {
+        health: unit.health,
+        zones: (unit.damageable_zones || []).map((zone) => ({ ...zone }))
+      };
+    }
+  }
+
+  throw new Error(`Enemy not found in enemydata.json: ${name}`);
+}
+
+function makeExplosionAttackRow(name, damage, ap = 2, dur = 0) {
+  return {
+    'Atk Name': name,
+    'Atk Type': 'Explosion',
+    DMG: damage,
+    DUR: dur,
+    AP: ap
+  };
+}
 
 test('calculateShotsToKill rounds up to the next full firing cycle', () => {
   assert.equal(calculateShotsToKill(300, 100), 3);
@@ -574,4 +603,42 @@ test('zone outcome labels expose fixed badge text and row ttk semantics', () => 
   assert.equal(getZoneDisplayedTtkSeconds('main', { zoneTtkSeconds: 2, mainTtkSeconds: 1 }), 1);
   assert.equal(getZoneDisplayedTtkSeconds('limb', { zoneTtkSeconds: 0, mainTtkSeconds: 1 }), 0);
   assert.equal(getZoneDisplayedTtkSeconds('utility', { zoneTtkSeconds: 0, mainTtkSeconds: null }), 0);
+});
+
+test('AP4 explosive against real Hulk Bruiser Main yields finite main shots and ttk', () => {
+  const enemy = getEnemyByName('Hulk Bruiser');
+  const summary = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks: [makeExplosionAttackRow('Synthetic AP4 Explosive', 100, 4)],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 0,
+    explosiveZoneIndices: [0]
+  });
+
+  const mainSummary = summary.zoneSummaries[summary.mainZoneIndex];
+  assert.equal(mainSummary.totalDamagePerCycle, 26);
+  assert.equal(mainSummary.killSummary.mainShotsToKill, 70);
+  assert.equal(mainSummary.killSummary.mainTtkSeconds, 69);
+});
+
+test('routed Hulk Bruiser arm explosive damage hits Main directly without damaging the arm', () => {
+  const enemy = getEnemyByName('Hulk Bruiser');
+  const leftArmIndex = enemy.zones.findIndex((zone) => zone.zone_name === 'left_arm');
+  assert.notEqual(leftArmIndex, -1);
+
+  const summary = summarizeEnemyTargetScenario({
+    enemy,
+    selectedAttacks: [makeExplosionAttackRow('Synthetic AP4 Explosive', 100, 4)],
+    hitCounts: [1],
+    rpm: 60,
+    projectileZoneIndex: 0,
+    explosiveZoneIndices: [leftArmIndex]
+  });
+
+  assert.equal(summary.totalDirectMainDamagePerCycle, 26);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, 0);
+  assert.equal(summary.totalDamageToMainPerCycle, 26);
+  assert.equal(summary.zoneSummaries[leftArmIndex].totalDamagePerCycle, 0);
+  assert.equal(summary.zoneSummaries[summary.mainZoneIndex].totalDamagePerCycle, 26);
 });
