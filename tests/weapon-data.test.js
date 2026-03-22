@@ -7,7 +7,7 @@ globalThis.localStorage = {
   setItem() {}
 };
 
-const { ingestMatrix, inferPatchVersion, state } = await import('../weapons/data.js');
+const { ingestMatrix, inferPatchVersion, loadFromText, state } = await import('../weapons/data.js');
 
 function parseCsvLine(line) {
   const values = [];
@@ -142,4 +142,43 @@ test('checked-in CQC-20 explosion data reflects the 2200 damage buff', () => {
   assert.equal(explosion.DMG, '2200');
   assert.equal(explosion.DUR, '2200');
   assert.equal(explosion.AP, '6');
+});
+
+test('checked-in VG-70 data exposes selectable auto, volley, and total attack rows', () => {
+  const csv = readFileSync(new URL('../weapons/weapondata.csv', import.meta.url), 'utf8');
+  loadFromText(csv);
+
+  const variable = state.groups.find((group) => group.code === 'VG-70' && group.name === 'Variable');
+  assert.ok(variable);
+  assert.equal(variable.rpm, 550);
+  assert.equal(variable.rows.length, 3);
+
+  const auto = variable.rows.find((row) => row['Atk Name'] === 'VG-70_P (Auto)');
+  const volley = variable.rows.find((row) => row['Atk Name'] === 'VG-70_P (Volley x7)');
+  const total = variable.rows.find((row) => row['Atk Name'] === 'VG-70_P (Total x49)');
+
+  assert.ok(auto);
+  assert.ok(volley);
+  assert.ok(total);
+
+  assert.equal(auto.DMG, '85');
+  assert.equal(auto.DUR, '23');
+  assert.equal(auto.AP, '2');
+  assert.equal(auto.DF, '10');
+  assert.equal(auto.ST, '10');
+  assert.equal(auto.PF, '4');
+
+  assert.equal(volley.DMG, '595');
+  assert.equal(volley.DUR, '161');
+  assert.equal(volley.AP, '2');
+  assert.equal(volley.DF, '10');
+  assert.equal(volley.ST, '10');
+  assert.equal(volley.PF, '4');
+
+  assert.equal(total.DMG, '4165');
+  assert.equal(total.DUR, '1127');
+  assert.equal(total.AP, '2');
+  assert.equal(total.DF, '10');
+  assert.equal(total.ST, '10');
+  assert.equal(total.PF, '4');
 });
