@@ -150,7 +150,7 @@ test('checked-in VG-70 data exposes selectable auto, volley, and total attack ro
 
   const variable = state.groups.find((group) => group.code === 'VG-70' && group.name === 'Variable');
   assert.ok(variable);
-  assert.equal(variable.rpm, 550);
+  assert.equal(variable.rpm, 750);
   assert.equal(variable.rows.length, 3);
 
   const auto = variable.rows.find((row) => row['Atk Name'] === 'VG-70_P (Auto)');
@@ -181,4 +181,29 @@ test('checked-in VG-70 data exposes selectable auto, volley, and total attack ro
   assert.equal(total.DF, '10');
   assert.equal(total.ST, '10');
   assert.equal(total.PF, '4');
+});
+
+test('checked-in selectable RPM weapons use their highest RPM setting', () => {
+  const rows = loadCheckedInWeaponRows();
+
+  assert.equal(
+    rows.find((row) => row.Code === 'AR-61' && row.Name === 'Tenderizer')?.RPM,
+    '850'
+  );
+  assert.equal(
+    rows.find((row) => row.Code === 'VG-70' && row.Name === 'Variable')?.RPM,
+    '750'
+  );
+  assert.equal(
+    rows.find((row) => row.Code === 'MG-43' && row.Name === 'Machine Gun')?.RPM,
+    '900'
+  );
+  assert.equal(
+    rows.find((row) => row.Code === 'M-105' && row.Name === 'Stalwart')?.RPM,
+    '1150'
+  );
+  assert.equal(
+    rows.find((row) => row.Code === 'MG-206' && row.Name === 'Heavy Machine Gun')?.RPM,
+    '750'
+  );
 });

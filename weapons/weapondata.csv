@@ -80,9 +80,9 @@ Primary,SMG,M7S,UNSC SMG,872,projectile,M7S_P,90,18,2,10,10,5,
 Primary,SMG,SMG-72,Pummeler,475,projectile,SMG-72_P,85,18,2,10,15,5,Stun Medium
 Primary,SPC,JAR-5,Dominator,250,projectile,15x100mm STANDARD ROCKET_P,275,90,3,10,35,15,
 Primary,SPC,FMAL-66,Torcher,,spray,FLAM-66 TORCHER_S,2,2,4,10,5,5,Fire
-Primary,SPC,VG-70,Variable,550,projectile,VG-70_P (Auto),85,23,2,10,10,4,
-Primary,SPC,VG-70,Variable,550,projectile,VG-70_P (Volley x7),595,161,2,10,10,4,
-Primary,SPC,VG-70,Variable,550,projectile,VG-70_P (Total x49),4165,1127,2,10,10,4,
+Primary,SPC,VG-70,Variable,750,projectile,VG-70_P (Auto),85,23,2,10,10,4,
+Primary,SPC,VG-70,Variable,750,projectile,VG-70_P (Volley x7),595,161,2,10,10,4,
+Primary,SPC,VG-70,Variable,750,projectile,VG-70_P (Total x49),4165,1127,2,10,10,4,
 Secondary,CQC,CQC-19,Stun Lance,,melee,CQC-19_M,165,83,3,10,35,30,Stun Large
 Secondary,CQC,CQC-2,Saber,,melee,CQC-2_M,188,98,3,10,25,30,
 Secondary,CQC,CQC-30,Stun Baton,,melee,CQC-30_M,75,38,3,10,35,30,Stun Large
@@ -190,9 +190,9 @@ Support,GL,GL-28,Belt-Fed Grenade Launcher,240,explosion,GL_28_P_IE,150,150,4,30
 Support,GL,GL-52,De-Escalator,200,projectile,GL-52_P,20,2,0,10,40,10,
 Support,GL,GL-52,De-Escalator,200,explosion,GL-52_P_IE,0,0,5,0,0,0,
 Support,GL,GL-52,De-Escalator,200,arc,GL-52_P_IE_A,100,70,4,20,35,10,Stun Small
-Support,MG,MG-206,Heavy Machine Gun,600,projectile,12.5mm BCHP RIFLE ROUNDS_P,150,35,4,15,25,20,
-Support,MG,M-105,Stalwart,850,projectile,5.5x50mm FULL METAL JACKET_P,90,22,2,10,15,10,
-Support,MG,MG-43,Machine Gun,760,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
+Support,MG,MG-206,Heavy Machine Gun,750,projectile,12.5mm BCHP RIFLE ROUNDS_P,150,35,4,15,25,20,
+Support,MG,M-105,Stalwart,1150,projectile,5.5x50mm FULL METAL JACKET_P,90,22,2,10,15,10,
+Support,MG,MG-43,Machine Gun,900,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
 Support,MG,M-1000,Maxigun,1500,projectile,8x60mm HIGH VELOCITY P,80,18,3,10,15,12,
 Support,RL,EAT-700,Expendable Napalm,600,projectile,20mm FLAK ROUNDS_P1 x20,200,200,0,30,50,25,
 Support,RL,EAT-700,Expendable Napalm,600,explosion,20mm FLAK ROUNDS_P1_IE x20,50,50,3,30,50,25,BurningHeavy • Fire
