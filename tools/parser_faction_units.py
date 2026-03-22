@@ -22,8 +22,13 @@ Normalization rules:
   - Ignore    : fac_super_earth, fac_helldivers, anything unmapped
 
 Deduping:
-  - If multiple entries for the same unit exist within a faction, the script
-    keeps the one with the most damageable_zones; if tied, the higher health wins.
+  - If multiple entries for the same loc_name exist within a faction, prefer an
+    unsuffixed/base source path when one exists (for example
+    `.../cha_berserker/cha_berserker` over `.../cha_berserker_iron_fleet`)
+  - Within that canonical pool, keep the one with the most damageable_zones; if
+    tied, the higher health wins
+  - Differing non-canonical payloads can be written to `--variant-report` for
+    review without polluting the main export
 
 Zone field filtering/renames:
   - ignore: affected_by_collision_impact, armor_angle_check, child_zones,
@@ -146,6 +151,7 @@ FATAL_KEYS = [
 ]
 
 EXPLOSIVE_UNSET_SENTINEL = 3.4028235e+38
+DUPLICATE_SUFFIX_RE = re.compile(r"__dup\d+$")
 
 def normalize_ex_target(v: Any):
     if isinstance(v, bool):
@@ -289,14 +295,108 @@ def _score_payload(payload: Dict[str, Any]) -> tuple:
     health = payload.get("health") or 0
     return (zlen, health)
 
+def strip_duplicate_suffix(source_key: Any) -> str:
+    if not isinstance(source_key, str):
+        return ""
+    return DUPLICATE_SUFFIX_RE.sub("", source_key)
 
-def _best_payload(a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
-    return a if _score_payload(a) >= _score_payload(b) else b
+def has_unsuffixed_source_path(source_key: Any) -> bool:
+    cleaned = strip_duplicate_suffix(source_key)
+    if not cleaned:
+        return False
+
+    segments = [segment for segment in cleaned.split("/") if segment]
+    if len(segments) < 2:
+        return False
+
+    return segments[-1] == segments[-2]
+
+def _candidate_sort_key(candidate: Dict[str, Any]) -> tuple:
+    source_key = strip_duplicate_suffix(candidate.get("source_key"))
+    zone_count, health = _score_payload(candidate)
+    return (
+        0 if has_unsuffixed_source_path(source_key) else 1,
+        0 if "__" not in source_key else 1,
+        -zone_count,
+        -health,
+        len(source_key),
+        source_key,
+    )
+
+def _best_candidate(candidates: list[Dict[str, Any]]) -> Dict[str, Any]:
+    return sorted(candidates, key=_candidate_sort_key)[0]
+
+def _canonical_payload(candidate: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "health": candidate.get("health"),
+        "damageable_zones": candidate.get("damageable_zones"),
+    }
+
+def _payload_signature(candidate: Dict[str, Any]) -> str:
+    return json.dumps(
+        _canonical_payload(candidate),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+def _compact_candidate(candidate: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "source_key": strip_duplicate_suffix(candidate.get("source_key")),
+        "health": candidate.get("health"),
+        "zone_count": len(candidate.get("damageable_zones") or []),
+        "unsuffixed_source_path": has_unsuffixed_source_path(candidate.get("source_key")),
+    }
+
+def resolve_unit_candidates(candidates: list[Dict[str, Any]]) -> tuple[Dict[str, Any], Dict[str, Any] | None]:
+    canonical_pool = [candidate for candidate in candidates if has_unsuffixed_source_path(candidate.get("source_key"))]
+    if not canonical_pool:
+        canonical_pool = candidates
+
+    canonical_candidate = _best_candidate(canonical_pool)
+    canonical_signature = _payload_signature(canonical_candidate)
+
+    signature_groups: "OrderedDict[str, list[Dict[str, Any]]]" = OrderedDict()
+    for candidate in candidates:
+        signature_groups.setdefault(_payload_signature(candidate), []).append(candidate)
+
+    variant_groups: list[Dict[str, Any]] = []
+    for signature, matches in signature_groups.items():
+        if signature == canonical_signature:
+            continue
+        representative = _best_candidate(matches)
+        variant_groups.append(
+            {
+                "representative": _compact_candidate(representative),
+                "source_keys": sorted(
+                    {strip_duplicate_suffix(candidate.get("source_key")) for candidate in matches}
+                ),
+            }
+        )
+
+    variant_groups.sort(
+        key=lambda group: (
+            0 if group["representative"]["unsuffixed_source_path"] else 1,
+            -group["representative"]["zone_count"],
+            -(group["representative"]["health"] or 0),
+            group["representative"]["source_key"],
+        )
+    )
+
+    variant_report = None
+    if variant_groups:
+        variant_report = {
+            "canonical": _compact_candidate(canonical_candidate),
+            "variants": variant_groups,
+        }
+
+    return _canonical_payload(canonical_candidate), variant_report
 
 
-def parse_enemy_units(src: dict) -> dict:
-    """Return {Faction: {UnitName: {health, damageable_zones}}}."""
-    per_faction: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(dict)
+def parse_enemy_units(src: dict) -> tuple[dict, dict]:
+    """Return ({Faction: {UnitName: {health, damageable_zones}}}, variant_report)."""
+    per_faction_candidates: Dict[str, Dict[str, list[Dict[str, Any]]]] = defaultdict(lambda: defaultdict(list))
+    variant_report: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(dict)
 
     for key, payload in src.items():
         if not isinstance(key, str) or not isinstance(payload, dict):
@@ -351,17 +451,23 @@ def parse_enemy_units(src: dict) -> dict:
 
         # Build a trimmed view of the payload we care about
         current = {
+            "source_key": key,
             "health": payload.get("health"),
             "damageable_zones": zones,
         }
 
-        if unit_name in per_faction[faction]:
-            per_faction[faction][unit_name] = _best_payload(per_faction[faction][unit_name], current)
-        else:
-            per_faction[faction][unit_name] = current
+        per_faction_candidates[faction][unit_name].append(current)
+
+    per_faction: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(dict)
+    for faction, units in per_faction_candidates.items():
+        for unit_name, candidates in units.items():
+            canonical_payload, unit_variant_report = resolve_unit_candidates(candidates)
+            per_faction[faction][unit_name] = canonical_payload
+            if unit_variant_report:
+                variant_report[faction][unit_name] = unit_variant_report
 
     # Stable alphabetical unit order by key when serialized (sort_keys=True on dump)
-    return per_faction
+    return per_faction, variant_report
 
 # --- CLI ------------------------------------------------------------------
 
@@ -370,6 +476,11 @@ def main():
     ap = argparse.ArgumentParser(description="Extract enemy units grouped by faction with health and damageable_zones.")
     ap.add_argument("-i", "--input", default="Filtered_Health.json", help="Path to master JSON")
     ap.add_argument("-o", "--output", default="enemydata.json", help="Path to write grouped JSON")
+    ap.add_argument(
+        "--variant-report",
+        default="",
+        help="Optional path to write non-canonical same-name payload variants for review.",
+    )
     args = ap.parse_args()
 
     # Validate input file path
@@ -400,18 +511,38 @@ def main():
     with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    result = parse_enemy_units(data)
+    result, variant_report = parse_enemy_units(data)
 
     # Convert defaultdicts to plain dicts for serialization
     result_out = {fac: dict(units) for fac, units in result.items()}
+    variant_report_out = {
+        fac: dict(units)
+        for fac, units in variant_report.items()
+        if units
+    }
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result_out, f, ensure_ascii=False, indent=2, sort_keys=True)
+
+    variant_report_path = args.variant_report.strip()
+    if variant_report_path:
+        variant_report_dir = os.path.dirname(variant_report_path)
+        if variant_report_dir and not os.path.exists(variant_report_dir):
+            try:
+                os.makedirs(variant_report_dir, exist_ok=True)
+            except OSError as e:
+                ap.error(f"Cannot create variant report directory '{variant_report_dir}': {e}")
+        with open(variant_report_path, "w", encoding="utf-8") as f:
+            json.dump(variant_report_out, f, ensure_ascii=False, indent=2, sort_keys=True)
+        print(f"Wrote {variant_report_path} with {sum(len(units) for units in variant_report_out.values())} variant groups.")
 
     total_units = sum(len(units) for units in result_out.values())
     print(f"Wrote {output_path} with {total_units} units across {len(result_out)} factions.")
     for fac in sorted(result_out.keys()):
         print(f"- {fac}: {len(result_out[fac])}")
+    if variant_report_out and not variant_report_path:
+        total_variant_groups = sum(len(units) for units in variant_report_out.values())
+        print(f"- Review note: {total_variant_groups} same-name variant groups were detected; re-run with --variant-report to inspect them.")
 
 if __name__ == "__main__":
     main()

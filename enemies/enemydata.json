@@ -440,7 +440,7 @@
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 1000,
+          "health": 750,
           "zone_name": "Main"
         },
         {
@@ -450,27 +450,27 @@
           "IsFatal": true,
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 150,
+          "health": 110,
           "zone_name": "head"
         },
         {
-          "AV": 1,
+          "AV": 2,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 1,
           "ToMain%": 1,
-          "health": -1,
+          "health": 425,
           "zone_name": "chest_left"
         },
         {
-          "AV": 0,
+          "AV": 1,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 1,
           "ToMain%": 1,
-          "health": -1,
+          "health": 350,
           "zone_name": "boss"
         },
         {
@@ -479,8 +479,8 @@
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 1,
-          "ToMain%": 1,
-          "health": -1,
+          "ToMain%": 0.65,
+          "health": 600,
           "zone_name": "pelvis"
         },
         {
@@ -502,26 +502,26 @@
           "zone_name": "shoulderplate_right"
         },
         {
-          "AV": 0,
-          "Dur%": 0,
-          "ExTarget": "Part",
+          "AV": 1,
+          "Dur%": 0.3,
+          "ExTarget": "Main",
           "MainCap": 1,
-          "ToMain%": 0.3,
-          "health": 300,
+          "ToMain%": 0.5,
+          "health": 260,
           "zone_name": "right_arm"
         },
         {
-          "AV": 0,
-          "Dur%": 0,
-          "ExTarget": "Part",
+          "AV": 1,
+          "Dur%": 0.3,
+          "ExTarget": "Main",
           "MainCap": 1,
-          "ToMain%": 0.3,
-          "health": 300,
+          "ToMain%": 0.5,
+          "health": 260,
           "zone_name": "left_arm"
         },
         {
           "AV": 1,
-          "Dur%": 0,
+          "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 1,
@@ -531,7 +531,7 @@
         },
         {
           "AV": 1,
-          "Dur%": 0,
+          "Dur%": 0.3,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 1,
@@ -540,7 +540,7 @@
           "zone_name": "left_leg"
         }
       ],
-      "health": 1000
+      "health": 750
     },
     "Brawler": {
       "damageable_zones": [

@@ -87,7 +87,7 @@ Step 3: run the existing parser
 PowerShell:
 
     Set-Location C:\GitHub\supercalc
-    python .\tools\parser_faction_units.py --input C:\temp\entity-component-settings-flat.json --output C:\temp\enemydata-from-filediver.json
+    python .\tools\parser_faction_units.py --input C:\temp\entity-component-settings-flat.json --output C:\temp\enemydata-from-filediver.json --variant-report C:\temp\enemydata-variants.json
 
 The parser now preserves Constitution bleed-rate metadata from the raw health
 component:
@@ -100,6 +100,14 @@ This is important because zone-level `bleedout_enabled` is not reliable enough
 on its own for cases like Voteless arms, which have Constitution and do bleed
 despite carrying `bleedout_enabled: false` in the raw zone record.
 
+When multiple raw payloads share the same `loc_name`, the parser now prefers an
+unsuffixed/base source path as the canonical export when one exists. This keeps
+standard units such as `Berserker` from being silently replaced by suffixed
+variant payloads like `..._iron_fleet`.
+
+Any differing same-name payloads are written to the optional `--variant-report`
+output for manual review.
+
 
 Step 4: review before checking in
 ---------------------------------
@@ -110,6 +118,11 @@ PowerShell:
 
 Do not blindly overwrite `enemies\enemydata.json`. The generated file is review
 input, not the checked-in source of truth.
+
+Review `C:\temp\enemydata-variants.json` alongside the normal compare report
+when the parser detects same-name payload variants. At the time of writing, this
+is useful for cases like `Berserker`, where a suffixed Iron Fleet payload should
+not replace the standard canonical export.
 
 The comparison helper:
 

@@ -838,6 +838,38 @@ test('real Factory Strider front body uses zero-bleed Constitution display metad
   assert.equal(conInfo.sortValue, 1200);
 });
 
+test('real Berserker keeps the standard canonical stats instead of the Iron Fleet variant', () => {
+  const enemy = getEnemyByName('Berserker');
+  const head = enemy.zones.find((zone) => zone.zone_name === 'head');
+  const chestLeft = enemy.zones.find((zone) => zone.zone_name === 'chest_left');
+  const boss = enemy.zones.find((zone) => zone.zone_name === 'boss');
+  const pelvis = enemy.zones.find((zone) => zone.zone_name === 'pelvis');
+  const rightArm = enemy.zones.find((zone) => zone.zone_name === 'right_arm');
+
+  assert.equal(enemy.health, 750);
+  assert.ok(head);
+  assert.equal(head.health, 110);
+  assert.equal(head.AV, 1);
+
+  assert.ok(chestLeft);
+  assert.equal(chestLeft.health, 425);
+  assert.equal(chestLeft.AV, 2);
+
+  assert.ok(boss);
+  assert.equal(boss.health, 350);
+  assert.equal(boss.AV, 1);
+
+  assert.ok(pelvis);
+  assert.equal(pelvis.health, 600);
+  assert.equal(pelvis['ToMain%'], 0.65);
+
+  assert.ok(rightArm);
+  assert.equal(rightArm.health, 260);
+  assert.equal(rightArm.AV, 1);
+  assert.equal(rightArm.ExTarget, 'Main');
+  assert.equal(rightArm['ToMain%'], 0.5);
+});
+
 test('real Voteless arm keeps Constitution bleed rate and does not use zero-bleed display', () => {
   const enemy = getEnemyByName('Voteless');
   const rightArm = enemy.zones.find((zone) => zone.zone_name === 'arm_r');
