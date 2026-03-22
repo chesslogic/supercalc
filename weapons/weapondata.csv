@@ -180,9 +180,9 @@ Support,CQC,CQC-1,One True Flag,,melee,CQC-1_M,200,100,3,10,35,30,Stun Large
 Support,CQC,CQC-9,Defoliation Tool,,melee,CQC-9_M,450,225,3,10,10,30,DMG/DUR/AP increases over time
 Support,CQC,-,Entrenchment Tool,,melee,Entrenchment_Tool_M,110,55,3,10,25,30,
 Support,CQC,CQC-20,Breaching Hammer,,melee,CQC-20_M,300,150,3,30,40,10,
-Support,CQC,CQC-20,Breaching Hammer,,explosion,CQC-20_M_IE,2100,2100,6,30,50,40,
-Support,GL,GL-21,Grenade Launcher,160,projectile,40mm HE GRENADE_P,20,2,0,10,40,10,
-Support,GL,GL-21,Grenade Launcher,160,explosion,40mm HE GRENADE_P_IE,400,400,4,30,25,30,
+Support,CQC,CQC-20,Breaching Hammer,,explosion,CQC-20_M_IE,2200,2200,6,30,50,40,
+Support,GL,GL-21,Grenade Launcher,160,projectile,40mm HE GRENADE_P,0,0,4,10,30,10,
+Support,GL,GL-21,Grenade Launcher,160,explosion,40mm HE GRENADE_P_IE,400,400,3,30,25,30,
 Support,GL,GL-28,Belt-Fed Grenade Launcher,240,projectile,GL_28_P,0,0,4,10,30,10,
 Support,GL,GL-28,Belt-Fed Grenade Launcher,240,explosion,GL_28_P_IE,150,150,4,30,20,20,
 Support,GL,GL-52,De-Escalator,200,projectile,GL-52_P,20,2,0,10,40,10,
