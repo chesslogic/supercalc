@@ -360,6 +360,32 @@ tbody tr:hover {
 }
 .dropdown-item:hover{background:#242424; color:var(--accent)}
 .dropdown-item:last-child{border-bottom:none}
+.weapon-dropdown-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.weapon-dropdown-label{
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.weapon-dropdown-ap{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:flex-start;
+  gap:1px;
+  font-weight:700;
+  line-height:1;
+}
+.weapon-dropdown-ap-marker{
+  color:var(--muted);
+  font-size:11px;
+  line-height:1;
+}
 
 .calculator-details-panel{
   background:#171717; border:2px solid var(--border); padding:12px; overflow-y:auto; overflow-x:hidden; width:100%; max-height:35vh

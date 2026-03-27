@@ -9,6 +9,7 @@ import {
   setSelectedWeapon
 } from './data.js';
 import { getEnemyDropdownQueryState } from './selector-utils.js';
+import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
 import { renderWeaponDetails, renderEnemyDetails } from './rendering.js';
@@ -150,7 +151,7 @@ function setupWeaponSelector(slot) {
   let isOpen = false;
 
   function populateDropdown(query = '') {
-    const options = getWeaponOptions();
+    const options = getWeaponOptions(slot);
 
     if (!options || options.length === 0) {
       weaponDropdown.innerHTML = '';
@@ -182,18 +183,32 @@ function setupWeaponSelector(slot) {
 
     filteredOptions.forEach((weapon) => {
       const item = document.createElement('div');
-      item.className = 'dropdown-item';
+      item.className = 'dropdown-item weapon-dropdown-item';
 
-      const type = weapon.type || '';
-      const sub = weapon.sub || '';
-      const code = weapon.code || '';
-      const name = weapon.name || '';
-      const displayText = `[${type}]${sub ? `[${sub}]` : ''}${code} ${name}`;
+      const displayModel = getWeaponOptionDisplayModel(weapon);
+      item.title = displayModel.apTitle;
 
-      item.textContent = displayText;
+      const label = document.createElement('span');
+      label.className = 'weapon-dropdown-label';
+      label.textContent = displayModel.labelText;
+      item.appendChild(label);
+
+      const apValue = document.createElement('span');
+      apValue.className = `weapon-dropdown-ap ${displayModel.apClassName}`.trim();
+      apValue.title = displayModel.apTitle;
+      apValue.textContent = displayModel.apText;
+
+      if (displayModel.apMarkerText) {
+        const marker = document.createElement('span');
+        marker.className = 'weapon-dropdown-ap-marker';
+        marker.textContent = displayModel.apMarkerText;
+        apValue.appendChild(marker);
+      }
+
+      item.appendChild(apValue);
       item.addEventListener('click', () => {
         setSelectedWeapon(slot, weapon);
-        weaponInput.value = displayText || weapon.name;
+        weaponInput.value = displayModel.labelText || weapon.name;
         closeDropdown();
         renderWeaponDetails();
         renderEnemyDetails();

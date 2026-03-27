@@ -1,10 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { calculatorState, setEnemyTableMode } from '../calculator/data.js';
+import { state as weaponsState } from '../weapons/data.js';
+import { calculatorState, getWeaponOptions, setCalculatorMode, setEnemyTableMode, setSelectedWeapon } from '../calculator/data.js';
 import { getEnemyColumnsForState, getOverviewColumnsForState } from '../calculator/rendering.js';
 import { getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
 import { getCalculatorModeButtonTitle } from '../calculator/ui.js';
+import {
+  getWeaponDropdownApInfo,
+  getWeaponOptionDisplayModel,
+  getWeaponRowPreviewHitCount,
+  sortWeaponOptionsForReference
+} from '../calculator/weapon-dropdown.js';
 import {
   applyExplosiveDisplayToCell,
   EXPLOSIVE_DISPLAY_COLUMN_LABEL,
@@ -47,6 +54,31 @@ test('enemy dropdown does not offer overview in single mode', () => {
   assert.equal(state.effectiveQuery, '');
   assert.equal(state.showOverviewOption, false);
 });
+
+function makeWeapon(name, {
+  type = 'Primary',
+  sub = 'AR',
+  code = '',
+  index = 0,
+  rows = []
+} = {}) {
+  return {
+    name,
+    type,
+    sub,
+    code,
+    index,
+    rows
+  };
+}
+
+function makeAttackRow(ap, dmg, dur = dmg) {
+  return {
+    AP: ap,
+    DMG: dmg,
+    DUR: dur
+  };
+}
 
 test('enemy table mode defaults to analysis and normalizes to supported values', () => {
   setEnemyTableMode('analysis');
@@ -109,6 +141,187 @@ test('calculator mode buttons expose descriptive hover titles', () => {
     getCalculatorModeButtonTitle('compare'),
     'Two weapons side-by-side for each enemy component. Try the Overview enemy!'
   );
+});
+
+test('weapon dropdown AP preview ignores zero or insignificant high-AP rows', () => {
+  const grenadeLauncher = makeWeapon('Grenade Launcher', {
+    type: 'Support',
+    sub: 'GL',
+    code: 'GL-21',
+    rows: [
+      makeAttackRow(4, 20, 2),
+      makeAttackRow(3, 400, 400)
+    ]
+  });
+
+  const info = getWeaponDropdownApInfo(grenadeLauncher);
+  assert.equal(info.displayAp, 3);
+  assert.equal(info.hasCaveat, false);
+  assert.deepEqual(info.significantAps, [3]);
+});
+
+test('weapon dropdown preview caps multi-projectile rows at three estimated hits', () => {
+  assert.equal(getWeaponRowPreviewHitCount({ 'Atk Name': 'SHRAPNEL_P x30', DMG: 110, DUR: 35, AP: 3 }), 3);
+  assert.equal(getWeaponRowPreviewHitCount({ 'Atk Name': 'LAS-16_Trident_B x6', DMG: 60, DUR: 6, AP: 2 }), 3);
+  assert.equal(getWeaponRowPreviewHitCount({ 'Atk Name': '5.5x50mm FULL METAL JACKET_P', DMG: 90, DUR: 22, AP: 2 }), 1);
+});
+
+test('weapon dropdown AP preview keeps max AP and marks significant secondary AP tiers', () => {
+  const eruptor = makeWeapon('Eruptor', {
+    type: 'Primary',
+    sub: 'EXP',
+    code: 'R-36',
+    rows: [
+      { ...makeAttackRow(4, 230, 115), 'Atk Name': '15x100mm HIGH EXPLOSIVE_P' },
+      { ...makeAttackRow(3, 225, 225), 'Atk Name': '15x100mm HIGH EXPLOSIVE_P_IE' },
+      { ...makeAttackRow(3, 110, 35), 'Atk Name': 'SHRAPNEL_P x30' }
+    ]
+  });
+
+  const info = getWeaponDropdownApInfo(eruptor);
+  assert.equal(info.displayAp, 4);
+  assert.equal(info.hasCaveat, true);
+  assert.deepEqual(info.significantAps, [3, 4]);
+  assert.deepEqual(info.significantSecondaryAps, [3]);
+});
+
+test('weapon dropdown display model exposes a compact colored AP value and caveat marker', () => {
+  const display = getWeaponOptionDisplayModel(makeWeapon('Eruptor', {
+    type: 'Primary',
+    sub: 'EXP',
+    code: 'R-36',
+    rows: [
+      { ...makeAttackRow(4, 230, 115), 'Atk Name': '15x100mm HIGH EXPLOSIVE_P' },
+      { ...makeAttackRow(3, 225, 225), 'Atk Name': '15x100mm HIGH EXPLOSIVE_P_IE' },
+      { ...makeAttackRow(3, 110, 35), 'Atk Name': 'SHRAPNEL_P x30' }
+    ]
+  }));
+
+  assert.equal(display.labelText, '[Primary][EXP]R-36 Eruptor');
+  assert.equal(display.apText, '4');
+  assert.equal(display.apMarkerText, '*');
+  assert.equal(display.apClassName, 'ap-yellow');
+  assert.match(display.apTitle, /significant AP 3/i);
+});
+
+test('compare-mode AP sorting floats same-AP peers before the rest', () => {
+  const referenceWeapon = makeWeapon('Liberator Carbine', {
+    type: 'Primary',
+    sub: 'AR',
+    code: 'AR-23A',
+    rows: [makeAttackRow(2, 90, 22)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', rows: [makeAttackRow(3, 75, 10)] }),
+    makeWeapon('Tenderizer', { type: 'Primary', sub: 'AR', code: 'AR-61', rows: [makeAttackRow(2, 105, 30)] }),
+    makeWeapon('Expendable Anti-Tank', { type: 'Support', sub: 'RL', code: 'EAT-17', rows: [makeAttackRow(6, 650, 650)] }),
+    makeWeapon('Diligence', { type: 'Primary', sub: 'DMR', code: 'R-63', rows: [makeAttackRow(2, 165, 45)] })
+  ], referenceWeapon);
+
+  const names = sorted.map((weapon) => weapon.name);
+  assert.deepEqual(names.slice(0, 2), ['Tenderizer', 'Diligence']);
+});
+
+test('compare-mode AP sorting keeps caveated mixed-profile weapons between clean matches and the rest', () => {
+  const referenceWeapon = makeWeapon('Adjudicator', {
+    type: 'Primary',
+    sub: 'AR',
+    code: 'BR-14',
+    rows: [makeAttackRow(3, 95, 23)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('Tenderizer', { type: 'Primary', sub: 'AR', code: 'AR-61', rows: [makeAttackRow(2, 105, 30)] }),
+    makeWeapon('Eruptor', {
+      type: 'Primary',
+      sub: 'EXP',
+      code: 'R-36',
+      rows: [
+        { ...makeAttackRow(4, 230, 115), 'Atk Name': '15x100mm HIGH EXPLOSIVE_P' },
+        { ...makeAttackRow(3, 225, 225), 'Atk Name': '15x100mm HIGH EXPLOSIVE_P_IE' },
+        { ...makeAttackRow(3, 110, 35), 'Atk Name': 'SHRAPNEL_P x30' }
+      ]
+    }),
+    makeWeapon('Diligence Counter Sniper', { type: 'Primary', sub: 'DMR', code: 'R-63CS', rows: [makeAttackRow(3, 200, 50)] })
+  ], referenceWeapon);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Diligence Counter Sniper',
+    'Eruptor',
+    'Tenderizer'
+  ]);
+});
+
+test('compare-mode AP sorting groups anti-tank weapons together for AP5+ references', () => {
+  const referenceWeapon = makeWeapon('Recoilless Rifle', {
+    type: 'Support',
+    sub: 'RL',
+    code: 'GR-8',
+    rows: [makeAttackRow(6, 3200, 3200)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', rows: [makeAttackRow(3, 75, 10)] }),
+    makeWeapon('Commando', { type: 'Support', sub: 'RL', code: 'MLS-4X', rows: [makeAttackRow(5, 1200, 1200)] }),
+    makeWeapon('HMG Emplacement', { type: 'Stratagem', sub: 'EMP', code: 'E/MG-101', rows: [makeAttackRow(4, 200, 40)] }),
+    makeWeapon('Quasar Cannon', { type: 'Support', sub: 'EP', code: 'LAS-99', rows: [makeAttackRow(6, 2000, 2000)] })
+  ], referenceWeapon);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Quasar Cannon',
+    'Commando',
+    'Coyote',
+    'HMG Emplacement'
+  ]);
+});
+
+test('getWeaponOptions uses the opposite compare slot as the AP sorting reference', () => {
+  const previousGroups = weaponsState.groups;
+  const previousMode = calculatorState.mode;
+  const previousWeaponA = calculatorState.weaponA;
+  const previousWeaponB = calculatorState.weaponB;
+  const previousSelectedAttackKeys = {
+    A: [...calculatorState.selectedAttackKeys.A],
+    B: [...calculatorState.selectedAttackKeys.B]
+  };
+  const previousAttackHitCounts = {
+    A: { ...calculatorState.attackHitCounts.A },
+    B: { ...calculatorState.attackHitCounts.B }
+  };
+
+  try {
+    const referenceWeapon = makeWeapon('Reference AP2', {
+      type: 'Primary',
+      sub: 'AR',
+      code: 'REF-2',
+      rows: [makeAttackRow(2, 90, 22)]
+    });
+    weaponsState.groups = [
+      makeWeapon('Liberator Carbine', {
+        type: 'Primary',
+        sub: 'AR',
+        code: 'AR-23A',
+        index: 0,
+        rows: [makeAttackRow(2, 90, 22)]
+      }),
+      makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', index: 1, rows: [makeAttackRow(3, 75, 10)] }),
+      makeWeapon('Tenderizer', { type: 'Primary', sub: 'AR', code: 'AR-61', index: 2, rows: [makeAttackRow(2, 105, 30)] }),
+      makeWeapon('Diligence', { type: 'Primary', sub: 'DMR', code: 'R-63', index: 3, rows: [makeAttackRow(2, 165, 45)] })
+    ];
+
+    setCalculatorMode('compare');
+    setSelectedWeapon('A', referenceWeapon);
+
+    assert.deepEqual(
+      getWeaponOptions('B').map((weapon) => weapon.name),
+      ['Liberator Carbine', 'Tenderizer', 'Diligence', 'Coyote']
+    );
+  } finally {
+    weaponsState.groups = previousGroups;
+    calculatorState.mode = previousMode;
+    calculatorState.weaponA = previousWeaponA;
+    calculatorState.weaponB = previousWeaponB;
+    calculatorState.selectedAttackKeys = previousSelectedAttackKeys;
+    calculatorState.attackHitCounts = previousAttackHitCounts;
+  }
 });
 
 test('explosive display shows missing multipliers as zero reduction', () => {

@@ -2,6 +2,11 @@
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
 import { getAttackRowKey, getDefaultSelectedAttackKeys, getPreferredZoneIndex } from './compare-utils.js';
+import {
+  compareWeaponOptionBaseOrder,
+  getWeaponDropdownApInfo,
+  sortWeaponOptionsForReference
+} from './weapon-dropdown.js';
 
 const DEFAULT_ENEMY_SORT = {
   key: 'zone_name',
@@ -47,14 +52,12 @@ export const calculatorState = {
   enemySort: { ...DEFAULT_ENEMY_SORT }
 };
 
-export function getWeaponOptions() {
+export function getWeaponOptions(slot = 'A') {
   if (!weaponsState.groups) {
     return [];
   }
 
-  const typeOrder = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
-
-  return weaponsState.groups
+  const options = weaponsState.groups
     .map((group) => ({
       id: group.name,
       name: group.name,
@@ -62,26 +65,23 @@ export function getWeaponOptions() {
       sub: group.sub,
       code: group.code,
       rpm: group.rpm,
-      rows: group.rows
+      rows: group.rows,
+      index: group.index,
+      apInfo: getWeaponDropdownApInfo(group)
     }))
-    .sort((a, b) => {
-      const aTypeIndex = typeOrder.indexOf(a.type?.toLowerCase() || '');
-      const bTypeIndex = typeOrder.indexOf(b.type?.toLowerCase() || '');
+    .sort(compareWeaponOptionBaseOrder);
 
-      if (aTypeIndex !== bTypeIndex) {
-        if (aTypeIndex === -1 && bTypeIndex >= 0) {
-          return 1;
-        }
+  if (calculatorState.mode !== 'compare') {
+    return options;
+  }
 
-        if (aTypeIndex >= 0 && bTypeIndex === -1) {
-          return -1;
-        }
+  const otherSlot = normalizeSlot(slot) === 'B' ? 'A' : 'B';
+  const referenceWeapon = calculatorState[getWeaponStateKey(otherSlot)] || null;
+  if (!referenceWeapon) {
+    return options;
+  }
 
-        return aTypeIndex - bTypeIndex;
-      }
-
-      return (a.code || '').localeCompare(b.code || '');
-    });
+  return sortWeaponOptionsForReference(options, referenceWeapon);
 }
 
 export function getEnemyOptions() {
