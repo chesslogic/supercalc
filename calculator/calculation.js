@@ -11,6 +11,7 @@ import {
 } from './data.js';
 import { buildHallOfFameEntries, buildOverviewRows, getAttackRowKey } from './compare-utils.js';
 import { splitAttacksByApplication } from './attack-types.js';
+import { formatDamageValue } from './damage-rounding.js';
 import { formatTtkSeconds } from './summary.js';
 import { summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
@@ -151,21 +152,11 @@ export function calculateDamage(slot = 'A') {
 }
 
 function buildDamageFormulaText(attackResult) {
-  const apMultiText = attackResult.ap < attackResult.av ? '0 (AP < AV)' :
-    attackResult.ap === attackResult.av ? '0.65 (AP = AV)' :
-      '1.0 (AP > AV)';
   const dmgMultiplied = attackResult.dmg * (1 - attackResult.durPercent);
   const durMultiplied = attackResult.dur * attackResult.durPercent;
   const exMultValue = attackResult.isExplosion ? attackResult.explosionModifier : 1.0;
-  const exMultTextExpanded = attackResult.isExplosion
-    ? (
-      attackResult.explosionModifier === 0
-        ? '0 (ExMult: immune)'
-        : `${attackResult.explosionModifier} (${attackResult.hasExplicitExplosionMultiplier ? 'ExMult' : 'implicit ExMult'})`
-    )
-    : '1.0';
 
-  return `= (${dmgMultiplied.toFixed(2)} + ${durMultiplied.toFixed(2)}) × ${exMultValue} × ${attackResult.damageMultiplier} = ((${attackResult.dmg} × (1 - ${attackResult.durPercent})) + (${attackResult.dur} × ${attackResult.durPercent})) × ${exMultTextExpanded} × ${apMultiText}`;
+  return `= floor((${formatDamageValue(dmgMultiplied)} + ${formatDamageValue(durMultiplied)}) × ${formatDamageValue(exMultValue)} × ${formatDamageValue(attackResult.damageMultiplier)}) = ${formatDamageValue(attackResult.damage)}`;
 }
 
 function normalizeZoneName(value) {
@@ -283,7 +274,7 @@ function appendAttackApplication(leftContent, application) {
   const damageValue = document.createElement('span');
   const hasZoneDamage = application.zoneDamage > 0;
   damageValue.className = hasZoneDamage ? 'calc-damage-value' : 'calc-damage-value muted';
-  damageValue.textContent = `${application.zoneName}: ${application.zoneDamage.toFixed(2)} zone`;
+  damageValue.textContent = `${application.zoneName}: ${formatDamageValue(application.zoneDamage)} zone`;
   applicationLine.appendChild(damageValue);
 
   if (application.attackResult) {
@@ -306,7 +297,7 @@ function appendAttackApplication(leftContent, application) {
 
     const mainDamageValue = document.createElement('span');
     mainDamageValue.className = 'calc-main-damage-value';
-    mainDamageValue.textContent = `Main: ${application.totalMainDamage.toFixed(2)} (${application.directMainDamage.toFixed(2)} direct + ${application.passthroughMainDamage.toFixed(2)} passthrough)`;
+    mainDamageValue.textContent = `Main: ${formatDamageValue(application.totalMainDamage)} (${formatDamageValue(application.directMainDamage)} direct + ${formatDamageValue(application.passthroughMainDamage)} passthrough)`;
     mainDamageResult.appendChild(mainDamageValue);
     leftContent.appendChild(mainDamageResult);
   }
@@ -336,7 +327,7 @@ function appendAttackCard(container, slot, attack, attackKey, index) {
 
   const attackTotals = document.createElement('div');
   attackTotals.className = 'calc-main-damage-line';
-  attackTotals.textContent = `Cycle total: ${attack.totalZoneDamagePerCycle.toFixed(2)} zone • ${attack.totalDamageToMainPerCycle.toFixed(2)} main`;
+  attackTotals.textContent = `Cycle total: ${formatDamageValue(attack.totalZoneDamagePerCycle)} zone • ${formatDamageValue(attack.totalDamageToMainPerCycle)} main`;
   attackTotals.classList.add('calc-damage-value', 'muted');
   leftContent.appendChild(attackTotals);
   attackCard.appendChild(leftContent);
@@ -455,9 +446,9 @@ function appendTotalCard(container, results) {
     numerator.className = 'calc-fraction-numerator';
     numerator.textContent = `${zoneHealth}`;
 
-    const denominator = document.createElement('div');
-    denominator.className = 'calc-fraction-denominator';
-    denominator.textContent = `${totalDamagePerCycle.toFixed(2)}`;
+      const denominator = document.createElement('div');
+      denominator.className = 'calc-fraction-denominator';
+      denominator.textContent = `${formatDamageValue(totalDamagePerCycle)}`;
 
     fraction.appendChild(numerator);
     fraction.appendChild(denominator);
@@ -488,9 +479,9 @@ function appendTotalCard(container, results) {
       conNumerator.className = 'calc-fraction-numerator';
       conNumerator.textContent = `${zoneHealth + zoneCon}`;
 
-      const conDenominator = document.createElement('div');
-      conDenominator.className = 'calc-fraction-denominator';
-      conDenominator.textContent = `${totalDamagePerCycle.toFixed(2)}`;
+        const conDenominator = document.createElement('div');
+        conDenominator.className = 'calc-fraction-denominator';
+        conDenominator.textContent = `${formatDamageValue(totalDamagePerCycle)}`;
 
       conFraction.appendChild(conNumerator);
       conFraction.appendChild(conDenominator);
@@ -516,7 +507,7 @@ function appendTotalCard(container, results) {
 
     zoneDamageDisplay.classList.add('calc-damage-value');
   } else {
-    zoneDamageDisplay.textContent = `${totalDamagePerCycle.toFixed(2)}`;
+    zoneDamageDisplay.textContent = `${formatDamageValue(totalDamagePerCycle)}`;
     zoneDamageDisplay.classList.add('calc-damage-value', 'muted');
   }
   zoneDamageContainer.appendChild(zoneDamageDisplay);
@@ -541,9 +532,9 @@ function appendTotalCard(container, results) {
     numerator.className = 'calc-fraction-numerator';
     numerator.textContent = `${enemyMainHealth}`;
 
-    const denominator = document.createElement('div');
-    denominator.className = 'calc-fraction-denominator';
-    denominator.textContent = `${totalDamageToMainPerCycle.toFixed(2)}`;
+      const denominator = document.createElement('div');
+      denominator.className = 'calc-fraction-denominator';
+      denominator.textContent = `${formatDamageValue(totalDamageToMainPerCycle)}`;
 
     fraction.appendChild(numerator);
     fraction.appendChild(denominator);
@@ -567,7 +558,7 @@ function appendTotalCard(container, results) {
     mainDamageDisplay.appendChild(result);
     mainDamageDisplay.classList.add('calc-main-damage-value');
   } else {
-    mainDamageDisplay.textContent = `${totalDamageToMainPerCycle.toFixed(2)}`;
+    mainDamageDisplay.textContent = `${formatDamageValue(totalDamageToMainPerCycle)}`;
     mainDamageDisplay.classList.add('calc-main-damage-value', 'muted');
   }
   mainDamageContainer.appendChild(mainDamageDisplay);

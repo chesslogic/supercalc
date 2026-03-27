@@ -1,5 +1,6 @@
 import { isExplosiveAttack } from './attack-types.js';
 import { buildKillSummary } from './summary.js';
+import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 
 function toNumber(value, fallback = 0) {
@@ -155,10 +156,12 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
   const dur = toNumber(attack?.DUR);
   const durPercent = toNumber(zone?.['Dur%']);
   const rawBaseDamage = (dmg * (1 - durPercent)) + (dur * durPercent);
-  const damagePerAttack = rawBaseDamage * damageMultiplier * explosionModifier;
+  const rawDamage = rawBaseDamage * damageMultiplier * explosionModifier;
+  const damagePerAttack = roundDamagePacket(rawDamage) ?? 0;
 
   const toMainPercent = toNumber(zone?.['ToMain%']);
-  const damageToMain = damagePerAttack * toMainPercent;
+  const rawDamageToMain = damagePerAttack * toMainPercent;
+  const damageToMain = roundDamagePacket(rawDamageToMain) ?? 0;
 
   return {
     name: attack?.['Atk Name'] || attack?.Name || 'Unknown',
@@ -174,6 +177,8 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
     hasExplicitExplosionMultiplier,
     isExplosion,
     rawBaseDamage,
+    rawDamage,
+    rawDamageToMain,
     toMainPercent,
     exTarget: zone?.ExTarget || '',
     hits: toPositiveInteger(hits)

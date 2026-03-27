@@ -277,6 +277,32 @@ test('buildZoneComparisonMetrics adds approximate effective distance for modeled
   assert.match(metrics.bySlot.A.effectiveDistance.title, /off by as much as 3%/i);
 });
 
+test('buildZoneComparisonMetrics floors each ranged packet before summing multi-hit breakpoints', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
+
+  const metrics = buildZoneComparisonMetrics({
+    zone: makeZone('head', { health: 125, isFatal: true }),
+    enemyMainHealth: 500,
+    weaponA: { code: 'AR-23', name: 'Liberator', rpm: 60 },
+    selectedAttacksA: [makeAttackRow('Burst', 42)],
+    hitCountsA: [4]
+  });
+
+  const expectedDistance = calculateMaxDistanceForDamageFloor(
+    42,
+    { caliber: 5.5, mass: 4.5, velocity: 900, drag: 0.3 },
+    32
+  );
+
+  assert.ok(expectedDistance !== null);
+  assert.equal(metrics.bySlot.A.zoneSummary.totalDamagePerCycle, 168);
+  assert.equal(metrics.bySlot.A.shotsToKill, 1);
+  assert.ok(metrics.bySlot.A.effectiveDistance.isAvailable);
+  assert.ok(Math.abs(metrics.bySlot.A.effectiveDistance.meters - expectedDistance) < 0.01);
+  assert.match(metrics.bySlot.A.effectiveDistance.title, /125 rounded damage per selected firing cycle/i);
+});
+
 test('buildZoneComparisonMetrics leaves effective distance unavailable for ambiguous ballistic profiles', () => {
   resetBallisticFalloffProfiles();
   ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);

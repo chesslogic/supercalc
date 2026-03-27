@@ -183,6 +183,57 @@ test('summarizeZoneDamage keeps shots but omits ttk without rpm', () => {
   assert.equal(summary.killSummary.zoneTtkSeconds, null);
 });
 
+test('calculateAttackAgainstZone floors per-packet damage before applying main passthrough', () => {
+  const attack = calculateAttackAgainstZone(
+    {
+      'Atk Name': 'Adjudicator-ish',
+      'Atk Type': 'Projectile',
+      DMG: 44.6,
+      DUR: 0,
+      AP: 3
+    },
+    {
+      AV: 3,
+      'Dur%': 0,
+      'ToMain%': 0.7,
+      ExTarget: 'Part',
+      ExMult: 1
+    }
+  );
+
+  assert.equal(attack.damage, 28);
+  assert.equal(attack.damageToMain, 19);
+});
+
+test('summarizeZoneDamage does not carry fractional leftovers across firing cycles', () => {
+  const summary = summarizeZoneDamage({
+    zone: {
+      health: 125,
+      Con: 0,
+      AV: 3,
+      'Dur%': 0,
+      'ToMain%': 0,
+      ExTarget: 'Part',
+      ExMult: 1,
+      IsFatal: false
+    },
+    enemyMainHealth: 1000,
+    selectedAttacks: [{
+      'Atk Name': 'Fractional Threshold',
+      'Atk Type': 'Projectile',
+      DMG: 64.23076923076923,
+      DUR: 0,
+      AP: 3
+    }],
+    rpm: 60
+  });
+
+  assert.equal(summary.attackDetails[0].damage, 41);
+  assert.equal(summary.totalDamagePerCycle, 41);
+  assert.equal(summary.killSummary.zoneShotsToKill, 4);
+  assert.equal(summary.killSummary.zoneTtkSeconds, 3);
+});
+
 test('explosive damage uses ExMult directly, so ExMult 0 means immunity', () => {
   const attack = calculateAttackAgainstZone(
     {
@@ -353,15 +404,15 @@ test('charger-style BFGL head hit applies direct main damage and passthrough fro
     explosiveZoneIndices: [1]
   });
 
-  const expectedDirectMainDamage = 150 * 0.75 * 0.65;
-  const expectedPassthroughDamage = expectedDirectMainDamage * 0.7;
+  const expectedDirectMainDamage = 73;
+  const expectedPassthroughDamage = 51;
   const expectedTotalMainDamage = expectedDirectMainDamage + expectedPassthroughDamage;
 
-  assert.ok(Math.abs(summary.totalDirectMainDamagePerCycle - expectedDirectMainDamage) < 1e-9);
-  assert.ok(Math.abs(summary.totalPassthroughMainDamagePerCycle - expectedPassthroughDamage) < 1e-9);
-  assert.ok(Math.abs(summary.totalDamageToMainPerCycle - expectedTotalMainDamage) < 1e-9);
-  assert.ok(Math.abs(summary.zoneSummaries[1].totalDamagePerCycle - expectedDirectMainDamage) < 1e-9);
-  assert.ok(Math.abs(summary.zoneSummaries[0].totalDamagePerCycle - expectedTotalMainDamage) < 1e-9);
+  assert.equal(summary.totalDirectMainDamagePerCycle, expectedDirectMainDamage);
+  assert.equal(summary.totalPassthroughMainDamagePerCycle, expectedPassthroughDamage);
+  assert.equal(summary.totalDamageToMainPerCycle, expectedTotalMainDamage);
+  assert.equal(summary.zoneSummaries[1].totalDamagePerCycle, expectedDirectMainDamage);
+  assert.equal(summary.zoneSummaries[0].totalDamagePerCycle, expectedTotalMainDamage);
 });
 
 test('explosive AoE applies one direct main hit and adds passthrough from every struck limb', () => {
