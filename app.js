@@ -1,4 +1,5 @@
 import { loadCSV, loadFromText, ingestMatrix, state as weaponsState } from './weapons/data.js';
+import { loadBallisticFalloffCsv } from './weapons/falloff.js';
 import { buildTypeFilters, buildSubFilters, renderTable } from './weapons/table.js';
 import { loadEnemyData } from './enemies/data.js';
 import { renderEnemyTable, setupEnemyTableSorting } from './enemies/table.js';
@@ -146,6 +147,11 @@ async function boot(){
     // Use a clear label for mock data
     weaponsState.patchVersion = 'TEST DATA';
     updatePatchTicker();
+    try {
+      await loadBallisticFalloffCsv();
+    } catch (err) {
+      console.warn('Failed to load ballistic falloff data in test mode:', err);
+    }
     initUI(); 
     hideSourceLink();
     hideLoading('calculator-weapon-loading');
@@ -166,6 +172,11 @@ async function boot(){
     try { 
       await loadCSV();
       updatePatchTicker();
+      try {
+        await loadBallisticFalloffCsv();
+      } catch (err) {
+        console.warn('Failed to load ballistic falloff data:', err);
+      }
       hideLoading('calculator-weapon-loading');
       
       // Load enemy data

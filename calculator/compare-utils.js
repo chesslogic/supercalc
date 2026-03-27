@@ -10,6 +10,7 @@ import {
   getEnemyZoneConDisplayInfo,
   getEnemyZoneHealthDisplayInfo
 } from './enemy-zone-display.js';
+import { calculateEffectiveDistanceInfo } from './effective-distance.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
@@ -241,16 +242,26 @@ function summarizeZoneForSlot({
     totalDamageToMainPerCycle: zoneSummary?.totalDamageToMainPerCycle || 0,
     killSummary: zoneSummary?.killSummary
   });
+  const damagesZone = hasDamagePath(zoneSummary);
+  const effectiveDistance = calculateEffectiveDistanceInfo({
+    weapon,
+    zone,
+    zoneSummary,
+    outcomeKind,
+    selectedAttackCount: selectedAttacks.length,
+    damagesZone
+  });
 
   return {
     weapon,
     selectedAttackCount: selectedAttacks.length,
     zoneSummary,
     outcomeKind,
-    damagesZone: hasDamagePath(zoneSummary),
+    damagesZone,
     shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary),
     ttkSeconds: getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary),
-    hasRpm: zoneSummary?.killSummary?.hasRpm ?? false
+    hasRpm: zoneSummary?.killSummary?.hasRpm ?? false,
+    effectiveDistance
   };
 }
 
@@ -713,12 +724,18 @@ export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
       return row.zone?.MainCap ? 1 : 0;
     case 'shots':
       return row.metrics?.bySlot?.A?.shotsToKill ?? null;
+    case 'range':
+      return row.metrics?.bySlot?.A?.effectiveDistance?.sortValue ?? null;
     case 'ttk':
       return row.metrics?.bySlot?.A?.ttkSeconds ?? null;
     case 'shotsA':
       return row.metrics?.bySlot?.A?.shotsToKill ?? null;
+    case 'rangeA':
+      return row.metrics?.bySlot?.A?.effectiveDistance?.sortValue ?? null;
     case 'shotsB':
       return row.metrics?.bySlot?.B?.shotsToKill ?? null;
+    case 'rangeB':
+      return row.metrics?.bySlot?.B?.effectiveDistance?.sortValue ?? null;
     case 'shotsDiff':
       return getDiffSortValue(row.metrics?.diffShots, diffDisplayMode);
     case 'ttkA':

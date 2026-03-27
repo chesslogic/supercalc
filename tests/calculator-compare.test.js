@@ -13,6 +13,11 @@ import {
   getPreferredZoneIndex,
   sortEnemyZoneRows
 } from '../calculator/compare-utils.js';
+import {
+  calculateMaxDistanceForDamageFloor,
+  ingestBallisticFalloffCsvText,
+  resetBallisticFalloffProfiles
+} from '../weapons/falloff.js';
 
 function makeAttackRow(name, damage, ap = 2) {
   return {
@@ -109,6 +114,11 @@ function makeZone(zoneName, {
     IsFatal: isFatal
   };
 }
+
+const TEST_FALLOFF_CSV = `Category,Weapon,Caliber,Mass,Velocity,Drag,,2m,5m,15m,25m,50m,75m,100m,150m,200m
+Primary / Assault Rifle,AR-23 Liberator,5.5,4.5,900,0.3,,0.70%,0.75%,2.15%,3.76%,6.82%,10.20%,13.34%,18.98%,23.96%
+Primary / Energy based,PLAS-101 Purifier (charged),20,25,350,1.5,,3.18%,9.75%,21.60%,33.75%,50.40%,61.47%,67.48%,72.60%,74.21%
+Primary / Energy based,PLAS-101 Purifier (uncharged),20,25,550,1.5,,4.90%,9.92%,23.00%,34.00%,51.37%,61.85%,67.69%,72.65%,74.23%`;
 
 test('getDefaultSelectedAttackKeys auto-selects a lone attack row only', () => {
   const loneAttack = makeAttackRow('Single', 100);
@@ -241,6 +251,46 @@ test('buildZoneComparisonMetrics honors hit counts for each slot', () => {
   assert.equal(metrics.bySlot.B.zoneSummary.totalDamagePerCycle, 100);
   assert.equal(metrics.bySlot.B.shotsToKill, 3);
   assert.equal(metrics.diffShots.sortValue, 1);
+});
+
+test('buildZoneComparisonMetrics adds approximate effective distance for modeled projectile breakpoints', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
+
+  const metrics = buildZoneComparisonMetrics({
+    zone: makeZone('head', { health: 100, isFatal: true }),
+    enemyMainHealth: 500,
+    weaponA: { code: 'AR-23', name: 'Liberator', rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 105)]
+  });
+
+  const expectedDistance = calculateMaxDistanceForDamageFloor(
+    105,
+    { caliber: 5.5, mass: 4.5, velocity: 900, drag: 0.3 },
+    100
+  );
+
+  assert.ok(expectedDistance !== null);
+  assert.ok(metrics.bySlot.A.effectiveDistance.isAvailable);
+  assert.ok(Math.abs(metrics.bySlot.A.effectiveDistance.meters - expectedDistance) < 0.01);
+  assert.equal(metrics.bySlot.A.effectiveDistance.text, `${Math.floor(expectedDistance)}m`);
+  assert.match(metrics.bySlot.A.effectiveDistance.title, /off by as much as 3%/i);
+});
+
+test('buildZoneComparisonMetrics leaves effective distance unavailable for ambiguous ballistic profiles', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
+
+  const metrics = buildZoneComparisonMetrics({
+    zone: makeZone('head', { health: 100, isFatal: true }),
+    enemyMainHealth: 500,
+    weaponA: { code: 'PLAS-101', name: 'Purifier', rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 200)]
+  });
+
+  assert.equal(metrics.bySlot.A.effectiveDistance.isAvailable, false);
+  assert.equal(metrics.bySlot.A.effectiveDistance.text, '-');
+  assert.match(metrics.bySlot.A.effectiveDistance.title, /multiple possible falloff profiles/i);
 });
 
 test('buildZoneComparisonMetrics marks one-sided damage wins as infinite diff severity', () => {

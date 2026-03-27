@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   BALLISTIC_FALLOFF_EXCLUDED_WEAPONS,
+  ingestBallisticFalloffCsvText,
   calculateBallisticDamageAtDistance,
   calculateBallisticDamageMultiplier,
   calculateBallisticDamageReduction,
@@ -11,7 +12,9 @@ import {
   calculateBallisticFalloffScale,
   calculateMaxDistanceForDamageFloor,
   calculateMaxDistanceForDamageMultiplier,
-  isBallisticFalloffModeledWeapon
+  isBallisticFalloffModeledWeapon,
+  resetBallisticFalloffProfiles,
+  resolveBallisticFalloffProfileForWeapon
 } from '../weapons/falloff.js';
 
 function parseCsvLine(line) {
@@ -54,6 +57,10 @@ function loadObservedFalloffRows() {
     const values = parseCsvLine(line);
     return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? '']));
   });
+}
+
+function loadObservedFalloffCsvText() {
+  return readFileSync(new URL('../weapons/falloff.csv', import.meta.url), 'utf8');
 }
 
 function toPercentFraction(value) {
@@ -125,6 +132,42 @@ test('calculateBallisticDamageAtDistance and inverse helpers round-trip practica
   assert.ok(Math.abs(floorDistance - 100) < 0.01);
 
   assert.equal(calculateMaxDistanceForDamageMultiplier(liberator, 0.25), Number.POSITIVE_INFINITY);
+});
+
+test('resolveBallisticFalloffProfileForWeapon matches common weapon selections and rejects ambiguous ones', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(loadObservedFalloffCsvText());
+
+  const liberator = resolveBallisticFalloffProfileForWeapon({
+    code: 'AR-23',
+    name: 'Liberator'
+  });
+  assert.equal(liberator.status, 'available');
+  assert.equal(liberator.profile?.weaponLabel, 'AR-23 Liberator');
+
+  const oneTwo = resolveBallisticFalloffProfileForWeapon({
+    code: 'AR/GL-21',
+    name: 'One-Two (AR)'
+  });
+  assert.equal(oneTwo.status, 'available');
+  assert.equal(oneTwo.profile?.weaponLabel, 'AR|GL-21 One-Two');
+
+  const purifier = resolveBallisticFalloffProfileForWeapon({
+    code: 'PLAS-101',
+    name: 'Purifier'
+  });
+  assert.equal(purifier.status, 'ambiguous');
+});
+
+test('resolveBallisticFalloffProfileForWeapon keeps excluded launchers out of the general model', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(loadObservedFalloffCsvText());
+
+  const ultimatum = resolveBallisticFalloffProfileForWeapon({
+    code: 'GP-20',
+    name: 'Ultimatum'
+  });
+  assert.equal(ultimatum.status, 'excluded');
 });
 
 test('ballistic falloff model tracks observed CSV rows for normal projectile families', () => {

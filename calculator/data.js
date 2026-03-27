@@ -28,6 +28,7 @@ function buildInitialHitCounts(attackKeys = []) {
 export const calculatorState = {
   mode: 'single',
   compareView: 'focused',
+  enemyTableMode: 'analysis',
   overviewScope: 'All',
   diffDisplayMode: 'absolute',
   weaponA: null,
@@ -108,6 +109,10 @@ export function setCalculatorMode(mode) {
 
 export function setCompareView(view) {
   calculatorState.compareView = view === 'overview' ? 'overview' : 'focused';
+}
+
+export function setEnemyTableMode(mode) {
+  calculatorState.enemyTableMode = mode === 'stats' ? 'stats' : 'analysis';
 }
 
 export function setOverviewScope(scope) {

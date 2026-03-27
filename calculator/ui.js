@@ -16,6 +16,14 @@ import { renderCalculation } from './calculation.js';
 
 let enemySelectorSetup = false;
 
+export function getCalculatorModeButtonTitle(mode) {
+  if (mode === 'compare') {
+    return 'Two weapons side-by-side for each enemy component. Try the Overview enemy!';
+  }
+
+  return 'One weapon at a time with the full enemy component table.';
+}
+
 export function setupCalculator() {
   if (enemyState.units && enemyState.units.length > 0) {
     window.enemyDataLoaded = true;
@@ -48,6 +56,12 @@ function syncCalculatorModeUi() {
   calculatorContainer?.classList.toggle('calculator-mode-compare', compareMode);
   modeSingleButton?.classList.toggle('is-active', !compareMode);
   modeCompareButton?.classList.toggle('is-active', compareMode);
+  if (modeSingleButton) {
+    modeSingleButton.title = getCalculatorModeButtonTitle('single');
+  }
+  if (modeCompareButton) {
+    modeCompareButton.title = getCalculatorModeButtonTitle('compare');
+  }
   weaponRowB?.classList.toggle('hidden', !compareMode);
 
   if (weaponLabelA) {

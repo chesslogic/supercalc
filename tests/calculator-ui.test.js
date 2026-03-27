@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { calculatorState, setEnemyTableMode } from '../calculator/data.js';
+import { getEnemyColumnsForState, getOverviewColumnsForState } from '../calculator/rendering.js';
 import { getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
+import { getCalculatorModeButtonTitle } from '../calculator/ui.js';
 import {
   applyExplosiveDisplayToCell,
   EXPLOSIVE_DISPLAY_COLUMN_LABEL,
@@ -43,6 +46,69 @@ test('enemy dropdown does not offer overview in single mode', () => {
 
   assert.equal(state.effectiveQuery, '');
   assert.equal(state.showOverviewOption, false);
+});
+
+test('enemy table mode defaults to analysis and normalizes to supported values', () => {
+  setEnemyTableMode('analysis');
+  assert.equal(calculatorState.enemyTableMode, 'analysis');
+
+  setEnemyTableMode('stats');
+  assert.equal(calculatorState.enemyTableMode, 'stats');
+
+  setEnemyTableMode('unknown');
+  assert.equal(calculatorState.enemyTableMode, 'analysis');
+});
+
+test('single mode always shows the full enemy columns plus derived metrics', () => {
+  const columns = getEnemyColumnsForState({
+    mode: 'single',
+    enemyTableMode: 'analysis'
+  });
+
+  assert.deepEqual(
+    columns.map((column) => column.key),
+    ['zone_name', 'health', 'Con', 'Dur%', 'AV', 'IsFatal', 'ExTarget', 'ExMult', 'ToMain%', 'MainCap', 'shots', 'range', 'ttk']
+  );
+});
+
+test('compare mode still uses compact analysis columns and optional stats columns', () => {
+  const analysisColumns = getEnemyColumnsForState({
+    mode: 'compare',
+    enemyTableMode: 'analysis'
+  });
+  assert.deepEqual(
+    analysisColumns.map((column) => column.key),
+    ['zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+  );
+
+  const statsColumns = getEnemyColumnsForState({
+    mode: 'compare',
+    enemyTableMode: 'stats'
+  });
+  assert.deepEqual(
+    statsColumns.map((column) => column.key),
+    ['zone_name', 'health', 'Con', 'Dur%', 'AV', 'IsFatal', 'ExTarget', 'ExMult', 'ToMain%', 'MainCap']
+  );
+
+  const overviewAnalysisColumns = getOverviewColumnsForState({
+    enemyTableMode: 'analysis',
+    overviewScope: 'All'
+  });
+  assert.deepEqual(
+    overviewAnalysisColumns.map((column) => column.key),
+    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+  );
+});
+
+test('calculator mode buttons expose descriptive hover titles', () => {
+  assert.equal(
+    getCalculatorModeButtonTitle('single'),
+    'One weapon at a time with the full enemy component table.'
+  );
+  assert.equal(
+    getCalculatorModeButtonTitle('compare'),
+    'Two weapons side-by-side for each enemy component. Try the Overview enemy!'
+  );
 });
 
 test('explosive display shows missing multipliers as zero reduction', () => {

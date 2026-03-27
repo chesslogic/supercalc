@@ -18,6 +18,7 @@ import {
   getWeaponForSlot,
   setDiffDisplayMode,
   setEnemyGroupMode,
+  setEnemyTableMode,
   setOverviewScope,
   setSelectedAttack,
   setSelectedExplosiveZone,
@@ -50,19 +51,42 @@ import {
   applyEnemyZoneConDisplayToCell,
   applyEnemyZoneHealthDisplayToCell
 } from './enemy-zone-display.js';
+import { EFFECTIVE_DISTANCE_TOOLTIP } from './effective-distance.js';
 
 const DEFAULT_WEAPON_HEADERS = ['Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
-const ENEMY_BASE_COLUMNS = [
-  { key: 'zone_name', label: 'Zone Name' },
+const ENEMY_STATS_COLUMNS = [
+  { key: 'zone_name', label: 'Zone' },
   { key: 'health', label: 'Health' },
   { key: 'Con', label: 'Con' },
   { key: 'Dur%', label: 'Dur%' },
   { key: 'AV', label: 'AV' },
-  { key: 'IsFatal', label: 'IsFatal' },
+  { key: 'IsFatal', label: 'IsLethal' },
   { key: 'ExTarget', label: 'ExTarget' },
   { key: 'ExMult', label: EXPLOSIVE_DISPLAY_COLUMN_LABEL },
   { key: 'ToMain%', label: 'ToMain%' },
   { key: 'MainCap', label: 'MainCap' }
+];
+const ENEMY_ANALYSIS_COLUMNS = [
+  { key: 'zone_name', label: 'Zone' },
+  { key: 'AV', label: 'AV' },
+  { key: 'Dur%', label: 'Dur%' },
+  { key: 'IsFatal', label: 'IsLethal' },
+  { key: 'ExMult', label: EXPLOSIVE_DISPLAY_COLUMN_LABEL }
+];
+const ENEMY_SINGLE_ANALYSIS_METRIC_COLUMNS = [
+  { key: 'shots', label: 'Shots' },
+  { key: 'range', label: 'Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
+  { key: 'ttk', label: 'TTK' }
+];
+const ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS = [
+  { key: 'shotsA', label: 'A Shots' },
+  { key: 'rangeA', label: 'A Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
+  { key: 'shotsB', label: 'B Shots' },
+  { key: 'rangeB', label: 'B Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
+  { key: 'shotsDiff', label: 'Diff Shots' },
+  { key: 'ttkA', label: 'A TTK' },
+  { key: 'ttkB', label: 'B TTK' },
+  { key: 'ttkDiff', label: 'Diff TTK' }
 ];
 
 function createPlaceholder(container, text) {
@@ -108,6 +132,20 @@ function createTtkValueNode(ttkSeconds) {
   });
 
   return ttkValue;
+}
+
+function createRangeValueNode(distanceInfo) {
+  const rangeValue = document.createElement('span');
+  rangeValue.className = 'calc-derived-value';
+
+  if (!distanceInfo?.isAvailable) {
+    rangeValue.textContent = '-';
+    rangeValue.classList.add('muted');
+    return rangeValue;
+  }
+
+  rangeValue.textContent = distanceInfo.text;
+  return rangeValue;
 }
 
 function formatPercentDiff(value) {
@@ -478,44 +516,96 @@ export function renderWeaponDetails() {
   container.appendChild(table);
 }
 
-function getEnemyColumns() {
-  if (calculatorState.mode === 'compare') {
+export function getEnemyBaseColumnsForState({
+  mode = 'single',
+  enemyTableMode = 'analysis'
+} = {}) {
+  if (mode !== 'compare') {
+    return ENEMY_STATS_COLUMNS;
+  }
+
+  return enemyTableMode === 'stats'
+    ? ENEMY_STATS_COLUMNS
+    : ENEMY_ANALYSIS_COLUMNS;
+}
+
+export function getEnemyColumnsForState({
+  mode = 'single',
+  enemyTableMode = 'analysis'
+} = {}) {
+  const baseColumns = getEnemyBaseColumnsForState({ mode, enemyTableMode });
+
+  if (mode !== 'compare') {
     return [
-      ...ENEMY_BASE_COLUMNS,
-      { key: 'shotsA', label: 'A Shots' },
-      { key: 'shotsB', label: 'B Shots' },
-      { key: 'shotsDiff', label: 'Diff Shots' },
-      { key: 'ttkA', label: 'A TTK' },
-      { key: 'ttkB', label: 'B TTK' },
-      { key: 'ttkDiff', label: 'Diff TTK' }
+      ...baseColumns,
+      ...ENEMY_SINGLE_ANALYSIS_METRIC_COLUMNS
     ];
   }
 
-  return [
-    ...ENEMY_BASE_COLUMNS,
-    { key: 'shots', label: 'Shots' },
-    { key: 'ttk', label: 'TTK' }
-  ];
-}
-
-function getOverviewColumns() {
-  const baseColumns = [
-    ...(calculatorState.overviewScope === 'All'
-      ? [{ key: 'faction', label: 'Faction' }]
-      : []),
-    { key: 'enemy', label: 'Enemy' },
-    ...ENEMY_BASE_COLUMNS
-  ];
+  if (enemyTableMode === 'stats') {
+    return baseColumns;
+  }
 
   return [
     ...baseColumns,
-    { key: 'shotsA', label: 'A Shots' },
-    { key: 'shotsB', label: 'B Shots' },
-    { key: 'shotsDiff', label: 'Diff Shots' },
-    { key: 'ttkA', label: 'A TTK' },
-    { key: 'ttkB', label: 'B TTK' },
-    { key: 'ttkDiff', label: 'Diff TTK' }
+    ...ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS
   ];
+}
+
+export function getOverviewColumnsForState({
+  enemyTableMode = 'analysis',
+  overviewScope = 'All'
+} = {}) {
+  const baseColumns = [
+    ...(overviewScope === 'All'
+      ? [{ key: 'faction', label: 'Faction' }]
+      : []),
+    { key: 'enemy', label: 'Enemy' },
+    ...getEnemyBaseColumnsForState({
+      mode: 'compare',
+      enemyTableMode
+    })
+  ];
+
+  if (enemyTableMode === 'stats') {
+    return baseColumns;
+  }
+
+  return [
+    ...baseColumns,
+    ...ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS
+  ];
+}
+
+function getEnemyBaseColumns() {
+  return getEnemyBaseColumnsForState({
+    mode: calculatorState.mode,
+    enemyTableMode: calculatorState.enemyTableMode
+  });
+}
+
+function getEnemyColumns() {
+  return getEnemyColumnsForState({
+    mode: calculatorState.mode,
+    enemyTableMode: calculatorState.enemyTableMode
+  });
+}
+
+function getOverviewColumns() {
+  return getOverviewColumnsForState({
+    enemyTableMode: calculatorState.enemyTableMode,
+    overviewScope: calculatorState.overviewScope
+  });
+}
+
+function ensureEnemySortKeyVisible(columns) {
+  const visibleKeys = new Set(columns.map((column) => column.key));
+  if (visibleKeys.has(calculatorState.enemySort.key)) {
+    return;
+  }
+
+  calculatorState.enemySort.key = 'zone_name';
+  calculatorState.enemySort.dir = 'asc';
 }
 
 function appendToolbarButtonGroup(toolbar, labelText, items, isActive, onClick) {
@@ -572,6 +662,23 @@ function renderEnemyControls(enemy) {
   const toolbar = document.createElement('div');
   toolbar.className = 'calculator-toolbar';
 
+  if (calculatorState.mode === 'compare') {
+    appendToolbarButtonGroup(
+      toolbar,
+      'View:',
+      [
+        { value: 'analysis', label: 'Analysis' },
+        { value: 'stats', label: 'Stats' }
+      ],
+      (value) => calculatorState.enemyTableMode === value,
+      (value) => {
+        setEnemyTableMode(value);
+        ensureEnemySortKeyVisible(overviewActive ? getOverviewColumns() : getEnemyColumns());
+        renderEnemyDetails();
+      }
+    );
+  }
+
   appendToolbarButtonGroup(
     toolbar,
     'Grouping:',
@@ -599,25 +706,31 @@ function renderEnemyControls(enemy) {
       }
     );
 
-    appendToolbarButtonGroup(
-      toolbar,
-      'Diff:',
-      [
-        { value: 'absolute', label: 'Absolute' },
-        { value: 'percent', label: '%' }
-      ],
-      (value) => calculatorState.diffDisplayMode === value,
-      (value) => {
-        setDiffDisplayMode(value);
-        renderEnemyDetails();
-        renderCalculation();
-      }
-    );
+    if (calculatorState.enemyTableMode === 'analysis') {
+      appendToolbarButtonGroup(
+        toolbar,
+        'Diff:',
+        [
+          { value: 'absolute', label: 'Absolute' },
+          { value: 'percent', label: '%' }
+        ],
+        (value) => calculatorState.diffDisplayMode === value,
+        (value) => {
+          setDiffDisplayMode(value);
+          renderEnemyDetails();
+          renderCalculation();
+        }
+      );
+    }
   }
 
   const note = document.createElement('span');
   note.className = 'status calculator-toolbar-note';
-  if (overviewActive) {
+  if (calculatorState.mode !== 'compare') {
+    note.textContent = 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK.';
+  } else if (calculatorState.enemyTableMode === 'stats') {
+    note.textContent = 'Stats view restores the fuller enemy columns. Switch back to Analysis for shots, range, and TTK.';
+  } else if (overviewActive) {
     note.textContent = 'Overview is selected in the enemy dropdown. Pick a specific enemy there to return to the focused view.';
   } else if (calculatorState.mode === 'compare') {
     const groupingSlot = getOutcomeGroupingSlot(calculatorState.mode, calculatorState.enemySort.key);
@@ -712,10 +825,12 @@ function renderOverviewDetails(container) {
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   const columns = getOverviewColumns();
+  ensureEnemySortKeyVisible(columns);
 
   columns.forEach((column) => {
     const th = document.createElement('th');
     th.textContent = column.label;
+    th.title = column.title || '';
     th.classList.add('sortable');
     if (calculatorState.enemySort.key === column.key) {
       th.classList.add(`sort-${calculatorState.enemySort.dir}`);
@@ -776,8 +891,18 @@ function renderOverviewDetails(container) {
         return;
       }
 
+      if (column.key === 'rangeA') {
+        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'range', row.metrics));
+        return;
+      }
+
       if (column.key === 'shotsB') {
         tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'shots', row.metrics));
+        return;
+      }
+
+      if (column.key === 'rangeB') {
+        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'range', row.metrics));
         return;
       }
 
@@ -823,6 +948,19 @@ function buildSingleMetricCell(slot, slotMetrics, type, metrics = null) {
       td.classList.add('muted');
     }
     td.title = getMetricTitle(slot, slotMetrics, 'shots', metrics) || '';
+    return td;
+  }
+
+  if (type === 'range') {
+    const distanceInfo = slotMetrics?.effectiveDistance;
+    td.appendChild(createRangeValueNode(distanceInfo));
+    if (!distanceInfo?.isAvailable) {
+      td.classList.add('muted');
+    }
+    td.title = distanceInfo?.title || '';
+    if (distanceInfo?.title) {
+      td.style.cursor = 'help';
+    }
     return td;
   }
 
@@ -974,9 +1112,11 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
   }
 
   const columns = getEnemyColumns();
+  ensureEnemySortKeyVisible(columns);
   columns.forEach((column) => {
     const th = document.createElement('th');
     th.textContent = column.label;
+    th.title = column.title || '';
     th.classList.add('sortable');
     if (calculatorState.enemySort.key === column.key) {
       th.classList.add(`sort-${calculatorState.enemySort.dir}`);
@@ -1032,6 +1172,11 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
         return;
       }
 
+      if (column.key === 'range') {
+        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'range', metrics));
+        return;
+      }
+
       if (column.key === 'ttk') {
         tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk', metrics));
         return;
@@ -1042,8 +1187,18 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
         return;
       }
 
+      if (column.key === 'rangeA') {
+        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'range', metrics));
+        return;
+      }
+
       if (column.key === 'shotsB') {
         tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'shots', metrics));
+        return;
+      }
+
+      if (column.key === 'rangeB') {
+        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'range', metrics));
         return;
       }
 
