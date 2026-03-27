@@ -583,13 +583,13 @@ export function shouldShowEnemyControls({
   hasFocusedEnemy = false
 } = {}) {
   const overviewActive = mode === 'compare' && compareView === 'overview';
-  return overviewActive || hasFocusedEnemy || mode === 'compare';
+  return overviewActive || hasFocusedEnemy || shouldShowEnemyScopeControls({ mode });
 }
 
 export function shouldShowEnemyScopeControls({
   mode = 'single'
 } = {}) {
-  return mode === 'compare';
+  return mode === 'compare' || mode === 'single';
 }
 
 function getEnemyBaseColumns() {
@@ -756,7 +756,9 @@ function renderEnemyControls(enemy) {
   const note = document.createElement('span');
   note.className = 'status calculator-toolbar-note';
   if (calculatorState.mode !== 'compare') {
-    note.textContent = 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK.';
+    note.textContent = hasFocusedEnemy
+      ? 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK. Scope also filters the enemy dropdown.'
+      : 'Scope filters the enemy dropdown in single mode. Select an enemy to see the full enemy table, including raw stats plus Shots, Range, and TTK.';
   } else if (!overviewActive && !hasFocusedEnemy) {
     note.textContent = 'Scope filters the enemy dropdown and carries into Overview. Select an enemy or Overview to see details.';
   } else if (calculatorState.enemyTableMode === 'stats') {

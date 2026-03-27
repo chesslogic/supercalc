@@ -13,6 +13,10 @@ const DEFAULT_ENEMY_SORT = {
   dir: 'asc',
   groupMode: 'none'
 };
+export const DEFAULT_CALCULATOR_MODE = 'compare';
+export const DEFAULT_COMPARE_VIEW = 'focused';
+export const DEFAULT_OVERVIEW_SCOPE = 'All';
+export const PREFERRED_OVERVIEW_SCOPE_ORDER = ['Terminids', 'Automatons', 'Illuminate'];
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -31,10 +35,10 @@ function buildInitialHitCounts(attackKeys = []) {
 }
 
 export const calculatorState = {
-  mode: 'single',
-  compareView: 'focused',
+  mode: DEFAULT_CALCULATOR_MODE,
+  compareView: DEFAULT_COMPARE_VIEW,
   enemyTableMode: 'analysis',
-  overviewScope: 'All',
+  overviewScope: DEFAULT_OVERVIEW_SCOPE,
   diffDisplayMode: 'absolute',
   weaponA: null,
   weaponB: null,
@@ -89,7 +93,25 @@ export function getEnemyOptions() {
 }
 
 export function getOverviewScopeOptions() {
-  return ['All', ...(enemyState.factions || [])];
+  const loadedScopes = Array.isArray(enemyState.factions) ? enemyState.factions : [];
+  const seenScopes = new Set();
+  const orderedScopes = [];
+
+  PREFERRED_OVERVIEW_SCOPE_ORDER.forEach((scope) => {
+    if (loadedScopes.includes(scope) && !seenScopes.has(scope)) {
+      orderedScopes.push(scope);
+      seenScopes.add(scope);
+    }
+  });
+
+  loadedScopes.forEach((scope) => {
+    if (!seenScopes.has(scope)) {
+      orderedScopes.push(scope);
+      seenScopes.add(scope);
+    }
+  });
+
+  return [DEFAULT_OVERVIEW_SCOPE, ...orderedScopes];
 }
 
 export function getWeaponForSlot(slot = 'A') {
@@ -116,7 +138,7 @@ export function setEnemyTableMode(mode) {
 }
 
 export function setOverviewScope(scope) {
-  calculatorState.overviewScope = scope || 'All';
+  calculatorState.overviewScope = scope || DEFAULT_OVERVIEW_SCOPE;
 }
 
 export function setDiffDisplayMode(mode) {

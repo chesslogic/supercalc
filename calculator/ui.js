@@ -25,6 +25,17 @@ export function getCalculatorModeButtonTitle(mode) {
   return 'One weapon at a time with the full enemy component table.';
 }
 
+export const ENEMY_OVERVIEW_DROPDOWN_CLASS = 'dropdown-item dropdown-item-overview';
+
+export function getEnemyOverviewOptionHtml(scope = 'All') {
+  const normalizedScope = String(scope || 'All').trim() || 'All';
+  const summary = normalizedScope === 'All'
+    ? 'compare all matching enemies'
+    : `compare matching ${normalizedScope} enemies`;
+
+  return `Overview <span class="overview-dropdown-meta">${summary}</span>`;
+}
+
 export function setupCalculator() {
   if (enemyState.units && enemyState.units.length > 0) {
     window.enemyDataLoaded = true;
@@ -320,8 +331,10 @@ function setupEnemySelector() {
 
     if (showOverviewOption) {
       const overviewItem = document.createElement('div');
-      overviewItem.className = 'dropdown-item';
-      overviewItem.innerHTML = 'Overview <span style="color:var(--muted); font-size:11px;">(all matching enemies)</span>';
+      overviewItem.className = ENEMY_OVERVIEW_DROPDOWN_CLASS;
+      overviewItem.innerHTML = getEnemyOverviewOptionHtml(calculatorState.overviewScope);
+      overviewItem.title = 'Compare both weapons across every enemy currently matching the scope and search filter.';
+      overviewItem.classList.toggle('is-active', calculatorState.compareView === 'overview');
       overviewItem.addEventListener('click', () => {
         setCompareView('overview');
         syncEnemyInputValue();

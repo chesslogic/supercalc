@@ -2,7 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { state as weaponsState } from '../weapons/data.js';
-import { calculatorState, getWeaponOptions, setCalculatorMode, setEnemyTableMode, setSelectedWeapon } from '../calculator/data.js';
+import { enemyState } from '../enemies/data.js';
+import {
+  calculatorState,
+  DEFAULT_CALCULATOR_MODE,
+  DEFAULT_COMPARE_VIEW,
+  DEFAULT_OVERVIEW_SCOPE,
+  getOverviewScopeOptions,
+  getWeaponOptions,
+  setCalculatorMode,
+  setEnemyTableMode,
+  setSelectedWeapon
+} from '../calculator/data.js';
 import {
   getEnemyColumnsForState,
   getOverviewColumnsForState,
@@ -10,7 +21,11 @@ import {
   shouldShowEnemyScopeControls
 } from '../calculator/rendering.js';
 import { filterEnemiesByScope, getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
-import { getCalculatorModeButtonTitle } from '../calculator/ui.js';
+import {
+  ENEMY_OVERVIEW_DROPDOWN_CLASS,
+  getCalculatorModeButtonTitle,
+  getEnemyOverviewOptionHtml
+} from '../calculator/ui.js';
 import {
   getWeaponDropdownApInfo,
   getWeaponOptionDisplayModel,
@@ -60,6 +75,12 @@ test('enemy dropdown does not offer overview in single mode', () => {
   assert.equal(state.showOverviewOption, false);
 });
 
+test('calculator defaults to focused compare mode with all scopes enabled', () => {
+  assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
+  assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
+  assert.equal(DEFAULT_OVERVIEW_SCOPE, 'All');
+});
+
 test('enemy dropdown treats the selected enemy label as display text rather than a live filter', () => {
   const state = getEnemyDropdownQueryState('Stalker', {
     mode: 'compare',
@@ -88,7 +109,7 @@ test('enemy dropdown scope filtering works from the underlying enemy dataset', (
   );
 });
 
-test('compare mode shows enemy controls and scope controls even without a focused enemy', () => {
+test('scope controls are available before selection in both single and compare mode', () => {
   assert.equal(shouldShowEnemyControls({
     mode: 'compare',
     compareView: 'focused',
@@ -99,7 +120,32 @@ test('compare mode shows enemy controls and scope controls even without a focuse
     mode: 'single',
     compareView: 'focused',
     hasFocusedEnemy: false
-  }), false);
+  }), true);
+  assert.equal(shouldShowEnemyScopeControls({ mode: 'single' }), true);
+});
+
+test('scope options keep the three base fronts in gameplay order before extras', () => {
+  const previousFactions = enemyState.factions;
+
+  try {
+    enemyState.factions = ['Appropriators', 'Automatons', 'Illuminate', 'Terminids', 'Jet Brigade'];
+    assert.deepEqual(getOverviewScopeOptions(), [
+      'All',
+      'Terminids',
+      'Automatons',
+      'Illuminate',
+      'Appropriators',
+      'Jet Brigade'
+    ]);
+  } finally {
+    enemyState.factions = previousFactions;
+  }
+});
+
+test('overview dropdown option uses a dedicated highlighted presentation', () => {
+  assert.equal(ENEMY_OVERVIEW_DROPDOWN_CLASS, 'dropdown-item dropdown-item-overview');
+  assert.match(getEnemyOverviewOptionHtml('All'), /compare all matching enemies/i);
+  assert.match(getEnemyOverviewOptionHtml('Terminids'), /compare matching terminids enemies/i);
 });
 
 function makeWeapon(name, {

@@ -360,6 +360,22 @@ tbody tr:hover {
 }
 .dropdown-item:hover{background:#242424; color:var(--accent)}
 .dropdown-item:last-child{border-bottom:none}
+.dropdown-item-overview{
+  background:linear-gradient(90deg, rgba(255, 220, 0, 0.12), rgba(255, 220, 0, 0.03));
+  border-left:3px solid var(--accent);
+  padding-left:9px;
+  font-weight:700;
+}
+.dropdown-item-overview.is-active{
+  background:linear-gradient(90deg, rgba(255, 220, 0, 0.18), rgba(255, 220, 0, 0.05));
+  color:var(--accent);
+}
+.overview-dropdown-meta{
+  color:var(--muted);
+  font-size:11px;
+  font-weight:400;
+  margin-left:6px;
+}
 .weapon-dropdown-item{
   display:flex;
   align-items:center;
