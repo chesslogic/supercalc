@@ -577,6 +577,21 @@ export function getOverviewColumnsForState({
   ];
 }
 
+export function shouldShowEnemyControls({
+  mode = 'single',
+  compareView = 'focused',
+  hasFocusedEnemy = false
+} = {}) {
+  const overviewActive = mode === 'compare' && compareView === 'overview';
+  return overviewActive || hasFocusedEnemy || mode === 'compare';
+}
+
+export function shouldShowEnemyScopeControls({
+  mode = 'single'
+} = {}) {
+  return mode === 'compare';
+}
+
 function getEnemyBaseColumns() {
   return getEnemyBaseColumnsForState({
     mode: calculatorState.mode,
@@ -652,7 +667,11 @@ function renderEnemyControls(enemy) {
 
   const overviewActive = calculatorState.mode === 'compare' && calculatorState.compareView === 'overview';
   const hasFocusedEnemy = Boolean(enemy && enemy.zones && enemy.zones.length > 0);
-  if (!overviewActive && !hasFocusedEnemy) {
+  if (!shouldShowEnemyControls({
+    mode: calculatorState.mode,
+    compareView: calculatorState.compareView,
+    hasFocusedEnemy
+  })) {
     controlsContainer.classList.add('hidden');
     return;
   }
@@ -662,7 +681,7 @@ function renderEnemyControls(enemy) {
   const toolbar = document.createElement('div');
   toolbar.className = 'calculator-toolbar';
 
-  if (calculatorState.mode === 'compare') {
+  if (calculatorState.mode === 'compare' && (overviewActive || hasFocusedEnemy)) {
     appendToolbarButtonGroup(
       toolbar,
       'View:',
@@ -679,33 +698,43 @@ function renderEnemyControls(enemy) {
     );
   }
 
-  appendToolbarButtonGroup(
-    toolbar,
-    'Grouping:',
-    [
-      { value: 'none', label: 'No grouping' },
-      { value: 'outcome', label: 'Group by outcome' }
-    ],
-    (value) => calculatorState.enemySort.groupMode === value,
-    (value) => {
-      setEnemyGroupMode(value);
-      renderEnemyDetails();
-    }
-  );
+  if (overviewActive || hasFocusedEnemy) {
+    appendToolbarButtonGroup(
+      toolbar,
+      'Grouping:',
+      [
+        { value: 'none', label: 'No grouping' },
+        { value: 'outcome', label: 'Group by outcome' }
+      ],
+      (value) => calculatorState.enemySort.groupMode === value,
+      (value) => {
+        setEnemyGroupMode(value);
+        renderEnemyDetails();
+      }
+    );
+  }
 
-  if (overviewActive) {
+  if (shouldShowEnemyScopeControls({ mode: calculatorState.mode })) {
     appendToolbarButtonGroup(
       toolbar,
       'Scope:',
       getOverviewScopeOptions().map((scope) => ({ value: scope, label: scope })),
       (value) => calculatorState.overviewScope === value,
       (value) => {
+        if (overviewActive) {
+          ensureEnemySortKeyVisible(getOverviewColumnsForState({
+            enemyTableMode: calculatorState.enemyTableMode,
+            overviewScope: value
+          }));
+        }
         setOverviewScope(value);
         renderEnemyDetails();
         renderCalculation();
       }
     );
+  }
 
+  if (overviewActive) {
     if (calculatorState.enemyTableMode === 'analysis') {
       appendToolbarButtonGroup(
         toolbar,
@@ -728,6 +757,8 @@ function renderEnemyControls(enemy) {
   note.className = 'status calculator-toolbar-note';
   if (calculatorState.mode !== 'compare') {
     note.textContent = 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK.';
+  } else if (!overviewActive && !hasFocusedEnemy) {
+    note.textContent = 'Scope filters the enemy dropdown and carries into Overview. Select an enemy or Overview to see details.';
   } else if (calculatorState.enemyTableMode === 'stats') {
     note.textContent = 'Stats view restores the fuller enemy columns. Switch back to Analysis for shots, range, and TTK.';
   } else if (overviewActive) {

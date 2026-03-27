@@ -8,7 +8,7 @@ import {
   setSelectedEnemy,
   setSelectedWeapon
 } from './data.js';
-import { getEnemyDropdownQueryState } from './selector-utils.js';
+import { filterEnemiesByScope, getEnemyDropdownQueryState } from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
@@ -297,7 +297,8 @@ function setupEnemySelector() {
       showOverviewOption
     } = getEnemyDropdownQueryState(query, {
       mode: calculatorState.mode,
-      compareView: calculatorState.compareView
+      compareView: calculatorState.compareView,
+      selectedEnemyName: calculatorState.selectedEnemy?.name || ''
     });
 
     if (!options || options.length === 0) {
@@ -309,7 +310,8 @@ function setupEnemySelector() {
       return;
     }
 
-    const filteredOptions = options.filter((enemy) =>
+    const scopedOptions = filterEnemiesByScope(options, calculatorState.overviewScope);
+    const filteredOptions = scopedOptions.filter((enemy) =>
       enemy.name.toLowerCase().includes(effectiveQuery) ||
       enemy.faction.toLowerCase().includes(effectiveQuery)
     );

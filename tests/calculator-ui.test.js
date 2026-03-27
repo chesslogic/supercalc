@@ -3,8 +3,13 @@ import assert from 'node:assert/strict';
 
 import { state as weaponsState } from '../weapons/data.js';
 import { calculatorState, getWeaponOptions, setCalculatorMode, setEnemyTableMode, setSelectedWeapon } from '../calculator/data.js';
-import { getEnemyColumnsForState, getOverviewColumnsForState } from '../calculator/rendering.js';
-import { getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
+import {
+  getEnemyColumnsForState,
+  getOverviewColumnsForState,
+  shouldShowEnemyControls,
+  shouldShowEnemyScopeControls
+} from '../calculator/rendering.js';
+import { filterEnemiesByScope, getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
 import { getCalculatorModeButtonTitle } from '../calculator/ui.js';
 import {
   getWeaponDropdownApInfo,
@@ -53,6 +58,48 @@ test('enemy dropdown does not offer overview in single mode', () => {
 
   assert.equal(state.effectiveQuery, '');
   assert.equal(state.showOverviewOption, false);
+});
+
+test('enemy dropdown treats the selected enemy label as display text rather than a live filter', () => {
+  const state = getEnemyDropdownQueryState('Stalker', {
+    mode: 'compare',
+    compareView: 'focused',
+    selectedEnemyName: 'Stalker'
+  });
+
+  assert.equal(state.effectiveQuery, '');
+  assert.equal(state.showOverviewOption, false);
+});
+
+test('enemy dropdown scope filtering works from the underlying enemy dataset', () => {
+  const enemies = [
+    { name: 'Stalker', faction: 'Terminids' },
+    { name: 'Berserker', faction: 'Automatons' },
+    { name: 'Observer', faction: 'Illuminate' }
+  ];
+
+  assert.deepEqual(
+    filterEnemiesByScope(enemies, 'All').map((enemy) => enemy.name),
+    ['Stalker', 'Berserker', 'Observer']
+  );
+  assert.deepEqual(
+    filterEnemiesByScope(enemies, 'Automatons').map((enemy) => enemy.name),
+    ['Berserker']
+  );
+});
+
+test('compare mode shows enemy controls and scope controls even without a focused enemy', () => {
+  assert.equal(shouldShowEnemyControls({
+    mode: 'compare',
+    compareView: 'focused',
+    hasFocusedEnemy: false
+  }), true);
+  assert.equal(shouldShowEnemyScopeControls({ mode: 'compare' }), true);
+  assert.equal(shouldShowEnemyControls({
+    mode: 'single',
+    compareView: 'focused',
+    hasFocusedEnemy: false
+  }), false);
 });
 
 function makeWeapon(name, {
