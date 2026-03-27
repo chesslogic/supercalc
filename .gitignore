@@ -1,1 +1,4 @@
 *.code-workspace
+
+# Local reference-only notes
+tools/issues/
