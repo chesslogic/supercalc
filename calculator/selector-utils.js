@@ -1,3 +1,5 @@
+import { filterEnemiesByScope as filterEnemiesByResolvedScope } from './enemy-scope.js';
+
 export function getEnemyDropdownQueryState(query, {
   mode = 'single',
   compareView = 'focused',
@@ -18,10 +20,5 @@ export function getEnemyDropdownQueryState(query, {
 }
 
 export function filterEnemiesByScope(options = [], scope = 'All') {
-  const normalizedScope = String(scope ?? 'All').trim().toLowerCase();
-  if (normalizedScope === '' || normalizedScope === 'all') {
-    return [...options];
-  }
-
-  return options.filter((enemy) => String(enemy?.faction ?? '').trim().toLowerCase() === normalizedScope);
+  return filterEnemiesByResolvedScope(options, scope);
 }

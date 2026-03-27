@@ -451,13 +451,19 @@ test('getDiffDisplayMetric returns percent values when available', () => {
 test('buildOverviewRows flattens units and filters by faction scope', () => {
   const units = [
     {
-      faction: 'Terminids',
+      faction: 'Terminid',
       name: 'Stalker',
       health: 800,
       zones: [makeZone('Main'), makeZone('head', { isFatal: true })]
     },
     {
-      faction: 'Automatons',
+      faction: 'Terminid',
+      name: 'Predator Hunter',
+      health: 250,
+      zones: [makeZone('Main')]
+    },
+    {
+      faction: 'Automaton',
       name: 'Devastator',
       health: 900,
       zones: [makeZone('Main')]
@@ -466,13 +472,13 @@ test('buildOverviewRows flattens units and filters by faction scope', () => {
 
   const allRows = buildOverviewRows({
     units,
-    scope: 'All',
+    scope: 'all',
     weaponA: { rpm: 60 },
     weaponB: { rpm: 60 },
     selectedAttacksA: [makeAttackRow('A', 100)],
     selectedAttacksB: [makeAttackRow('B', 100)]
   });
-  assert.equal(allRows.length, 3);
+  assert.equal(allRows.length, 4);
   assert.equal(allRows[0].faction, 'Terminids');
   assert.equal(allRows[0].enemyName, 'Stalker');
 
@@ -487,6 +493,19 @@ test('buildOverviewRows flattens units and filters by faction scope', () => {
   assert.deepEqual(
     automatonRows.map((row) => `${row.faction}:${row.enemyName}:${row.zone.zone_name}`),
     ['Automatons:Devastator:Main']
+  );
+
+  const predatorRows = buildOverviewRows({
+    units,
+    scope: 'Predator Strain',
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 100)],
+    selectedAttacksB: [makeAttackRow('B', 100)]
+  });
+  assert.deepEqual(
+    predatorRows.map((row) => `${row.faction}:${row.enemyName}:${row.zone.zone_name}`),
+    ['Terminids:Predator Hunter:Main']
   );
 });
 

@@ -78,7 +78,7 @@ test('enemy dropdown does not offer overview in single mode', () => {
 test('calculator defaults to focused compare mode with all scopes enabled', () => {
   assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
   assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
-  assert.equal(DEFAULT_OVERVIEW_SCOPE, 'All');
+  assert.equal(DEFAULT_OVERVIEW_SCOPE, 'all');
 });
 
 test('enemy dropdown treats the selected enemy label as display text rather than a live filter', () => {
@@ -94,18 +94,34 @@ test('enemy dropdown treats the selected enemy label as display text rather than
 
 test('enemy dropdown scope filtering works from the underlying enemy dataset', () => {
   const enemies = [
-    { name: 'Stalker', faction: 'Terminids' },
-    { name: 'Berserker', faction: 'Automatons' },
-    { name: 'Observer', faction: 'Illuminate' }
+    { name: 'Stalker', faction: 'Terminid' },
+    { name: 'Predator Hunter', faction: 'Terminid' },
+    { name: 'Berserker', faction: 'Automaton' },
+    { name: 'Agitator', faction: 'Automaton' },
+    { name: 'Observer', faction: 'Illuminate' },
+    { name: 'Fleshmob', faction: 'Illuminate' },
+    { name: 'Gatekeeper', faction: 'Illuminate' }
   ];
 
   assert.deepEqual(
-    filterEnemiesByScope(enemies, 'All').map((enemy) => enemy.name),
-    ['Stalker', 'Berserker', 'Observer']
+    filterEnemiesByScope(enemies, 'all').map((enemy) => enemy.name),
+    ['Stalker', 'Predator Hunter', 'Berserker', 'Agitator', 'Observer', 'Fleshmob', 'Gatekeeper']
   );
   assert.deepEqual(
     filterEnemiesByScope(enemies, 'Automatons').map((enemy) => enemy.name),
-    ['Berserker']
+    ['Berserker', 'Agitator']
+  );
+  assert.deepEqual(
+    filterEnemiesByScope(enemies, 'Predator Strain').map((enemy) => enemy.name),
+    ['Predator Hunter']
+  );
+  assert.deepEqual(
+    filterEnemiesByScope(enemies, 'Mindless Masses').map((enemy) => enemy.name),
+    ['Observer', 'Fleshmob']
+  );
+  assert.deepEqual(
+    filterEnemiesByScope(enemies, 'Appropriators').map((enemy) => enemy.name),
+    ['Observer', 'Gatekeeper']
   );
 });
 
@@ -125,27 +141,41 @@ test('scope controls are available before selection in both single and compare m
 });
 
 test('scope options keep the three base fronts in gameplay order before extras', () => {
-  const previousFactions = enemyState.factions;
+  const previousUnits = enemyState.units;
 
   try {
-    enemyState.factions = ['Appropriators', 'Automatons', 'Illuminate', 'Terminids', 'Jet Brigade'];
-    assert.deepEqual(getOverviewScopeOptions(), [
-      'All',
-      'Terminids',
-      'Automatons',
-      'Illuminate',
-      'Appropriators',
-      'Jet Brigade'
+    enemyState.units = [
+      { name: 'Predator Hunter', faction: 'Terminid' },
+      { name: 'Rupture Charger', faction: 'Terminid' },
+      { name: 'Spore Burst Scavenger', faction: 'Terminid' },
+      { name: 'Agitator', faction: 'Automaton' },
+      { name: 'Hulk Firebomber', faction: 'Automaton' },
+      { name: 'Observer', faction: 'Illuminate' },
+      { name: 'Fleshmob', faction: 'Illuminate' },
+      { name: 'Gatekeeper', faction: 'Illuminate' }
+    ];
+    assert.deepEqual(getOverviewScopeOptions().map(({ id, label }) => [id, label]), [
+      ['all', 'All enemies'],
+      ['terminids', 'All Terminids'],
+      ['rupture-strain', 'Rupture Strain'],
+      ['spore-burst-strain', 'Spore Burst Strain'],
+      ['predator-strain', 'Predator Strain'],
+      ['automatons', 'All Automatons'],
+      ['cyborg-legion', 'Cyborg Legion'],
+      ['incineration-corps', 'Incineration Corps'],
+      ['illuminate', 'All Illuminate'],
+      ['mindless-masses', 'Mindless Masses'],
+      ['appropriators', 'Appropriators']
     ]);
   } finally {
-    enemyState.factions = previousFactions;
+    enemyState.units = previousUnits;
   }
 });
 
 test('overview dropdown option uses a dedicated highlighted presentation', () => {
   assert.equal(ENEMY_OVERVIEW_DROPDOWN_CLASS, 'dropdown-item dropdown-item-overview');
-  assert.match(getEnemyOverviewOptionHtml('All'), /compare all matching enemies/i);
-  assert.match(getEnemyOverviewOptionHtml('Terminids'), /compare matching terminids enemies/i);
+  assert.match(getEnemyOverviewOptionHtml('all'), /compare all matching enemies/i);
+  assert.match(getEnemyOverviewOptionHtml('Appropriators'), /compare matching appropriators enemies/i);
 });
 
 function makeWeapon(name, {
@@ -217,11 +247,20 @@ test('compare mode still uses compact analysis columns and optional stats column
 
   const overviewAnalysisColumns = getOverviewColumnsForState({
     enemyTableMode: 'analysis',
-    overviewScope: 'All'
+    overviewScope: 'all'
   });
   assert.deepEqual(
     overviewAnalysisColumns.map((column) => column.key),
     ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+  );
+
+  const scopedOverviewColumns = getOverviewColumnsForState({
+    enemyTableMode: 'analysis',
+    overviewScope: 'appropriators'
+  });
+  assert.deepEqual(
+    scopedOverviewColumns.map((column) => column.key),
+    ['enemy', 'zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 });
 

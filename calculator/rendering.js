@@ -8,11 +8,11 @@ import {
   durPercentageColor
 } from '../colors.js';
 import {
-  getSelectedExplosiveZoneIndices,
-  getOverviewScopeOptions,
-  getAttackHitCounts,
   calculatorState,
   getEnemyOptions,
+  getOverviewScopeOptionGroupsForState,
+  getSelectedExplosiveZoneIndices,
+  getAttackHitCounts,
   getSelectedAttackKeys,
   getSelectedAttacks,
   getWeaponForSlot,
@@ -52,6 +52,7 @@ import {
   applyEnemyZoneHealthDisplayToCell
 } from './enemy-zone-display.js';
 import { EFFECTIVE_DISTANCE_TOOLTIP } from './effective-distance.js';
+import { getEnemyScopeSummaryLabel, isAllEnemyScope } from './enemy-scope.js';
 
 const DEFAULT_WEAPON_HEADERS = ['Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const ENEMY_STATS_COLUMNS = [
@@ -554,10 +555,10 @@ export function getEnemyColumnsForState({
 
 export function getOverviewColumnsForState({
   enemyTableMode = 'analysis',
-  overviewScope = 'All'
+  overviewScope = 'all'
 } = {}) {
   const baseColumns = [
-    ...(overviewScope === 'All'
+    ...(isAllEnemyScope(overviewScope)
       ? [{ key: 'faction', label: 'Faction' }]
       : []),
     { key: 'enemy', label: 'Enemy' },
@@ -645,6 +646,50 @@ function appendToolbarButtonGroup(toolbar, labelText, items, isActive, onClick) 
   toolbar.appendChild(group);
 }
 
+function appendToolbarSelectGroup(toolbar, labelText, groups, selectedValue, onChange) {
+  const label = document.createElement('span');
+  label.className = 'label';
+  label.textContent = labelText;
+  toolbar.appendChild(label);
+
+  const group = document.createElement('div');
+  group.className = 'calculator-toolbar-group calculator-toolbar-select-group';
+
+  const select = document.createElement('select');
+  select.className = 'calculator-toolbar-select';
+
+  (groups || []).forEach((entry) => {
+    if (!entry) {
+      return;
+    }
+
+    if (entry.label && Array.isArray(entry.options)) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = entry.label;
+      entry.options.forEach(({ id, label: optionLabel }) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = optionLabel;
+        optgroup.appendChild(option);
+      });
+      select.appendChild(optgroup);
+      return;
+    }
+
+    (entry.options || []).forEach(({ id, label: optionLabel }) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = optionLabel;
+      select.appendChild(option);
+    });
+  });
+
+  select.value = selectedValue;
+  select.addEventListener('change', (event) => onChange(event.target.value));
+  group.appendChild(select);
+  toolbar.appendChild(group);
+}
+
 function getFocusedTargetingModes(selectedAttacksA, selectedAttacksB) {
   const activeAttacks = calculatorState.mode === 'compare'
     ? [...selectedAttacksA, ...selectedAttacksB]
@@ -715,11 +760,11 @@ function renderEnemyControls(enemy) {
   }
 
   if (shouldShowEnemyScopeControls({ mode: calculatorState.mode })) {
-    appendToolbarButtonGroup(
+    appendToolbarSelectGroup(
       toolbar,
       'Scope:',
-      getOverviewScopeOptions().map((scope) => ({ value: scope, label: scope })),
-      (value) => calculatorState.overviewScope === value,
+      getOverviewScopeOptionGroupsForState(),
+      calculatorState.overviewScope,
       (value) => {
         if (overviewActive) {
           ensureEnemySortKeyVisible(getOverviewColumnsForState({
@@ -760,7 +805,7 @@ function renderEnemyControls(enemy) {
       ? 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK. Scope also filters the enemy dropdown.'
       : 'Scope filters the enemy dropdown in single mode. Select an enemy to see the full enemy table, including raw stats plus Shots, Range, and TTK.';
   } else if (!overviewActive && !hasFocusedEnemy) {
-    note.textContent = 'Scope filters the enemy dropdown and carries into Overview. Select an enemy or Overview to see details.';
+    note.textContent = `Scope filters the enemy dropdown and carries into Overview. Current scope: ${getEnemyScopeSummaryLabel(calculatorState.overviewScope)}. Select an enemy or Overview to see details.`;
   } else if (calculatorState.enemyTableMode === 'stats') {
     note.textContent = 'Stats view restores the fuller enemy columns. Switch back to Analysis for shots, range, and TTK.';
   } else if (overviewActive) {

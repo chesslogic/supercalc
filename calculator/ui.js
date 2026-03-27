@@ -8,6 +8,7 @@ import {
   setSelectedEnemy,
   setSelectedWeapon
 } from './data.js';
+import { getEnemyScopeSummaryLabel, getEnemyUnitFrontLabel } from './enemy-scope.js';
 import { filterEnemiesByScope, getEnemyDropdownQueryState } from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
 import { state as weaponsState } from '../weapons/data.js';
@@ -27,11 +28,11 @@ export function getCalculatorModeButtonTitle(mode) {
 
 export const ENEMY_OVERVIEW_DROPDOWN_CLASS = 'dropdown-item dropdown-item-overview';
 
-export function getEnemyOverviewOptionHtml(scope = 'All') {
-  const normalizedScope = String(scope || 'All').trim() || 'All';
-  const summary = normalizedScope === 'All'
+export function getEnemyOverviewOptionHtml(scope = 'all') {
+  const summaryLabel = getEnemyScopeSummaryLabel(scope);
+  const summary = summaryLabel === 'All'
     ? 'compare all matching enemies'
-    : `compare matching ${normalizedScope} enemies`;
+    : `compare matching ${summaryLabel} enemies`;
 
   return `Overview <span class="overview-dropdown-meta">${summary}</span>`;
 }
@@ -324,7 +325,8 @@ function setupEnemySelector() {
     const scopedOptions = filterEnemiesByScope(options, calculatorState.overviewScope);
     const filteredOptions = scopedOptions.filter((enemy) =>
       enemy.name.toLowerCase().includes(effectiveQuery) ||
-      enemy.faction.toLowerCase().includes(effectiveQuery)
+      getEnemyUnitFrontLabel(enemy).toLowerCase().includes(effectiveQuery) ||
+      String(enemy.faction || '').toLowerCase().includes(effectiveQuery)
     );
 
     enemyDropdown.innerHTML = '';
@@ -356,7 +358,7 @@ function setupEnemySelector() {
     filteredOptions.forEach((enemy) => {
       const item = document.createElement('div');
       item.className = 'dropdown-item';
-      item.innerHTML = `${enemy.name} <span style="color:var(--muted); font-size:11px;">(${enemy.faction})</span>`;
+      item.innerHTML = `${enemy.name} <span style="color:var(--muted); font-size:11px;">(${getEnemyUnitFrontLabel(enemy)})</span>`;
       item.addEventListener('click', () => {
         setSelectedEnemy(enemy);
         syncEnemyInputValue();

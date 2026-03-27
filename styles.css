@@ -431,6 +431,25 @@ tbody tr:hover {
   padding:6px 10px;
 }
 
+.calculator-toolbar-select-group{
+  align-items:center;
+}
+
+.calculator-toolbar-select{
+  min-width:180px;
+  padding:6px 10px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:#171717;
+  color:var(--text);
+}
+
+.calculator-toolbar-select:hover,
+.calculator-toolbar-select:focus{
+  border-color:var(--accent);
+  outline:none;
+}
+
 .calculator-toolbar-note{
   margin-left:auto;
 }

@@ -3,6 +3,11 @@ import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
 import { getAttackRowKey, getDefaultSelectedAttackKeys, getPreferredZoneIndex } from './compare-utils.js';
 import {
+  getOverviewScopeOptionGroups,
+  getOverviewScopeOptions as getAvailableOverviewScopeOptions,
+  normalizeEnemyScopeId
+} from './enemy-scope.js';
+import {
   compareWeaponOptionBaseOrder,
   getWeaponDropdownApInfo,
   sortWeaponOptionsForReference
@@ -15,8 +20,7 @@ const DEFAULT_ENEMY_SORT = {
 };
 export const DEFAULT_CALCULATOR_MODE = 'compare';
 export const DEFAULT_COMPARE_VIEW = 'focused';
-export const DEFAULT_OVERVIEW_SCOPE = 'All';
-export const PREFERRED_OVERVIEW_SCOPE_ORDER = ['Terminids', 'Automatons', 'Illuminate'];
+export const DEFAULT_OVERVIEW_SCOPE = 'all';
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -93,25 +97,11 @@ export function getEnemyOptions() {
 }
 
 export function getOverviewScopeOptions() {
-  const loadedScopes = Array.isArray(enemyState.factions) ? enemyState.factions : [];
-  const seenScopes = new Set();
-  const orderedScopes = [];
+  return getAvailableOverviewScopeOptions(getEnemyOptions());
+}
 
-  PREFERRED_OVERVIEW_SCOPE_ORDER.forEach((scope) => {
-    if (loadedScopes.includes(scope) && !seenScopes.has(scope)) {
-      orderedScopes.push(scope);
-      seenScopes.add(scope);
-    }
-  });
-
-  loadedScopes.forEach((scope) => {
-    if (!seenScopes.has(scope)) {
-      orderedScopes.push(scope);
-      seenScopes.add(scope);
-    }
-  });
-
-  return [DEFAULT_OVERVIEW_SCOPE, ...orderedScopes];
+export function getOverviewScopeOptionGroupsForState() {
+  return getOverviewScopeOptionGroups(getEnemyOptions());
 }
 
 export function getWeaponForSlot(slot = 'A') {
@@ -138,7 +128,7 @@ export function setEnemyTableMode(mode) {
 }
 
 export function setOverviewScope(scope) {
-  calculatorState.overviewScope = scope || DEFAULT_OVERVIEW_SCOPE;
+  calculatorState.overviewScope = normalizeEnemyScopeId(scope || DEFAULT_OVERVIEW_SCOPE);
 }
 
 export function setDiffDisplayMode(mode) {
