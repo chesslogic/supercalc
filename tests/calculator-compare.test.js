@@ -319,6 +319,30 @@ test('buildZoneComparisonMetrics leaves effective distance unavailable for ambig
   assert.match(metrics.bySlot.A.effectiveDistance.title, /multiple possible falloff profiles/i);
 });
 
+test('buildZoneComparisonMetrics keeps effective distance for fatal placeholder-health zones that kill through main', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
+
+  const metrics = buildZoneComparisonMetrics({
+    zone: makeZone('torso_inside', { health: -1, isFatal: true, toMainPercent: 1 }),
+    enemyMainHealth: 500,
+    weaponA: { code: 'AR-23', name: 'Liberator', rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 105)]
+  });
+
+  const expectedDistance = calculateMaxDistanceForDamageFloor(
+    105,
+    { caliber: 5.5, mass: 4.5, velocity: 900, drag: 0.3 },
+    100
+  );
+
+  assert.ok(expectedDistance !== null);
+  assert.equal(metrics.bySlot.A.outcomeKind, 'fatal');
+  assert.equal(metrics.bySlot.A.shotsToKill, 5);
+  assert.ok(metrics.bySlot.A.effectiveDistance.isAvailable);
+  assert.ok(Math.abs(metrics.bySlot.A.effectiveDistance.meters - expectedDistance) < 0.01);
+});
+
 test('buildZoneComparisonMetrics marks one-sided damage wins as infinite diff severity', () => {
   const metrics = buildZoneComparisonMetrics({
     zone: {

@@ -10,6 +10,7 @@ import {
 } from '../calculator/summary.js';
 import { tokenizeFormattedTtk } from '../calculator/ttk-formatting.js';
 import {
+  getZoneDisplayedKillPath,
   calculateAttackAgainstZone,
   getZoneDisplayedShotsToKill,
   getZoneDisplayedTtkSeconds,
@@ -29,6 +30,50 @@ const ENEMY_DATA = JSON.parse(
   readFileSync(new URL('../enemies/enemydata.json', import.meta.url), 'utf8')
 );
 
+function parseCsvLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+
+    if (char === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      values.push(current);
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current);
+  return values;
+}
+
+function loadCheckedInWeaponRows() {
+  const csv = readFileSync(new URL('../weapons/weapondata.csv', import.meta.url), 'utf8').trimEnd();
+  const lines = csv.split(/\r?\n/u);
+  const headers = parseCsvLine(lines[0]);
+
+  return lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
+    return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? '']));
+  });
+}
+
+const WEAPON_ROWS = loadCheckedInWeaponRows();
+
 function getEnemyByName(name) {
   for (const factionUnits of Object.values(ENEMY_DATA)) {
     const unit = factionUnits?.[name];
@@ -41,6 +86,39 @@ function getEnemyByName(name) {
   }
 
   throw new Error(`Enemy not found in enemydata.json: ${name}`);
+}
+
+function getWeaponProjectileAttackByName(name) {
+  const row = WEAPON_ROWS.find((entry) => (
+    entry.Name === name
+    && String(entry['Atk Type']).toLowerCase() === 'projectile'
+  ));
+
+  if (!row) {
+    throw new Error(`Weapon not found in weapondata.csv: ${name}`);
+  }
+
+  return {
+    'Atk Name': row['Atk Name'],
+    'Atk Type': row['Atk Type'],
+    DMG: Number(row.DMG),
+    DUR: Number(row.DUR),
+    AP: Number(row.AP)
+  };
+}
+
+function getWeaponRpmByName(name) {
+  const row = WEAPON_ROWS.find((entry) => (
+    entry.Name === name
+    && Number.isFinite(Number(entry.RPM))
+    && Number(entry.RPM) > 0
+  ));
+
+  if (!row) {
+    throw new Error(`Weapon RPM not found in weapondata.csv: ${name}`);
+  }
+
+  return Number(row.RPM);
 }
 
 function makeExplosionAttackRow(name, damage, ap = 2, dur = 0) {
@@ -787,10 +865,25 @@ test('zone outcome labels expose fixed badge text and row ttk semantics', () => 
   assert.equal(getZoneOutcomeDescription('limb'), 'This part can be removed before main would die');
   assert.equal(getZoneOutcomeDescription('utility'), 'This part can be removed, but destroying it does not kill the enemy');
 
-  assert.equal(getZoneDisplayedTtkSeconds('fatal', { zoneTtkSeconds: 0, mainTtkSeconds: 2 }), 0);
+  assert.equal(getZoneDisplayedTtkSeconds('fatal', { zoneShotsToKill: 1, zoneTtkSeconds: 0, mainTtkSeconds: 2 }), 0);
   assert.equal(getZoneDisplayedTtkSeconds('main', { zoneTtkSeconds: 2, mainTtkSeconds: 1 }), 1);
   assert.equal(getZoneDisplayedTtkSeconds('limb', { zoneTtkSeconds: 0, mainTtkSeconds: 1 }), 0);
   assert.equal(getZoneDisplayedTtkSeconds('utility', { zoneTtkSeconds: 0, mainTtkSeconds: null }), 0);
+});
+
+test('fatal zones fall back to main kill metrics when part health is placeholder-only', () => {
+  const killSummary = {
+    zoneShotsToKill: null,
+    zoneTtkSeconds: null,
+    zoneEffectiveShotsToKill: null,
+    zoneEffectiveTtkSeconds: null,
+    mainShotsToKill: 5,
+    mainTtkSeconds: 4
+  };
+
+  assert.equal(getZoneDisplayedKillPath('fatal', killSummary), 'main');
+  assert.equal(getZoneDisplayedShotsToKill('fatal', killSummary), 5);
+  assert.equal(getZoneDisplayedTtkSeconds('fatal', killSummary), 4);
 });
 
 test('zero-bleed Constitution fatal zones use combined health for displayed shots and ttk', () => {
@@ -831,6 +924,43 @@ test('zero-bleed Constitution fatal zones use combined health for displayed shot
   assert.equal(outcomeKind, 'fatal');
   assert.equal(getZoneDisplayedShotsToKill(outcomeKind, summary.killSummary), 4);
   assert.equal(getZoneDisplayedTtkSeconds(outcomeKind, summary.killSummary), 3);
+});
+
+test('real Charger torso_inside uses main kill metrics for finisher weapons', () => {
+  const charger = getEnemyByName('Charger');
+  const zone = charger.zones.find((entry) => entry.zone_name === 'torso_inside');
+  assert.ok(zone);
+
+  for (const { weaponName, expectedShots } of [
+    { weaponName: 'Liberator Carbine', expectedShots: 12 },
+    { weaponName: 'Tenderizer', expectedShots: 10 }
+  ]) {
+    const rpm = getWeaponRpmByName(weaponName);
+    const summary = summarizeZoneDamage({
+      zone,
+      enemyMainHealth: charger.health,
+      selectedAttacks: [getWeaponProjectileAttackByName(weaponName)],
+      hitCounts: [1],
+      rpm
+    });
+    const outcomeKind = getZoneOutcomeKind({
+      zone,
+      totalDamagePerCycle: summary.totalDamagePerCycle,
+      totalDamageToMainPerCycle: summary.totalDamageToMainPerCycle,
+      killSummary: summary.killSummary
+    });
+
+    assert.equal(summary.zoneHealth, -1);
+    assert.equal(summary.killSummary.zoneShotsToKill, null);
+    assert.equal(summary.killSummary.mainShotsToKill, expectedShots);
+    assert.equal(outcomeKind, 'fatal');
+    assert.equal(getZoneDisplayedKillPath(outcomeKind, summary.killSummary), 'main');
+    assert.equal(getZoneDisplayedShotsToKill(outcomeKind, summary.killSummary), expectedShots);
+    assert.equal(
+      getZoneDisplayedTtkSeconds(outcomeKind, summary.killSummary),
+      calculateTtkSeconds(expectedShots, rpm)
+    );
+  }
 });
 
 test('AP4 explosive against real Hulk Bruiser Main yields finite main shots and ttk', () => {

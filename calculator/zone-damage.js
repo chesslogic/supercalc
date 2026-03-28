@@ -521,23 +521,54 @@ export function getZoneOutcomeDescription(kind) {
   return null;
 }
 
+function getZoneShotsToKill(killSummary) {
+  return killSummary?.zoneEffectiveShotsToKill ?? killSummary?.zoneShotsToKill ?? null;
+}
+
+function getZoneTtkSeconds(killSummary) {
+  return killSummary?.zoneEffectiveTtkSeconds ?? killSummary?.zoneTtkSeconds ?? null;
+}
+
+export function getZoneDisplayedKillPath(kind, killSummary) {
+  if (!killSummary) {
+    return null;
+  }
+
+  const zoneShotsToKill = getZoneShotsToKill(killSummary);
+
+  if (kind === 'main') {
+    return 'main';
+  }
+
+  if (kind === 'fatal') {
+    if (zoneShotsToKill !== null) {
+      return 'zone';
+    }
+
+    if (killSummary.mainShotsToKill !== null) {
+      return 'main';
+    }
+  }
+
+  if (kind === 'limb' || kind === 'utility') {
+    return 'zone';
+  }
+
+  return null;
+}
+
 export function getZoneDisplayedShotsToKill(kind, killSummary) {
   if (!killSummary) {
     return null;
   }
 
-  const zoneShotsToKill = killSummary.zoneEffectiveShotsToKill ?? killSummary.zoneShotsToKill ?? null;
-
-  if (kind === 'fatal') {
-    return zoneShotsToKill;
-  }
-
-  if (kind === 'main') {
+  const displayedKillPath = getZoneDisplayedKillPath(kind, killSummary);
+  if (displayedKillPath === 'main') {
     return killSummary.mainShotsToKill;
   }
 
-  if (kind === 'limb' || kind === 'utility') {
-    return zoneShotsToKill;
+  if (displayedKillPath === 'zone') {
+    return getZoneShotsToKill(killSummary);
   }
 
   return null;
@@ -548,18 +579,13 @@ export function getZoneDisplayedTtkSeconds(kind, killSummary) {
     return null;
   }
 
-  const zoneTtkSeconds = killSummary.zoneEffectiveTtkSeconds ?? killSummary.zoneTtkSeconds ?? null;
-
-  if (kind === 'fatal') {
-    return zoneTtkSeconds;
-  }
-
-  if (kind === 'main') {
+  const displayedKillPath = getZoneDisplayedKillPath(kind, killSummary);
+  if (displayedKillPath === 'main') {
     return killSummary.mainTtkSeconds;
   }
 
-  if (kind === 'limb' || kind === 'utility') {
-    return zoneTtkSeconds;
+  if (displayedKillPath === 'zone') {
+    return getZoneTtkSeconds(killSummary);
   }
 
   return null;

@@ -1,5 +1,6 @@
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 import { roundDamagePacket } from './damage-rounding.js';
+import { getZoneDisplayedKillPath, getZoneDisplayedShotsToKill } from './zone-damage.js';
 import {
   MIN_BALLISTIC_DAMAGE_MULTIPLIER,
   calculateBallisticDamageMultiplier,
@@ -43,12 +44,12 @@ export function formatEffectiveDistanceText(meters) {
   return `${Math.max(0, Math.floor(meters))}m`;
 }
 
-function getDisplayedDamageFloor(zone, zoneSummary, outcomeKind, displayedShots) {
+function getDisplayedDamageFloor(zone, zoneSummary, displayedKillPath, displayedShots) {
   if (!Number.isFinite(displayedShots) || displayedShots <= 0) {
     return null;
   }
 
-  if (outcomeKind === 'main') {
+  if (displayedKillPath === 'main') {
     return Math.ceil((toFiniteNumber(zoneSummary?.enemyMainHealth) ?? 0) / displayedShots);
   }
 
@@ -65,10 +66,10 @@ function getDisplayedDamageFloor(zone, zoneSummary, outcomeKind, displayedShots)
   return Math.ceil(effectiveZoneHealth / displayedShots);
 }
 
-function getDisplayedApplicationDamage(application, outcomeKind) {
+function getDisplayedApplicationDamage(application, displayedKillPath) {
   const hits = toFiniteNumber(application?.hits) ?? 1;
 
-  if (outcomeKind === 'main') {
+  if (displayedKillPath === 'main') {
     const totalMainDamage = toFiniteNumber(application?.totalMainDamage);
     if (totalMainDamage !== null) {
       return totalMainDamage;
@@ -117,7 +118,7 @@ function calculateRoundedImpactDamageAtMultiplier(attackResult, damageMultiplier
   return roundDamagePacket(rawBaseDamage * damageMultiplier * armorMultiplier * explosionMultiplier) ?? 0;
 }
 
-function calculateModeledApplicationDamageAtMultiplier(application, outcomeKind, zone, damageMultiplier) {
+function calculateModeledApplicationDamageAtMultiplier(application, displayedKillPath, zone, damageMultiplier) {
   const attackResult = getApplicationAttackResult(application);
   if (!attackResult) {
     return 0;
@@ -128,7 +129,7 @@ function calculateModeledApplicationDamageAtMultiplier(application, outcomeKind,
     return 0;
   }
 
-  if (outcomeKind === 'main') {
+  if (displayedKillPath === 'main') {
     const mainDamagePerHit = isDirectMainApplication(application, zone)
       ? roundedImpactDamage
       : (roundDamagePacket(roundedImpactDamage * (toFiniteNumber(attackResult?.toMainPercent) ?? 0)) ?? 0);
@@ -139,39 +140,39 @@ function calculateModeledApplicationDamageAtMultiplier(application, outcomeKind,
   return roundedImpactDamage * getApplicationHits(application);
 }
 
-function calculateCompositeDamageAtDistance(modeledApplications, constantDamage, zone, outcomeKind, distanceMeters) {
+function calculateCompositeDamageAtDistance(modeledApplications, constantDamage, zone, displayedKillPath, distanceMeters) {
   return modeledApplications.reduce((sum, application) => {
     const multiplier = calculateBallisticDamageMultiplier(application.attributes, distanceMeters);
     if (multiplier === null) {
       return sum;
     }
 
-    return sum + calculateModeledApplicationDamageAtMultiplier(application.source, outcomeKind, zone, multiplier);
+    return sum + calculateModeledApplicationDamageAtMultiplier(application.source, displayedKillPath, zone, multiplier);
   }, constantDamage);
 }
 
-function calculateCompositeMinimumDamage(modeledApplications, constantDamage, zone, outcomeKind) {
+function calculateCompositeMinimumDamage(modeledApplications, constantDamage, zone, displayedKillPath) {
   return modeledApplications.reduce((sum, application) => {
     return sum + calculateModeledApplicationDamageAtMultiplier(
       application.source,
-      outcomeKind,
+      displayedKillPath,
       zone,
       MIN_BALLISTIC_DAMAGE_MULTIPLIER
     );
   }, constantDamage);
 }
 
-function solveMaxDistanceForDamageFloor(modeledApplications, constantDamage, zone, outcomeKind, damageFloor) {
+function solveMaxDistanceForDamageFloor(modeledApplications, constantDamage, zone, displayedKillPath, damageFloor) {
   if (!Number.isFinite(damageFloor) || damageFloor <= 0) {
     return null;
   }
 
-  const pointBlankDamage = calculateCompositeDamageAtDistance(modeledApplications, constantDamage, zone, outcomeKind, 0);
+  const pointBlankDamage = calculateCompositeDamageAtDistance(modeledApplications, constantDamage, zone, displayedKillPath, 0);
   if (pointBlankDamage < damageFloor) {
     return null;
   }
 
-  const minimumDamage = calculateCompositeMinimumDamage(modeledApplications, constantDamage, zone, outcomeKind);
+  const minimumDamage = calculateCompositeMinimumDamage(modeledApplications, constantDamage, zone, displayedKillPath);
   if (minimumDamage >= damageFloor) {
     return Number.POSITIVE_INFINITY;
   }
@@ -179,7 +180,7 @@ function solveMaxDistanceForDamageFloor(modeledApplications, constantDamage, zon
   let low = 0;
   let high = 25;
   while (
-    calculateCompositeDamageAtDistance(modeledApplications, constantDamage, zone, outcomeKind, high) >= damageFloor
+    calculateCompositeDamageAtDistance(modeledApplications, constantDamage, zone, displayedKillPath, high) >= damageFloor
     && high < 100000
   ) {
     high *= 2;
@@ -191,7 +192,7 @@ function solveMaxDistanceForDamageFloor(modeledApplications, constantDamage, zon
       modeledApplications,
       constantDamage,
       zone,
-      outcomeKind,
+      displayedKillPath,
       middle
     );
 
@@ -241,22 +242,21 @@ export function calculateEffectiveDistanceInfo({
     return createUnavailableDistanceInfo('Selected attacks do not damage this part');
   }
 
-  const displayedShots = outcomeKind === 'main'
-    ? zoneSummary.killSummary.mainShotsToKill
-    : (zoneSummary.killSummary.zoneEffectiveShotsToKill ?? zoneSummary.killSummary.zoneShotsToKill ?? null);
+  const displayedKillPath = getZoneDisplayedKillPath(outcomeKind, zoneSummary.killSummary);
+  const displayedShots = getZoneDisplayedShotsToKill(outcomeKind, zoneSummary.killSummary);
 
-  if (!Number.isFinite(displayedShots) || displayedShots <= 0) {
+  if (!displayedKillPath || !Number.isFinite(displayedShots) || displayedShots <= 0) {
     return createUnavailableDistanceInfo('Approximate range unavailable for this breakpoint');
   }
 
-  const damageFloor = getDisplayedDamageFloor(zone, zoneSummary, outcomeKind, displayedShots);
+  const damageFloor = getDisplayedDamageFloor(zone, zoneSummary, displayedKillPath, displayedShots);
   if (!Number.isFinite(damageFloor) || damageFloor <= 0) {
     return createUnavailableDistanceInfo('Approximate range unavailable for this breakpoint');
   }
 
   const attackDetails = Array.isArray(zoneSummary.attackDetails) ? zoneSummary.attackDetails : [];
   const projectileApplications = attackDetails.filter((application) =>
-    !application?.isExplosion && getDisplayedApplicationDamage(application, outcomeKind) > 0
+    !application?.isExplosion && getDisplayedApplicationDamage(application, displayedKillPath) > 0
   );
 
   if (projectileApplications.length === 0) {
@@ -269,7 +269,7 @@ export function calculateEffectiveDistanceInfo({
   }
 
   const constantDamage = attackDetails.reduce((sum, application) => {
-    const contribution = getDisplayedApplicationDamage(application, outcomeKind);
+    const contribution = getDisplayedApplicationDamage(application, displayedKillPath);
     if (contribution <= 0) {
       return sum;
     }
@@ -285,7 +285,7 @@ export function calculateEffectiveDistanceInfo({
   let adjustedConstantDamage = constantDamage;
 
   for (const application of projectileApplications) {
-    const contribution = getDisplayedApplicationDamage(application, outcomeKind);
+    const contribution = getDisplayedApplicationDamage(application, displayedKillPath);
     const drag = toFiniteNumber(falloffResolution.profile.attributes.drag) ?? 0;
     const attackResult = getApplicationAttackResult(application);
     const rawBaseDamage = toFiniteNumber(attackResult?.rawBaseDamage);
@@ -305,7 +305,7 @@ export function calculateEffectiveDistanceInfo({
     modeledApplications,
     adjustedConstantDamage,
     zone,
-    outcomeKind,
+    displayedKillPath,
     damageFloor
   );
   if (meters === null) {
