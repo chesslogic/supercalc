@@ -2,6 +2,22 @@ import { apColorClass } from '../colors.js';
 
 export const DROPDOWN_AP_SIGNIFICANCE_SHARE = 0.1;
 export const WEAPON_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
+export const DEFAULT_WEAPON_SORT_MODE = 'grouped';
+export const WEAPON_SORT_MODE_DEFINITIONS = [
+  {
+    id: 'grouped',
+    label: 'Grouped'
+  },
+  {
+    id: 'ap-desc',
+    label: 'AP high -> low'
+  },
+  {
+    id: 'match-reference',
+    label: 'Match other weapon AP',
+    compareOnly: true
+  }
+];
 export const WEAPON_DROPDOWN_MULTIPROJECTILE_PREVIEW_RULES = [
   {
     id: 'all-directional-fragments',
@@ -48,6 +64,10 @@ function parseApValue(value) {
 
 function compareText(a, b) {
   return String(a || '').localeCompare(String(b || ''));
+}
+
+function toSortableApValue(value) {
+  return value === null ? Number.NEGATIVE_INFINITY : value;
 }
 
 function getWeaponRowMultiplicity(row) {
@@ -120,6 +140,30 @@ export function compareWeaponOptionBaseOrder(a, b) {
   }
 
   return (toFiniteNumber(a?.index) ?? Number.MAX_SAFE_INTEGER) - (toFiniteNumber(b?.index) ?? Number.MAX_SAFE_INTEGER);
+}
+
+export function normalizeWeaponSortMode(sortMode, {
+  mode = 'single'
+} = {}) {
+  const normalizedMode = String(mode || 'single').trim().toLowerCase() === 'compare'
+    ? 'compare'
+    : 'single';
+  const normalizedSortMode = String(sortMode || DEFAULT_WEAPON_SORT_MODE).trim().toLowerCase();
+  const availableModes = getWeaponSortModeOptions({ mode: normalizedMode });
+
+  return availableModes.find((entry) => entry.id === normalizedSortMode)?.id || DEFAULT_WEAPON_SORT_MODE;
+}
+
+export function getWeaponSortModeOptions({
+  mode = 'single'
+} = {}) {
+  const normalizedMode = String(mode || 'single').trim().toLowerCase() === 'compare'
+    ? 'compare'
+    : 'single';
+
+  return WEAPON_SORT_MODE_DEFINITIONS.filter((definition) => (
+    normalizedMode === 'compare' || !definition.compareOnly
+  ));
 }
 
 export function getWeaponRowMeaningfulDamage(row) {
@@ -221,6 +265,15 @@ export function getWeaponOptionDisplayModel(weapon) {
   };
 }
 
+export function compareWeaponOptionsByApDescending(a, b) {
+  const apDiff = toSortableApValue(toApInfo(b).displayAp) - toSortableApValue(toApInfo(a).displayAp);
+  if (apDiff !== 0) {
+    return apDiff;
+  }
+
+  return compareWeaponOptionBaseOrder(a, b);
+}
+
 export function getWeaponOptionPriorityBucket(option, referenceWeapon) {
   const referenceInfo = toApInfo(referenceWeapon);
   const optionInfo = toApInfo(option);
@@ -254,4 +307,23 @@ export function sortWeaponOptionsForReference(options = [], referenceWeapon = nu
 
     return compareWeaponOptionBaseOrder(a, b);
   });
+}
+
+export function sortWeaponOptions(options = [], {
+  sortMode = DEFAULT_WEAPON_SORT_MODE,
+  mode = 'single',
+  referenceWeapon = null
+} = {}) {
+  const normalizedSortMode = normalizeWeaponSortMode(sortMode, { mode });
+  switch (normalizedSortMode) {
+    case 'ap-desc':
+      return [...options].sort(compareWeaponOptionsByApDescending);
+    case 'match-reference':
+      return referenceWeapon
+        ? sortWeaponOptionsForReference(options, referenceWeapon)
+        : [...options].sort(compareWeaponOptionBaseOrder);
+    case 'grouped':
+    default:
+      return [...options].sort(compareWeaponOptionBaseOrder);
+  }
 }

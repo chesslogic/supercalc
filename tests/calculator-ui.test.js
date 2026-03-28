@@ -8,10 +8,13 @@ import {
   DEFAULT_CALCULATOR_MODE,
   DEFAULT_COMPARE_VIEW,
   DEFAULT_OVERVIEW_SCOPE,
+  DEFAULT_WEAPON_SORT_MODE,
   getOverviewScopeOptions,
   getWeaponOptions,
+  getWeaponSortModeOptionsForState,
   setCalculatorMode,
   setEnemyTableMode,
+  setWeaponSortMode,
   setSelectedWeapon
 } from '../calculator/data.js';
 import {
@@ -27,9 +30,12 @@ import {
   getEnemyOverviewOptionHtml
 } from '../calculator/ui.js';
 import {
+  compareWeaponOptionsByApDescending,
   getWeaponDropdownApInfo,
   getWeaponOptionDisplayModel,
   getWeaponRowPreviewHitCount,
+  getWeaponSortModeOptions,
+  sortWeaponOptions,
   sortWeaponOptionsForReference
 } from '../calculator/weapon-dropdown.js';
 import {
@@ -79,6 +85,7 @@ test('calculator defaults to focused compare mode with all scopes enabled', () =
   assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
   assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
   assert.equal(DEFAULT_OVERVIEW_SCOPE, 'all');
+  assert.equal(DEFAULT_WEAPON_SORT_MODE, 'grouped');
 });
 
 test('enemy dropdown treats the selected enemy label as display text rather than a live filter', () => {
@@ -275,6 +282,17 @@ test('calculator mode buttons expose descriptive hover titles', () => {
   );
 });
 
+test('weapon sort mode options expose the compare-only reference mode only in compare mode', () => {
+  assert.deepEqual(
+    getWeaponSortModeOptions({ mode: 'single' }).map((option) => option.id),
+    ['grouped', 'ap-desc']
+  );
+  assert.deepEqual(
+    getWeaponSortModeOptions({ mode: 'compare' }).map((option) => option.id),
+    ['grouped', 'ap-desc', 'match-reference']
+  );
+});
+
 test('weapon dropdown AP preview ignores zero or insignificant high-AP rows', () => {
   const grenadeLauncher = makeWeapon('Grenade Launcher', {
     type: 'Support',
@@ -334,6 +352,38 @@ test('weapon dropdown display model exposes a compact colored AP value and cavea
   assert.equal(display.apMarkerText, '*');
   assert.equal(display.apClassName, 'ap-yellow');
   assert.match(display.apTitle, /significant AP 3/i);
+});
+
+test('weapon AP-desc sorting puts higher representative AP first and keeps ties in base order', () => {
+  const sorted = [
+    makeWeapon('Diligence', { type: 'Primary', sub: 'DMR', code: 'R-63', rows: [makeAttackRow(2, 165, 45)] }),
+    makeWeapon('Quasar Cannon', { type: 'Support', sub: 'EP', code: 'LAS-99', rows: [makeAttackRow(6, 2000, 2000)] }),
+    makeWeapon('Tenderizer', { type: 'Primary', sub: 'AR', code: 'AR-61', rows: [makeAttackRow(2, 105, 30)] }),
+    makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
+  ].sort(compareWeaponOptionsByApDescending);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Quasar Cannon',
+    'Grenade Launcher',
+    'Tenderizer',
+    'Diligence'
+  ]);
+});
+
+test('sortWeaponOptions falls back to grouped order when reference sorting has no reference weapon', () => {
+  const options = [
+    makeWeapon('Tenderizer', { type: 'Primary', sub: 'AR', code: 'AR-61', rows: [makeAttackRow(2, 105, 30)] }),
+    makeWeapon('Diligence', { type: 'Primary', sub: 'DMR', code: 'R-63', rows: [makeAttackRow(2, 165, 45)] })
+  ];
+
+  assert.deepEqual(
+    sortWeaponOptions(options, {
+      sortMode: 'match-reference',
+      mode: 'compare',
+      referenceWeapon: null
+    }).map((weapon) => weapon.name),
+    ['Tenderizer', 'Diligence']
+  );
 });
 
 test('compare-mode AP sorting floats same-AP peers before the rest', () => {
@@ -405,9 +455,10 @@ test('compare-mode AP sorting groups anti-tank weapons together for AP5+ referen
   ]);
 });
 
-test('getWeaponOptions uses the opposite compare slot as the AP sorting reference', () => {
+test('getWeaponOptions keeps grouped ordering by default even in compare mode', () => {
   const previousGroups = weaponsState.groups;
   const previousMode = calculatorState.mode;
+  const previousWeaponSortMode = calculatorState.weaponSortMode;
   const previousWeaponA = calculatorState.weaponA;
   const previousWeaponB = calculatorState.weaponB;
   const previousSelectedAttackKeys = {
@@ -444,15 +495,94 @@ test('getWeaponOptions uses the opposite compare slot as the AP sorting referenc
 
     assert.deepEqual(
       getWeaponOptions('B').map((weapon) => weapon.name),
+      ['Coyote', 'Liberator Carbine', 'Tenderizer', 'Diligence']
+    );
+  } finally {
+    weaponsState.groups = previousGroups;
+    calculatorState.mode = previousMode;
+    calculatorState.weaponSortMode = previousWeaponSortMode;
+    calculatorState.weaponA = previousWeaponA;
+    calculatorState.weaponB = previousWeaponB;
+    calculatorState.selectedAttackKeys = previousSelectedAttackKeys;
+    calculatorState.attackHitCounts = previousAttackHitCounts;
+  }
+});
+
+test('getWeaponOptions uses the opposite compare slot as the AP sorting reference when that mode is selected', () => {
+  const previousGroups = weaponsState.groups;
+  const previousMode = calculatorState.mode;
+  const previousWeaponSortMode = calculatorState.weaponSortMode;
+  const previousWeaponA = calculatorState.weaponA;
+  const previousWeaponB = calculatorState.weaponB;
+  const previousSelectedAttackKeys = {
+    A: [...calculatorState.selectedAttackKeys.A],
+    B: [...calculatorState.selectedAttackKeys.B]
+  };
+  const previousAttackHitCounts = {
+    A: { ...calculatorState.attackHitCounts.A },
+    B: { ...calculatorState.attackHitCounts.B }
+  };
+
+  try {
+    const referenceWeapon = makeWeapon('Reference AP2', {
+      type: 'Primary',
+      sub: 'AR',
+      code: 'REF-2',
+      rows: [makeAttackRow(2, 90, 22)]
+    });
+    weaponsState.groups = [
+      makeWeapon('Liberator Carbine', {
+        type: 'Primary',
+        sub: 'AR',
+        code: 'AR-23A',
+        index: 0,
+        rows: [makeAttackRow(2, 90, 22)]
+      }),
+      makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', index: 1, rows: [makeAttackRow(3, 75, 10)] }),
+      makeWeapon('Tenderizer', { type: 'Primary', sub: 'AR', code: 'AR-61', index: 2, rows: [makeAttackRow(2, 105, 30)] }),
+      makeWeapon('Diligence', { type: 'Primary', sub: 'DMR', code: 'R-63', index: 3, rows: [makeAttackRow(2, 165, 45)] })
+    ];
+
+    setCalculatorMode('compare');
+    setWeaponSortMode('match-reference');
+    setSelectedWeapon('A', referenceWeapon);
+
+    assert.deepEqual(
+      getWeaponOptions('B').map((weapon) => weapon.name),
       ['Liberator Carbine', 'Tenderizer', 'Diligence', 'Coyote']
     );
   } finally {
     weaponsState.groups = previousGroups;
     calculatorState.mode = previousMode;
+    calculatorState.weaponSortMode = previousWeaponSortMode;
     calculatorState.weaponA = previousWeaponA;
     calculatorState.weaponB = previousWeaponB;
     calculatorState.selectedAttackKeys = previousSelectedAttackKeys;
     calculatorState.attackHitCounts = previousAttackHitCounts;
+  }
+});
+
+test('weapon sort mode options for state drop compare-only modes in single mode', () => {
+  const previousMode = calculatorState.mode;
+  const previousWeaponSortMode = calculatorState.weaponSortMode;
+
+  try {
+    setCalculatorMode('compare');
+    setWeaponSortMode('match-reference');
+    assert.deepEqual(
+      getWeaponSortModeOptionsForState().map((option) => option.id),
+      ['grouped', 'ap-desc', 'match-reference']
+    );
+
+    setCalculatorMode('single');
+    assert.equal(calculatorState.weaponSortMode, 'grouped');
+    assert.deepEqual(
+      getWeaponSortModeOptionsForState().map((option) => option.id),
+      ['grouped', 'ap-desc']
+    );
+  } finally {
+    calculatorState.mode = previousMode;
+    calculatorState.weaponSortMode = previousWeaponSortMode;
   }
 });
 

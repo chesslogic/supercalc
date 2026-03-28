@@ -8,9 +8,11 @@ import {
   normalizeEnemyScopeId
 } from './enemy-scope.js';
 import {
-  compareWeaponOptionBaseOrder,
+  DEFAULT_WEAPON_SORT_MODE,
   getWeaponDropdownApInfo,
-  sortWeaponOptionsForReference
+  getWeaponSortModeOptions,
+  normalizeWeaponSortMode,
+  sortWeaponOptions
 } from './weapon-dropdown.js';
 
 const DEFAULT_ENEMY_SORT = {
@@ -21,6 +23,7 @@ const DEFAULT_ENEMY_SORT = {
 export const DEFAULT_CALCULATOR_MODE = 'compare';
 export const DEFAULT_COMPARE_VIEW = 'focused';
 export const DEFAULT_OVERVIEW_SCOPE = 'all';
+export { DEFAULT_WEAPON_SORT_MODE };
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -41,6 +44,7 @@ function buildInitialHitCounts(attackKeys = []) {
 export const calculatorState = {
   mode: DEFAULT_CALCULATOR_MODE,
   compareView: DEFAULT_COMPARE_VIEW,
+  weaponSortMode: DEFAULT_WEAPON_SORT_MODE,
   enemyTableMode: 'analysis',
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   diffDisplayMode: 'absolute',
@@ -76,20 +80,18 @@ export function getWeaponOptions(slot = 'A') {
       rows: group.rows,
       index: group.index,
       apInfo: getWeaponDropdownApInfo(group)
-    }))
-    .sort(compareWeaponOptionBaseOrder);
-
-  if (calculatorState.mode !== 'compare') {
-    return options;
-  }
+    }));
 
   const otherSlot = normalizeSlot(slot) === 'B' ? 'A' : 'B';
-  const referenceWeapon = calculatorState[getWeaponStateKey(otherSlot)] || null;
-  if (!referenceWeapon) {
-    return options;
-  }
+  const referenceWeapon = calculatorState.mode === 'compare'
+    ? calculatorState[getWeaponStateKey(otherSlot)] || null
+    : null;
 
-  return sortWeaponOptionsForReference(options, referenceWeapon);
+  return sortWeaponOptions(options, {
+    sortMode: calculatorState.weaponSortMode,
+    mode: calculatorState.mode,
+    referenceWeapon
+  });
 }
 
 export function getEnemyOptions() {
@@ -104,6 +106,10 @@ export function getOverviewScopeOptionGroupsForState() {
   return getOverviewScopeOptionGroups(getEnemyOptions());
 }
 
+export function getWeaponSortModeOptionsForState() {
+  return getWeaponSortModeOptions({ mode: calculatorState.mode });
+}
+
 export function getWeaponForSlot(slot = 'A') {
   return calculatorState[getWeaponStateKey(slot)] || null;
 }
@@ -114,9 +120,18 @@ export function getActiveWeaponSlots() {
 
 export function setCalculatorMode(mode) {
   calculatorState.mode = mode === 'compare' ? 'compare' : 'single';
+  calculatorState.weaponSortMode = normalizeWeaponSortMode(calculatorState.weaponSortMode, {
+    mode: calculatorState.mode
+  });
   if (calculatorState.mode !== 'compare') {
     calculatorState.compareView = 'focused';
   }
+}
+
+export function setWeaponSortMode(sortMode) {
+  calculatorState.weaponSortMode = normalizeWeaponSortMode(sortMode, {
+    mode: calculatorState.mode
+  });
 }
 
 export function setCompareView(view) {

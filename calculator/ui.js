@@ -3,9 +3,11 @@ import {
   calculatorState,
   getEnemyOptions,
   getWeaponOptions,
+  getWeaponSortModeOptionsForState,
   setCalculatorMode,
   setCompareView,
   setSelectedEnemy,
+  setWeaponSortMode,
   setSelectedWeapon
 } from './data.js';
 import { getEnemyScopeSummaryLabel, getEnemyUnitFrontLabel } from './enemy-scope.js';
@@ -61,6 +63,7 @@ function syncCalculatorModeUi() {
   const calculatorContainer = document.querySelector('#tab-calculator .calculator-container');
   const modeSingleButton = document.getElementById('calculator-mode-single');
   const modeCompareButton = document.getElementById('calculator-mode-compare');
+  const weaponSortSelect = document.getElementById('calculator-weapon-sort');
   const weaponRowB = document.getElementById('calculator-weapon-row-b');
   const weaponLabelA = document.getElementById('calculator-weapon-label-a');
 
@@ -79,6 +82,18 @@ function syncCalculatorModeUi() {
 
   if (weaponLabelA) {
     weaponLabelA.textContent = compareMode ? 'Weapon A:' : 'Weapon:';
+  }
+
+  if (weaponSortSelect) {
+    const availableSortModes = getWeaponSortModeOptionsForState();
+    weaponSortSelect.innerHTML = '';
+    availableSortModes.forEach(({ id, label }) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = label;
+      weaponSortSelect.appendChild(option);
+    });
+    weaponSortSelect.value = calculatorState.weaponSortMode;
   }
 
   syncEnemyInputValue();
@@ -102,6 +117,7 @@ function syncEnemyInputValue() {
 function setupModeToggle() {
   const modeSingleButton = document.getElementById('calculator-mode-single');
   const modeCompareButton = document.getElementById('calculator-mode-compare');
+  const weaponSortSelect = document.getElementById('calculator-weapon-sort');
 
   if (!modeSingleButton || !modeCompareButton) {
     return;
@@ -125,6 +141,14 @@ function setupModeToggle() {
     }
 
     setCalculatorMode('compare');
+    syncCalculatorModeUi();
+    renderWeaponDetails();
+    renderEnemyDetails();
+    renderCalculation();
+  });
+
+  weaponSortSelect?.addEventListener('change', (event) => {
+    setWeaponSortMode(event.target.value);
     syncCalculatorModeUi();
     renderWeaponDetails();
     renderEnemyDetails();

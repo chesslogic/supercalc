@@ -316,6 +316,10 @@ tbody tr:hover {
   display:flex;
   gap:8px;
 }
+.calculator-mode-select{
+  min-width:210px;
+  max-width:100%;
+}
 .calculator-mode-btn.is-active,
 .calculator-toolbar-button.is-active{
   border-color:var(--accent);
