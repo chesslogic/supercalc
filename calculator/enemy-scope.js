@@ -27,6 +27,47 @@ FRONT_DEFINITIONS.forEach((front) => {
   });
 });
 
+export const ENEMY_TARGET_TYPE_DEFINITIONS = [
+  {
+    id: 'unit',
+    label: 'Units',
+    summaryLabel: 'Units',
+    defaultSelected: true
+  },
+  {
+    id: 'giant',
+    label: 'Giants',
+    summaryLabel: 'Giants',
+    requiredTag: 'giant',
+    defaultSelected: true
+  },
+  {
+    id: 'structure',
+    label: 'Structures',
+    summaryLabel: 'Structures',
+    requiredTag: 'structure',
+    defaultSelected: false
+  },
+  {
+    id: 'objective',
+    label: 'Objectives',
+    summaryLabel: 'Objectives',
+    requiredTag: 'objective',
+    defaultSelected: false
+  }
+];
+
+const ENEMY_TARGET_TYPE_LOOKUP = new Map();
+ENEMY_TARGET_TYPE_DEFINITIONS.forEach((definition) => {
+  ENEMY_TARGET_TYPE_LOOKUP.set(normalizeText(definition.id), definition.id);
+  ENEMY_TARGET_TYPE_LOOKUP.set(normalizeText(definition.label), definition.id);
+  ENEMY_TARGET_TYPE_LOOKUP.set(normalizeText(definition.summaryLabel), definition.id);
+});
+
+export const DEFAULT_ENEMY_TARGET_TYPE_IDS = ENEMY_TARGET_TYPE_DEFINITIONS
+  .filter((definition) => definition.defaultSelected)
+  .map((definition) => definition.id);
+
 const ENEMY_SCOPE_DEFINITIONS = [
   {
     id: 'all',
@@ -192,6 +233,16 @@ export function getEnemyUnitFrontLabel(unit) {
   return getEnemyUnitFront(unit)?.label || String(unit?.faction ?? '').trim();
 }
 
+export function getEnemyUnitScopeTags(unit) {
+  const rawTags = Array.isArray(unit?.scopeTags)
+    ? unit.scopeTags
+    : (Array.isArray(unit?.scope_tags) ? unit.scope_tags : []);
+
+  return rawTags
+    .map((tag) => normalizeText(tag))
+    .filter(Boolean);
+}
+
 export function getEnemyScopeDefinition(scope = 'all') {
   const scopeId = normalizeEnemyScopeId(scope);
   return ENEMY_SCOPE_DEFINITIONS.find((definition) => definition.id === scopeId)
@@ -229,6 +280,78 @@ export function matchesEnemyScope(unit, scope = 'all') {
 
 export function filterEnemiesByScope(units = [], scope = 'all') {
   return (Array.isArray(units) ? units : []).filter((unit) => matchesEnemyScope(unit, scope));
+}
+
+export function normalizeEnemyTargetTypeId(targetTypeId = 'unit') {
+  return ENEMY_TARGET_TYPE_LOOKUP.get(normalizeText(targetTypeId)) || null;
+}
+
+export function normalizeEnemyTargetTypeIds(targetTypeIds = DEFAULT_ENEMY_TARGET_TYPE_IDS) {
+  if (!Array.isArray(targetTypeIds)) {
+    return [...DEFAULT_ENEMY_TARGET_TYPE_IDS];
+  }
+
+  const seen = new Set();
+  const normalizedIds = [];
+  targetTypeIds.forEach((targetTypeId) => {
+    const normalizedId = normalizeEnemyTargetTypeId(targetTypeId);
+    if (!normalizedId || seen.has(normalizedId)) {
+      return;
+    }
+
+    seen.add(normalizedId);
+    normalizedIds.push(normalizedId);
+  });
+
+  return normalizedIds;
+}
+
+export function getEnemyTargetTypeDefinition(targetTypeId = 'unit') {
+  const normalizedId = normalizeEnemyTargetTypeId(targetTypeId);
+  return ENEMY_TARGET_TYPE_DEFINITIONS.find((definition) => definition.id === normalizedId) || null;
+}
+
+export function matchesEnemyTargetType(unit, targetTypeId = 'unit') {
+  const definition = typeof targetTypeId === 'string'
+    ? getEnemyTargetTypeDefinition(targetTypeId)
+    : targetTypeId;
+  if (!definition) {
+    return false;
+  }
+
+  const scopeTags = getEnemyUnitScopeTags(unit);
+  if (definition.id === 'unit') {
+    return ENEMY_TARGET_TYPE_DEFINITIONS
+      .filter((entry) => entry.requiredTag)
+      .every((entry) => !scopeTags.includes(entry.requiredTag));
+  }
+
+  return scopeTags.includes(definition.requiredTag);
+}
+
+export function filterEnemiesByTargetTypes(units = [], targetTypeIds = DEFAULT_ENEMY_TARGET_TYPE_IDS) {
+  const normalizedTargetTypeIds = normalizeEnemyTargetTypeIds(targetTypeIds);
+  if (normalizedTargetTypeIds.length === 0) {
+    return [];
+  }
+
+  const activeDefinitions = normalizedTargetTypeIds
+    .map((targetTypeId) => getEnemyTargetTypeDefinition(targetTypeId))
+    .filter(Boolean);
+
+  return (Array.isArray(units) ? units : []).filter((unit) =>
+    activeDefinitions.some((definition) => matchesEnemyTargetType(unit, definition))
+  );
+}
+
+export function getEnemyTargetTypeOptions(units = []) {
+  const availableUnits = Array.isArray(units) ? units : [];
+  const filterByAvailability = availableUnits.length > 0;
+
+  return ENEMY_TARGET_TYPE_DEFINITIONS.filter((definition) => (
+    !filterByAvailability
+    || filterEnemiesByTargetTypes(availableUnits, [definition.id]).length > 0
+  ));
 }
 
 export function getOverviewScopeOptions(units = []) {

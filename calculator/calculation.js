@@ -4,6 +4,7 @@ import {
   calculatorState,
   getAttackHitCounts,
   getEnemyOptions,
+  getSelectedEnemyTargetTypes,
   getSelectedAttacks,
   getSelectedExplosiveZoneIndices,
   getSelectedZone,
@@ -764,6 +765,7 @@ function renderOverviewCalculation(container) {
   const rows = buildOverviewRows({
     units: getEnemyOptions(),
     scope: calculatorState.overviewScope,
+    targetTypes: getSelectedEnemyTargetTypes(),
     weaponA,
     weaponB,
     selectedAttacksA,

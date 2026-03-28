@@ -45,6 +45,7 @@ function resetCalculatorState(calculatorState) {
   calculatorState.mode = 'single';
   calculatorState.compareView = 'focused';
   calculatorState.overviewScope = 'All';
+  calculatorState.enemyTargetTypes = ['unit', 'giant'];
   calculatorState.diffDisplayMode = 'absolute';
   calculatorState.weaponA = null;
   calculatorState.weaponB = null;

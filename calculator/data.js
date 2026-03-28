@@ -3,9 +3,12 @@ import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
 import { getAttackRowKey, getDefaultSelectedAttackKeys, getPreferredZoneIndex } from './compare-utils.js';
 import {
+  DEFAULT_ENEMY_TARGET_TYPE_IDS,
+  getEnemyTargetTypeOptions,
   getOverviewScopeOptionGroups,
   getOverviewScopeOptions as getAvailableOverviewScopeOptions,
-  normalizeEnemyScopeId
+  normalizeEnemyScopeId,
+  normalizeEnemyTargetTypeIds
 } from './enemy-scope.js';
 import {
   DEFAULT_WEAPON_SORT_MODE,
@@ -23,6 +26,7 @@ const DEFAULT_ENEMY_SORT = {
 export const DEFAULT_CALCULATOR_MODE = 'compare';
 export const DEFAULT_COMPARE_VIEW = 'focused';
 export const DEFAULT_OVERVIEW_SCOPE = 'all';
+export const DEFAULT_ENEMY_TARGET_TYPES = [...DEFAULT_ENEMY_TARGET_TYPE_IDS];
 export { DEFAULT_WEAPON_SORT_MODE };
 
 function normalizeSlot(slot) {
@@ -47,6 +51,7 @@ export const calculatorState = {
   weaponSortMode: DEFAULT_WEAPON_SORT_MODE,
   enemyTableMode: 'analysis',
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
+  enemyTargetTypes: [...DEFAULT_ENEMY_TARGET_TYPES],
   diffDisplayMode: 'absolute',
   weaponA: null,
   weaponB: null,
@@ -106,6 +111,10 @@ export function getOverviewScopeOptionGroupsForState() {
   return getOverviewScopeOptionGroups(getEnemyOptions());
 }
 
+export function getEnemyTargetTypeOptionsForState() {
+  return getEnemyTargetTypeOptions(getEnemyOptions());
+}
+
 export function getWeaponSortModeOptionsForState() {
   return getWeaponSortModeOptions({ mode: calculatorState.mode });
 }
@@ -144,6 +153,28 @@ export function setEnemyTableMode(mode) {
 
 export function setOverviewScope(scope) {
   calculatorState.overviewScope = normalizeEnemyScopeId(scope || DEFAULT_OVERVIEW_SCOPE);
+}
+
+export function getSelectedEnemyTargetTypes() {
+  return [...calculatorState.enemyTargetTypes];
+}
+
+export function setSelectedEnemyTargetTypes(targetTypeIds) {
+  calculatorState.enemyTargetTypes = normalizeEnemyTargetTypeIds(targetTypeIds);
+}
+
+export function toggleSelectedEnemyTargetType(targetTypeId) {
+  const normalizedTargetTypeId = normalizeEnemyTargetTypeIds([targetTypeId])[0] || null;
+  if (!normalizedTargetTypeId) {
+    return [...calculatorState.enemyTargetTypes];
+  }
+
+  const nextTargetTypes = calculatorState.enemyTargetTypes.includes(normalizedTargetTypeId)
+    ? calculatorState.enemyTargetTypes.filter((value) => value !== normalizedTargetTypeId)
+    : [...calculatorState.enemyTargetTypes, normalizedTargetTypeId];
+
+  calculatorState.enemyTargetTypes = normalizeEnemyTargetTypeIds(nextTargetTypes);
+  return [...calculatorState.enemyTargetTypes];
 }
 
 export function setDiffDisplayMode(mode) {

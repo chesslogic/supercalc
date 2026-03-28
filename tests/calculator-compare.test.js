@@ -509,6 +509,59 @@ test('buildOverviewRows flattens units and filters by faction scope', () => {
   );
 });
 
+test('buildOverviewRows filters overview rows by selected enemy target types', () => {
+  const units = [
+    {
+      faction: 'Terminid',
+      name: 'Stalker',
+      health: 800,
+      zones: [makeZone('Main')]
+    },
+    {
+      faction: 'Terminid',
+      name: 'Bile Titan',
+      health: 3500,
+      scopeTags: ['giant'],
+      zones: [makeZone('Main')]
+    },
+    {
+      faction: 'Automaton',
+      name: 'Fabricator',
+      health: 1500,
+      scopeTags: ['objective'],
+      zones: [makeZone('Main')]
+    }
+  ];
+
+  const unitRows = buildOverviewRows({
+    units,
+    scope: 'all',
+    targetTypes: ['unit'],
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 100)],
+    selectedAttacksB: [makeAttackRow('B', 100)]
+  });
+  assert.deepEqual(
+    unitRows.map((row) => `${row.faction}:${row.enemyName}:${row.zone.zone_name}`),
+    ['Terminids:Stalker:Main']
+  );
+
+  const giantRows = buildOverviewRows({
+    units,
+    scope: 'all',
+    targetTypes: ['giant'],
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 100)],
+    selectedAttacksB: [makeAttackRow('B', 100)]
+  });
+  assert.deepEqual(
+    giantRows.map((row) => `${row.faction}:${row.enemyName}:${row.zone.zone_name}`),
+    ['Terminids:Bile Titan:Main']
+  );
+});
+
 test('sortEnemyZoneRows sorts diff columns numerically and keeps unavailable rows last', () => {
   const rows = [
     makeSortRow(0, 'slower', { diffTtk: 1.25 }),

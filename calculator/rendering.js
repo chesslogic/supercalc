@@ -9,8 +9,10 @@ import {
 } from '../colors.js';
 import {
   calculatorState,
+  getEnemyTargetTypeOptionsForState,
   getEnemyOptions,
   getOverviewScopeOptionGroupsForState,
+  getSelectedEnemyTargetTypes,
   getSelectedExplosiveZoneIndices,
   getAttackHitCounts,
   getSelectedAttackKeys,
@@ -23,6 +25,7 @@ import {
   setSelectedAttack,
   setSelectedExplosiveZone,
   setSelectedZoneIndex,
+  toggleSelectedEnemyTargetType,
   toggleEnemySort
 } from './data.js';
 import {
@@ -779,6 +782,18 @@ function renderEnemyControls(enemy) {
     );
   }
 
+  appendToolbarButtonGroup(
+    toolbar,
+    'Targets:',
+    getEnemyTargetTypeOptionsForState().map((option) => ({ value: option.id, label: option.label })),
+    (value) => getSelectedEnemyTargetTypes().includes(value),
+    (value) => {
+      toggleSelectedEnemyTargetType(value);
+      renderEnemyDetails();
+      renderCalculation();
+    }
+  );
+
   if (overviewActive) {
     if (calculatorState.enemyTableMode === 'analysis') {
       appendToolbarButtonGroup(
@@ -802,10 +817,10 @@ function renderEnemyControls(enemy) {
   note.className = 'status calculator-toolbar-note';
   if (calculatorState.mode !== 'compare') {
     note.textContent = hasFocusedEnemy
-      ? 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK. Scope also filters the enemy dropdown.'
-      : 'Scope filters the enemy dropdown in single mode. Select an enemy to see the full enemy table, including raw stats plus Shots, Range, and TTK.';
+      ? 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK. Scope and target filters also affect the enemy dropdown.'
+      : 'Scope and target filters affect the enemy dropdown in single mode. Select an enemy to see the full enemy table, including raw stats plus Shots, Range, and TTK.';
   } else if (!overviewActive && !hasFocusedEnemy) {
-    note.textContent = `Scope filters the enemy dropdown and carries into Overview. Current scope: ${getEnemyScopeSummaryLabel(calculatorState.overviewScope)}. Select an enemy or Overview to see details.`;
+    note.textContent = `Scope and target filters affect the enemy dropdown and carry into Overview. Current scope: ${getEnemyScopeSummaryLabel(calculatorState.overviewScope)}. Select an enemy or Overview to see details.`;
   } else if (calculatorState.enemyTableMode === 'stats') {
     note.textContent = 'Stats view restores the fuller enemy columns. Switch back to Analysis for shots, range, and TTK.';
   } else if (overviewActive) {
@@ -933,6 +948,7 @@ function renderOverviewDetails(container) {
   const overviewRows = buildOverviewRows({
     units: getEnemyOptions(),
     scope: calculatorState.overviewScope,
+    targetTypes: getSelectedEnemyTargetTypes(),
     weaponA,
     weaponB,
     selectedAttacksA,
@@ -942,7 +958,7 @@ function renderOverviewDetails(container) {
   });
 
   if (overviewRows.length === 0) {
-    createPlaceholder(container, 'No overview rows are available for the current scope');
+    createPlaceholder(container, 'No overview rows are available for the current scope and target filters');
     return;
   }
 

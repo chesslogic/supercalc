@@ -126,6 +126,65 @@ test('parser derives Constitution bleed rates and only marks zero-bleed zones wh
   }
 });
 
+test('parser emits scope tags for curated giant, structure, and objective targets', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
+  const inputPath = join(tempDir, 'input.json');
+  const outputPath = join(tempDir, 'output.json');
+
+  const buildFixtureUnit = (locName, health) => ({
+    loc_name: locName,
+    health,
+    constitution: 0,
+    constitution_changerate: 0,
+    zone_bleedout_changerate: 0,
+    default_damageable_zone_info: {
+      zone_name: 'main',
+      health: -1,
+      constitution: 0,
+      armor: 0,
+      affected_by_explosions: false,
+      affects_main_health: 1,
+      main_health_affect_capped_by_zone_health: true,
+      projectile_durable_resistance: 0
+    },
+    damageable_zones: [
+      {
+        zone_name: 'body',
+        health: 400,
+        constitution: 0,
+        armor: 0,
+        affected_by_explosions: true,
+        affects_main_health: 1,
+        main_health_affect_capped_by_zone_health: true,
+        projectile_durable_resistance: 0,
+        causes_death_on_death: 1
+      }
+    ]
+  });
+
+  try {
+    const fixture = {
+      'content/fac_bugs/giants/hive_lord': buildFixtureUnit('Hive Lord', 12000),
+      'content/fac_cyborgs/objectives/fabricator': buildFixtureUnit('Fabricator', 2500),
+      'content/fac_illuminate/defense/cannon_turret': buildFixtureUnit('Cannon Turret', 3000)
+    };
+
+    writeFileSync(inputPath, JSON.stringify(fixture, null, 2));
+
+    const result = spawnSync(PYTHON, [PARSER_PATH, '--input', inputPath, '--output', outputPath], {
+      encoding: 'utf8'
+    });
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+
+    const parsed = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.deepEqual(parsed.Terminid['Hive Lord'].scope_tags, ['giant']);
+    assert.deepEqual(parsed.Automaton.Fabricator.scope_tags, ['objective']);
+    assert.deepEqual(parsed.Illuminate['Cannon Turret'].scope_tags, ['structure']);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('parser prefers the unsuffixed base payload and reports differing same-name variants', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
   const inputPath = join(tempDir, 'input.json');

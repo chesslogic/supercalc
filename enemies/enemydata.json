@@ -22,7 +22,10 @@
           "zone_name": "battery"
         }
       ],
-      "health": 400
+      "health": 400,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Agitator": {
       "damageable_zones": [
@@ -333,7 +336,10 @@
           "zone_name": "back"
         }
       ],
-      "health": 400
+      "health": 400,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Ballistic Missile": {
       "damageable_zones": [
@@ -636,7 +642,10 @@
           "zone_name": "insides"
         }
       ],
-      "health": 4000
+      "health": 4000,
+      "scope_tags": [
+        "objective"
+      ]
     },
     "Cannon Turret": {
       "damageable_zones": [
@@ -670,7 +679,10 @@
           "zone_name": "back"
         }
       ],
-      "health": 2100
+      "health": 2100,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Commissar": {
       "damageable_zones": [
@@ -1108,7 +1120,10 @@
           "zone_name": "insides"
         }
       ],
-      "health": 1500
+      "health": 1500,
+      "scope_tags": [
+        "objective"
+      ]
     },
     "Factory Strider": {
       "damageable_zones": [
@@ -1486,7 +1501,10 @@
           "zone_name": "weakspot_engine"
         }
       ],
-      "health": 10000
+      "health": 10000,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Factory Strider Gatling Gun": {
       "damageable_zones": [
@@ -1501,7 +1519,10 @@
           "zone_name": "Main"
         }
       ],
-      "health": 300
+      "health": 300,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Fusion Autocannon": {
       "damageable_zones": [
@@ -1535,7 +1556,10 @@
           "zone_name": "back"
         }
       ],
-      "health": 2100
+      "health": 2100,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Fusion Repeater": {
       "damageable_zones": [
@@ -1783,7 +1807,10 @@
           "zone_name": "back"
         }
       ],
-      "health": 2100
+      "health": 2100,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Heavy Fusion Repeater": {
       "damageable_zones": [
@@ -3731,7 +3758,10 @@
           "zone_name": "Main"
         }
       ],
-      "health": 2100
+      "health": 2100,
+      "scope_tags": [
+        "structure"
+      ]
     },
     "Crescent Overseer": {
       "damageable_zones": [
@@ -5095,7 +5125,10 @@
           "zone_name": "back_middle_leg_internal"
         }
       ],
-      "health": 3000
+      "health": 3000,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Leviathan": {
       "damageable_zones": [
@@ -6951,7 +6984,10 @@
           "zone_name": "tail_outer_flesh"
         }
       ],
-      "health": 6500
+      "health": 6500,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Bile Warrior": {
       "damageable_zones": [
@@ -7493,7 +7529,10 @@
           "zone_name": "r_front_leg"
         }
       ],
-      "health": 3000
+      "health": 3000,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Dragonroach": {
       "damageable_zones": [
@@ -8315,7 +8354,10 @@
           "zone_name": "spine5_r_leg"
         }
       ],
-      "health": 150000
+      "health": 150000,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Hunter": {
       "damageable_zones": [
@@ -8637,7 +8679,10 @@
           "zone_name": "[unknown]"
         }
       ],
-      "health": 4000
+      "health": 4000,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Infested Tower": {
       "damageable_zones": [
@@ -8660,7 +8705,10 @@
           "zone_name": "all"
         }
       ],
-      "health": 15000
+      "health": 15000,
+      "scope_tags": [
+        "objective"
+      ]
     },
     "Nursing Spewer": {
       "damageable_zones": [
@@ -9576,7 +9624,10 @@
           "zone_name": "all"
         }
       ],
-      "health": 2500
+      "health": 2500,
+      "scope_tags": [
+        "objective"
+      ]
     },
     "Spore Burst Hunter": {
       "damageable_zones": [
@@ -10090,7 +10141,10 @@
           "zone_name": "neck"
         }
       ],
-      "health": 2400
+      "health": 2400,
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Spore Lung": {
       "damageable_zones": [
@@ -10104,7 +10158,10 @@
           "zone_name": "Main"
         }
       ],
-      "health": 30000
+      "health": 30000,
+      "scope_tags": [
+        "objective"
+      ]
     },
     "Stalker": {
       "damageable_zones": [

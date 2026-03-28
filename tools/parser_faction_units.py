@@ -63,6 +63,27 @@ from typing import Union
 from collections import defaultdict, OrderedDict
 from typing import Any, Dict
 
+ENEMY_SCOPE_TAGS_BY_UNIT_NAME: Dict[str, list[str]] = {
+    "AA Emplacement": ["structure"],
+    "Automaton Mortar Emplacement": ["structure"],
+    "Bile Titan": ["giant"],
+    "Bulk Fabricator": ["objective"],
+    "Cannon Turret": ["structure"],
+    "Charger Behemoth": ["giant"],
+    "Fabricator": ["objective"],
+    "Factory Strider": ["giant"],
+    "Factory Strider Gatling Gun": ["structure"],
+    "Fusion Autocannon": ["structure"],
+    "Harvester": ["giant"],
+    "Heavy Fusion Cannon": ["structure"],
+    "Hive Lord": ["giant"],
+    "Impaler": ["giant"],
+    "Infested Tower": ["objective"],
+    "Shrieker Nest": ["objective"],
+    "Spore Charger": ["giant"],
+    "Spore Lung": ["objective"],
+}
+
 # --- Mapping helpers -------------------------------------------------------
 
 def normalize_faction(raw: str):
@@ -102,6 +123,10 @@ def round_float(value: Any) -> Union[int, float]:
             return int(rounded) if rounded == int(rounded) else rounded
         except (ValueError, TypeError):
             return value
+
+
+def get_scope_tags_for_unit(unit_name: str) -> list[str]:
+    return list(ENEMY_SCOPE_TAGS_BY_UNIT_NAME.get(str(unit_name or ""), []))
 
 def sanitize_string(s: str) -> str:
     if "^_^" in s:
@@ -327,10 +352,13 @@ def _best_candidate(candidates: list[Dict[str, Any]]) -> Dict[str, Any]:
     return sorted(candidates, key=_candidate_sort_key)[0]
 
 def _canonical_payload(candidate: Dict[str, Any]) -> Dict[str, Any]:
-    return {
+    payload = {
         "health": candidate.get("health"),
         "damageable_zones": candidate.get("damageable_zones"),
     }
+    if candidate.get("scope_tags"):
+        payload["scope_tags"] = candidate.get("scope_tags")
+    return payload
 
 def _payload_signature(candidate: Dict[str, Any]) -> str:
     return json.dumps(
@@ -455,6 +483,9 @@ def parse_enemy_units(src: dict) -> tuple[dict, dict]:
             "health": payload.get("health"),
             "damageable_zones": zones,
         }
+        scope_tags = get_scope_tags_for_unit(unit_name)
+        if scope_tags:
+            current["scope_tags"] = scope_tags
 
         per_faction_candidates[faction][unit_name].append(current)
 

@@ -40,6 +40,9 @@ export function processEnemyData(data) {
         faction: factionName,
         name: unitName,
         health: unitData.health,
+        scopeTags: Array.isArray(unitData.scope_tags)
+          ? unitData.scope_tags.map((tag) => String(tag ?? '').trim()).filter(Boolean)
+          : [],
         zones: unitData.damageable_zones || [],
         zoneCount: (unitData.damageable_zones || []).length
       };
@@ -56,6 +59,7 @@ export function processEnemyData(data) {
       const searchText = [
         factionName,
         unitName,
+        ...unit.scopeTags,
         ...unit.zones.map(zone => zone.zone_name || ''),
         ...unit.zones.map(zone => Object.values(zone).map(v => String(v || '')))
       ].flat().map(v => String(v || '').toLowerCase()).join(' ');

@@ -7,15 +7,19 @@ import {
   calculatorState,
   DEFAULT_CALCULATOR_MODE,
   DEFAULT_COMPARE_VIEW,
+  DEFAULT_ENEMY_TARGET_TYPES,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
+  getSelectedEnemyTargetTypes,
   getOverviewScopeOptions,
   getWeaponOptions,
   getWeaponSortModeOptionsForState,
   setCalculatorMode,
   setEnemyTableMode,
+  setSelectedEnemyTargetTypes,
   setWeaponSortMode,
-  setSelectedWeapon
+  setSelectedWeapon,
+  toggleSelectedEnemyTargetType
 } from '../calculator/data.js';
 import {
   getEnemyColumnsForState,
@@ -24,6 +28,7 @@ import {
   shouldShowEnemyScopeControls
 } from '../calculator/rendering.js';
 import { filterEnemiesByScope, getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
+import { filterEnemiesByTargetTypes, getEnemyTargetTypeOptions } from '../calculator/enemy-scope.js';
 import {
   ENEMY_OVERVIEW_DROPDOWN_CLASS,
   getCalculatorModeButtonTitle,
@@ -85,6 +90,7 @@ test('calculator defaults to focused compare mode with all scopes enabled', () =
   assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
   assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
   assert.equal(DEFAULT_OVERVIEW_SCOPE, 'all');
+  assert.deepEqual(DEFAULT_ENEMY_TARGET_TYPES, ['unit', 'giant']);
   assert.equal(DEFAULT_WEAPON_SORT_MODE, 'grouped');
 });
 
@@ -130,6 +136,57 @@ test('enemy dropdown scope filtering works from the underlying enemy dataset', (
     filterEnemiesByScope(enemies, 'Appropriators').map((enemy) => enemy.name),
     ['Observer', 'Gatekeeper']
   );
+});
+
+test('enemy target type filtering distinguishes units, giants, structures, and objectives', () => {
+  const enemies = [
+    { name: 'Stalker', faction: 'Terminid' },
+    { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] },
+    { name: 'AA Emplacement', faction: 'Automaton', scopeTags: ['structure'] },
+    { name: 'Shrieker Nest', faction: 'Terminid', scopeTags: ['objective'] }
+  ];
+
+  assert.deepEqual(
+    filterEnemiesByTargetTypes(enemies, ['unit']).map((enemy) => enemy.name),
+    ['Stalker']
+  );
+  assert.deepEqual(
+    filterEnemiesByTargetTypes(enemies, ['giant', 'objective']).map((enemy) => enemy.name),
+    ['Bile Titan', 'Shrieker Nest']
+  );
+  assert.deepEqual(
+    getEnemyTargetTypeOptions(enemies).map(({ id }) => id),
+    ['unit', 'giant', 'structure', 'objective']
+  );
+});
+
+test('enemy target type options only include categories present in the dataset', () => {
+  const enemies = [
+    { name: 'Stalker', faction: 'Terminid' },
+    { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] }
+  ];
+
+  assert.deepEqual(
+    getEnemyTargetTypeOptions(enemies).map(({ id }) => id),
+    ['unit', 'giant']
+  );
+});
+
+test('enemy target type selection normalizes ids and toggles independently', () => {
+  const previousTargetTypes = [...calculatorState.enemyTargetTypes];
+
+  try {
+    setSelectedEnemyTargetTypes(['Objectives', 'unit', 'unit']);
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['objective', 'unit']);
+
+    toggleSelectedEnemyTargetType('structure');
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['objective', 'unit', 'structure']);
+
+    toggleSelectedEnemyTargetType('Objectives');
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['unit', 'structure']);
+  } finally {
+    calculatorState.enemyTargetTypes = previousTargetTypes;
+  }
 });
 
 test('scope controls are available before selection in both single and compare mode', () => {

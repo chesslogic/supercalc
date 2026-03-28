@@ -2,6 +2,7 @@
 import {
   calculatorState,
   getEnemyOptions,
+  getSelectedEnemyTargetTypes,
   getWeaponOptions,
   getWeaponSortModeOptionsForState,
   setCalculatorMode,
@@ -10,7 +11,11 @@ import {
   setWeaponSortMode,
   setSelectedWeapon
 } from './data.js';
-import { getEnemyScopeSummaryLabel, getEnemyUnitFrontLabel } from './enemy-scope.js';
+import {
+  filterEnemiesByTargetTypes,
+  getEnemyScopeSummaryLabel,
+  getEnemyUnitFrontLabel
+} from './enemy-scope.js';
 import { filterEnemiesByScope, getEnemyDropdownQueryState } from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
 import { state as weaponsState } from '../weapons/data.js';
@@ -347,7 +352,8 @@ function setupEnemySelector() {
     }
 
     const scopedOptions = filterEnemiesByScope(options, calculatorState.overviewScope);
-    const filteredOptions = scopedOptions.filter((enemy) =>
+    const targetFilteredOptions = filterEnemiesByTargetTypes(scopedOptions, getSelectedEnemyTargetTypes());
+    const filteredOptions = targetFilteredOptions.filter((enemy) =>
       enemy.name.toLowerCase().includes(effectiveQuery) ||
       getEnemyUnitFrontLabel(enemy).toLowerCase().includes(effectiveQuery) ||
       String(enemy.faction || '').toLowerCase().includes(effectiveQuery)

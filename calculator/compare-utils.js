@@ -11,7 +11,7 @@ import {
   getEnemyZoneHealthDisplayInfo
 } from './enemy-zone-display.js';
 import { calculateEffectiveDistanceInfo } from './effective-distance.js';
-import { filterEnemiesByScope, getEnemyUnitFrontLabel } from './enemy-scope.js';
+import { filterEnemiesByScope, filterEnemiesByTargetTypes, getEnemyUnitFrontLabel } from './enemy-scope.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
@@ -509,6 +509,7 @@ export function buildFocusedZoneComparisonRows({
 export function buildOverviewRows({
   units = [],
   scope = 'all',
+  targetTypes,
   weaponA,
   weaponB,
   selectedAttacksA = [],
@@ -516,7 +517,7 @@ export function buildOverviewRows({
   hitCountsA = [],
   hitCountsB = []
 }) {
-  return filterEnemiesByScope(units, scope)
+  return filterEnemiesByTargetTypes(filterEnemiesByScope(units, scope), targetTypes)
     .flatMap((unit) => {
       const enemyMainHealth = toFiniteNumber(unit?.health) ?? 0;
       const frontLabel = getEnemyUnitFrontLabel(unit);
