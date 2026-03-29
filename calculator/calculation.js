@@ -14,8 +14,9 @@ import {
 import { buildHallOfFameEntries, buildOverviewRows, getAttackRowKey } from './compare-utils.js';
 import { splitAttacksByApplication } from './attack-types.js';
 import { formatDamageValue } from './damage-rounding.js';
+import { EFFECTIVE_DISTANCE_TOOLTIP } from './effective-distance.js';
 import { formatTtkSeconds } from './summary.js';
-import { getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
+import { getZoneOutcomeDescription, getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
 import { state as weaponsState } from '../weapons/data.js';
 import { buildWeaponRecommendationRows } from './recommendations.js';
@@ -792,21 +793,167 @@ function renderOverviewCalculation(container) {
   container.appendChild(wrapper);
 }
 
+const RECOMMENDATION_RANGE_FLOOR_TITLE = 'Minimum modeled distance that range-sensitive highlight flags must survive. Unknown-range rows stay listed, but those highlights do not count until the breakpoint range is known.';
+const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are any recommendations that light up OH Kill, OH Crit, 2 Crit, Low OHKO, <0.6s, or Pen All.';
+const RECOMMENDATION_HEADER_DEFINITIONS = [
+  { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
+  { label: 'Attack', title: 'Best-ranked attack row for this weapon.' },
+  { label: 'Target', title: 'Best-ranked target zone for the listed attack, plus the outcome badge.' },
+  { label: 'Shots', title: 'Shots or firing cycles needed to reach the listed outcome using the recommendation preview hit-count.' },
+  { label: 'TTK', title: 'Modeled time to reach the listed outcome at the weapon\'s RPM.' },
+  {
+    label: 'Range',
+    title: `${EFFECTIVE_DISTANCE_TOOLTIP}\nUnknown-range rows stay listed, but range-sensitive highlights only count when the breakpoint qualifies.`
+  },
+  { label: 'OH Kill', title: 'One-shot kill highlight at the current range floor.' },
+  { label: 'OH Crit', title: 'One-shot critical-disable highlight at the current range floor.' },
+  { label: '2 Crit', title: 'Two-shot critical-disable highlight at the current range floor.' },
+  { label: 'Low OHKO', title: 'One-shot kill or critical highlight with 25% or less extra damage.' },
+  { label: '<0.6s', title: 'Fast-TTK highlight for rows under 0.6 seconds at the current range floor.' },
+  { label: 'Pen All', title: 'Highlights attack rows that can damage every zone on the current enemy.' },
+  { label: 'Tip', title: 'Short note explaining why this breakpoint stands out or what path it follows.' }
+];
+const RECOMMENDATION_FLAG_TITLES = {
+  oneShotKill: {
+    active: 'Meets the one-shot kill highlight at the current range floor.',
+    inactive: 'Does not currently meet the one-shot kill highlight.'
+  },
+  oneShotCritical: {
+    active: 'Meets the one-shot critical-disable highlight at the current range floor.',
+    inactive: 'Does not currently meet the one-shot critical-disable highlight.'
+  },
+  twoShotCritical: {
+    active: 'Meets the two-shot critical-disable highlight at the current range floor.',
+    inactive: 'Does not currently meet the two-shot critical-disable highlight.'
+  },
+  lowOverkillOhko: {
+    active: 'Meets the low-overkill one-shot highlight with 25% or less extra damage.',
+    inactive: 'Does not currently meet the low-overkill one-shot highlight.'
+  },
+  fastTtk: {
+    active: 'Meets the sub-0.6s TTK highlight at the current range floor.',
+    inactive: 'Does not currently meet the sub-0.6s TTK highlight.'
+  },
+  penetratesAll: {
+    active: 'This attack row can damage every zone on the current enemy.',
+    inactive: 'At least one zone on the current enemy takes no damage from this attack row.'
+  }
+};
+
+function getRecommendationHitAssumptionText(hitCount) {
+  const normalizedHitCount = Number.isFinite(hitCount) && hitCount > 0
+    ? Math.max(1, hitCount)
+    : 1;
+
+  return normalizedHitCount === 1
+    ? 'Recommendation preview assumes 1 hit per firing cycle for this row.'
+    : `Recommendation preview assumes ${normalizedHitCount} hits per firing cycle for this row, so "Shots" counts firing cycles, not individual projectiles.`;
+}
+
+function getRecommendationSummaryTitle(hasHighlightedRows) {
+  return hasHighlightedRows
+    ? `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nRows without those highlights are hidden from this table.`
+    : `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nNothing matches right now, so the table falls back to the best-ranked row for each weapon.`;
+}
+
+function getRecommendationTargetTitle(row) {
+  const zoneName = row?.bestZoneName || '—';
+  const outcomeLabel = getZoneOutcomeLabel(row?.bestOutcomeKind);
+  const outcomeDescription = getZoneOutcomeDescription(row?.bestOutcomeKind);
+  const lines = [`Best-ranked target: ${zoneName}`];
+
+  if (outcomeLabel && outcomeDescription) {
+    lines.push(`${outcomeLabel}: ${outcomeDescription}`);
+  } else if (outcomeLabel) {
+    lines.push(`Outcome: ${outcomeLabel}`);
+  }
+
+  return lines.join('\n');
+}
+
+function getRecommendationAttackTitle(row) {
+  const attackName = String(row?.attackName || 'Attack').trim() || 'Attack';
+  return `Attack row: ${attackName}\n${getRecommendationHitAssumptionText(row?.hitCount)}`;
+}
+
+function getRecommendationShotsTitle(row) {
+  const shotsToKill = row?.shotsToKill;
+  const lines = [
+    shotsToKill === null
+      ? 'Shots-to-kill is unavailable for this breakpoint.'
+      : `${shotsToKill} ${shotsToKill === 1 ? 'shot' : 'shots'} to reach the listed outcome.`
+  ];
+  lines.push(getRecommendationHitAssumptionText(row?.hitCount));
+  return lines.join('\n');
+}
+
+function getRecommendationTtkTitle(row) {
+  const lines = [
+    row?.ttkSeconds === null
+      ? 'TTK unavailable without RPM.'
+      : `${formatTtkSeconds(row.ttkSeconds)} to reach the listed outcome at the weapon\'s RPM.`
+  ];
+  lines.push(getRecommendationHitAssumptionText(row?.hitCount));
+  return lines.join('\n');
+}
+
+function getRecommendationRangeTitle(row) {
+  const baseTitle = row?.effectiveDistance?.title || EFFECTIVE_DISTANCE_TOOLTIP;
+
+  if (row?.rangeStatus === 'failed') {
+    return `${baseTitle}\nThis breakpoint falls short of the current range floor, so range-sensitive highlights do not count.`;
+  }
+
+  if (row?.rangeStatus === 'unknown') {
+    return `${baseTitle}\nThis row stays listed, but range-sensitive highlights do not count until the breakpoint range is known.`;
+  }
+
+  return `${baseTitle}\nThis breakpoint qualifies for range-sensitive highlights at the current range floor.`;
+}
+
+function getRecommendationFlagTitle(flagKey, value) {
+  const metadata = RECOMMENDATION_FLAG_TITLES[flagKey];
+  if (!metadata) {
+    return value ? 'Highlighted recommendation.' : 'This highlight is not met.';
+  }
+
+  return value ? metadata.active : metadata.inactive;
+}
+
+function getRecommendationTipTitle(row, isFallbackRow = false) {
+  const lines = [
+    row?.tip
+      ? `Breakpoint note: ${row.tip}`
+      : 'No extra breakpoint note for this recommendation.'
+  ];
+
+  if (isFallbackRow) {
+    lines.push('This row is shown as a fallback because nothing met the current highlight checks.');
+  }
+
+  return lines.join('\n');
+}
+
 function createOutcomeBadge(outcomeKind) {
   const outcomeLabel = getZoneOutcomeLabel(outcomeKind);
+  const outcomeDescription = getZoneOutcomeDescription(outcomeKind);
   if (!outcomeLabel) {
     return null;
   }
 
   const badge = document.createElement('span');
   badge.className = `calc-zone-context calc-zone-context-${outcomeKind}`;
+  badge.title = outcomeDescription || outcomeLabel;
   badge.textContent = outcomeLabel;
   return badge;
 }
 
-function createRecommendationFlag(value, label = 'Yes') {
+function createRecommendationFlag(value, label = 'Yes', title = '') {
   const flag = document.createElement('span');
   flag.className = `calc-recommend-flag ${value ? 'is-true' : 'is-false'}`;
+  if (title) {
+    flag.title = title;
+  }
   flag.textContent = value ? label : '—';
   return flag;
 }
@@ -939,10 +1086,13 @@ function renderWeakspotBundlesPanel(container, enemy) {
   container.appendChild(panel);
 }
 
-function appendRecommendationCell(row, content, className = '') {
+function appendRecommendationCell(row, content, className = '', title = '') {
   const cell = document.createElement('td');
   if (className) {
     cell.className = className;
+  }
+  if (title) {
+    cell.title = title;
   }
 
   if (typeof Node !== 'undefined' && content instanceof Node) {
@@ -954,7 +1104,7 @@ function appendRecommendationCell(row, content, className = '') {
   row.appendChild(cell);
 }
 
-function renderRecommendationPanel(container, enemy) {
+export function renderRecommendationPanel(container, enemy) {
   const panel = document.createElement('section');
   panel.className = 'calc-compare-panel calc-recommend-panel';
 
@@ -977,6 +1127,7 @@ function renderRecommendationPanel(container, enemy) {
   rangeLabel.className = 'label';
   rangeLabel.textContent = 'Range floor';
   rangeLabel.htmlFor = 'calculator-recommendation-range';
+  rangeLabel.title = RECOMMENDATION_RANGE_FLOOR_TITLE;
   controls.appendChild(rangeLabel);
 
   const rangeInput = document.createElement('input');
@@ -987,6 +1138,7 @@ function renderRecommendationPanel(container, enemy) {
   rangeInput.max = '500';
   rangeInput.step = '5';
   rangeInput.value = String(calculatorState.recommendationRangeMeters);
+  rangeInput.title = RECOMMENDATION_RANGE_FLOOR_TITLE;
   rangeInput.addEventListener('change', (event) => {
     setRecommendationRangeMeters(event.target.value);
     renderCalculation();
@@ -996,6 +1148,7 @@ function renderRecommendationPanel(container, enemy) {
   const controlsNote = document.createElement('span');
   controlsNote.className = 'status calc-recommend-note';
   controlsNote.textContent = 'Range-sensitive flags only light up when the modeled breakpoint survives the selected floor. Unknown-range profiles stay listed, but they do not pass those flags.';
+  controlsNote.title = RECOMMENDATION_RANGE_FLOOR_TITLE;
   controls.appendChild(controlsNote);
 
   body.appendChild(controls);
@@ -1023,10 +1176,12 @@ function renderRecommendationPanel(container, enemy) {
     || row.hasLowOverkillOhko
     || row.penetratesAll
   ));
+  const usingFallbackRows = flaggedRows.length === 0;
   const displayRows = (flaggedRows.length > 0 ? flaggedRows : recommendationRows).slice(0, 24);
 
   const summary = document.createElement('div');
   summary.className = 'calc-recommend-summary';
+  summary.title = getRecommendationSummaryTitle(!usingFallbackRows);
   summary.textContent = flaggedRows.length > 0
     ? `Showing ${displayRows.length} highlighted recommendations at ${calculatorState.recommendationRangeMeters}m+.`
     : `No rows hit the current highlight checks at ${calculatorState.recommendationRangeMeters}m+. Showing the best fallback rows instead.`;
@@ -1050,23 +1205,12 @@ function renderRecommendationPanel(container, enemy) {
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  [
-    'Weapon',
-    'Attack',
-    'Target',
-    'Shots',
-    'TTK',
-    'Range',
-    'OH Kill',
-    'OH Crit',
-    '2 Crit',
-    'Low OHKO',
-    '<0.6s',
-    'Pen All',
-    'Tip'
-  ].forEach((labelText) => {
+  RECOMMENDATION_HEADER_DEFINITIONS.forEach(({ label, title }) => {
     const th = document.createElement('th');
-    th.textContent = labelText;
+    th.textContent = label;
+    if (title) {
+      th.title = title;
+    }
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -1076,8 +1220,8 @@ function renderRecommendationPanel(container, enemy) {
   displayRows.forEach((row) => {
     const tableRow = document.createElement('tr');
 
-    appendRecommendationCell(tableRow, row.weapon.name);
-    appendRecommendationCell(tableRow, row.attackName, 'trunc');
+    appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
+    appendRecommendationCell(tableRow, row.attackName, 'trunc', getRecommendationAttackTitle(row));
 
     const target = document.createElement('div');
     target.className = 'calc-recommend-target';
@@ -1088,23 +1232,82 @@ function renderRecommendationPanel(container, enemy) {
     if (outcomeBadge) {
       target.appendChild(outcomeBadge);
     }
-    appendRecommendationCell(tableRow, target);
+    appendRecommendationCell(tableRow, target, '', getRecommendationTargetTitle(row));
 
-    appendRecommendationCell(tableRow, row.shotsToKill === null ? '-' : String(row.shotsToKill));
-    appendRecommendationCell(tableRow, row.ttkSeconds === null ? '-' : formatTtkSeconds(row.ttkSeconds));
+    appendRecommendationCell(
+      tableRow,
+      row.shotsToKill === null ? '-' : String(row.shotsToKill),
+      '',
+      getRecommendationShotsTitle(row)
+    );
+    appendRecommendationCell(
+      tableRow,
+      row.ttkSeconds === null ? '-' : formatTtkSeconds(row.ttkSeconds),
+      '',
+      getRecommendationTtkTitle(row)
+    );
     appendRecommendationCell(
       tableRow,
       row.effectiveDistance?.isAvailable
         ? row.effectiveDistance.text
-        : (row.rangeStatus === 'unknown' ? '?' : '-')
+        : (row.rangeStatus === 'unknown' ? '?' : '-'),
+      '',
+      getRecommendationRangeTitle(row)
     );
-    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasOneShotKill));
-    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasOneShotCritical));
-    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasTwoShotCritical));
-    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasLowOverkillOhko));
-    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasFastTtk));
-    appendRecommendationCell(tableRow, createRecommendationFlag(row.penetratesAll));
-    appendRecommendationCell(tableRow, row.tip || '—', row.tip ? '' : 'muted');
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.hasOneShotKill,
+        'Yes',
+        getRecommendationFlagTitle('oneShotKill', row.hasOneShotKill)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.hasOneShotCritical,
+        'Yes',
+        getRecommendationFlagTitle('oneShotCritical', row.hasOneShotCritical)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.hasTwoShotCritical,
+        'Yes',
+        getRecommendationFlagTitle('twoShotCritical', row.hasTwoShotCritical)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.hasLowOverkillOhko,
+        'Yes',
+        getRecommendationFlagTitle('lowOverkillOhko', row.hasLowOverkillOhko)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.hasFastTtk,
+        'Yes',
+        getRecommendationFlagTitle('fastTtk', row.hasFastTtk)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.penetratesAll,
+        'Yes',
+        getRecommendationFlagTitle('penetratesAll', row.penetratesAll)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      row.tip || '—',
+      row.tip ? '' : 'muted',
+      getRecommendationTipTitle(row, usingFallbackRows)
+    );
 
     tbody.appendChild(tableRow);
   });

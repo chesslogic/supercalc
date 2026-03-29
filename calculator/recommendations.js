@@ -1,9 +1,14 @@
 import { buildFocusedZoneComparisonRows } from './compare-utils.js';
+import { isExplosiveAttack } from './attack-types.js';
 import { getZoneDisplayedKillPath } from './zone-damage.js';
-import { compareWeaponOptionBaseOrder, getWeaponRowPreviewHitCount } from './weapon-dropdown.js';
+import { compareWeaponOptionBaseOrder, getWeaponRowMultiplicity } from './weapon-dropdown.js';
 
 export const DEFAULT_RECOMMENDATION_RANGE_METERS = 30;
 export const LOW_OVERKILL_RATIO_THRESHOLD = 0.25;
+export const RECOMMENDATION_SHOTGUN_HIT_SHARE = 0.4;
+export const RECOMMENDATION_MAX_SHOTGUN_HITS = 6;
+export const RECOMMENDATION_FRAGMENT_HIT_CAP = 3;
+export const RECOMMENDATION_IMPLICIT_REPEAT_HITS = 2;
 
 const RANGE_STATUS_ORDER = {
   qualified: 0,
@@ -20,9 +25,22 @@ const OUTCOME_PRIORITY = {
   none: 5
 };
 
+const RECOMMENDATION_IMPLICIT_REPEAT_RULES = [
+  {
+    id: 'eagle-bombing-run',
+    weaponPattern: /^eagle (?:airstrike|napalm airstrike)$/i,
+    attackPattern: /bomb/i,
+    hitCount: RECOMMENDATION_IMPLICIT_REPEAT_HITS
+  }
+];
+
 function toFiniteNumber(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+function normalizeText(value) {
+  return String(value ?? '').trim().toLowerCase();
 }
 
 function compareBooleanDescending(left, right) {
@@ -59,6 +77,100 @@ function getOutcomePriority(outcomeKind) {
 
 function getRangeMeters(distanceInfo) {
   return distanceInfo?.isAvailable ? toFiniteNumber(distanceInfo.meters) : null;
+}
+
+function getRecommendationAttackName(attackRow) {
+  return String(attackRow?.['Atk Name'] || attackRow?.Name || '').trim();
+}
+
+function isBundledRecommendationAttack(attackName) {
+  return /\((?:volley|total)\s+x\d+\)/i.test(attackName);
+}
+
+function isShotgunRecommendationAttack({
+  weapon,
+  attackName,
+  multiplicity
+}) {
+  if (multiplicity <= 1) {
+    return false;
+  }
+
+  const weaponSub = normalizeText(weapon?.sub);
+  const weaponCode = normalizeText(weapon?.code);
+  const weaponName = normalizeText(weapon?.name);
+  return weaponSub === 'sg'
+    || weaponCode.startsWith('sg-')
+    || weaponName.includes('shotgun')
+    || /\b(?:buckshot|birdshot|flechettes?|stun rounds|trident|liberty fire)\b/i.test(attackName);
+}
+
+function isFragmentRecommendationAttack({
+  attackRow,
+  attackName,
+  multiplicity
+}) {
+  if (multiplicity <= 1) {
+    return false;
+  }
+
+  return isExplosiveAttack(attackRow)
+    || /\b(?:shrapnel|cluster bomb|flak rounds)\b/i.test(attackName);
+}
+
+function getImplicitRecommendationRepeatHits({
+  weapon,
+  attackName
+}) {
+  return RECOMMENDATION_IMPLICIT_REPEAT_RULES.find((rule) => (
+    rule.weaponPattern.test(weapon?.name || '')
+    && (!rule.attackPattern || rule.attackPattern.test(attackName))
+  ))?.hitCount || 1;
+}
+
+// Recommendation rows intentionally model a plausible subset of simultaneous impacts rather than
+// assuming every pellet or bomblet lands. Explicit "(Volley xN)" / "(Total xN)" rows are already
+// pre-bundled in the sheet and stay at one firing cycle.
+export function getRecommendationAttackHitCount({
+  weapon,
+  attackRow
+}) {
+  const attackName = getRecommendationAttackName(attackRow);
+  if (!attackName) {
+    return 1;
+  }
+
+  if (isBundledRecommendationAttack(attackName)) {
+    return 1;
+  }
+
+  const multiplicity = getWeaponRowMultiplicity(attackRow);
+  let hitCount = 1;
+
+  if (isShotgunRecommendationAttack({
+    weapon,
+    attackName,
+    multiplicity
+  })) {
+    hitCount = Math.min(
+      RECOMMENDATION_MAX_SHOTGUN_HITS,
+      Math.max(2, Math.ceil(multiplicity * RECOMMENDATION_SHOTGUN_HIT_SHARE))
+    );
+  } else if (isFragmentRecommendationAttack({
+    attackRow,
+    attackName,
+    multiplicity
+  })) {
+    hitCount = Math.min(RECOMMENDATION_FRAGMENT_HIT_CAP, multiplicity);
+  }
+
+  return Math.max(
+    hitCount,
+    getImplicitRecommendationRepeatHits({
+      weapon,
+      attackName
+    })
+  );
 }
 
 export function normalizeRecommendationRangeMeters(value) {
@@ -399,7 +511,10 @@ export function buildWeaponRecommendationRows({
           enemy,
           weapon,
           attackRow,
-          hitCount: getWeaponRowPreviewHitCount(attackRow),
+          hitCount: getRecommendationAttackHitCount({
+            weapon,
+            attackRow
+          }),
           rangeFloorMeters: normalizedRangeFloor
         }))
         .filter(Boolean)

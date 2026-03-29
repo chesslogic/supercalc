@@ -70,7 +70,7 @@ function toSortableApValue(value) {
   return value === null ? Number.NEGATIVE_INFINITY : value;
 }
 
-function getWeaponRowMultiplicity(row) {
+export function getWeaponRowMultiplicity(row) {
   const attackName = String(row?.['Atk Name'] || '').trim();
   const matches = [...attackName.matchAll(/(?:^|[\s(])x(\d+)(?=[)\s]|$)/gi)];
   if (matches.length === 0) {

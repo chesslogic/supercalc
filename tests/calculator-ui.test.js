@@ -235,6 +235,57 @@ test('processEnemyData keeps inline enemies hidden from the selector but availab
   }
 });
 
+test('processEnemyData assigns stable numbered labels to unknown zones within an enemy', () => {
+  const previousState = {
+    factions: enemyState.factions,
+    units: enemyState.units,
+    inlineUnits: enemyState.inlineUnits,
+    filteredUnits: enemyState.filteredUnits,
+    filterActive: enemyState.filterActive,
+    sortKey: enemyState.sortKey,
+    sortDir: enemyState.sortDir,
+    factionIndex: enemyState.factionIndex,
+    searchIndex: enemyState.searchIndex,
+    unitIndex: enemyState.unitIndex
+  };
+
+  try {
+    processEnemyData({
+      Automaton: {
+        'Unknown Walker': {
+          health: 800,
+          damageable_zones: [
+            { zone_name: '[unknown]', health: 200 },
+            { zone_name: 'head', health: 150 },
+            { zone_name: '[unknown]', health: 250 }
+          ]
+        }
+      }
+    });
+
+    const unit = getEnemyUnitByName('Unknown Walker');
+    assert.deepEqual(
+      unit?.zones.map((zone) => [zone.zone_name, zone.raw_zone_name || null]),
+      [
+        ['[unknown 1]', '[unknown]'],
+        ['head', null],
+        ['[unknown 2]', '[unknown]']
+      ]
+    );
+  } finally {
+    enemyState.factions = previousState.factions;
+    enemyState.units = previousState.units;
+    enemyState.inlineUnits = previousState.inlineUnits;
+    enemyState.filteredUnits = previousState.filteredUnits;
+    enemyState.filterActive = previousState.filterActive;
+    enemyState.sortKey = previousState.sortKey;
+    enemyState.sortDir = previousState.sortDir;
+    enemyState.factionIndex = previousState.factionIndex;
+    enemyState.searchIndex = previousState.searchIndex;
+    enemyState.unitIndex = previousState.unitIndex;
+  }
+});
+
 test('enemy target type selection normalizes ids and toggles independently', () => {
   const previousTargetTypes = [...calculatorState.enemyTargetTypes];
 

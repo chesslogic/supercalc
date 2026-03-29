@@ -1,0 +1,261 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+if (!globalThis.localStorage) {
+  globalThis.localStorage = {
+    getItem() {
+      return null;
+    },
+    setItem() {},
+    removeItem() {}
+  };
+}
+
+const { calculatorState } = await import('../calculator/data.js');
+const { renderRecommendationPanel } = await import('../calculator/calculation.js');
+const { state: weaponsState } = await import('../weapons/data.js');
+
+class TestClassList {
+  constructor(element) {
+    this.element = element;
+    this.tokens = new Set();
+  }
+
+  syncFromString(value) {
+    this.tokens = new Set(String(value || '').split(/\s+/).filter(Boolean));
+  }
+
+  syncElement() {
+    this.element._className = [...this.tokens].join(' ');
+  }
+
+  add(...tokens) {
+    tokens
+      .flatMap((token) => String(token || '').split(/\s+/))
+      .filter(Boolean)
+      .forEach((token) => this.tokens.add(token));
+    this.syncElement();
+  }
+
+  contains(token) {
+    return this.tokens.has(token);
+  }
+}
+
+class TestElement {
+  constructor(tagName) {
+    this.tagName = String(tagName || '').toUpperCase();
+    this.children = [];
+    this.parentNode = null;
+    this.textContent = '';
+    this.title = '';
+    this.id = '';
+    this.type = '';
+    this.min = '';
+    this.max = '';
+    this.step = '';
+    this.value = '';
+    this.htmlFor = '';
+    this.dataset = {};
+    this.listeners = new Map();
+    this._className = '';
+    this.classList = new TestClassList(this);
+  }
+
+  get className() {
+    return this._className;
+  }
+
+  set className(value) {
+    this._className = String(value || '');
+    this.classList.syncFromString(this._className);
+  }
+
+  appendChild(child) {
+    if (!child) {
+      return child;
+    }
+
+    child.parentNode = this;
+    this.children.push(child);
+    return child;
+  }
+
+  addEventListener(type, handler) {
+    this.listeners.set(type, handler);
+  }
+
+  get childElementCount() {
+    return this.children.length;
+  }
+}
+
+class TestDocument {
+  createElement(tagName) {
+    return new TestElement(tagName);
+  }
+}
+
+function collectElements(root, predicate, results = []) {
+  if (predicate(root)) {
+    results.push(root);
+  }
+
+  (root.children || []).forEach((child) => collectElements(child, predicate, results));
+  return results;
+}
+
+function makeAttackRow(name, damage, ap = 2) {
+  return {
+    'Atk Type': 'Projectile',
+    'Atk Name': name,
+    DMG: damage,
+    DUR: 0,
+    AP: ap,
+    DF: 10,
+    ST: 10,
+    PF: 10
+  };
+}
+
+function makeWeapon(name, {
+  code = '',
+  index = 0,
+  rpm = 60,
+  sub = 'AR',
+  type = 'Primary',
+  rows = []
+} = {}) {
+  return {
+    name,
+    code,
+    index,
+    rpm,
+    type,
+    sub,
+    rows
+  };
+}
+
+function makeZone(zoneName, {
+  health = 100,
+  isFatal = false,
+  av = 1,
+  toMainPercent = 0
+} = {}) {
+  return {
+    zone_name: zoneName,
+    health,
+    Con: 0,
+    AV: av,
+    'Dur%': 0,
+    'ToMain%': toMainPercent,
+    ExTarget: 'Part',
+    ExMult: 1,
+    IsFatal: isFatal
+  };
+}
+
+function renderPanelForTest(enemy) {
+  const previousDocument = globalThis.document;
+  const previousNode = globalThis.Node;
+  const container = new TestElement('div');
+
+  globalThis.document = new TestDocument();
+  globalThis.Node = TestElement;
+
+  try {
+    renderRecommendationPanel(container, enemy);
+    return container;
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.Node = previousNode;
+  }
+}
+
+test('renderRecommendationPanel adds explanatory titles to highlighted recommendation headers and cells', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    weaponsState.groups = [
+      makeWeapon('Breaker', {
+        code: 'SG-225',
+        rpm: 120,
+        sub: 'SG',
+        rows: [makeAttackRow('12g BUCKSHOT_P x11', 30, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Target Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 145, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('torso', { health: 200, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const headers = collectElements(container, (element) => element.tagName === 'TH');
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+    const flags = collectElements(container, (element) => element.classList.contains('calc-recommend-flag'));
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const outcomeBadge = collectElements(container, (element) => element.classList.contains('calc-zone-context'))[0];
+
+    assert.equal(
+      headers.find((element) => element.textContent === 'OH Kill')?.title,
+      'One-shot kill highlight at the current range floor.'
+    );
+    assert.match(headers.find((element) => element.textContent === 'Target')?.title || '', /target zone/i);
+    assert.match(cells[1].title, /5 hits per firing cycle/i);
+    assert.match(cells[2].title, /Best-ranked target: head/i);
+    assert.match(cells[2].title, /Killing this part kills the enemy/i);
+    assert.match(cells[3].title, /counts firing cycles, not individual projectiles/i);
+    assert.match(cells[4].title, /weapon's RPM/i);
+    assert.match(cells[5].title, /qualifies for range-sensitive highlights/i);
+    assert.equal(outcomeBadge.title, 'Killing this part kills the enemy');
+    assert.equal(flags[0].title, 'Meets the one-shot kill highlight at the current range floor.');
+    assert.match(summary.title, /Rows without those highlights are hidden from this table/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel explains fallback rows and unknown range rows when nothing is highlighted', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+
+  try {
+    calculatorState.recommendationRangeMeters = 30;
+    weaponsState.groups = [
+      makeWeapon('Body Tapper', {
+        rpm: 60,
+        rows: [makeAttackRow('Body Tap', 50, 1)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Armor Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 3, toMainPercent: 1 }),
+        makeZone('body', { health: 250, av: 1, toMainPercent: 0 })
+      ]
+    });
+
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+    const flags = collectElements(container, (element) => element.classList.contains('calc-recommend-flag'));
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+
+    assert.match(summary.textContent, /fallback rows/i);
+    assert.match(summary.title, /falls back to the best-ranked row for each weapon/i);
+    assert.match(cells[5].title, /row stays listed, but range-sensitive highlights do not count/i);
+    assert.equal(flags[0].title, 'Does not currently meet the one-shot kill highlight.');
+    assert.match(cells[12].title, /fallback because nothing met the current highlight checks/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    weaponsState.groups = previousGroups;
+  }
+});

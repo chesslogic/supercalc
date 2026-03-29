@@ -20,6 +20,28 @@ function normalizeScopeTags(rawScopeTags = [], inheritedScopeTags = []) {
   ].map((tag) => String(tag ?? '').trim()).filter(Boolean))];
 }
 
+function isUnknownZoneName(zoneName) {
+  const normalizedZoneName = String(zoneName ?? '').trim().toLowerCase();
+  return normalizedZoneName === '[unknown]' || normalizedZoneName === 'unknown';
+}
+
+function buildUnitZones(rawZones = []) {
+  let unknownZoneCount = 0;
+  return (Array.isArray(rawZones) ? rawZones : []).map((zone) => {
+    const normalizedZoneName = String(zone?.zone_name ?? '').trim();
+    if (!isUnknownZoneName(normalizedZoneName)) {
+      return { ...zone };
+    }
+
+    unknownZoneCount += 1;
+    return {
+      ...zone,
+      raw_zone_name: normalizedZoneName || '[unknown]',
+      zone_name: `[unknown ${unknownZoneCount}]`
+    };
+  });
+}
+
 function buildSearchText(unit) {
   return [
     unit.faction,
@@ -39,13 +61,14 @@ function buildEnemyUnit({
   unitData,
   parentUnit = null
 }) {
+  const zones = buildUnitZones(unitData.damageable_zones);
   return {
     faction: factionName,
     name: unitName,
     health: unitData.health,
     scopeTags: normalizeScopeTags(unitData.scope_tags, parentUnit?.scopeTags || []),
-    zones: unitData.damageable_zones || [],
-    zoneCount: (unitData.damageable_zones || []).length,
+    zones,
+    zoneCount: zones.length,
     isInline: Boolean(parentUnit),
     parentEnemyName: parentUnit?.name || String(unitData.parent_enemy || '').trim() || null,
     showInSelector: unitData.show_in_selector !== false,

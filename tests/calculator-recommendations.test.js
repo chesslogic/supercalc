@@ -11,6 +11,7 @@ import {
   ingestBallisticFalloffCsvText,
   resetBallisticFalloffProfiles
 } from '../weapons/falloff.js';
+import { enemyState, getEnemyUnitByName, processEnemyData } from '../enemies/data.js';
 
 function makeAttackRow(name, damage, ap = 2) {
   return {
@@ -29,6 +30,8 @@ function makeWeapon(name, {
   code = '',
   index = 0,
   rpm = 60,
+  type = 'Primary',
+  sub = 'AR',
   rows = []
 } = {}) {
   return {
@@ -36,8 +39,8 @@ function makeWeapon(name, {
     code,
     index,
     rpm,
-    type: 'Primary',
-    sub: 'AR',
+    type,
+    sub,
     rows
   };
 }
@@ -58,6 +61,13 @@ function makeZone(zoneName, {
     ExTarget: 'Part',
     ExMult: 1,
     IsFatal: isFatal
+  };
+}
+
+function makeExplosionAttackRow(name, damage, ap = 3) {
+  return {
+    ...makeAttackRow(name, damage, ap),
+    'Atk Type': 'Explosion'
   };
 }
 
@@ -138,6 +148,87 @@ test('buildWeaponRecommendationRows drops one-shot range-qualified flags when th
   assert.equal(beyondRangeRows[0].rangeStatus, 'failed');
 });
 
+test('buildWeaponRecommendationRows models realistic landed pellets for shotgun recommendations', () => {
+  const enemy = {
+    name: 'Shotgun Dummy',
+    health: 600,
+    zones: [
+      makeZone('head', { health: 145, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Breaker', {
+      code: 'SG-225',
+      sub: 'SG',
+      rows: [makeAttackRow('12g BUCKSHOT_P x11', 30, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].hitCount, 5);
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].hasOneShotKill, true);
+});
+
+test('buildWeaponRecommendationRows models nearby repeated explosions for Eagle Airstrike rows', () => {
+  const enemy = {
+    name: 'Airstrike Dummy',
+    health: 3000,
+    zones: [
+      makeZone('head', { health: 1500, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('EAGLE AIRSTRIKE', {
+      type: 'Stratagem',
+      sub: 'EGL',
+      rows: [makeExplosionAttackRow('100KG BOMB_P_IE', 800, 5)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].hitCount, 2);
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].hasOneShotKill, true);
+});
+
+test('buildWeaponRecommendationRows leaves pre-bundled volley rows at one firing cycle', () => {
+  const enemy = {
+    name: 'Volley Dummy',
+    health: 1500,
+    zones: [
+      makeZone('head', { health: 1000, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Variable', {
+      code: 'VG-70',
+      sub: 'SPC',
+      rows: [makeAttackRow('VG-70_P (Volley x7)', 595, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].hitCount, 1);
+  assert.equal(rows[0].shotsToKill, 2);
+  assert.equal(rows[0].hasOneShotKill, false);
+});
+
 test('getEnemyTacticalInfoChips merges faction, class, and enemy-specific guidance', () => {
   const chips = getEnemyTacticalInfoChips({
     name: 'Factory Strider',
@@ -182,4 +273,61 @@ test('normalizeRecommendationRangeMeters keeps range input in a sane integer ban
   assert.equal(normalizeRecommendationRangeMeters('30.7'), 31);
   assert.equal(normalizeRecommendationRangeMeters(-10), 0);
   assert.equal(normalizeRecommendationRangeMeters(999), 500);
+});
+
+test('buildWeaponRecommendationRows preserves numbered unknown labels from processed enemies', () => {
+  const previousState = {
+    factions: enemyState.factions,
+    units: enemyState.units,
+    inlineUnits: enemyState.inlineUnits,
+    filteredUnits: enemyState.filteredUnits,
+    filterActive: enemyState.filterActive,
+    sortKey: enemyState.sortKey,
+    sortDir: enemyState.sortDir,
+    factionIndex: enemyState.factionIndex,
+    searchIndex: enemyState.searchIndex,
+    unitIndex: enemyState.unitIndex
+  };
+
+  try {
+    processEnemyData({
+      Automaton: {
+        'Unknown Walker': {
+          health: 600,
+          damageable_zones: [
+            makeZone('[unknown]', { health: 100, av: 1 }),
+            makeZone('[unknown]', { health: 300, av: 1 })
+          ]
+        }
+      }
+    });
+
+    const enemy = getEnemyUnitByName('Unknown Walker');
+    const rows = buildWeaponRecommendationRows({
+      enemy,
+      weapons: [
+        makeWeapon('Spotter', {
+          rows: [makeAttackRow('Spotter', 100, 2)]
+        })
+      ],
+      rangeFloorMeters: 0
+    });
+
+    assert.equal(rows[0].bestZoneName, '[unknown 1]');
+    assert.deepEqual(
+      rows[0].attackRecommendations[0].candidates.map((candidate) => candidate.zone.zone_name),
+      ['[unknown 1]', '[unknown 2]']
+    );
+  } finally {
+    enemyState.factions = previousState.factions;
+    enemyState.units = previousState.units;
+    enemyState.inlineUnits = previousState.inlineUnits;
+    enemyState.filteredUnits = previousState.filteredUnits;
+    enemyState.filterActive = previousState.filterActive;
+    enemyState.sortKey = previousState.sortKey;
+    enemyState.sortDir = previousState.sortDir;
+    enemyState.factionIndex = previousState.factionIndex;
+    enemyState.searchIndex = previousState.searchIndex;
+    enemyState.unitIndex = previousState.unitIndex;
+  }
 });
