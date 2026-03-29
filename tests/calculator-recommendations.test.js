@@ -5,7 +5,7 @@ import {
   buildWeaponRecommendationRows,
   normalizeRecommendationRangeMeters
 } from '../calculator/recommendations.js';
-import { getEnemyTacticalInfoChips } from '../calculator/tactical-data.js';
+import { getEnemyTacticalInfoChips, getEnemyWeakspotBundles } from '../calculator/tactical-data.js';
 import {
   calculateMaxDistanceForDamageFloor,
   ingestBallisticFalloffCsvText,
@@ -148,6 +148,31 @@ test('getEnemyTacticalInfoChips merges faction, class, and enemy-specific guidan
   assert.ok(chips.some((chip) => chip.value === 'Automatons'));
   assert.ok(chips.some((chip) => chip.value === 'Giant'));
   assert.ok(chips.some((chip) => /Factory Strider Gatling Gun/.test(chip.description)));
+});
+
+test('getEnemyWeakspotBundles exposes curated Factory Strider standalone and body targets together', () => {
+  const bundles = getEnemyWeakspotBundles({
+    name: 'Factory Strider',
+    faction: 'Automaton',
+    scopeTags: ['giant']
+  });
+
+  assert.equal(bundles.length, 1);
+  assert.equal(bundles[0].label, 'Factory Strider weakspots');
+  assert.deepEqual(
+    bundles[0].entries.map((entry) => [
+      entry.label,
+      entry.sourceEnemyName,
+      entry.sourceZoneNames || (entry.sourceZoneName ? [entry.sourceZoneName] : null)
+    ]),
+    [
+      ['Belly panel cluster', 'Factory Strider', ['front_body', 'right_body', 'left_body', 'back_body']],
+      ['Engine weakspot', 'Factory Strider', ['weakspot_engine']],
+      ['Chin Gatling Gun', 'Factory Strider Gatling Gun', null],
+      ['Cannon Turret', 'Cannon Turret', null]
+    ]
+  );
+  assert.match(bundles[0].entries[0].description, /curated closest match to the wiki belly-panel weakspot/i);
 });
 
 test('normalizeRecommendationRangeMeters keeps range input in a sane integer band', () => {

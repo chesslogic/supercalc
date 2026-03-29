@@ -125,6 +125,48 @@ const ENEMY_INFO_CHIPS = {
   ]
 };
 
+const ENEMY_WEAKSPOT_BUNDLES = {
+  'Factory Strider': [
+    {
+      id: 'factory-strider-reviewed-targets',
+      label: 'Factory Strider weakspots',
+      description: 'Curated tactical targets around a full Factory Strider engagement, including reviewed standalone entries that are not zones on the main body table.',
+      entries: [
+        {
+          label: 'Belly panel cluster',
+          sourceType: 'zone-cluster',
+          sourceEnemyName: 'Factory Strider',
+          sourceZoneNames: ['front_body', 'right_body', 'left_body', 'back_body'],
+          sourceLabel: 'Factory Strider · front_body / right_body / left_body / back_body',
+          description: 'Curated closest match to the wiki belly-panel weakspot. The raw export splits removable armor layers and underlying zero-bleed body panels into separate zones, so this is treated as a reviewed cluster rather than a one-row mapping.'
+        },
+        {
+          label: 'Engine weakspot',
+          sourceType: 'zone',
+          sourceEnemyName: 'Factory Strider',
+          sourceZoneName: 'weakspot_engine',
+          sourceLabel: 'Factory Strider · weakspot_engine',
+          description: 'Exposed body weakspot on the main Factory Strider table.'
+        },
+        {
+          label: 'Chin Gatling Gun',
+          sourceType: 'enemy',
+          sourceEnemyName: 'Factory Strider Gatling Gun',
+          sourceLabel: 'Standalone curated target',
+          description: 'Separate reviewed entry because the current filediver dump does not surface it as a named top-level Factory Strider zone.'
+        },
+        {
+          label: 'Cannon Turret',
+          sourceType: 'enemy',
+          sourceEnemyName: 'Cannon Turret',
+          sourceLabel: 'Standalone turret target',
+          description: 'Separate turret target that can be evaluated independently from the body table.'
+        }
+      ]
+    }
+  ]
+};
+
 function getEnemyTargetTypeId(enemy) {
   const scopeTags = getEnemyUnitScopeTags(enemy);
   if (scopeTags.includes('giant')) {
@@ -186,4 +228,16 @@ export function getEnemyTacticalInfoChips(enemy) {
     ...(TARGET_TYPE_INFO_CHIPS[targetTypeId] || []),
     ...(ENEMY_INFO_CHIPS[String(enemy?.name || '').trim()] || [])
   ]);
+}
+
+export function getEnemyWeakspotBundles(enemy) {
+  const enemyName = String(enemy?.name || enemy || '').trim();
+  if (!enemyName) {
+    return [];
+  }
+
+  return (ENEMY_WEAKSPOT_BUNDLES[enemyName] || []).map((bundle) => ({
+    ...bundle,
+    entries: (bundle.entries || []).map((entry) => ({ ...entry }))
+  }));
 }

@@ -966,6 +966,58 @@ tbody tr:hover {
   line-height:1.4;
 }
 
+.calc-bundle-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.calc-bundle-card{
+  padding:12px;
+  border:1px solid var(--border);
+  background:#202020;
+}
+
+.calc-bundle-title{
+  font-weight:700;
+}
+
+.calc-bundle-description{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.4;
+}
+
+.calc-bundle-entries{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+}
+
+.calc-bundle-entry{
+  padding:10px;
+  border:1px solid #2c2c2c;
+  background:#171717;
+}
+
+.calc-bundle-entry-title{
+  font-weight:700;
+}
+
+.calc-bundle-entry-source{
+  margin-top:4px;
+  color:var(--accent);
+  font-size:12px;
+}
+
+.calc-bundle-entry-description{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.4;
+}
+
 .calc-recommend-body{
   display:flex;
   flex-direction:column;
