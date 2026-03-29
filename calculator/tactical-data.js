@@ -133,12 +133,20 @@ const ENEMY_WEAKSPOT_BUNDLES = {
       description: 'Curated tactical targets around a full Factory Strider engagement, including reviewed standalone entries that are not zones on the main body table.',
       entries: [
         {
-          label: 'Belly panel cluster',
+          label: 'Belly panels (underside proxy)',
           sourceType: 'zone-cluster',
           sourceEnemyName: 'Factory Strider',
           sourceZoneNames: ['front_body', 'right_body', 'left_body', 'back_body'],
           sourceLabel: 'Factory Strider · front_body / right_body / left_body / back_body',
-          description: 'Curated closest match to the wiki belly-panel weakspot. The raw export splits removable armor layers and underlying zero-bleed body panels into separate zones, so this is treated as a reviewed cluster rather than a one-row mapping.'
+          description: 'Closest checked-in proxy for the wiki belly panels. These AV3 fatal body rows are treated as a reviewed underside-panel cluster rather than proof that every body-facing row is equally exposed at spawn.'
+        },
+        {
+          label: 'Head / eye weakspot',
+          sourceType: 'zone',
+          sourceEnemyName: 'Factory Strider',
+          sourceZoneName: 'head_body',
+          sourceLabel: 'Factory Strider · head_body',
+          description: 'Slightly exposed fatal head-body weakspot; closest checked-in proxy for the exposed eye/head opening.'
         },
         {
           label: 'Engine weakspot',
