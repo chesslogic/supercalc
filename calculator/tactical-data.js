@@ -141,10 +141,11 @@ const ENEMY_WEAKSPOT_BUNDLES = {
         },
         {
           label: 'Head / eye weakspot',
-          sourceType: 'enemy',
-          sourceEnemyName: 'Factory Strider Head / Eye Weakspot',
-          sourceLabel: 'Curated inline target · wiki-measured',
-          description: 'Curated overlay target for the slightly exposed eye/head opening. This avoids treating the broader exported head_body row as if it were the same as the exposed opening.'
+          sourceType: 'zone',
+          sourceEnemyName: 'Factory Strider',
+          sourceZoneName: 'head_body',
+          sourceLabel: 'Factory Strider · head_body',
+          description: 'Same gameplay target as the exposed eye opening. The export names the underlying killable part `head_body`, even though most of it sits beneath shared head armor.'
         },
         {
           label: 'Engine weakspot',

@@ -1525,26 +1525,6 @@
           "show_in_selector": false,
           "source_provenance": "wiki-measured",
           "source_note": "Curated inline overlay for the exposed underside belly panels. Kept separate from the base filediver-derived Factory Strider row because the exported anatomy splits body rows by direction and exposure state."
-        },
-        "Factory Strider Head / Eye Weakspot": {
-          "damageable_zones": [
-            {
-              "AV": 4,
-              "Dur%": 1,
-              "ExMult": 0.6,
-              "ExTarget": "Part",
-              "IsFatal": true,
-              "MainCap": 0,
-              "ToMain%": 1,
-              "health": 2500,
-              "zone_name": "head_eye"
-            }
-          ],
-          "health": 2500,
-          "parent_enemy": "Factory Strider",
-          "show_in_selector": false,
-          "source_provenance": "wiki-measured",
-          "source_note": "Curated inline overlay for the slightly exposed Factory Strider head/eye opening. Kept separate from the base filediver-derived row because the export exposes head_body but does not isolate the visible opening as its own target."
         }
       },
       "scope_tags": [

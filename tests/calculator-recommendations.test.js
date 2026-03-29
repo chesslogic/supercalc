@@ -168,14 +168,14 @@ test('getEnemyWeakspotBundles exposes curated Factory Strider standalone and bod
     ]),
     [
       ['Belly panels', 'Factory Strider Belly Panels', 'enemy', null],
-      ['Head / eye weakspot', 'Factory Strider Head / Eye Weakspot', 'enemy', null],
+      ['Head / eye weakspot', 'Factory Strider', 'zone', ['head_body']],
       ['Engine weakspot', 'Factory Strider', 'zone', ['weakspot_engine']],
       ['Chin Gatling Gun', 'Factory Strider Gatling Gun', 'enemy', null],
       ['Cannon Turret', 'Cannon Turret', 'enemy', null]
     ]
   );
   assert.match(bundles[0].entries[0].description, /curated overlay target for the exposed underside belly panels/i);
-  assert.match(bundles[0].entries[1].description, /curated overlay target for the slightly exposed eye\/head opening/i);
+  assert.match(bundles[0].entries[1].description, /same gameplay target as the exposed eye opening/i);
 });
 
 test('normalizeRecommendationRangeMeters keeps range input in a sane integer band', () => {
