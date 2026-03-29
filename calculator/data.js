@@ -17,6 +17,10 @@ import {
   normalizeWeaponSortMode,
   sortWeaponOptions
 } from './weapon-dropdown.js';
+import {
+  DEFAULT_RECOMMENDATION_RANGE_METERS,
+  normalizeRecommendationRangeMeters
+} from './recommendations.js';
 
 const DEFAULT_ENEMY_SORT = {
   key: 'zone_name',
@@ -53,6 +57,7 @@ export const calculatorState = {
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   enemyTargetTypes: [...DEFAULT_ENEMY_TARGET_TYPES],
   diffDisplayMode: 'absolute',
+  recommendationRangeMeters: DEFAULT_RECOMMENDATION_RANGE_METERS,
   weaponA: null,
   weaponB: null,
   selectedEnemy: null,
@@ -179,6 +184,11 @@ export function toggleSelectedEnemyTargetType(targetTypeId) {
 
 export function setDiffDisplayMode(mode) {
   calculatorState.diffDisplayMode = mode === 'percent' ? 'percent' : 'absolute';
+}
+
+export function setRecommendationRangeMeters(value) {
+  calculatorState.recommendationRangeMeters = normalizeRecommendationRangeMeters(value);
+  return calculatorState.recommendationRangeMeters;
 }
 
 export function setSelectedWeapon(slot, weapon) {

@@ -664,9 +664,10 @@ test('sortEnemyZoneRows ranks one-sided diff wins beyond finite numeric deltas',
 test('sortEnemyZoneRows can group by outcome before sorting a side-specific ttk column', () => {
   const rows = [
     makeSortRow(0, 'utility', { outcomeKindA: 'utility', ttkA: 0.5 }),
-    makeSortRow(1, 'fatal-slow', { outcomeKindA: 'fatal', ttkA: 2 }),
-    makeSortRow(2, 'main', { outcomeKindA: 'main', ttkA: 0.25 }),
-    makeSortRow(3, 'fatal-fast', { outcomeKindA: 'fatal', ttkA: 1 })
+    makeSortRow(1, 'critical', { outcomeKindA: 'critical', ttkA: 0.75 }),
+    makeSortRow(2, 'fatal-slow', { outcomeKindA: 'fatal', ttkA: 2 }),
+    makeSortRow(3, 'main', { outcomeKindA: 'main', ttkA: 0.25 }),
+    makeSortRow(4, 'fatal-fast', { outcomeKindA: 'fatal', ttkA: 1 })
   ];
 
   const sorted = sortEnemyZoneRows(rows, {
@@ -678,12 +679,13 @@ test('sortEnemyZoneRows can group by outcome before sorting a side-specific ttk 
 
   assert.deepEqual(
     sorted.map((row) => row.zone.zone_name),
-    ['main', 'fatal-fast', 'fatal-slow', 'utility']
+    ['main', 'fatal-fast', 'fatal-slow', 'critical', 'utility']
   );
   assert.equal(sorted[0].groupStart, false);
   assert.equal(sorted[1].groupStart, true);
   assert.equal(sorted[2].groupStart, false);
   assert.equal(sorted[3].groupStart, true);
+  assert.equal(sorted[4].groupStart, true);
 });
 
 test('sortEnemyZoneRows keeps the literal Main zone first regardless of sort direction', () => {
@@ -803,7 +805,17 @@ test('sortEnemyZoneRows subgroups one-sided diff rows by winning outcome and rea
         displayValue: 0.25
       }
     }),
-    makeSortRow(5, 'one-sided-part', {
+    makeSortRow(5, 'one-sided-critical', {
+      outcomeKindB: 'critical',
+      ttkB: 0.2,
+      diffTtk: {
+        kind: 'one-sided',
+        sortValue: Number.NEGATIVE_INFINITY,
+        winner: 'B',
+        displayValue: 0.2
+      }
+    }),
+    makeSortRow(6, 'one-sided-part', {
       outcomeKindB: 'utility',
       ttkB: 0.15,
       diffTtk: {
@@ -813,7 +825,7 @@ test('sortEnemyZoneRows subgroups one-sided diff rows by winning outcome and rea
         displayValue: 0.15
       }
     }),
-    makeSortRow(6, 'kill', { outcomeKindA: 'fatal', diffTtk: -0.2 })
+    makeSortRow(7, 'kill', { outcomeKindA: 'fatal', diffTtk: -0.2 })
   ];
 
   const sorted = sortEnemyZoneRows(rows, {
@@ -830,6 +842,7 @@ test('sortEnemyZoneRows subgroups one-sided diff rows by winning outcome and rea
       'one-sided-main-fast',
       'one-sided-main-slow',
       'one-sided-kill',
+      'one-sided-critical',
       'one-sided-limb',
       'one-sided-part',
       'kill'

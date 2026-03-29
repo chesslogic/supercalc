@@ -2,6 +2,7 @@ import { isExplosiveAttack } from './attack-types.js';
 import { buildKillSummary } from './summary.js';
 import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
+import { getCriticalZoneInfo } from './tactical-data.js';
 
 function toNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -453,10 +454,17 @@ export function summarizeEnemyTargetScenario({
   };
 }
 
-export function getZoneOutcomeKind({ zone, totalDamagePerCycle, totalDamageToMainPerCycle, killSummary }) {
+export function getZoneOutcomeKind({
+  enemy = null,
+  zone,
+  totalDamagePerCycle,
+  totalDamageToMainPerCycle,
+  killSummary
+}) {
   const hasZoneDamage = totalDamagePerCycle > 0;
   const hasMainDamage = totalDamageToMainPerCycle > 0 && killSummary?.mainShotsToKill !== null;
   const zoneShotsToKill = killSummary?.zoneEffectiveShotsToKill ?? killSummary?.zoneShotsToKill ?? null;
+  const criticalZoneInfo = getCriticalZoneInfo(enemy, zone);
 
   if (!hasZoneDamage && !hasMainDamage) {
     return null;
@@ -472,13 +480,13 @@ export function getZoneOutcomeKind({ zone, totalDamagePerCycle, totalDamageToMai
       zoneShotsToKill !== null &&
       zoneShotsToKill < killSummary.mainShotsToKill
     ) {
-      return 'limb';
+      return criticalZoneInfo ? 'critical' : 'limb';
     }
 
     return 'main';
   }
 
-  return 'utility';
+  return criticalZoneInfo ? 'critical' : 'utility';
 }
 
 export function getZoneOutcomeLabel(kind) {
@@ -488,6 +496,10 @@ export function getZoneOutcomeLabel(kind) {
 
   if (kind === 'main') {
     return 'Main';
+  }
+
+  if (kind === 'critical') {
+    return 'Critical';
   }
 
   if (kind === 'limb') {
@@ -508,6 +520,10 @@ export function getZoneOutcomeDescription(kind) {
 
   if (kind === 'main') {
     return 'This path kills through main health';
+  }
+
+  if (kind === 'critical') {
+    return 'Destroying this critical part removes an important threat or utility before the body kill.';
   }
 
   if (kind === 'limb') {
@@ -550,7 +566,7 @@ export function getZoneDisplayedKillPath(kind, killSummary) {
     }
   }
 
-  if (kind === 'limb' || kind === 'utility') {
+  if (kind === 'critical' || kind === 'limb' || kind === 'utility') {
     return 'zone';
   }
 

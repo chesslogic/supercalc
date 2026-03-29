@@ -16,6 +16,7 @@ import {
   getWeaponSortModeOptionsForState,
   setCalculatorMode,
   setEnemyTableMode,
+  setRecommendationRangeMeters,
   setSelectedEnemyTargetTypes,
   setWeaponSortMode,
   setSelectedWeapon,
@@ -278,6 +279,19 @@ test('enemy table mode defaults to analysis and normalizes to supported values',
   assert.equal(calculatorState.enemyTableMode, 'analysis');
 });
 
+test('recommendation range meters normalize into a bounded integer', () => {
+  const previousRange = calculatorState.recommendationRangeMeters;
+
+  try {
+    assert.equal(setRecommendationRangeMeters('30.7'), 31);
+    assert.equal(calculatorState.recommendationRangeMeters, 31);
+    assert.equal(setRecommendationRangeMeters(-5), 0);
+    assert.equal(setRecommendationRangeMeters(999), 500);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRange;
+  }
+});
+
 test('single mode always shows the full enemy columns plus derived metrics', () => {
   const columns = getEnemyColumnsForState({
     mode: 'single',
@@ -297,7 +311,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     analysisColumns.map((column) => column.key),
-    ['zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const statsColumns = getEnemyColumnsForState({
@@ -315,7 +329,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     overviewAnalysisColumns.map((column) => column.key),
-    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const scopedOverviewColumns = getOverviewColumnsForState({
@@ -324,7 +338,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     scopedOverviewColumns.map((column) => column.key),
-    ['enemy', 'zone_name', 'AV', 'Dur%', 'IsFatal', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 });
 

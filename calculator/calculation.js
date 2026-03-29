@@ -8,14 +8,18 @@ import {
   getSelectedAttacks,
   getSelectedExplosiveZoneIndices,
   getSelectedZone,
-  getWeaponForSlot
+  getWeaponForSlot,
+  setRecommendationRangeMeters
 } from './data.js';
 import { buildHallOfFameEntries, buildOverviewRows, getAttackRowKey } from './compare-utils.js';
 import { splitAttacksByApplication } from './attack-types.js';
 import { formatDamageValue } from './damage-rounding.js';
 import { formatTtkSeconds } from './summary.js';
-import { summarizeEnemyTargetScenario } from './zone-damage.js';
+import { getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
+import { state as weaponsState } from '../weapons/data.js';
+import { buildWeaponRecommendationRows } from './recommendations.js';
+import { getEnemyTacticalInfoChips } from './tactical-data.js';
 
 function appendTtkLine(resultWrapper, ttkSeconds, hasRpm) {
   const ttkLine = document.createElement('div');
@@ -788,6 +792,266 @@ function renderOverviewCalculation(container) {
   container.appendChild(wrapper);
 }
 
+function createOutcomeBadge(outcomeKind) {
+  const outcomeLabel = getZoneOutcomeLabel(outcomeKind);
+  if (!outcomeLabel) {
+    return null;
+  }
+
+  const badge = document.createElement('span');
+  badge.className = `calc-zone-context calc-zone-context-${outcomeKind}`;
+  badge.textContent = outcomeLabel;
+  return badge;
+}
+
+function createRecommendationFlag(value, label = 'Yes') {
+  const flag = document.createElement('span');
+  flag.className = `calc-recommend-flag ${value ? 'is-true' : 'is-false'}`;
+  flag.textContent = value ? label : '—';
+  return flag;
+}
+
+function renderTacticalGuidePanel(container, enemy) {
+  const chips = getEnemyTacticalInfoChips(enemy);
+  if (chips.length === 0) {
+    return;
+  }
+
+  const panel = document.createElement('section');
+  panel.className = 'calc-compare-panel calc-info-panel';
+
+  const heading = document.createElement('div');
+  heading.className = 'calc-compare-heading';
+
+  const title = document.createElement('div');
+  title.className = 'calc-compare-title';
+  title.textContent = `${enemy.name} tactical notes`;
+  heading.appendChild(title);
+  panel.appendChild(heading);
+
+  const body = document.createElement('div');
+  body.className = 'calc-compare-body';
+
+  const grid = document.createElement('div');
+  grid.className = 'calc-info-grid';
+  chips.forEach((chip) => {
+    const card = document.createElement('div');
+    card.className = 'calc-info-card';
+
+    const label = document.createElement('div');
+    label.className = 'calc-info-card-label';
+    label.textContent = chip.label;
+    card.appendChild(label);
+
+    const value = document.createElement('div');
+    value.className = 'calc-info-card-value';
+    value.textContent = chip.value;
+    card.appendChild(value);
+
+    const description = document.createElement('div');
+    description.className = 'calc-info-card-description';
+    description.textContent = chip.description;
+    card.appendChild(description);
+
+    grid.appendChild(card);
+  });
+
+  body.appendChild(grid);
+  panel.appendChild(body);
+  container.appendChild(panel);
+}
+
+function appendRecommendationCell(row, content, className = '') {
+  const cell = document.createElement('td');
+  if (className) {
+    cell.className = className;
+  }
+
+  if (typeof Node !== 'undefined' && content instanceof Node) {
+    cell.appendChild(content);
+  } else {
+    cell.textContent = content;
+  }
+
+  row.appendChild(cell);
+}
+
+function renderRecommendationPanel(container, enemy) {
+  const panel = document.createElement('section');
+  panel.className = 'calc-compare-panel calc-recommend-panel';
+
+  const heading = document.createElement('div');
+  heading.className = 'calc-compare-heading';
+
+  const title = document.createElement('div');
+  title.className = 'calc-compare-title';
+  title.textContent = `${enemy.name} weapon recommendations`;
+  heading.appendChild(title);
+  panel.appendChild(heading);
+
+  const body = document.createElement('div');
+  body.className = 'calc-compare-body calc-recommend-body';
+
+  const controls = document.createElement('div');
+  controls.className = 'calc-recommend-controls';
+
+  const rangeLabel = document.createElement('label');
+  rangeLabel.className = 'label';
+  rangeLabel.textContent = 'Range floor';
+  rangeLabel.htmlFor = 'calculator-recommendation-range';
+  controls.appendChild(rangeLabel);
+
+  const rangeInput = document.createElement('input');
+  rangeInput.id = 'calculator-recommendation-range';
+  rangeInput.className = 'input calc-recommend-input';
+  rangeInput.type = 'number';
+  rangeInput.min = '0';
+  rangeInput.max = '500';
+  rangeInput.step = '5';
+  rangeInput.value = String(calculatorState.recommendationRangeMeters);
+  rangeInput.addEventListener('change', (event) => {
+    setRecommendationRangeMeters(event.target.value);
+    renderCalculation();
+  });
+  controls.appendChild(rangeInput);
+
+  const controlsNote = document.createElement('span');
+  controlsNote.className = 'status calc-recommend-note';
+  controlsNote.textContent = 'Range-sensitive flags only light up when the modeled breakpoint survives the selected floor. Unknown-range profiles stay listed, but they do not pass those flags.';
+  controls.appendChild(controlsNote);
+
+  body.appendChild(controls);
+
+  if (!Array.isArray(weaponsState.groups) || weaponsState.groups.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'muted';
+    emptyState.textContent = 'Weapon data is still loading.';
+    body.appendChild(emptyState);
+    panel.appendChild(body);
+    container.appendChild(panel);
+    return;
+  }
+
+  const recommendationRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons: weaponsState.groups,
+    rangeFloorMeters: calculatorState.recommendationRangeMeters
+  });
+  const flaggedRows = recommendationRows.filter((row) => (
+    row.hasOneShotKill
+    || row.hasOneShotCritical
+    || row.hasTwoShotCritical
+    || row.hasFastTtk
+    || row.hasLowOverkillOhko
+    || row.penetratesAll
+  ));
+  const displayRows = (flaggedRows.length > 0 ? flaggedRows : recommendationRows).slice(0, 24);
+
+  const summary = document.createElement('div');
+  summary.className = 'calc-recommend-summary';
+  summary.textContent = flaggedRows.length > 0
+    ? `Showing ${displayRows.length} highlighted recommendations at ${calculatorState.recommendationRangeMeters}m+.`
+    : `No rows hit the current highlight checks at ${calculatorState.recommendationRangeMeters}m+. Showing the best fallback rows instead.`;
+  body.appendChild(summary);
+
+  if (displayRows.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'muted';
+    emptyState.textContent = 'No recommendation rows are available for the current enemy.';
+    body.appendChild(emptyState);
+    panel.appendChild(body);
+    container.appendChild(panel);
+    return;
+  }
+
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'calc-recommend-table-wrap';
+
+  const table = document.createElement('table');
+  table.className = 'calculator-table calc-recommend-table';
+
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  [
+    'Weapon',
+    'Attack',
+    'Target',
+    'Shots',
+    'TTK',
+    'Range',
+    'OH Kill',
+    'OH Crit',
+    '2 Crit',
+    'Low OHKO',
+    '<0.6s',
+    'Pen All',
+    'Tip'
+  ].forEach((labelText) => {
+    const th = document.createElement('th');
+    th.textContent = labelText;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  displayRows.forEach((row) => {
+    const tableRow = document.createElement('tr');
+
+    appendRecommendationCell(tableRow, row.weapon.name);
+    appendRecommendationCell(tableRow, row.attackName, 'trunc');
+
+    const target = document.createElement('div');
+    target.className = 'calc-recommend-target';
+    const targetName = document.createElement('span');
+    targetName.textContent = row.bestZoneName || '—';
+    target.appendChild(targetName);
+    const outcomeBadge = createOutcomeBadge(row.bestOutcomeKind);
+    if (outcomeBadge) {
+      target.appendChild(outcomeBadge);
+    }
+    appendRecommendationCell(tableRow, target);
+
+    appendRecommendationCell(tableRow, row.shotsToKill === null ? '-' : String(row.shotsToKill));
+    appendRecommendationCell(tableRow, row.ttkSeconds === null ? '-' : formatTtkSeconds(row.ttkSeconds));
+    appendRecommendationCell(
+      tableRow,
+      row.effectiveDistance?.isAvailable
+        ? row.effectiveDistance.text
+        : (row.rangeStatus === 'unknown' ? '?' : '-')
+    );
+    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasOneShotKill));
+    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasOneShotCritical));
+    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasTwoShotCritical));
+    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasLowOverkillOhko));
+    appendRecommendationCell(tableRow, createRecommendationFlag(row.hasFastTtk));
+    appendRecommendationCell(tableRow, createRecommendationFlag(row.penetratesAll));
+    appendRecommendationCell(tableRow, row.tip || '—', row.tip ? '' : 'muted');
+
+    tbody.appendChild(tableRow);
+  });
+
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  body.appendChild(tableWrap);
+  panel.appendChild(body);
+  container.appendChild(panel);
+}
+
+function renderFocusedSupplementalPanels(container, enemy) {
+  if (!enemy?.zones || enemy.zones.length === 0) {
+    return;
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'calc-compare-results calc-focused-results';
+  renderTacticalGuidePanel(wrapper, enemy);
+  renderRecommendationPanel(wrapper, enemy);
+  if (wrapper.childElementCount > 0) {
+    container.appendChild(wrapper);
+  }
+}
+
 export function renderCalculation() {
   const container = document.getElementById('calculator-result');
   if (!container) {
@@ -809,6 +1073,7 @@ export function renderCalculation() {
     renderComparePanel(compareWrapper, 'B', calculateDamage('B'));
 
     container.appendChild(compareWrapper);
+    renderFocusedSupplementalPanels(container, calculatorState.selectedEnemy);
     return;
   }
 
@@ -819,4 +1084,5 @@ export function renderCalculation() {
   }
 
   renderCalculationContent(container, 'A', results);
+  renderFocusedSupplementalPanels(container, results.enemy);
 }

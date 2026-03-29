@@ -74,7 +74,7 @@ const ENEMY_ANALYSIS_COLUMNS = [
   { key: 'zone_name', label: 'Zone' },
   { key: 'AV', label: 'AV' },
   { key: 'Dur%', label: 'Dur%' },
-  { key: 'IsFatal', label: 'IsLethal' },
+  { key: 'ToMain%', label: 'ToMain%' },
   { key: 'ExMult', label: EXPLOSIVE_DISPLAY_COLUMN_LABEL }
 ];
 const ENEMY_SINGLE_ANALYSIS_METRIC_COLUMNS = [
@@ -269,6 +269,11 @@ function getMetricTitle(slot, slotMetrics, valueType, metrics = null) {
 
   if (valueType === 'ttk' && slotMetrics.outcomeKind === 'limb') {
     return 'This part can be removed, but it breaks before it can kill main';
+  }
+
+  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'critical') {
+    return slotMetrics.criticalInfo?.tip
+      || 'This part is a critical disable target and breaks before the body kill path.';
   }
 
   if (valueType === 'ttk' && slotMetrics.outcomeKind === 'utility') {
@@ -831,7 +836,7 @@ function renderEnemyControls(enemy) {
       ? 'Diff columns are computed as B - A. One-sided damage wins sort beyond finite deltas, and outcome grouping currently follows B because you are sorting a B column.'
       : 'Diff columns are computed as B - A. One-sided damage wins sort beyond finite deltas, and outcome grouping follows A by default.';
   } else {
-    note.textContent = 'Outcome grouping follows the Kill, Main, Limb, Part badge order.';
+    note.textContent = 'Outcome grouping follows the Kill, Main, Critical, Limb, Part badge order.';
   }
   toolbar.appendChild(note);
 
