@@ -163,18 +163,19 @@ test('getEnemyWeakspotBundles exposes curated Factory Strider standalone and bod
     bundles[0].entries.map((entry) => [
       entry.label,
       entry.sourceEnemyName,
+      entry.sourceType,
       entry.sourceZoneNames || (entry.sourceZoneName ? [entry.sourceZoneName] : null)
     ]),
     [
-      ['Belly panels (underside proxy)', 'Factory Strider', ['front_body', 'right_body', 'left_body', 'back_body']],
-      ['Head / eye weakspot', 'Factory Strider', ['head_body']],
-      ['Engine weakspot', 'Factory Strider', ['weakspot_engine']],
-      ['Chin Gatling Gun', 'Factory Strider Gatling Gun', null],
-      ['Cannon Turret', 'Cannon Turret', null]
+      ['Belly panels', 'Factory Strider Belly Panels', 'enemy', null],
+      ['Head / eye weakspot', 'Factory Strider Head / Eye Weakspot', 'enemy', null],
+      ['Engine weakspot', 'Factory Strider', 'zone', ['weakspot_engine']],
+      ['Chin Gatling Gun', 'Factory Strider Gatling Gun', 'enemy', null],
+      ['Cannon Turret', 'Cannon Turret', 'enemy', null]
     ]
   );
-  assert.match(bundles[0].entries[0].description, /closest checked-in proxy for the wiki belly panels/i);
-  assert.match(bundles[0].entries[1].description, /exposed eye\/head opening/i);
+  assert.match(bundles[0].entries[0].description, /curated overlay target for the exposed underside belly panels/i);
+  assert.match(bundles[0].entries[1].description, /curated overlay target for the slightly exposed eye\/head opening/i);
 });
 
 test('normalizeRecommendationRangeMeters keeps range input in a sane integer band', () => {

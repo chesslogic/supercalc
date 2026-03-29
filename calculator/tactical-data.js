@@ -133,20 +133,18 @@ const ENEMY_WEAKSPOT_BUNDLES = {
       description: 'Curated tactical targets around a full Factory Strider engagement, including reviewed standalone entries that are not zones on the main body table.',
       entries: [
         {
-          label: 'Belly panels (underside proxy)',
-          sourceType: 'zone-cluster',
-          sourceEnemyName: 'Factory Strider',
-          sourceZoneNames: ['front_body', 'right_body', 'left_body', 'back_body'],
-          sourceLabel: 'Factory Strider · front_body / right_body / left_body / back_body',
-          description: 'Closest checked-in proxy for the wiki belly panels. These AV3 fatal body rows are treated as a reviewed underside-panel cluster rather than proof that every body-facing row is equally exposed at spawn.'
+          label: 'Belly panels',
+          sourceType: 'enemy',
+          sourceEnemyName: 'Factory Strider Belly Panels',
+          sourceLabel: 'Curated inline target · wiki-measured',
+          description: 'Curated overlay target for the exposed underside belly panels. This keeps the wiki-measured tactical weakspot separate from the base filediver-derived Factory Strider anatomy.'
         },
         {
           label: 'Head / eye weakspot',
-          sourceType: 'zone',
-          sourceEnemyName: 'Factory Strider',
-          sourceZoneName: 'head_body',
-          sourceLabel: 'Factory Strider · head_body',
-          description: 'Slightly exposed fatal head-body weakspot; closest checked-in proxy for the exposed eye/head opening.'
+          sourceType: 'enemy',
+          sourceEnemyName: 'Factory Strider Head / Eye Weakspot',
+          sourceLabel: 'Curated inline target · wiki-measured',
+          description: 'Curated overlay target for the slightly exposed eye/head opening. This avoids treating the broader exported head_body row as if it were the same as the exposed opening.'
         },
         {
           label: 'Engine weakspot',

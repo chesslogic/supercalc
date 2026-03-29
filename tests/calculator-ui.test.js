@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { state as weaponsState } from '../weapons/data.js';
-import { enemyState } from '../enemies/data.js';
+import { enemyState, getEnemyUnitByName, processEnemyData } from '../enemies/data.js';
 import {
   calculatorState,
   DEFAULT_CALCULATOR_MODE,
@@ -10,6 +10,7 @@ import {
   DEFAULT_ENEMY_TARGET_TYPES,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
+  getEnemyOptions,
   getSelectedEnemyTargetTypes,
   getOverviewScopeOptions,
   getWeaponOptions,
@@ -171,6 +172,67 @@ test('enemy target type options only include categories present in the dataset',
     getEnemyTargetTypeOptions(enemies).map(({ id }) => id),
     ['unit', 'giant']
   );
+});
+
+test('processEnemyData keeps inline enemies hidden from the selector but available by name', () => {
+  const previousState = {
+    factions: enemyState.factions,
+    units: enemyState.units,
+    inlineUnits: enemyState.inlineUnits,
+    filteredUnits: enemyState.filteredUnits,
+    filterActive: enemyState.filterActive,
+    sortKey: enemyState.sortKey,
+    sortDir: enemyState.sortDir,
+    factionIndex: enemyState.factionIndex,
+    searchIndex: enemyState.searchIndex,
+    unitIndex: enemyState.unitIndex
+  };
+
+  try {
+    processEnemyData({
+      Automaton: {
+        'Factory Strider': {
+          health: 10000,
+          scope_tags: ['giant'],
+          damageable_zones: [
+            { zone_name: 'Main', health: 10000 }
+          ],
+          inline_enemies: {
+            'Factory Strider Belly Panels': {
+              health: 1200,
+              show_in_selector: false,
+              source_provenance: 'wiki-measured',
+              source_note: 'Curated inline overlay target',
+              damageable_zones: [
+                { zone_name: 'belly_panels', health: 1200, Con: 1200 }
+              ]
+            }
+          }
+        }
+      }
+    });
+
+    assert.deepEqual(getEnemyOptions().map((enemy) => enemy.name), ['Factory Strider']);
+    assert.equal(enemyState.inlineUnits.length, 1);
+
+    const inlineEnemy = getEnemyUnitByName('Factory Strider Belly Panels');
+    assert.equal(inlineEnemy?.isInline, true);
+    assert.equal(inlineEnemy?.parentEnemyName, 'Factory Strider');
+    assert.equal(inlineEnemy?.showInSelector, false);
+    assert.equal(inlineEnemy?.sourceProvenance, 'wiki-measured');
+    assert.deepEqual(inlineEnemy?.scopeTags, ['giant']);
+  } finally {
+    enemyState.factions = previousState.factions;
+    enemyState.units = previousState.units;
+    enemyState.inlineUnits = previousState.inlineUnits;
+    enemyState.filteredUnits = previousState.filteredUnits;
+    enemyState.filterActive = previousState.filterActive;
+    enemyState.sortKey = previousState.sortKey;
+    enemyState.sortDir = previousState.sortDir;
+    enemyState.factionIndex = previousState.factionIndex;
+    enemyState.searchIndex = previousState.searchIndex;
+    enemyState.unitIndex = previousState.unitIndex;
+  }
 });
 
 test('enemy target type selection normalizes ids and toggles independently', () => {
