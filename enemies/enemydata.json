@@ -1019,8 +1019,8 @@
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 1,
-          "ToMain%": 0.4,
-          "health": 600,
+          "ToMain%": 0,
+          "health": 500,
           "zone_name": "backpack"
         }
       ],
@@ -3346,8 +3346,8 @@
           "IsFatal": true,
           "MainCap": 1,
           "ToMain%": 0.65,
-          "health": 30,
-          "zone_name": "backpack"
+          "health": 90,
+          "zone_name": "leg_right"
         },
         {
           "AV": 0,
@@ -7965,8 +7965,8 @@
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
-          "ToMain%": 0.45,
-          "health": 125,
+          "ToMain%": 0.25,
+          "health": 100,
           "zone_name": "r_claw"
         },
         {
@@ -7974,8 +7974,8 @@
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
-          "ToMain%": 0.45,
-          "health": 125,
+          "ToMain%": 0.25,
+          "health": 100,
           "zone_name": "l_claw"
         }
       ],
