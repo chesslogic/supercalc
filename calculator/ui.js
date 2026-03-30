@@ -18,12 +18,14 @@ import {
 } from './enemy-scope.js';
 import { filterEnemiesByScope, getEnemyDropdownQueryState } from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
+import { copyShareableUrl } from './url-state.js';
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
 import { renderWeaponDetails, renderEnemyDetails } from './rendering.js';
 import { renderCalculation } from './calculation.js';
 
 let enemySelectorSetup = false;
+let shareButtonSetup = false;
 
 export function getCalculatorModeButtonTitle(mode) {
   if (mode === 'compare') {
@@ -58,10 +60,38 @@ export function setupCalculator() {
     enemySelectorSetup = true;
   }
 
+  if (!shareButtonSetup) {
+    setupShareButton();
+    shareButtonSetup = true;
+  }
+
   syncCalculatorModeUi();
   renderWeaponDetails();
   renderEnemyDetails();
   renderCalculation();
+}
+
+function setupShareButton() {
+  const shareButton = document.getElementById('calculator-share-link');
+  const shareStatus = document.getElementById('calculator-share-status');
+  if (!shareButton || !shareStatus) {
+    return;
+  }
+
+  shareButton.title = 'Copy a link that restores the current calculator setup and tab filters.';
+  shareButton.addEventListener('click', async () => {
+    shareStatus.textContent = '';
+
+    try {
+      const { copied, url } = await copyShareableUrl();
+      shareStatus.textContent = copied ? 'Link copied.' : 'Clipboard unavailable.';
+      shareStatus.title = url || '';
+    } catch (error) {
+      console.error('Failed to copy shareable URL:', error);
+      shareStatus.textContent = 'Copy failed.';
+      shareStatus.title = '';
+    }
+  });
 }
 
 function syncCalculatorModeUi() {

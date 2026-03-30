@@ -5,6 +5,8 @@ export const enemyState = {
   inlineUnits: [],
   filteredUnits: [],
   filterActive: false,
+  searchQuery: '',
+  activeFactions: [],
   sortKey: null,
   sortDir: 'asc',
   // Pre-indexed data for faster filtering
@@ -12,6 +14,72 @@ export const enemyState = {
   searchIndex: new Map(),
   unitIndex: new Map(),
 };
+
+let enemyStateChangeListener = null;
+
+function normalizeFilterValues(values = []) {
+  return [...new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => String(value ?? '').trim())
+      .filter(Boolean)
+  )];
+}
+
+export function setEnemyStateChangeListener(listener) {
+  enemyStateChangeListener = typeof listener === 'function' ? listener : null;
+}
+
+export function notifyEnemyStateChange() {
+  enemyStateChangeListener?.(enemyState);
+}
+
+export function setEnemySearchQuery(query) {
+  enemyState.searchQuery = String(query ?? '').trim();
+  notifyEnemyStateChange();
+}
+
+export function setActiveEnemyFactions(factions = []) {
+  enemyState.activeFactions = normalizeFilterValues(factions);
+  notifyEnemyStateChange();
+  return [...enemyState.activeFactions];
+}
+
+export function toggleActiveEnemyFaction(faction) {
+  const normalizedFaction = normalizeFilterValues([faction])[0];
+  if (!normalizedFaction) {
+    return [...enemyState.activeFactions];
+  }
+
+  enemyState.activeFactions = enemyState.activeFactions.includes(normalizedFaction)
+    ? enemyState.activeFactions.filter((value) => value !== normalizedFaction)
+    : [...enemyState.activeFactions, normalizedFaction];
+  notifyEnemyStateChange();
+  return [...enemyState.activeFactions];
+}
+
+export function setEnemySortState(sortKey = null, sortDir = 'asc') {
+  enemyState.sortKey = sortKey || null;
+  enemyState.sortDir = sortDir === 'desc' ? 'desc' : 'asc';
+  notifyEnemyStateChange();
+}
+
+export function toggleEnemyTableSort(sortKey) {
+  if (enemyState.sortKey === sortKey) {
+    enemyState.sortDir = enemyState.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    enemyState.sortKey = sortKey || null;
+    enemyState.sortDir = 'asc';
+  }
+  notifyEnemyStateChange();
+}
+
+export function resetEnemyFilterState() {
+  enemyState.searchQuery = '';
+  enemyState.activeFactions = [];
+  enemyState.sortKey = null;
+  enemyState.sortDir = 'asc';
+  notifyEnemyStateChange();
+}
 
 function normalizeScopeTags(rawScopeTags = [], inheritedScopeTags = []) {
   return [...new Set([

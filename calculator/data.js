@@ -49,6 +49,25 @@ function buildInitialHitCounts(attackKeys = []) {
   return hitCounts;
 }
 
+function normalizeHitCount(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 1) {
+    return 1;
+  }
+
+  return Math.max(1, Math.round(numeric));
+}
+
+let calculatorStateChangeListener = null;
+
+export function setCalculatorStateChangeListener(listener) {
+  calculatorStateChangeListener = typeof listener === 'function' ? listener : null;
+}
+
+function notifyCalculatorStateChange() {
+  calculatorStateChangeListener?.(calculatorState);
+}
+
 export const calculatorState = {
   mode: DEFAULT_CALCULATOR_MODE,
   compareView: DEFAULT_COMPARE_VIEW,
@@ -140,24 +159,29 @@ export function setCalculatorMode(mode) {
   if (calculatorState.mode !== 'compare') {
     calculatorState.compareView = 'focused';
   }
+  notifyCalculatorStateChange();
 }
 
 export function setWeaponSortMode(sortMode) {
   calculatorState.weaponSortMode = normalizeWeaponSortMode(sortMode, {
     mode: calculatorState.mode
   });
+  notifyCalculatorStateChange();
 }
 
 export function setCompareView(view) {
   calculatorState.compareView = view === 'overview' ? 'overview' : 'focused';
+  notifyCalculatorStateChange();
 }
 
 export function setEnemyTableMode(mode) {
   calculatorState.enemyTableMode = mode === 'stats' ? 'stats' : 'analysis';
+  notifyCalculatorStateChange();
 }
 
 export function setOverviewScope(scope) {
   calculatorState.overviewScope = normalizeEnemyScopeId(scope || DEFAULT_OVERVIEW_SCOPE);
+  notifyCalculatorStateChange();
 }
 
 export function getSelectedEnemyTargetTypes() {
@@ -166,6 +190,7 @@ export function getSelectedEnemyTargetTypes() {
 
 export function setSelectedEnemyTargetTypes(targetTypeIds) {
   calculatorState.enemyTargetTypes = normalizeEnemyTargetTypeIds(targetTypeIds);
+  notifyCalculatorStateChange();
 }
 
 export function toggleSelectedEnemyTargetType(targetTypeId) {
@@ -179,15 +204,18 @@ export function toggleSelectedEnemyTargetType(targetTypeId) {
     : [...calculatorState.enemyTargetTypes, normalizedTargetTypeId];
 
   calculatorState.enemyTargetTypes = normalizeEnemyTargetTypeIds(nextTargetTypes);
+  notifyCalculatorStateChange();
   return [...calculatorState.enemyTargetTypes];
 }
 
 export function setDiffDisplayMode(mode) {
   calculatorState.diffDisplayMode = mode === 'percent' ? 'percent' : 'absolute';
+  notifyCalculatorStateChange();
 }
 
 export function setRecommendationRangeMeters(value) {
   calculatorState.recommendationRangeMeters = normalizeRecommendationRangeMeters(value);
+  notifyCalculatorStateChange();
   return calculatorState.recommendationRangeMeters;
 }
 
@@ -198,6 +226,7 @@ export function setSelectedWeapon(slot, weapon) {
   calculatorState.attackHitCounts[normalizedSlot] = buildInitialHitCounts(
     calculatorState.selectedAttackKeys[normalizedSlot]
   );
+  notifyCalculatorStateChange();
 }
 
 export function getSelectedAttackKeys(slot = 'A') {
@@ -217,6 +246,7 @@ export function setSelectedAttack(slot, attackKey, checked) {
     if (!calculatorState.attackHitCounts[normalizedSlot][attackKey]) {
       calculatorState.attackHitCounts[normalizedSlot][attackKey] = 1;
     }
+    notifyCalculatorStateChange();
     return;
   }
 
@@ -225,12 +255,55 @@ export function setSelectedAttack(slot, attackKey, checked) {
   }
 
   delete calculatorState.attackHitCounts[normalizedSlot][attackKey];
+  notifyCalculatorStateChange();
 }
 
 export function toggleSelectedAttack(slot, attackKey) {
   const normalizedSlot = normalizeSlot(slot);
   const isSelected = calculatorState.selectedAttackKeys[normalizedSlot].includes(attackKey);
   setSelectedAttack(normalizedSlot, attackKey, !isSelected);
+}
+
+export function setSelectedAttackKeys(slot, attackKeys = []) {
+  const normalizedSlot = normalizeSlot(slot);
+  const weapon = getWeaponForSlot(normalizedSlot);
+  const validAttackKeys = new Set((weapon?.rows || []).map((row) => getAttackRowKey(row)));
+  const normalizedAttackKeys = [...new Set(
+    (Array.isArray(attackKeys) ? attackKeys : [])
+      .map((attackKey) => String(attackKey || ''))
+      .filter((attackKey) => attackKey && validAttackKeys.has(attackKey))
+  )];
+
+  calculatorState.selectedAttackKeys[normalizedSlot] = normalizedAttackKeys;
+  calculatorState.attackHitCounts[normalizedSlot] = normalizedAttackKeys.reduce((hitCounts, attackKey) => {
+    const existingValue = calculatorState.attackHitCounts[normalizedSlot][attackKey];
+    hitCounts[attackKey] = normalizeHitCount(existingValue);
+    return hitCounts;
+  }, {});
+  notifyCalculatorStateChange();
+}
+
+export function setAttackHitCount(slot, attackKey, value) {
+  const normalizedSlot = normalizeSlot(slot);
+  const normalizedAttackKey = String(attackKey || '');
+  if (!normalizedAttackKey || !calculatorState.selectedAttackKeys[normalizedSlot].includes(normalizedAttackKey)) {
+    return 1;
+  }
+
+  const nextValue = normalizeHitCount(value);
+  calculatorState.attackHitCounts[normalizedSlot][normalizedAttackKey] = nextValue;
+  notifyCalculatorStateChange();
+  return nextValue;
+}
+
+export function setAttackHitCounts(slot, hitCountMap = {}) {
+  const normalizedSlot = normalizeSlot(slot);
+  const nextHitCounts = {};
+  calculatorState.selectedAttackKeys[normalizedSlot].forEach((attackKey) => {
+    nextHitCounts[attackKey] = normalizeHitCount(hitCountMap?.[attackKey]);
+  });
+  calculatorState.attackHitCounts[normalizedSlot] = nextHitCounts;
+  notifyCalculatorStateChange();
 }
 
 export function getSelectedAttacks(slot = 'A') {
@@ -256,6 +329,7 @@ export function adjustAttackHitCount(slot, attackKey, delta) {
   const currentValue = calculatorState.attackHitCounts[normalizedSlot][attackKey] || 1;
   const nextValue = Math.max(1, currentValue + delta);
   calculatorState.attackHitCounts[normalizedSlot][attackKey] = nextValue;
+  notifyCalculatorStateChange();
   return nextValue;
 }
 
@@ -269,15 +343,18 @@ export function setSelectedEnemy(enemy) {
   if (enemy) {
     calculatorState.compareView = 'focused';
   }
+  notifyCalculatorStateChange();
 }
 
 export function setSelectedZoneIndex(zoneIndex) {
   if (!Number.isInteger(zoneIndex) || zoneIndex < 0) {
     calculatorState.selectedZoneIndex = null;
+    notifyCalculatorStateChange();
     return;
   }
 
   calculatorState.selectedZoneIndex = zoneIndex;
+  notifyCalculatorStateChange();
 }
 
 export function getSelectedZone() {
@@ -302,17 +379,28 @@ export function setSelectedExplosiveZone(zoneIndex, selected) {
     if (existingIndex === -1) {
       calculatorState.selectedExplosiveZoneIndices.push(zoneIndex);
     }
+    notifyCalculatorStateChange();
     return;
   }
 
   if (existingIndex !== -1) {
     calculatorState.selectedExplosiveZoneIndices.splice(existingIndex, 1);
   }
+  notifyCalculatorStateChange();
 }
 
 export function toggleSelectedExplosiveZone(zoneIndex) {
   const isSelected = calculatorState.selectedExplosiveZoneIndices.includes(zoneIndex);
   setSelectedExplosiveZone(zoneIndex, !isSelected);
+}
+
+export function setSelectedExplosiveZoneIndices(zoneIndices = []) {
+  calculatorState.selectedExplosiveZoneIndices = [...new Set(
+    (Array.isArray(zoneIndices) ? zoneIndices : [])
+      .map((zoneIndex) => Number(zoneIndex))
+      .filter((zoneIndex) => Number.isInteger(zoneIndex) && zoneIndex >= 0)
+  )];
+  notifyCalculatorStateChange();
 }
 
 export function getSelectedExplosiveZones() {
@@ -328,15 +416,31 @@ export function getSelectedExplosiveZones() {
 export function toggleEnemySort(sortKey) {
   if (calculatorState.enemySort.key === sortKey) {
     calculatorState.enemySort.dir = calculatorState.enemySort.dir === 'asc' ? 'desc' : 'asc';
+    notifyCalculatorStateChange();
     return;
   }
 
   calculatorState.enemySort.key = sortKey;
   calculatorState.enemySort.dir = 'asc';
+  notifyCalculatorStateChange();
 }
 
 export function setEnemyGroupMode(groupMode) {
   calculatorState.enemySort.groupMode = groupMode === 'outcome' ? 'outcome' : 'none';
+  notifyCalculatorStateChange();
+}
+
+export function setEnemySortState({
+  key = DEFAULT_ENEMY_SORT.key,
+  dir = DEFAULT_ENEMY_SORT.dir,
+  groupMode = DEFAULT_ENEMY_SORT.groupMode
+} = {}) {
+  calculatorState.enemySort = {
+    key: String(key || DEFAULT_ENEMY_SORT.key),
+    dir: dir === 'desc' ? 'desc' : 'asc',
+    groupMode: groupMode === 'outcome' ? 'outcome' : 'none'
+  };
+  notifyCalculatorStateChange();
 }
 
 export function resetEnemySort() {

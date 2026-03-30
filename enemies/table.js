@@ -1,5 +1,5 @@
 // enemies/table.js — enemy table rendering and sorting
-import { enemyState } from './data.js';
+import { enemyState, toggleEnemyTableSort } from './data.js';
 import { durPercentageColor, armorValueColor } from '../colors.js';
 import { applyExplosiveDisplayToCell, getExplosiveDisplayInfo } from '../calculator/explosive-display.js';
 import {
@@ -18,14 +18,7 @@ export function setupEnemyTableSorting() {
     
     header.addEventListener('click', () => {
       const sortKey = header.dataset.sort;
-      
-      // Toggle sort direction if clicking the same column
-      if (enemyState.sortKey === sortKey) {
-        enemyState.sortDir = enemyState.sortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        enemyState.sortKey = sortKey;
-        enemyState.sortDir = 'asc';
-      }
+      toggleEnemyTableSort(sortKey);
       
       // Update visual indicators
       sortableHeaders.forEach(h => {

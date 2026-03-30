@@ -1,6 +1,7 @@
 // data.js — loading, parsing, and state
 export const PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeLqZ5-maEmzrM6SUDMRXpHEhV0tQImiBdgMCil9lSA11IiY_nGdamE54W7DAiSXn1XuJljdF4P537/pub?gid=0&single=true&output=csv';
 export const LOCAL_CSV_URL = './weapons/weapondata.csv';
+export const DEFAULT_ACTIVE_WEAPON_TYPES = ['primary'];
 
 export const state = {
   headers: [],
@@ -8,6 +9,9 @@ export const state = {
   groups: [],
   filteredGroups: [],
   filterActive: false,
+  searchQuery: '',
+  activeTypes: [...DEFAULT_ACTIVE_WEAPON_TYPES],
+  activeSubs: [],
   sortKey: null,
   sortDir: 'asc',
   // Pre-indexed data for faster filtering
@@ -31,6 +35,92 @@ export const state = {
     rpmKey: null,
   },
 };
+
+let weaponStateChangeListener = null;
+
+function normalizeFilterValues(values = []) {
+  return [...new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => String(value ?? '').trim().toLowerCase())
+      .filter(Boolean)
+  )];
+}
+
+export function setWeaponStateChangeListener(listener) {
+  weaponStateChangeListener = typeof listener === 'function' ? listener : null;
+}
+
+export function notifyWeaponStateChange() {
+  weaponStateChangeListener?.(state);
+}
+
+export function setWeaponSearchQuery(query) {
+  state.searchQuery = String(query ?? '').trim();
+  notifyWeaponStateChange();
+}
+
+export function setActiveWeaponTypes(types = []) {
+  state.activeTypes = normalizeFilterValues(types);
+  notifyWeaponStateChange();
+  return [...state.activeTypes];
+}
+
+export function toggleActiveWeaponType(type) {
+  const normalizedType = normalizeFilterValues([type])[0];
+  if (!normalizedType) {
+    return [...state.activeTypes];
+  }
+
+  state.activeTypes = state.activeTypes.includes(normalizedType)
+    ? state.activeTypes.filter((value) => value !== normalizedType)
+    : [...state.activeTypes, normalizedType];
+  notifyWeaponStateChange();
+  return [...state.activeTypes];
+}
+
+export function setActiveWeaponSubs(subs = []) {
+  state.activeSubs = normalizeFilterValues(subs);
+  notifyWeaponStateChange();
+  return [...state.activeSubs];
+}
+
+export function toggleActiveWeaponSub(sub) {
+  const normalizedSub = normalizeFilterValues([sub])[0];
+  if (!normalizedSub) {
+    return [...state.activeSubs];
+  }
+
+  state.activeSubs = state.activeSubs.includes(normalizedSub)
+    ? state.activeSubs.filter((value) => value !== normalizedSub)
+    : [...state.activeSubs, normalizedSub];
+  notifyWeaponStateChange();
+  return [...state.activeSubs];
+}
+
+export function setWeaponSortState(sortKey = null, sortDir = 'asc') {
+  state.sortKey = sortKey || null;
+  state.sortDir = sortDir === 'desc' ? 'desc' : 'asc';
+  notifyWeaponStateChange();
+}
+
+export function toggleWeaponSort(sortKey) {
+  if (state.sortKey === sortKey) {
+    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    state.sortKey = sortKey || null;
+    state.sortDir = 'asc';
+  }
+  notifyWeaponStateChange();
+}
+
+export function resetWeaponFilterState() {
+  state.searchQuery = '';
+  state.activeTypes = [...DEFAULT_ACTIVE_WEAPON_TYPES];
+  state.activeSubs = [];
+  state.sortKey = null;
+  state.sortDir = 'asc';
+  notifyWeaponStateChange();
+}
 
 // Load pinned weapons from localStorage
 function loadPinnedWeapons() {

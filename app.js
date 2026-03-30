@@ -1,10 +1,19 @@
-import { loadCSV, loadFromText, ingestMatrix, state as weaponsState } from './weapons/data.js';
+import {
+  loadCSV,
+  loadFromText,
+  ingestMatrix,
+  setWeaponStateChangeListener,
+  state as weaponsState
+} from './weapons/data.js';
 import { loadBallisticFalloffCsv } from './weapons/falloff.js';
 import { buildTypeFilters, buildSubFilters, renderTable } from './weapons/table.js';
-import { loadEnemyData } from './enemies/data.js';
+import { syncWeaponFilterUi } from './weapons/filters.js';
+import { loadEnemyData, setEnemyStateChangeListener } from './enemies/data.js';
 import { renderEnemyTable, setupEnemyTableSorting } from './enemies/table.js';
-import { buildEnemyFactionFilters } from './enemies/filters.js';
+import { buildEnemyFactionFilters, syncEnemyFilterUi } from './enemies/filters.js';
 import { setupCalculator } from './calculator/ui.js';
+import { setCalculatorStateChangeListener } from './calculator/data.js';
+import { hydrateUrlState, syncUrlState } from './calculator/url-state.js';
 import './weapons/filters.js'; // sets up event listeners for search & type/sub chips
 import './enemies/filters.js'; // sets up event listeners for enemy search
 
@@ -34,6 +43,7 @@ function updatePatchTicker() {
 let enemyDataLoaded = false;
 // Track if calculator has been initialized
 let calculatorInitialized = false;
+let activeTab = 'calculator';
 
 // Tabs
 const sections = {
@@ -42,58 +52,70 @@ const sections = {
   calculator: document.getElementById('tab-calculator')
 };
 
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const tab = btn.dataset.tab;
-    for (const k in sections) sections[k].classList.toggle('hidden', k !== tab);
-    
-    // Initialize weapons UI when weapons tab is activated (if data is loaded)
-    if (tab === 'weapons') {
-      // Check if UI hasn't been initialized yet
-      const typeFilters = document.getElementById('typeFilters');
-      if (typeFilters && typeFilters.children.length === 0) {
-        buildTypeFilters();
-        buildSubFilters();
-        renderTable();
-        showSourceLink();
-      }
+async function activateTab(tab, {
+  syncHistory = true
+} = {}) {
+  activeTab = ['weapons', 'enemies', 'calculator'].includes(tab) ? tab : 'calculator';
+  document.querySelectorAll('.tab').forEach((button) => {
+    button.classList.toggle('active', button.dataset.tab === activeTab);
+  });
+  for (const key in sections) {
+    sections[key].classList.toggle('hidden', key !== activeTab);
+  }
+
+  if (activeTab === 'weapons') {
+    const typeFilters = document.getElementById('typeFilters');
+    if (typeFilters && typeFilters.children.length === 0) {
+      buildTypeFilters();
+      buildSubFilters();
+      renderTable();
+    } else {
+      syncWeaponFilterUi();
+      renderTable();
     }
-    
-    // Load enemy data when enemies tab is activated (only once)
-    if (tab === 'enemies' && !enemyDataLoaded && !window.enemyDataLoaded) {
-      const enemyStatusEl = document.getElementById('enemyStatusMsg');
-      const enemySourceEl = sections.enemies.querySelector('.source-links');
-      try {
-        if (enemyStatusEl) enemyStatusEl.textContent = 'Loading enemy data...';
-        await loadEnemyData();
-        buildEnemyFactionFilters();
-        renderEnemyTable();
-        setupEnemyTableSorting();
-        if (enemyStatusEl) enemyStatusEl.textContent = '';
-        if (enemySourceEl) enemySourceEl.classList.remove('hidden');
-        enemyDataLoaded = true;
-      } catch (err) {
-        console.error('Failed to load enemy data:', err);
-        if (enemyStatusEl) {
-          enemyStatusEl.textContent = 'Failed to load enemy data';
-          enemyStatusEl.style.color = '#ff8080';
-        }
-      }
-    } else if (tab === 'enemies' && (enemyDataLoaded || window.enemyDataLoaded)) {
-      // Just re-render if data is already loaded
+    showSourceLink();
+  }
+
+  if (activeTab === 'enemies' && !enemyDataLoaded && !window.enemyDataLoaded) {
+    const enemyStatusEl = document.getElementById('enemyStatusMsg');
+    const enemySourceEl = sections.enemies.querySelector('.source-links');
+    try {
+      if (enemyStatusEl) enemyStatusEl.textContent = 'Loading enemy data...';
+      await loadEnemyData();
       buildEnemyFactionFilters();
       renderEnemyTable();
-      const enemySourceEl = sections.enemies.querySelector('.source-links');
+      setupEnemyTableSorting();
+      if (enemyStatusEl) enemyStatusEl.textContent = '';
       if (enemySourceEl) enemySourceEl.classList.remove('hidden');
+      enemyDataLoaded = true;
+    } catch (err) {
+      console.error('Failed to load enemy data:', err);
+      if (enemyStatusEl) {
+        enemyStatusEl.textContent = 'Failed to load enemy data';
+        enemyStatusEl.style.color = '#ff8080';
+      }
     }
-    
-    // Initialize calculator when calculator tab is first activated
-    if (tab === 'calculator' && !calculatorInitialized) {
-      setupCalculator();
-      calculatorInitialized = true;
-    }
+  } else if (activeTab === 'enemies' && (enemyDataLoaded || window.enemyDataLoaded)) {
+    buildEnemyFactionFilters();
+    syncEnemyFilterUi();
+    renderEnemyTable();
+    const enemySourceEl = sections.enemies.querySelector('.source-links');
+    if (enemySourceEl) enemySourceEl.classList.remove('hidden');
+  }
+
+  if (activeTab === 'calculator' && !calculatorInitialized) {
+    setupCalculator();
+    calculatorInitialized = true;
+  }
+
+  if (syncHistory) {
+    syncUrlState({ activeTab });
+  }
+}
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    await activateTab(btn.dataset.tab);
   });
 });
 
@@ -157,13 +179,15 @@ async function boot(){
     hideLoading('calculator-weapon-loading');
     
     // Also load enemy data in test mode
-    loadEnemyData().then(() => {
+    try {
+      await loadEnemyData();
       window.enemyDataLoaded = true;
+      enemyDataLoaded = true;
       hideLoading('calculator-enemy-loading');
-    }).catch(err => {
+    } catch (err) {
       console.error('Failed to load enemy data in test mode:', err);
       hideLoading('calculator-enemy-loading');
-    });
+    }
   } else {
     // Show loading indicators on calculator (which opens first)
     showLoading('calculator-weapon-loading');
@@ -181,8 +205,9 @@ async function boot(){
       
       // Load enemy data
       try {
-        await loadEnemyData();
+       await loadEnemyData();
         window.enemyDataLoaded = true;
+        enemyDataLoaded = true;
         hideLoading('calculator-enemy-loading');
       } catch (err) {
         console.error('Failed to load enemy data on boot:', err);
@@ -201,11 +226,27 @@ async function boot(){
     }
   }
   
-  // Initialize calculator since it's the default tab
+  const { activeTab: hydratedTab } = hydrateUrlState(location.search);
+
+  // Initialize calculator since it is lightweight and share links may restore its state
   if (!calculatorInitialized) {
     setupCalculator();
     calculatorInitialized = true;
   }
+
+  await activateTab(hydratedTab, { syncHistory: false });
+
+  setCalculatorStateChangeListener(() => {
+    syncUrlState({ activeTab });
+  });
+  setWeaponStateChangeListener(() => {
+    syncUrlState({ activeTab });
+  });
+  setEnemyStateChangeListener(() => {
+    syncUrlState({ activeTab });
+  });
+
+  syncUrlState({ activeTab, historyMode: 'replace' });
 }
 
 boot();

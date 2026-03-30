@@ -1,63 +1,127 @@
 // weapons/filters.js — search and reset controls
-import { state, savePinnedWeapons } from './data.js';
-import { applyFilters, sortAndRenderBody, renderTable } from './table.js';
+import {
+  resetWeaponFilterState,
+  savePinnedWeapons,
+  setWeaponSearchQuery,
+  setWeaponSortState,
+  state,
+  toggleActiveWeaponSub,
+  toggleActiveWeaponType
+} from './data.js';
+import { applyFilters, renderTable } from './table.js';
 import { debounce } from '../utils.js';
 
-window._searchQuery = '';
+function syncSearchInput() {
+  const searchEl = globalThis.document?.getElementById('search');
+  if (searchEl && searchEl.value !== state.searchQuery) {
+    searchEl.value = state.searchQuery;
+  }
+}
 
-const searchEl = document.getElementById('search');
+function syncTypeChipState() {
+  const chips = globalThis.document?.querySelectorAll('#typeFilters .chip') || [];
+  chips.forEach((chip) => {
+    chip.classList.toggle('active', state.activeTypes.includes(String(chip.dataset.val || '').toLowerCase()));
+  });
+}
+
+function syncSubChipState() {
+  const chips = globalThis.document?.querySelectorAll('#subFilters .chip') || [];
+  chips.forEach((chip) => {
+    chip.classList.toggle('active', state.activeSubs.includes(String(chip.dataset.val || '').toLowerCase()));
+  });
+}
+
+function clearWeaponSortIndicators() {
+  const sortableHeaders = globalThis.document?.querySelectorAll('#weaponsTable th') || [];
+  sortableHeaders.forEach((header) => {
+    header.classList.remove('sort-asc', 'sort-desc');
+  });
+}
+
+export function syncWeaponFilterUi() {
+  syncSearchInput();
+  syncTypeChipState();
+  syncSubChipState();
+}
+
+const searchEl = globalThis.document?.getElementById('search');
 if (searchEl) {
   const debouncedApplyFilters = debounce(() => {
     applyFilters();
-  }, 50); // 50ms debounce
-  
-  searchEl.addEventListener('input', (e) => {
-    window._searchQuery = (e.target.value || '').trim();
+  }, 50);
+
+  searchEl.addEventListener('input', (event) => {
+    setWeaponSearchQuery(event.target.value || '');
     debouncedApplyFilters();
   });
 }
 
-const resetEl = document.getElementById('resetSort');
+const resetEl = globalThis.document?.getElementById('resetSort');
 if (resetEl) {
   resetEl.addEventListener('click', () => {
-    // Clear search field
-    const searchEl = document.getElementById('search');
-    if (searchEl) {
-      searchEl.value = '';
-      window._searchQuery = '';
-    }
-    
-    // Uncheck all type filters
-    const typeChips = document.querySelectorAll('#typeFilters .chip');
-    typeChips.forEach(chip => chip.classList.remove('active'));
-    
-    // Uncheck all sub filters
-    const subChips = document.querySelectorAll('#subFilters .chip');
-    subChips.forEach(chip => chip.classList.remove('active'));
-    
-    // Clear sort state
-    state.sortKey = null;
-    state.sortDir = 'asc';
-    
-    // Remove sort indicators from headers
-    const sortableHeaders = document.querySelectorAll('#weaponsTable th');
-    sortableHeaders.forEach(h => {
-      h.classList.remove('sort-asc', 'sort-desc');
-    });
-    
-    // Reapply filters to reset state
+    resetWeaponFilterState();
+    syncWeaponFilterUi();
+    clearWeaponSortIndicators();
+    setWeaponSortState(null, 'asc');
     applyFilters();
     renderTable();
   });
 }
 
 // Clear all pins button
-const clearPinsEl = document.getElementById('clearPins');
+const clearPinsEl = globalThis.document?.getElementById('clearPins');
 if (clearPinsEl) {
   clearPinsEl.addEventListener('click', () => {
     state.pinnedWeapons.clear();
     savePinnedWeapons();
     applyFilters();
     renderTable();
+  });
+}
+
+export function applyWeaponFilterState({
+  searchQuery = state.searchQuery,
+  activeTypes = state.activeTypes,
+  activeSubs = state.activeSubs,
+  sortKey = state.sortKey,
+  sortDir = state.sortDir
+} = {}, {
+  render = true
+} = {}) {
+  setWeaponSearchQuery(searchQuery);
+  state.activeTypes = [...new Set((Array.isArray(activeTypes) ? activeTypes : []).map((value) => String(value ?? '').trim().toLowerCase()).filter(Boolean))];
+  state.activeSubs = [...new Set((Array.isArray(activeSubs) ? activeSubs : []).map((value) => String(value ?? '').trim().toLowerCase()).filter(Boolean))];
+  setWeaponSortState(sortKey, sortDir);
+  syncWeaponFilterUi();
+  if (render) {
+    applyFilters();
+    renderTable();
+  }
+}
+
+export function getWeaponFilterStateSnapshot() {
+  return {
+    searchQuery: state.searchQuery,
+    activeTypes: [...state.activeTypes],
+    activeSubs: [...state.activeSubs],
+    sortKey: state.sortKey,
+    sortDir: state.sortDir
+  };
+}
+
+export function bindTypeChip(chip) {
+  chip.addEventListener('click', () => {
+    toggleActiveWeaponType(chip.dataset.val);
+    syncTypeChipState();
+    applyFilters();
+  });
+}
+
+export function bindSubChip(chip) {
+  chip.addEventListener('click', () => {
+    toggleActiveWeaponSub(chip.dataset.val);
+    syncSubChipState();
+    applyFilters();
   });
 }

@@ -1,5 +1,11 @@
 // table.js — render, grouping, sorting, filters
-import { state, savePinnedWeapons } from './data.js';
+import {
+  savePinnedWeapons,
+  state,
+  toggleActiveWeaponSub,
+  toggleActiveWeaponType,
+  toggleWeaponSort
+} from './data.js';
 import { classifyAtkType, atkColorClass, apColorClass, dfColorClass } from '../colors.js';
 
 export function isNumber(v){ return v !== null && v !== '' && !isNaN(Number(v)); }
@@ -49,12 +55,7 @@ export function renderTable(){
     }
     
     th.addEventListener('click', () => { 
-      if (state.sortKey === h) { 
-        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; 
-      } else { 
-        state.sortKey = h; 
-        state.sortDir = 'asc'; 
-      } 
+      toggleWeaponSort(h);
       renderTable(); // Re-render to update sort indicators
     });
     trh.appendChild(th);
@@ -218,14 +219,11 @@ function evaluateSearchQuery(query, searchText) {
 }
 
 export function applyFilters(){
-  const typeContainer = document.getElementById('typeFilters');
-  const subContainer  = document.getElementById('subFilters');
-  const activeTypes = typeContainer ? Array.from(typeContainer.querySelectorAll('.chip.active')).map(b => b.dataset.val) : [];
-  const activeSubs  = subContainer  ? Array.from(subContainer.querySelectorAll('.chip.active')).map(b => b.dataset.val)  : [];
-
-  const typeFilterActive = !!(typeContainer && activeTypes.length);
-  const subFilterActive  = !!(subContainer  && activeSubs.length);
-  const hasSearch = (window._searchQuery || '').length > 0;
+  const activeTypes = [...state.activeTypes];
+  const activeSubs = [...state.activeSubs];
+  const typeFilterActive = activeTypes.length > 0;
+  const subFilterActive = activeSubs.length > 0;
+  const hasSearch = state.searchQuery.length > 0;
 
   // Get pinned weapons (always included regardless of filters)
   const pinnedGroups = state.groups.filter(g => state.pinnedWeapons.has(g.name));
@@ -237,7 +235,7 @@ export function applyFilters(){
     return;
   }
 
-  const q = window._searchQuery || '';
+  const q = state.searchQuery;
   
   // Use pre-indexed data for much faster filtering
   let filteredGroups = state.groups;
@@ -294,15 +292,18 @@ export function buildTypeFilters(){
   const present = new Set();
   for (const g of state.groups) { const t = (g.type || '').toString().trim(); if (t) present.add(t.toLowerCase()); }
   const orderedDesired = ['primary','secondary','grenade','support','stratagem'];
-  const defaults = new Set(['primary']);
   el.innerHTML = '';
   orderedDesired.forEach(t => {
     if (!present.has(t)) return;
     const chip = document.createElement('button'); chip.type = 'button';
-    chip.className = 'chip' + (defaults.has(t) ? ' active' : '');
+    chip.className = 'chip' + (state.activeTypes.includes(t) ? ' active' : '');
     chip.textContent = t.charAt(0).toUpperCase() + t.slice(1);
     chip.dataset.val = t;
-    chip.addEventListener('click', () => { chip.classList.toggle('active'); applyFilters(); });
+    chip.addEventListener('click', () => {
+      toggleActiveWeaponType(chip.dataset.val);
+      chip.classList.toggle('active', state.activeTypes.includes(t));
+      applyFilters();
+    });
     el.appendChild(chip);
   });
   applyFilters();
@@ -316,10 +317,14 @@ export function buildSubFilters(){
   el.innerHTML = '';
   ordered.forEach(s => {
     const chip = document.createElement('button'); chip.type = 'button';
-    chip.className = 'chip'; // inactive by default
+    chip.className = 'chip' + (state.activeSubs.includes(s) ? ' active' : '');
     chip.textContent = s.toUpperCase();
     chip.dataset.val = s;
-    chip.addEventListener('click', () => { chip.classList.toggle('active'); applyFilters(); });
+    chip.addEventListener('click', () => {
+      toggleActiveWeaponSub(chip.dataset.val);
+      chip.classList.toggle('active', state.activeSubs.includes(s));
+      applyFilters();
+    });
     el.appendChild(chip);
   });
   applyFilters();
