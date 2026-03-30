@@ -14,12 +14,13 @@ Grenade,SPC,G-13,Incendiary Impact,,explosion,G-13 INCENDIARY IMPACT_E,150,150,3
 Grenade,SPC,G-142,Pyrotech,,explosion,G-142 PYROTECH_E,50,50,3,30,50,40,Fire
 Grenade,SPC,G-142,Pyrotech,,spray,G-142 PYROTECH_S,0,0,7,10,5,5,Fire
 Grenade,SPC,G-16,Impact,,explosion,G-16 IMPACT_E,400,400,4,30,30,40,
-Grenade,SPC,G-24,Stun,,explosion,G-23 STUN_E,0,0,6,0,50,0,Stun Large
+Grenade,SPC,G-23,Stun,,explosion,G-23 STUN_E,0,0,6,0,50,0,Stun Large
 Grenade,SPC,G-3,Smoke,,explosion,G-3 SMOKE_E,,,0,,,,
 Grenade,SPC,G-31,Arc,,explosion,G-31 ARC_E,0,0,6,0,0,0,
 Grenade,SPC,G-31,Arc,,arc,G-31 ARC_E_A,100,70,4,20,35,10,Stun Small
 Grenade,SPC,G-4,Gas,,explosion,G-4 GAS_E,3,3,6,30,10,10,Gas • Gas_Confusion
 Grenade,SPC,G-50,Seeker,,explosion,G-50 SEEKER_E,500,500,4,30,30,40,
+Grenade,SPC,K-2,Throwing Knife,,projectile,K-2 THROWING KNIFE_dm,300,150,3,10,35,5,
 Grenade,SPC,TM-1,Lure Mine,,explosion,TM-1 LURE MINE E,1000,1000,5,30,30,40,
 Grenade,SPC,TM-1,Lure Mine,,projectile,SHRAPNEL_P x35,110,35,3,10,10,20,
 Primary,AR,AR-23C,Liberator Concussive,400,projectile,5.5x50mm EXPLOSIVE_P,75,35,2,10,35,60,
@@ -67,7 +68,7 @@ Primary,NRG,PLAS-101,Purifier,1000,explosion,VOLATILE PLASMA BOLT_P_IE,75,75,3,1
 Primary,SG,SG-20,Halt (Flechettes),80,projectile,10g FLECHETTES_P x11,35,10,3,10,20,20,
 Primary,SG,SG-8S,Slugger,80,projectile,10g RIFLED SLUGS_P,330,90,3,10,30,35,
 Primary,SG,SG-20,Halt (Stun),80,projectile,10g STUN ROUNDS_P x20,6,2,2,10,15,10,Stun Large
-Primary,SG,LAS-16,Trident,750,beam,LAS-16_Trident_B x6,60,6,2,10,10,10,
+Primary,SG,LAS-13,Trident,750,beam,LAS-13 TRIDENT B x6,60,6,2,10,10,10,
 Primary,SG,SG-225SP,Breaker Spray&Pray,330,projectile,12g BIRDSHOT_P x16,15,4,2,10,3,1,
 Primary,SG,SG-225,Breaker,300,projectile,12g BUCKSHOT_P x11,30,6,2,10,15,10,
 Primary,SG,SG-225IE,Breaker Incendiary,300,projectile,12g LIBERTY FIRE_P x12,20,10,2,10,10,10,Fire
@@ -75,6 +76,7 @@ Primary,SG,M90A,UNSC Shotgun,80,projectile,BUCKSHOT_P x11,55,20,2,10,35,30,
 Primary,SG,SG-8,Punisher,80,projectile,BUCKSHOT_P1 x9,45,12,2,10,35,30,
 Primary,SG,DBS-2,Double Freedom,650,projectile,DBS-2 P x12,70,35,3,10,35,30,
 Primary,SG,SG-451,Cookout,80,projectile,SG-451_P x20,16,3,2,10,35,20,Fire
+Primary,SG,SG-97,Sweeper,150,projectile,SG-97 P x12,42,11,3,10,20,20,
 Primary,SMG,SMG-32,Reprimand,490,projectile,12x25mm FULL METAL JACKET_P1,140,32,3,10,15,10,
 Primary,SMG,SMG-37,Defender,520,projectile,12x25mm FULL METAL JACKET_P2,110,22,2,10,10,5,
 Primary,SMG,MP-98,Knight,1380,projectile,9x20mm FULL METAL JACKET_P,90,18,2,10,10,5,
@@ -84,7 +86,7 @@ Primary,SMG,SMG-72,Pummeler,475,projectile,SMG-72_P,85,18,2,10,15,5,Stun Medium
 Primary,SMG,SMG/FLAM-34,Stoker (SMG),420,projectile,12x25mm FULL METAL JACKET P3,130,30,2,10,15,10,
 Primary,SMG,SMG/FLAM-34,Stoker (Flamer),,spray,SMG/FLAM-34 STOKER 0 S,2,2,4,10,5,5,Fire
 Primary,SPC,JAR-5,Dominator,250,projectile,15x100mm STANDARD ROCKET_P,275,90,3,10,35,15,
-Primary,SPC,FMAL-66,Torcher,,spray,FLAM-66 TORCHER_S,2,2,4,10,5,5,Fire
+Primary,SPC,FLAM-66,Torcher,,spray,FLAM-66 TORCHER_S,2,2,4,10,5,5,Fire
 Primary,SPC,VG-70,Variable,750,projectile,VG-70_P (Auto),85,23,2,10,10,4,
 Primary,SPC,VG-70,Variable,750,projectile,VG-70_P (Volley x7),595,161,2,10,10,4,
 Primary,SPC,VG-70,Variable,750,projectile,VG-70_P (Total x49),4165,1127,2,10,10,4,
@@ -107,7 +109,7 @@ Secondary,SPC,P-35,Re-Educator,110,projectile,P-35_P,60,10,4,1,1,1,Gas • Gas_C
 Secondary,SPC,SG-22,Bushwhacker,650,projectile,BUCKSHOT_P1 x9,45,12,2,10,35,30,
 Secondary,SPC,GP-20,Ultimatum,900,projectile,GP-20_P,1000,1000,6,40,50,20,
 Secondary,SPC,GP-20,Ultimatum,900,explosion,GP-20_P_IE,2000,2000,6,40,70,60,
-Secondary,SPC,LAS-8,Dagger,,beam,LAS-7 DAGGER_B,250,50,2,10,0,0,Fire
+Secondary,SPC,LAS-7,Dagger,,beam,LAS-7 DAGGER_B,250,50,2,10,0,0,Fire
 Secondary,SPC,LAS-58,Talon,,projectile,LASER_P1,200,20,3,10,10,10,
 Secondary,SPC,P-11,Stim Pistol,70,projectile,P-11_P,,,0,,,,
 Secondary,SPC,P-72,Crisper,,spray,P-72 CRISPER_S,2,2,4,10,5,5,Fire
@@ -206,6 +208,10 @@ Support,RL,RL-77,Airburst Rocket Launcher (Flak),600,projectile,20mm FLAK ROUNDS
 Support,RL,RL-77,Airburst Rocket Launcher (Flak),600,explosion,20mm FLAK ROUNDS_P2_IE,150,150,3,25,25,40,
 Support,RL,MLS-4X,Commando,240,projectile,66mm MISSILE_P,1100,1100,6,30,40,25,
 Support,RL,MLS-4X,Commando,240,explosion,66mm MISSILE_P_IE,150,150,3,30,40,40,
+Support,RL,MS-11,Solo Silo,,explosion,SWP SOLO SILO EImpact,1500,1500,9,40,100,40,
+Support,RL,MS-11,Solo Silo,,explosion,SWP SOLO SILO E,2500,2500,7,40,100,40,
+Support,RL,MS-11,Solo Silo,,explosion,15x100mm HIGH EXPLOSIVE P IE,225,225,3,20,35,40,
+Support,RL,MS-11,Solo Silo,,projectile,SHRAPNEL_P x30,110,35,3,10,10,20,
 Support,RL,EAT-17,Expendable Anti-Tank,600,projectile,75mm HEAT GRENADE_P,2000,2000,6,30,50,25,
 Support,RL,EAT-17,Expendable Anti-Tank,600,explosion,75mm HEAT GRENADE_P_IE,150,150,3,30,60,40,
 Support,RL,EAT-411,Leveller,600,projectile,EAT-411_P,1000,1000,6,40,50,20,
