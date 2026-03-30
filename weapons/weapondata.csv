@@ -107,12 +107,12 @@ Secondary,SPC,GP-20,Ultimatum,900,projectile,GP-20_P,1000,1000,6,40,50,20,
 Secondary,SPC,GP-20,Ultimatum,900,explosion,GP-20_P_IE,2000,2000,6,40,70,60,
 Secondary,SPC,LAS-8,Dagger,,beam,LAS-7 DAGGER_B,250,50,2,10,0,0,Fire
 Secondary,SPC,LAS-58,Talon,,projectile,LASER_P1,200,20,3,10,10,10,
-Secondary,SPC,P-11,Stim Pistom,70,projectile,P-11_P,,,0,,,,
+Secondary,SPC,P-11,Stim Pistol,70,projectile,P-11_P,,,0,,,,
 Secondary,SPC,P-72,Crisper,,spray,P-72 CRISPER_S,2,2,4,10,5,5,Fire
 Secondary,SPC,PLAS-15,Loyalist (Uncharged),1000,projectile,SMALL PLASMA BOLT_P1,150,75,3,10,20,10,
 Secondary,SPC,PLAS-15,Loyalist (Uncharged),1000,explosion,SMALL PLASMA BOLT_P1_IE,75,75,3,10,10,7,
-Secondary,SPC,PLAS-15,Loyalist (Charged),1000,projectile,SMALL PLASMA BOLT_P2,150,75,3,10,20,10,
-Secondary,SPC,PLAS-15,Loyalist (Charged),1000,explosion,SMALL PLASMA BOLT_P2_IE,225,225,3,10,35,30,
+Secondary,SPC,PLAS-15,Loyalist (Charged),80,projectile,SMALL PLASMA BOLT_P2,150,75,3,10,20,10,
+Secondary,SPC,PLAS-15,Loyalist (Charged),80,explosion,SMALL PLASMA BOLT_P2_IE,225,225,3,10,35,30,
 Stratagem,BCK,AX/AR-23,"""GUARD DOG""",,projectile,5.5x50mm PENETRATOR_P,65,15,3,10,10,10,
 Stratagem,BCK,AX/ARC-3,"""GUARD DOG"" K-9",12,arc,"AX/ARC-3 ""GUARD DOG"" K-9_A",250,45,7,10,30,25,Stun Small
 Stratagem,BCK,AX/LAS-5,"""GUARD DOG"" ROVER",,beam,"AX/LAS-5 ""GUARD DOG"" ROVER_B",200,40,2,10,0,0,Fire
