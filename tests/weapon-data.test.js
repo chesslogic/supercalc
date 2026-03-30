@@ -144,6 +144,37 @@ test('checked-in CQC-20 explosion data reflects the 2200 damage buff', () => {
   assert.equal(explosion.AP, '6');
 });
 
+test('checked-in TM-1 data reflects the lure mine explosion and shrapnel rows', () => {
+  const rows = loadCheckedInWeaponRows();
+  const explosion = findWeaponRow(rows, {
+    code: 'TM-1',
+    attackType: 'explosion',
+    attackName: 'TM-1 LURE MINE E'
+  });
+  const shrapnel = findWeaponRow(rows, {
+    code: 'TM-1',
+    attackType: 'projectile',
+    attackName: 'SHRAPNEL_P x35'
+  });
+
+  assert.ok(explosion);
+  assert.ok(shrapnel);
+
+  assert.equal(explosion.DMG, '1000');
+  assert.equal(explosion.DUR, '1000');
+  assert.equal(explosion.AP, '5');
+  assert.equal(explosion.DF, '30');
+  assert.equal(explosion.ST, '30');
+  assert.equal(explosion.PF, '40');
+
+  assert.equal(shrapnel.DMG, '110');
+  assert.equal(shrapnel.DUR, '35');
+  assert.equal(shrapnel.AP, '3');
+  assert.equal(shrapnel.DF, '10');
+  assert.equal(shrapnel.ST, '10');
+  assert.equal(shrapnel.PF, '20');
+});
+
 test('checked-in VG-70 data exposes selectable auto, volley, and total attack rows', () => {
   const csv = readFileSync(new URL('../weapons/weapondata.csv', import.meta.url), 'utf8');
   loadFromText(csv);

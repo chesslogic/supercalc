@@ -20,6 +20,8 @@ Grenade,SPC,G-31,Arc,,explosion,G-31 ARC_E,0,0,6,0,0,0,
 Grenade,SPC,G-31,Arc,,arc,G-31 ARC_E_A,100,70,4,20,35,10,Stun Small
 Grenade,SPC,G-4,Gas,,explosion,G-4 GAS_E,3,3,6,30,10,10,Gas • Gas_Confusion
 Grenade,SPC,G-50,Seeker,,explosion,G-50 SEEKER_E,500,500,4,30,30,40,
+Grenade,SPC,TM-1,Lure Mine,,explosion,TM-1 LURE MINE E,1000,1000,5,30,30,40,
+Grenade,SPC,TM-1,Lure Mine,,projectile,SHRAPNEL_P x35,110,35,3,10,10,20,
 Primary,AR,AR-23C,Liberator Concussive,400,projectile,5.5x50mm EXPLOSIVE_P,75,35,2,10,35,60,
 Primary,AR,AR-23,Liberator,640,projectile,5.5x50mm FULL METAL JACKET_P,90,22,2,10,15,10,
 Primary,AR,AR-23A,Liberator Carbine,920,projectile,5.5x50mm FULL METAL JACKET_P,90,22,2,10,15,10,
