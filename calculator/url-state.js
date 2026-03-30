@@ -4,6 +4,7 @@ import {
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
   getSelectedAttackKeys,
+  getSelectedAttacks,
   getSelectedEnemyTargetTypes,
   getSelectedExplosiveZoneIndices,
   getWeaponForSlot,
@@ -24,6 +25,8 @@ import {
   setWeaponSortMode
 } from './data.js';
 import { DEFAULT_RECOMMENDATION_RANGE_METERS } from './recommendations.js';
+import { isExplosiveAttack } from './attack-types.js';
+import { getAttackRowKey, getDefaultSelectedAttackKeys } from './compare-utils.js';
 import { state as weaponsState, DEFAULT_ACTIVE_WEAPON_TYPES } from '../weapons/data.js';
 import { applyWeaponFilterState, getWeaponFilterStateSnapshot } from '../weapons/filters.js';
 import { applyEnemyFilterState, getEnemyFilterStateSnapshot } from '../enemies/filters.js';
@@ -193,6 +196,146 @@ function normalizeHitCountMap(value) {
   }, {});
 }
 
+function isIntegerLike(value) {
+  if (typeof value === 'number') {
+    return Number.isInteger(value);
+  }
+
+  if (typeof value !== 'string' || value.trim() === '') {
+    return false;
+  }
+
+  const numericValue = Number(value);
+  return Number.isInteger(numericValue);
+}
+
+function getWeaponAttackRows(weapon) {
+  return Array.isArray(weapon?.rows) ? weapon.rows : [];
+}
+
+function getAttackKeysForWeapon(weapon) {
+  return getWeaponAttackRows(weapon).map((row) => getAttackRowKey(row));
+}
+
+function getSelectedAttackRowIndicesForWeapon(weapon, selectedAttackKeys = []) {
+  if (!weapon) {
+    return [];
+  }
+
+  const selectedKeySet = new Set(selectedAttackKeys);
+  return getWeaponAttackRows(weapon).reduce((indices, row, rowIndex) => {
+    if (selectedKeySet.has(getAttackRowKey(row))) {
+      indices.push(rowIndex);
+    }
+    return indices;
+  }, []);
+}
+
+function normalizeAttackSelectionValue(value, weapon) {
+  const rows = getWeaponAttackRows(weapon);
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const entries = Array.isArray(value) ? value : [];
+  if (entries.every((entry) => isIntegerLike(entry))) {
+    return [...new Set(
+      entries
+        .map((entry) => Number(entry))
+        .filter((rowIndex) => Number.isInteger(rowIndex) && rowIndex >= 0 && rowIndex < rows.length)
+        .map((rowIndex) => getAttackRowKey(rows[rowIndex]))
+    )];
+  }
+
+  const validAttackKeys = new Set(getAttackKeysForWeapon(weapon));
+  return normalizeArrayOfStrings(entries).filter((attackKey) => validAttackKeys.has(attackKey));
+}
+
+function normalizeAttackHitCountValue(value, weapon) {
+  const rows = getWeaponAttackRows(weapon);
+  if (!value || typeof value !== 'object' || Array.isArray(value) || rows.length === 0) {
+    return {};
+  }
+
+  const validAttackKeys = new Set(getAttackKeysForWeapon(weapon));
+  return Object.entries(value).reduce((hitCounts, [attackRef, hitCount]) => {
+    const numericHitCount = Number(hitCount);
+    if (!Number.isFinite(numericHitCount) || numericHitCount < 1) {
+      return hitCounts;
+    }
+
+    let attackKey = '';
+    if (isIntegerLike(attackRef)) {
+      const rowIndex = Number(attackRef);
+      attackKey = rowIndex >= 0 && rowIndex < rows.length
+        ? getAttackRowKey(rows[rowIndex])
+        : '';
+    } else {
+      const normalizedAttackKey = String(attackRef || '').trim();
+      attackKey = validAttackKeys.has(normalizedAttackKey) ? normalizedAttackKey : '';
+    }
+
+    if (!attackKey) {
+      return hitCounts;
+    }
+
+    hitCounts[attackKey] = Math.max(1, Math.round(numericHitCount));
+    return hitCounts;
+  }, {});
+}
+
+function getEncodedSelectedAttackValue(slot) {
+  const weapon = getWeaponForSlot(slot);
+  const selectedAttackKeys = getSelectedAttackKeys(slot);
+  if (!weapon) {
+    return null;
+  }
+
+  const defaultAttackKeys = getDefaultSelectedAttackKeys(weapon);
+  if (isDeepEqual(selectedAttackKeys, defaultAttackKeys)) {
+    return null;
+  }
+
+  return getSelectedAttackRowIndicesForWeapon(weapon, selectedAttackKeys);
+}
+
+function getEncodedAttackHitCountsValue(slot) {
+  const weapon = getWeaponForSlot(slot);
+  if (!weapon) {
+    return null;
+  }
+
+  const selectedAttackKeys = getSelectedAttackKeys(slot);
+  if (selectedAttackKeys.length === 0) {
+    return null;
+  }
+
+  const selectedAttackIndices = getSelectedAttackRowIndicesForWeapon(weapon, selectedAttackKeys);
+  const selectedAttackIndexByKey = new Map(
+    selectedAttackIndices.map((rowIndex) => [getAttackRowKey(getWeaponAttackRows(weapon)[rowIndex]), rowIndex])
+  );
+
+  const hitCountState = calculatorState.attackHitCounts?.[slot] || {};
+  const compactHitCounts = selectedAttackKeys.reduce((entries, attackKey) => {
+    const hitCount = Number(hitCountState[attackKey]);
+    const rowIndex = selectedAttackIndexByKey.get(attackKey);
+    if (!Number.isFinite(hitCount) || hitCount <= 1 || !Number.isInteger(rowIndex)) {
+      return entries;
+    }
+
+    entries[rowIndex] = Math.max(1, Math.round(hitCount));
+    return entries;
+  }, {});
+
+  return Object.keys(compactHitCounts).length > 0 ? compactHitCounts : null;
+}
+
+function hasSelectedExplosiveAttacks() {
+  return ['A', 'B'].some((slot) =>
+    getSelectedAttacks(slot).some((attack) => isExplosiveAttack(attack))
+  );
+}
+
 function findWeaponByName(name) {
   const normalizedName = String(name ?? '').trim();
   if (!normalizedName) {
@@ -219,6 +362,14 @@ export function getActiveAppTabId() {
 export function buildUrlStateSnapshot({
   activeTab = getActiveAppTabId()
 } = {}) {
+  const encodedAttackKeysA = getEncodedSelectedAttackValue('A');
+  const encodedAttackKeysB = getEncodedSelectedAttackValue('B');
+  const encodedAttackHitCountsA = getEncodedAttackHitCountsValue('A');
+  const encodedAttackHitCountsB = getEncodedAttackHitCountsValue('B');
+  const explosiveZoneIndices = hasSelectedExplosiveAttacks()
+    ? [...getSelectedExplosiveZoneIndices()]
+    : [];
+
   return {
     version: URL_STATE_VERSION,
     activeTab: normalizeTabId(activeTab),
@@ -237,11 +388,11 @@ export function buildUrlStateSnapshot({
       selectedZoneIndex: Number.isInteger(calculatorState.selectedZoneIndex)
         ? calculatorState.selectedZoneIndex
         : null,
-      selectedExplosiveZoneIndices: [...getSelectedExplosiveZoneIndices()],
-      selectedAttackKeysA: [...getSelectedAttackKeys('A')],
-      selectedAttackKeysB: [...getSelectedAttackKeys('B')],
-      attackHitCountsA: { ...(calculatorState.attackHitCounts?.A || {}) },
-      attackHitCountsB: { ...(calculatorState.attackHitCounts?.B || {}) },
+      selectedExplosiveZoneIndices: explosiveZoneIndices,
+      selectedAttackKeysA: encodedAttackKeysA,
+      selectedAttackKeysB: encodedAttackKeysB,
+      attackHitCountsA: encodedAttackHitCountsA,
+      attackHitCountsB: encodedAttackHitCountsB,
       enemySort: { ...calculatorState.enemySort }
     },
     weapons: getWeaponFilterStateSnapshot(),
@@ -394,22 +545,22 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
 
   const selectedAttackKeysA = parseJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysA);
   if (selectedAttackKeysA.present) {
-    setSelectedAttackKeys('A', normalizeArrayOfStrings(selectedAttackKeysA.value));
+    setSelectedAttackKeys('A', normalizeAttackSelectionValue(selectedAttackKeysA.value, getWeaponForSlot('A')));
   }
 
   const selectedAttackKeysB = parseJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysB);
   if (selectedAttackKeysB.present) {
-    setSelectedAttackKeys('B', normalizeArrayOfStrings(selectedAttackKeysB.value));
+    setSelectedAttackKeys('B', normalizeAttackSelectionValue(selectedAttackKeysB.value, getWeaponForSlot('B')));
   }
 
   const attackHitCountsA = parseJsonParam(params, URL_PARAM_KEYS.attackHitCountsA);
   if (attackHitCountsA.present) {
-    setAttackHitCounts('A', normalizeHitCountMap(attackHitCountsA.value));
+    setAttackHitCounts('A', normalizeAttackHitCountValue(attackHitCountsA.value, getWeaponForSlot('A')));
   }
 
   const attackHitCountsB = parseJsonParam(params, URL_PARAM_KEYS.attackHitCountsB);
   if (attackHitCountsB.present) {
-    setAttackHitCounts('B', normalizeHitCountMap(attackHitCountsB.value));
+    setAttackHitCounts('B', normalizeAttackHitCountValue(attackHitCountsB.value, getWeaponForSlot('B')));
   }
 
   const requestedCompareView = params.get(URL_PARAM_KEYS.compareView) || DEFAULT_CALCULATOR_URL_STATE.compareView;

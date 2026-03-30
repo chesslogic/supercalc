@@ -261,12 +261,18 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   const breaker = makeWeapon('Breaker', {
     code: 'SG-225',
     sub: 'SG',
-    rows: [makeAttackRow('12g BUCKSHOT_P x11', 30, 2)]
+    rows: [
+      makeAttackRow('12g BUCKSHOT_P x11', 30, 2),
+      makeAttackRow('12g SLUG_P', 280, 3)
+    ]
   });
   const dominator = makeWeapon('Dominator', {
     code: 'JAR-5',
     sub: 'SPC',
-    rows: [makeAttackRow('15x100mm STANDARD ROCKET_P', 275, 3)]
+    rows: [
+      makeAttackRow('15x100mm STANDARD ROCKET_P', 275, 3),
+      makeAttackRow('15x100mm STUN ROCKET_P', 30, 2)
+    ]
   });
   const enemy = {
     name: 'Target Dummy',
@@ -276,7 +282,8 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
       makeZone('torso', { health: 300, av: 2, toMainPercent: 0.5 })
     ]
   };
-  const attackKey = getAttackRowKey(breaker.rows[0]);
+  const attackKeyA = getAttackRowKey(breaker.rows[1]);
+  const attackKeyB = getAttackRowKey(dominator.rows[0]);
 
   weaponsState.groups = [breaker, dominator];
   enemyState.units = [enemy];
@@ -290,8 +297,9 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   setRecommendationRangeMeters(45);
   setSelectedWeapon('A', breaker);
   setSelectedWeapon('B', dominator);
-  setSelectedAttackKeys('A', [attackKey]);
-  setAttackHitCounts('A', { [attackKey]: 3 });
+  setSelectedAttackKeys('A', [attackKeyA]);
+  setSelectedAttackKeys('B', [attackKeyB]);
+  setAttackHitCounts('A', { [attackKeyA]: 3 });
   setSelectedEnemy(enemy);
   setSelectedZoneIndex(1);
   setSelectedExplosiveZoneIndices([0, 1]);
@@ -319,9 +327,11 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   assert.equal(params.get('cwb'), 'Dominator');
   assert.equal(params.get('cen'), 'Target Dummy');
   assert.equal(params.get('csz'), '1');
-  assert.deepEqual(JSON.parse(params.get('cez')), [0, 1]);
-  assert.deepEqual(JSON.parse(params.get('caa')), [attackKey]);
-  assert.equal(JSON.parse(params.get('cha'))[attackKey], 3);
+  assert.equal(params.has('cez'), false);
+  assert.deepEqual(JSON.parse(params.get('caa')), [1]);
+  assert.deepEqual(JSON.parse(params.get('cab')), [0]);
+  assert.deepEqual(JSON.parse(params.get('cha')), { 1: 3 });
+  assert.equal(params.has('chb'), false);
   assert.equal(params.get('crm'), '45');
   assert.deepEqual(JSON.parse(params.get('wty')), ['primary', 'support']);
   assert.deepEqual(JSON.parse(params.get('wsub')), ['sg']);
@@ -334,7 +344,10 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   const breaker = makeWeapon('Breaker', {
     code: 'SG-225',
     sub: 'SG',
-    rows: [makeAttackRow('12g BUCKSHOT_P x11', 30, 2)]
+    rows: [
+      makeAttackRow('12g BUCKSHOT_P x11', 30, 2),
+      makeAttackRow('12g SLUG_P', 280, 3)
+    ]
   });
   const railgun = makeWeapon('Railgun', {
     code: 'RS-422',
@@ -350,7 +363,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
       makeZone('body', { health: 500, av: 4, toMainPercent: 0 })
     ]
   };
-  const attackKey = getAttackRowKey(breaker.rows[0]);
+  const attackKey = getAttackRowKey(breaker.rows[1]);
 
   weaponsState.groups = [breaker, railgun];
   enemyState.units = [enemy];
@@ -440,6 +453,30 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.deepEqual(enemyState.activeFactions, ['Automaton']);
   assert.equal(enemyState.sortKey, 'AV');
   assert.equal(enemyState.sortDir, 'desc');
+}));
+
+test('hydrateUrlState still supports legacy full attack-key payloads', { concurrency: false }, () => withStateFixture(() => {
+  const breaker = makeWeapon('Breaker', {
+    code: 'SG-225',
+    sub: 'SG',
+    rows: [
+      makeAttackRow('12g BUCKSHOT_P x11', 30, 2),
+      makeAttackRow('12g SLUG_P', 280, 3)
+    ]
+  });
+  const attackKey = getAttackRowKey(breaker.rows[1]);
+
+  weaponsState.groups = [breaker];
+  setSelectedWeapon('A', breaker);
+
+  hydrateUrlState(new URLSearchParams({
+    cwa: 'Breaker',
+    caa: JSON.stringify([attackKey]),
+    cha: JSON.stringify({ [attackKey]: 2 })
+  }));
+
+  assert.deepEqual(calculatorState.selectedAttackKeys.A, [attackKey]);
+  assert.equal(calculatorState.attackHitCounts.A[attackKey], 2);
 }));
 
 test('encodeUrlState omits default primary-only weapon type filters but preserves an explicit empty selection', { concurrency: false }, () => withStateFixture(() => {
