@@ -131,6 +131,8 @@ function syncCalculatorModeUi() {
     weaponSortSelect.value = calculatorState.weaponSortMode;
   }
 
+  syncWeaponInputValue('A');
+  syncWeaponInputValue('B');
   syncEnemyInputValue();
 }
 
@@ -140,6 +142,25 @@ function getEnemyInputDisplayValue() {
   }
 
   return calculatorState.selectedEnemy?.name || '';
+}
+
+export function getWeaponInputDisplayValue(slot) {
+  const weapon = calculatorState[slot === 'B' ? 'weaponB' : 'weaponA'];
+  if (!weapon) {
+    return '';
+  }
+
+  const displayModel = getWeaponOptionDisplayModel(weapon);
+  return displayModel.labelText || weapon.name || '';
+}
+
+function syncWeaponInputValue(slot) {
+  const suffix = slot.toLowerCase();
+  const weaponInput = document.getElementById(`calculator-weapon-input-${suffix}`)
+    || (slot === 'A' ? document.getElementById('calculator-weapon-input') : null);
+  if (weaponInput) {
+    weaponInput.value = getWeaponInputDisplayValue(slot);
+  }
 }
 
 function syncEnemyInputValue() {
@@ -210,8 +231,8 @@ function setupWeaponSelector(slot) {
   clearButton.type = 'button';
   clearButton.addEventListener('click', (event) => {
     event.stopPropagation();
-    weaponInput.value = '';
     setSelectedWeapon(slot, null);
+    syncWeaponInputValue(slot);
     renderWeaponDetails();
     renderEnemyDetails();
     renderCalculation();
@@ -279,7 +300,7 @@ function setupWeaponSelector(slot) {
       item.appendChild(apValue);
       item.addEventListener('click', () => {
         setSelectedWeapon(slot, weapon);
-        weaponInput.value = displayModel.labelText || weapon.name;
+        syncWeaponInputValue(slot);
         closeDropdown();
         renderWeaponDetails();
         renderEnemyDetails();
@@ -321,9 +342,11 @@ function setupWeaponSelector(slot) {
   });
 
   populateDropdown();
+  syncWeaponInputValue(slot);
 
   const checkDataAvailability = setInterval(() => {
     if (weaponsState.groups && weaponsState.groups.length > 0) {
+      syncWeaponInputValue(slot);
       if (isOpen) {
         populateDropdown(weaponInput.value);
       }

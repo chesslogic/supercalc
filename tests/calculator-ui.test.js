@@ -34,7 +34,8 @@ import { filterEnemiesByTargetTypes, getEnemyTargetTypeOptions } from '../calcul
 import {
   ENEMY_OVERVIEW_DROPDOWN_CLASS,
   getCalculatorModeButtonTitle,
-  getEnemyOverviewOptionHtml
+  getEnemyOverviewOptionHtml,
+  getWeaponInputDisplayValue
 } from '../calculator/ui.js';
 import {
   compareWeaponOptionsByApDescending,
@@ -464,6 +465,24 @@ test('calculator mode buttons expose descriptive hover titles', () => {
     getCalculatorModeButtonTitle('compare'),
     'Two weapons side-by-side for each enemy component. Try the Overview enemy!'
   );
+});
+
+test('weapon input display value reflects restored selected weapon state', () => {
+  const previousWeaponA = calculatorState.weaponA;
+
+  try {
+    const weapon = makeWeapon('Recoilless Rifle', {
+      type: 'Support',
+      sub: 'AT',
+      code: 'GR-8',
+      rows: [makeAttackRow(6, 650, 450)]
+    });
+
+    setSelectedWeapon('A', weapon);
+    assert.match(getWeaponInputDisplayValue('A'), /Recoilless Rifle/i);
+  } finally {
+    calculatorState.weaponA = previousWeaponA;
+  }
 });
 
 test('weapon sort mode options expose the compare-only reference mode only in compare mode', () => {
