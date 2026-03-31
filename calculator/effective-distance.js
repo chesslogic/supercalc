@@ -3,11 +3,14 @@ import { roundDamagePacket } from './damage-rounding.js';
 import { getZoneDisplayedKillPath, getZoneDisplayedShotsToKill } from './zone-damage.js';
 import {
   MIN_BALLISTIC_DAMAGE_MULTIPLIER,
+  PRACTICAL_ZERO_DAMAGE_MULTIPLIER,
+  calculatePracticalMaxProjectileDistance,
   calculateBallisticDamageMultiplier,
   resolveBallisticFalloffProfileForWeapon
 } from '../weapons/falloff.js';
 
 export const EFFECTIVE_DISTANCE_TOOLTIP = 'Approximate maximum distance before this breakpoint can fail. Ballistic falloff modeling can be off by as much as 3%.';
+export const PRACTICAL_MAX_RANGE_TOOLTIP_SUFFIX = `Projectile damage is treated as effectively gone once ballistic reduction reaches about 74.23% (${Math.round(PRACTICAL_ZERO_DAMAGE_MULTIPLIER * 100)}% remaining damage).`;
 
 function toFiniteNumber(value) {
   if (value === null || value === undefined || value === '') {
@@ -222,6 +225,19 @@ function getResolutionUnavailableTitle(status) {
   return `${EFFECTIVE_DISTANCE_TOOLTIP}\nNo ballistic falloff profile is loaded for this weapon.`;
 }
 
+function getPracticalMaxDistanceInfo(profileAttributes) {
+  const practicalMaxMeters = calculatePracticalMaxProjectileDistance(profileAttributes);
+  if (!Number.isFinite(practicalMaxMeters) || practicalMaxMeters <= 0) {
+    return null;
+  }
+
+  return {
+    meters: practicalMaxMeters,
+    text: formatEffectiveDistanceText(practicalMaxMeters),
+    title: `${EFFECTIVE_DISTANCE_TOOLTIP}\n${PRACTICAL_MAX_RANGE_TOOLTIP_SUFFIX}`
+  };
+}
+
 export function calculateEffectiveDistanceInfo({
   weapon,
   zone,
@@ -312,14 +328,18 @@ export function calculateEffectiveDistanceInfo({
     return createUnavailableDistanceInfo(`${EFFECTIVE_DISTANCE_TOOLTIP}\nThis breakpoint is already below the required damage floor at point blank range.`);
   }
 
+  const practicalMaxDistance = getPracticalMaxDistanceInfo(falloffResolution.profile.attributes);
+  const displayMeters = Number.isFinite(meters)
+    ? meters
+    : (practicalMaxDistance?.meters ?? meters);
   const detailLine = Number.isFinite(meters)
     ? `This breakpoint needs at least ${damageFloor} rounded damage per selected firing cycle.`
-    : 'This breakpoint still holds at the model\'s minimum projectile damage multiplier.';
+    : `This breakpoint still holds until the projectile reaches its practical no-damage cutoff. ${PRACTICAL_MAX_RANGE_TOOLTIP_SUFFIX}`;
 
   return {
-    meters,
-    sortValue: meters,
-    text: formatEffectiveDistanceText(meters),
+    meters: displayMeters,
+    sortValue: displayMeters,
+    text: formatEffectiveDistanceText(displayMeters),
     title: `${EFFECTIVE_DISTANCE_TOOLTIP}\n${detailLine}`,
     isAvailable: true
   };

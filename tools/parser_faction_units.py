@@ -84,6 +84,510 @@ ENEMY_SCOPE_TAGS_BY_UNIT_NAME: Dict[str, list[str]] = {
     "Spore Lung": ["objective"],
 }
 
+# These overrides run on the parser's transformed zone shape, keyed by
+# signature plus occurrence order within matching signatures. That keeps them
+# resilient to opaque upstream names while avoiding blind renames if the zone
+# stats for a curated part ever change.
+CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME: Dict[str, list[Dict[str, Any]]] = {
+    "Agitator": [
+        {
+            "occurrence": 0,
+            "zone_name": "left_forearm",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0.75,
+                "health": 300,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_forearm",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0.75,
+                "health": 300,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_upper_arm",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0,
+                "ExMult": 0.45,
+                "ExTarget": "Part",
+                "MainCap": True,
+                "ToMain%": 0.8,
+                "health": 300,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_upper_arm",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0,
+                "ExMult": 0.45,
+                "ExTarget": "Part",
+                "MainCap": True,
+                "ToMain%": 0.8,
+                "health": 300,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "head",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": True,
+                "ToMain%": 1,
+                "health": 150,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_leg",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1400,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_leg",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1400,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "pelvis",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 1,
+                "health": 1400,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "torso",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 1,
+                "health": 1200,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "torso_armor",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExMult": 0.35,
+                "ExTarget": "Part",
+                "MainCap": False,
+                "ToMain%": 0.3,
+                "health": 300,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "helmet",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExMult": 0.35,
+                "ExTarget": "Part",
+                "MainCap": False,
+                "ToMain%": 0.3,
+                "health": 200,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "left_pauldron",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExMult": 0.35,
+                "ExTarget": "Part",
+                "MainCap": False,
+                "ToMain%": 0.3,
+                "health": 200,
+            },
+        },
+        {
+            "occurrence": 2,
+            "zone_name": "right_pauldron",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExMult": 0.35,
+                "ExTarget": "Part",
+                "MainCap": False,
+                "ToMain%": 0.3,
+                "health": 200,
+            },
+        },
+    ],
+    "Veracitor": [
+        {
+            "occurrence": 0,
+            "zone_name": "cockpit",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": True,
+                "ToMain%": 1,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "cockpit_weakspot",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": True,
+                "ToMain%": 1,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "chassis",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "head",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0,
+                "health": 300,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_carapace",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0.5,
+                "health": 400,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_carapace",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0.5,
+                "health": 400,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_internals",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 1,
+                "health": 600,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_internals",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 1,
+                "health": 600,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "pilot",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": True,
+                "ToMain%": 0,
+                "health": 700,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_shoulder",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "left_upper_arm",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 2,
+            "zone_name": "right_shoulder",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 3,
+            "zone_name": "right_upper_arm",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_arm_weakspot",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_forearm",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_arm_weakspot",
+            "signature": {
+                "AV": 1,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "right_forearm",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0,
+                "health": 800,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "left_hip",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "left_upper_leg",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 2,
+            "zone_name": "right_hip",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 3,
+            "zone_name": "right_upper_leg",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 1,
+            "zone_name": "left_lower_leg",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 2,
+            "zone_name": "right_lower_leg",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 3,
+            "zone_name": "rear_hip",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 4,
+            "zone_name": "rear_leg",
+            "signature": {
+                "AV": 3,
+                "Dur%": 0.5,
+                "ExTarget": "Main",
+                "IsFatal": True,
+                "MainCap": False,
+                "ToMain%": 0.75,
+                "health": 1600,
+            },
+        },
+        {
+            "occurrence": 0,
+            "zone_name": "shield",
+            "signature": {
+                "AV": 2,
+                "Dur%": 0,
+                "ExTarget": "Main",
+                "MainCap": True,
+                "ToMain%": 0,
+                "health": 1300,
+            },
+        },
+    ],
+}
+
 # --- Mapping helpers -------------------------------------------------------
 
 def normalize_faction(raw: str):
@@ -127,6 +631,61 @@ def round_float(value: Any) -> Union[int, float]:
 
 def get_scope_tags_for_unit(unit_name: str) -> list[str]:
     return list(ENEMY_SCOPE_TAGS_BY_UNIT_NAME.get(str(unit_name or ""), []))
+
+def normalize_zone_signature(zone: Dict[str, Any]) -> Dict[str, Any]:
+    normalized: Dict[str, Any] = {}
+    for key, value in zone.items():
+        if key == "zone_name":
+            continue
+        if key == "MainCap":
+            normalized[key] = bool(value)
+            continue
+        normalized[key] = value
+    return normalized
+
+def serialize_zone_signature(zone: Dict[str, Any]) -> str:
+    return json.dumps(
+        normalize_zone_signature(zone),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+def build_curated_zone_name_override_lookup() -> Dict[str, Dict[tuple[str, int], str]]:
+    lookup: Dict[str, Dict[tuple[str, int], str]] = {}
+    for unit_name, overrides in CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME.items():
+        unit_lookup: Dict[tuple[str, int], str] = {}
+        for override in overrides:
+            signature = override.get("signature")
+            zone_name = str(override.get("zone_name") or "")
+            occurrence = int(override.get("occurrence", 0) or 0)
+            if not isinstance(signature, dict) or not zone_name:
+                continue
+            key = (serialize_zone_signature(signature), occurrence)
+            if key in unit_lookup:
+                raise ValueError(f"Duplicate curated zone override for {unit_name}: {key}")
+            unit_lookup[key] = zone_name
+        if unit_lookup:
+            lookup[unit_name] = unit_lookup
+    return lookup
+
+CURATED_ZONE_NAME_OVERRIDE_LOOKUP_BY_UNIT_NAME = build_curated_zone_name_override_lookup()
+
+def apply_curated_zone_name_overrides(unit_name: str, zones: list[Dict[str, Any]]) -> None:
+    override_lookup = CURATED_ZONE_NAME_OVERRIDE_LOOKUP_BY_UNIT_NAME.get(str(unit_name or ""))
+    if not override_lookup:
+        return
+
+    seen_signatures: Dict[str, int] = defaultdict(int)
+    for zone in zones:
+        if not isinstance(zone, dict):
+            continue
+        signature = serialize_zone_signature(zone)
+        occurrence = seen_signatures[signature]
+        replacement = override_lookup.get((signature, occurrence))
+        if replacement:
+            zone["zone_name"] = replacement
+        seen_signatures[signature] += 1
 
 def sanitize_string(s: str) -> str:
     if "^_^" in s:
@@ -476,6 +1035,8 @@ def parse_enemy_units(src: dict) -> tuple[dict, dict]:
                         is_main_zone=True,
                     )
                 zones.insert(0, main_zone)
+
+        apply_curated_zone_name_overrides(unit_name, zones)
 
         # Build a trimmed view of the payload we care about
         current = {

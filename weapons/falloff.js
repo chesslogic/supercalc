@@ -3,8 +3,10 @@ const DISTANCE_SCALE_FACTOR = 1250;
 const CALIBER_EXPONENT = 2;
 const VELOCITY_EXPONENT = 0.025;
 const LOCAL_FALLOFF_CSV_URL = './weapons/falloff.csv';
+export const PRACTICAL_ZERO_DAMAGE_REDUCTION = 0.7423;
 
 export const MIN_BALLISTIC_DAMAGE_MULTIPLIER = 1 - MAX_DAMAGE_REDUCTION;
+export const PRACTICAL_ZERO_DAMAGE_MULTIPLIER = 1 - PRACTICAL_ZERO_DAMAGE_REDUCTION;
 
 export const BALLISTIC_FALLOFF_EXCLUDED_WEAPONS = new Set([
   'GP-20 Ultimatum (read the note)',
@@ -375,5 +377,12 @@ export function calculateMaxDistanceForDamageFloor(baseDamage, attributes = {}, 
   return calculateMaxDistanceForDamageMultiplier(
     attributes,
     normalizedDamageFloor / normalizedBaseDamage
+  );
+}
+
+export function calculatePracticalMaxProjectileDistance(attributes = {}) {
+  return calculateMaxDistanceForDamageMultiplier(
+    attributes,
+    PRACTICAL_ZERO_DAMAGE_MULTIPLIER
   );
 }

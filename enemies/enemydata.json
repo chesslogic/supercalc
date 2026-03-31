@@ -45,7 +45,7 @@
           "MainCap": 1,
           "ToMain%": 0.75,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "left_forearm"
         },
         {
           "AV": 1,
@@ -55,7 +55,7 @@
           "MainCap": 1,
           "ToMain%": 0.8,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "left_upper_arm"
         },
         {
           "AV": 1,
@@ -65,7 +65,7 @@
           "MainCap": 1,
           "ToMain%": 0.8,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "right_upper_arm"
         },
         {
           "AV": 2,
@@ -74,7 +74,7 @@
           "MainCap": 1,
           "ToMain%": 0.75,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "right_forearm"
         },
         {
           "AV": 1,
@@ -84,7 +84,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "[unknown]"
+          "zone_name": "head"
         },
         {
           "AV": 2,
@@ -94,7 +94,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1400,
-          "zone_name": "[unknown]"
+          "zone_name": "left_leg"
         },
         {
           "AV": 2,
@@ -104,7 +104,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1400,
-          "zone_name": "[unknown]"
+          "zone_name": "right_leg"
         },
         {
           "AV": 2,
@@ -124,7 +124,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "[unknown]"
+          "zone_name": "torso"
         },
         {
           "AV": 2,
@@ -134,7 +134,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "torso_armor"
         },
         {
           "AV": 2,
@@ -144,7 +144,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "helmet"
         },
         {
           "AV": 2,
@@ -154,7 +154,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "left_pauldron"
         },
         {
           "AV": 2,
@@ -164,7 +164,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "right_pauldron"
         }
       ],
       "health": 750
@@ -1170,6 +1170,8 @@
         {
           "AV": 4,
           "Con": 2000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1177,9 +1179,7 @@
           "MainCap": 0,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "right_front_leg",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "right_front_leg"
         },
         {
           "AV": 5,
@@ -1214,6 +1214,8 @@
         {
           "AV": 4,
           "Con": 2000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1221,9 +1223,7 @@
           "MainCap": 1,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "right_back_leg",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "right_back_leg"
         },
         {
           "AV": 5,
@@ -1258,6 +1258,8 @@
         {
           "AV": 4,
           "Con": 2000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1265,9 +1267,7 @@
           "MainCap": 1,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "left_front_leg",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "left_front_leg"
         },
         {
           "AV": 5,
@@ -1302,6 +1302,8 @@
         {
           "AV": 4,
           "Con": 2000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1309,9 +1311,7 @@
           "MainCap": 1,
           "ToMain%": 0.4,
           "health": 1500,
-          "zone_name": "left_back_leg",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "left_back_leg"
         },
         {
           "AV": 5,
@@ -1437,6 +1437,8 @@
         {
           "AV": 3,
           "Con": 1200,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1444,13 +1446,13 @@
           "MainCap": 0,
           "ToMain%": 0.5,
           "health": 1200,
-          "zone_name": "front_body",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "front_body"
         },
         {
           "AV": 3,
           "Con": 1200,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1458,13 +1460,13 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "right_body",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "right_body"
         },
         {
           "AV": 3,
           "Con": 1200,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1472,13 +1474,13 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "left_body",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "left_body"
         },
         {
           "AV": 3,
           "Con": 1200,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.6,
           "ExTarget": "Part",
@@ -1486,9 +1488,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "back_body",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "back_body"
         },
         {
           "AV": 1,
@@ -1523,8 +1523,8 @@
           "health": 1200,
           "parent_enemy": "Factory Strider",
           "show_in_selector": false,
-          "source_provenance": "wiki-measured",
-          "source_note": "Curated inline overlay for the exposed underside belly panels. Kept separate from the base filediver-derived Factory Strider row because the exported anatomy splits body rows by direction and exposure state."
+          "source_note": "Curated inline overlay for the exposed underside belly panels. Kept separate from the base filediver-derived Factory Strider row because the exported anatomy splits body rows by direction and exposure state.",
+          "source_provenance": "wiki-measured"
         }
       },
       "scope_tags": [
@@ -1893,26 +1893,26 @@
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg",
-          "ConRate": 50
+          "zone_name": "left_leg"
         },
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg",
-          "ConRate": 50
+          "zone_name": "right_leg"
         },
         {
           "AV": 4,
@@ -1970,26 +1970,26 @@
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg",
-          "ConRate": 50
+          "zone_name": "left_leg"
         },
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg",
-          "ConRate": 50
+          "zone_name": "right_leg"
         },
         {
           "AV": 4,
@@ -2047,26 +2047,26 @@
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg",
-          "ConRate": 50
+          "zone_name": "left_leg"
         },
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg",
-          "ConRate": 50
+          "zone_name": "right_leg"
         },
         {
           "AV": 4,
@@ -2124,26 +2124,26 @@
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg",
-          "ConRate": 50
+          "zone_name": "left_leg"
         },
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg",
-          "ConRate": 50
+          "zone_name": "right_leg"
         },
         {
           "AV": 4,
@@ -2201,26 +2201,26 @@
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "left_leg",
-          "ConRate": 50
+          "zone_name": "left_leg"
         },
         {
           "AV": 4,
           "Con": 500,
+          "ConRate": 50,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.8,
           "health": 500,
-          "zone_name": "right_leg",
-          "ConRate": 50
+          "zone_name": "right_leg"
         },
         {
           "AV": 4,
@@ -3366,15 +3366,15 @@
       "damageable_zones": [
         {
           "AV": 5,
+          "Con": 50000,
+          "ConAppliesAnyDeath": true,
+          "ConRate": 10000,
           "Dur%": 1,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 11000,
-          "zone_name": "Main",
-          "Con": 50000,
-          "ConRate": 10000,
-          "ConAppliesAnyDeath": true
+          "zone_name": "Main"
         },
         {
           "AV": 5,
@@ -5729,7 +5729,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 1600,
-          "zone_name": "pilot_seat"
+          "zone_name": "cockpit"
         },
         {
           "AV": 1,
@@ -5739,7 +5739,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 800,
-          "zone_name": "0x7c69c9f9"
+          "zone_name": "cockpit_weakspot"
         },
         {
           "AV": 3,
@@ -5749,7 +5749,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "0x6c40f976"
+          "zone_name": "chassis"
         },
         {
           "AV": 3,
@@ -5758,7 +5758,7 @@
           "MainCap": 0,
           "ToMain%": 0,
           "health": 300,
-          "zone_name": "0x73757f26"
+          "zone_name": "head"
         },
         {
           "AV": 3,
@@ -5767,7 +5767,7 @@
           "MainCap": 0,
           "ToMain%": 0.5,
           "health": 400,
-          "zone_name": "0x2119e2ef"
+          "zone_name": "left_carapace"
         },
         {
           "AV": 3,
@@ -5776,7 +5776,7 @@
           "MainCap": 0,
           "ToMain%": 0.5,
           "health": 400,
-          "zone_name": "0x533fbac2"
+          "zone_name": "right_carapace"
         },
         {
           "AV": 1,
@@ -5786,7 +5786,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 600,
-          "zone_name": "0xba20d30a"
+          "zone_name": "left_internals"
         },
         {
           "AV": 1,
@@ -5796,7 +5796,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 600,
-          "zone_name": "0xe073cc3f"
+          "zone_name": "right_internals"
         },
         {
           "AV": 2,
@@ -5806,7 +5806,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 700,
-          "zone_name": "0x23128279"
+          "zone_name": "pilot"
         },
         {
           "AV": 2,
@@ -5815,7 +5815,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 800,
-          "zone_name": "0x19c4c9a6"
+          "zone_name": "left_shoulder"
         },
         {
           "AV": 2,
@@ -5824,7 +5824,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 800,
-          "zone_name": "left_arm"
+          "zone_name": "left_upper_arm"
         },
         {
           "AV": 1,
@@ -5833,7 +5833,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 800,
-          "zone_name": "0x718ce684"
+          "zone_name": "left_arm_weakspot"
         },
         {
           "AV": 3,
@@ -5842,7 +5842,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 800,
-          "zone_name": "0x15b7e16d"
+          "zone_name": "left_forearm"
         },
         {
           "AV": 2,
@@ -5851,7 +5851,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 800,
-          "zone_name": "0x6e41f493"
+          "zone_name": "right_shoulder"
         },
         {
           "AV": 2,
@@ -5860,7 +5860,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 800,
-          "zone_name": "right_arm"
+          "zone_name": "right_upper_arm"
         },
         {
           "AV": 1,
@@ -5869,7 +5869,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 800,
-          "zone_name": "0x61dcc7a6"
+          "zone_name": "right_arm_weakspot"
         },
         {
           "AV": 3,
@@ -5878,7 +5878,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 800,
-          "zone_name": "0x20c2028d"
+          "zone_name": "right_forearm"
         },
         {
           "AV": 2,
@@ -5898,7 +5898,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "0x93c0058d"
+          "zone_name": "left_upper_leg"
         },
         {
           "AV": 3,
@@ -5908,7 +5908,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "left_leg"
+          "zone_name": "left_lower_leg"
         },
         {
           "AV": 2,
@@ -5928,7 +5928,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "0x56eb4767"
+          "zone_name": "right_upper_leg"
         },
         {
           "AV": 3,
@@ -5938,7 +5938,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "right_leg"
+          "zone_name": "right_lower_leg"
         },
         {
           "AV": 3,
@@ -5948,7 +5948,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "0xb709fe1c"
+          "zone_name": "rear_hip"
         },
         {
           "AV": 3,
@@ -5958,7 +5958,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "0xb709fe1c"
+          "zone_name": "rear_leg"
         },
         {
           "AV": 2,
@@ -5976,15 +5976,15 @@
       "damageable_zones": [
         {
           "AV": 0,
+          "Con": 100,
+          "ConAppliesAnyDeath": true,
+          "ConRate": 5,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 160,
-          "zone_name": "Main",
-          "Con": 100,
-          "ConRate": 5,
-          "ConAppliesAnyDeath": true
+          "zone_name": "Main"
         },
         {
           "AV": 1,
@@ -5999,13 +5999,13 @@
         {
           "AV": 0,
           "Con": 1000,
+          "ConRate": 40,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
           "ToMain%": 0.4,
           "health": 80,
-          "zone_name": "arm_r",
-          "ConRate": 40
+          "zone_name": "arm_r"
         },
         {
           "AV": 0,
@@ -6019,13 +6019,13 @@
         {
           "AV": 0,
           "Con": 1000,
+          "ConRate": 40,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
           "ToMain%": 0.4,
           "health": 80,
-          "zone_name": "arm_l",
-          "ConRate": 40
+          "zone_name": "arm_l"
         },
         {
           "AV": 0,
@@ -6100,15 +6100,15 @@
         {
           "AV": 5,
           "Con": 1500,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1000,
-          "zone_name": "beamer",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "beamer"
         },
         {
           "AV": 5,
@@ -6485,14 +6485,14 @@
         {
           "AV": 2,
           "Con": 300,
+          "ConRate": 100,
           "Dur%": 0.7,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 250,
-          "zone_name": "face",
-          "ConRate": 100
+          "zone_name": "face"
         },
         {
           "AV": 1,
@@ -7028,14 +7028,14 @@
         {
           "AV": 1,
           "Con": 200,
+          "ConRate": 65,
           "Dur%": 0.2,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "face",
-          "ConRate": 65
+          "zone_name": "face"
         },
         {
           "AV": 1,
@@ -7108,14 +7108,14 @@
         {
           "AV": 2,
           "Con": 300,
+          "ConRate": 75,
           "Dur%": 0.6,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 200,
-          "zone_name": "face",
-          "ConRate": 75
+          "zone_name": "face"
         },
         {
           "AV": 1,
@@ -7178,16 +7178,16 @@
       "damageable_zones": [
         {
           "AV": 4,
+          "Con": 750,
+          "ConAppliesAnyDeath": true,
+          "ConRate": 100,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 2400,
-          "zone_name": "Main",
-          "Con": 750,
-          "ConRate": 100,
-          "ConAppliesAnyDeath": true
+          "zone_name": "Main"
         },
         {
           "AV": 4,
@@ -7369,16 +7369,16 @@
       "damageable_zones": [
         {
           "AV": 4,
+          "Con": 1000,
+          "ConAppliesAnyDeath": true,
+          "ConRate": 100,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3000,
-          "zone_name": "Main",
-          "Con": 1000,
-          "ConRate": 100,
-          "ConAppliesAnyDeath": true
+          "zone_name": "Main"
         },
         {
           "AV": 4,
@@ -7845,6 +7845,8 @@
         {
           "AV": 0,
           "Con": 2500,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7852,13 +7854,13 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "rb_wing",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "rb_wing"
         },
         {
           "AV": 0,
           "Con": 2500,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7866,13 +7868,13 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "lb_wing",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "lb_wing"
         },
         {
           "AV": 0,
           "Con": 2500,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7880,13 +7882,13 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "lf_wing",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "lf_wing"
         },
         {
           "AV": 0,
           "Con": 2500,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
@@ -7894,9 +7896,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 1500,
-          "zone_name": "rf_wing",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "rf_wing"
         }
       ],
       "health": 6500
@@ -7915,14 +7915,14 @@
         {
           "AV": 3,
           "Con": 200,
+          "ConRate": 75,
           "Dur%": 0.35,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 250,
-          "zone_name": "face",
-          "ConRate": 75
+          "zone_name": "face"
         },
         {
           "AV": 1,
@@ -8014,86 +8014,86 @@
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine5",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "spine5"
         },
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine4",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "spine4"
         },
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine3",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "spine3"
         },
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine2",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "spine2"
         },
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine1",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "spine1"
         },
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "spine0",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "spine0"
         },
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 20000,
-          "zone_name": "boss",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "boss"
         },
         {
           "AV": 5,
@@ -8148,14 +8148,14 @@
         {
           "AV": 5,
           "Con": 35000,
+          "ConNoBleed": true,
+          "ConRate": 0,
           "Dur%": 0,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 0.1,
           "health": 15000,
-          "zone_name": "boss_back",
-          "ConRate": 0,
-          "ConNoBleed": true
+          "zone_name": "boss_back"
         },
         {
           "AV": 2,
@@ -9114,16 +9114,16 @@
       "damageable_zones": [
         {
           "AV": 4,
+          "Con": 750,
+          "ConAppliesAnyDeath": true,
+          "ConRate": 100,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 2400,
-          "zone_name": "Main",
-          "Con": 750,
-          "ConRate": 100,
-          "ConAppliesAnyDeath": true
+          "zone_name": "Main"
         },
         {
           "AV": 5,
@@ -9425,14 +9425,14 @@
         {
           "AV": 3,
           "Con": 160,
+          "ConRate": 70,
           "Dur%": 0.2,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 110,
-          "zone_name": "face",
-          "ConRate": 70
+          "zone_name": "face"
         },
         {
           "AV": 1,
@@ -9848,14 +9848,14 @@
         {
           "AV": 1,
           "Con": 200,
+          "ConRate": 65,
           "Dur%": 0.4,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "face",
-          "ConRate": 65
+          "zone_name": "face"
         },
         {
           "AV": 1,
@@ -9918,16 +9918,16 @@
       "damageable_zones": [
         {
           "AV": 4,
+          "Con": 750,
+          "ConAppliesAnyDeath": true,
+          "ConRate": 100,
           "Dur%": 1,
           "ExMult": 0.75,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
           "health": 2400,
-          "zone_name": "Main",
-          "Con": 750,
-          "ConRate": 100,
-          "ConAppliesAnyDeath": true
+          "zone_name": "Main"
         },
         {
           "AV": 4,
@@ -10307,14 +10307,14 @@
         {
           "AV": 1,
           "Con": 200,
+          "ConRate": 65,
           "Dur%": 0.2,
           "ExTarget": "Main",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "face",
-          "ConRate": 65
+          "zone_name": "face"
         },
         {
           "AV": 1,
