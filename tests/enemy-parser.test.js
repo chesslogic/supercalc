@@ -32,8 +32,9 @@ function parseEnemyUnitsFixture(fixture) {
 }
 
 function buildRawZone(zone) {
+  const rawZoneName = Object.hasOwn(zone, 'raw_zone_name') ? zone.raw_zone_name : zone.zone_name;
   const raw = {
-    zone_name: zone.zone_name,
+    zone_name: rawZoneName,
     health: zone.health,
     armor: zone.AV,
     affected_by_explosions: zone.ExTarget === 'Part',
@@ -60,7 +61,11 @@ function buildFixtureUnit(locName, zones) {
     constitution: 0,
     constitution_changerate: 0,
     zone_bleedout_changerate: 0,
-    default_damageable_zone_info: buildRawZone({ ...mainZone, zone_name: 'main' }),
+    default_damageable_zone_info: buildRawZone({
+      ...mainZone,
+      zone_name: 'main',
+      raw_zone_name: Object.hasOwn(mainZone, 'raw_zone_name') ? mainZone.raw_zone_name : 'main'
+    }),
     damageable_zones: rawZones.map(buildRawZone)
   };
 }
@@ -371,7 +376,7 @@ test('parser prefers the unsuffixed base payload and reports differing same-name
   }
 });
 
-test('parser applies curated Agitator and Veracitor part-name overrides from zone signatures', () => {
+test('parser applies curated Agitator, Radical, Veracitor, and Impaler part-name overrides via signature fallback', () => {
   const agitatorZones = [
     { zone_name: 'Main', AV: 1, 'Dur%': 0.2, ExTarget: 'Part', MainCap: 0, 'ToMain%': 1, health: 750 },
     { zone_name: '[unknown]', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.75, health: 300 },
@@ -417,16 +422,28 @@ test('parser applies curated Agitator and Veracitor part-name overrides from zon
     { zone_name: '0xb709fe1c', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 0.75, health: 1600 },
     { zone_name: 'shield', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0, health: 1300 }
   ];
+  const impalerZones = [
+    { zone_name: 'Main', AV: 4, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 4000 },
+    { zone_name: 'l_tentacle', AV: 1, 'Dur%': 0.7, ExTarget: 'Part', MainCap: 0, 'ToMain%': 0.5, health: 500 },
+    { zone_name: 'm_tentacle', AV: 1, 'Dur%': 0.7, ExTarget: 'Part', MainCap: 0, 'ToMain%': 0.5, health: 500 },
+    { zone_name: 'r_tentacle', AV: 1, 'Dur%': 0.7, ExTarget: 'Part', MainCap: 0, 'ToMain%': 0.5, health: 500 },
+    { zone_name: 'l_front_armor_claw', AV: 4, 'Dur%': 0.75, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: -1 },
+    { zone_name: '[unknown]', AV: 4, 'Dur%': 0.75, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: -1 },
+    { zone_name: '[unknown]', AV: 4, 'Dur%': 0.75, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: -1 }
+  ];
 
   const fixture = {
     'content/fac_cyborgs/agitator/agitator': buildFixtureUnit('Agitator', agitatorZones),
-    'content/fac_illuminate/veracitor/veracitor': buildFixtureUnit('Veracitor', veracitorZones)
+    'content/fac_cyborgs/radical/radical': buildFixtureUnit('Radical', agitatorZones),
+    'content/fac_illuminate/veracitor/veracitor': buildFixtureUnit('Veracitor', veracitorZones),
+    'content/fac_bugs/impaler/impaler': buildFixtureUnit('Impaler', impalerZones)
   };
 
   const parsed = parseEnemyUnitsFixture(fixture);
+  const agitatorNames = parsed.Automaton.Agitator.damageable_zones.map((zone) => zone.zone_name);
 
   assert.deepEqual(
-    parsed.Automaton.Agitator.damageable_zones.map((zone) => zone.zone_name),
+    agitatorNames,
     [
       'Main',
       'left_forearm',
@@ -444,6 +461,7 @@ test('parser applies curated Agitator and Veracitor part-name overrides from zon
       'right_pauldron'
     ]
   );
+  assert.deepEqual(parsed.Automaton.Radical.damageable_zones.map((zone) => zone.zone_name), agitatorNames);
   assert.deepEqual(
     parsed.Illuminate.Veracitor.damageable_zones.map((zone) => zone.zone_name),
     [
@@ -476,12 +494,57 @@ test('parser applies curated Agitator and Veracitor part-name overrides from zon
       'shield'
     ]
   );
+  assert.deepEqual(
+    parsed.Terminid.Impaler.damageable_zones.map((zone) => zone.zone_name),
+    [
+      'Main',
+      'l_tentacle',
+      'm_tentacle',
+      'r_tentacle',
+      'l_tentacle_armor',
+      'm_tentacle_armor',
+      'r_tentacle_armor'
+    ]
+  );
+  assert.ok(parsed.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
 });
 
-test('checked-in enemydata keeps curated Agitator and Veracitor names', () => {
+test('parser prefers raw zone-name anchors when curated stats drift', () => {
+  const fixture = {
+    'content/fac_bugs/impaler/impaler': buildFixtureUnit('Impaler', [
+      { zone_name: 'Main', AV: 4, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 4000 },
+      { zone_name: 'l_tentacle', raw_zone_name: 'l_tentacle', AV: 1, 'Dur%': 0.7, ExTarget: 'Part', MainCap: 0, 'ToMain%': 0.5, health: 500 },
+      { zone_name: 'm_tentacle', raw_zone_name: 'm_tentacle', AV: 1, 'Dur%': 0.7, ExTarget: 'Part', MainCap: 0, 'ToMain%': 0.5, health: 500 },
+      { zone_name: 'r_tentacle', raw_zone_name: 'r_tentacle', AV: 1, 'Dur%': 0.7, ExTarget: 'Part', MainCap: 0, 'ToMain%': 0.5, health: 500 },
+      { zone_name: '[unknown]', raw_zone_name: '0xf7938517', AV: 4, 'Dur%': 0.8, ExTarget: 'Part', MainCap: 1, 'ToMain%': 0.9, health: -1 },
+      { zone_name: '[unknown]', raw_zone_name: '0x3d0088eb', AV: 4, 'Dur%': 0.8, ExTarget: 'Part', MainCap: 1, 'ToMain%': 0.9, health: -1 },
+      { zone_name: '[unknown]', raw_zone_name: '0x3d0088eb', AV: 4, 'Dur%': 0.8, ExTarget: 'Part', MainCap: 1, 'ToMain%': 0.9, health: -1 }
+    ])
+  };
+
+  const parsed = parseEnemyUnitsFixture(fixture);
+
+  assert.deepEqual(
+    parsed.Terminid.Impaler.damageable_zones.map((zone) => zone.zone_name),
+    [
+      'Main',
+      'l_tentacle',
+      'm_tentacle',
+      'r_tentacle',
+      'l_tentacle_armor',
+      'm_tentacle_armor',
+      'r_tentacle_armor'
+    ]
+  );
+  assert.ok(parsed.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
+});
+
+test('checked-in enemydata keeps curated Agitator, Radical, Veracitor, and Impaler names', () => {
   const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
   const agitatorNames = enemydata.Automaton.Agitator.damageable_zones.map((zone) => zone.zone_name);
+  const radicalNames = enemydata.Automaton.Radical.damageable_zones.map((zone) => zone.zone_name);
   const veracitorNames = enemydata.Illuminate.Veracitor.damageable_zones.map((zone) => zone.zone_name);
+  const impalerNames = enemydata.Terminid.Impaler.damageable_zones.map((zone) => zone.zone_name);
 
   assert.ok(!agitatorNames.includes('[unknown]'));
   assert.ok(agitatorNames.includes('helmet'));
@@ -489,6 +552,7 @@ test('checked-in enemydata keeps curated Agitator and Veracitor names', () => {
   assert.ok(agitatorNames.includes('right_pauldron'));
   assert.ok(agitatorNames.includes('left_upper_arm'));
   assert.ok(agitatorNames.includes('right_forearm'));
+  assert.deepEqual(radicalNames, agitatorNames);
 
   assert.ok(!veracitorNames.includes('pilot_seat'));
   assert.ok(!veracitorNames.some((name) => /^0x[0-9a-f]+$/i.test(name)));
@@ -497,4 +561,11 @@ test('checked-in enemydata keeps curated Agitator and Veracitor names', () => {
   assert.ok(veracitorNames.includes('left_shoulder'));
   assert.ok(veracitorNames.includes('right_upper_arm'));
   assert.ok(veracitorNames.includes('rear_leg'));
+
+  assert.ok(!impalerNames.includes('[unknown]'));
+  assert.ok(!impalerNames.includes('l_front_armor_claw'));
+  assert.ok(impalerNames.includes('l_tentacle_armor'));
+  assert.ok(impalerNames.includes('m_tentacle_armor'));
+  assert.ok(impalerNames.includes('r_tentacle_armor'));
+  assert.ok(enemydata.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
 });

@@ -2620,7 +2620,7 @@
           "MainCap": 1,
           "ToMain%": 0.75,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "left_forearm"
         },
         {
           "AV": 1,
@@ -2630,7 +2630,7 @@
           "MainCap": 1,
           "ToMain%": 0.8,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "left_upper_arm"
         },
         {
           "AV": 1,
@@ -2640,7 +2640,7 @@
           "MainCap": 1,
           "ToMain%": 0.8,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "right_upper_arm"
         },
         {
           "AV": 2,
@@ -2649,7 +2649,7 @@
           "MainCap": 1,
           "ToMain%": 0.75,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "right_forearm"
         },
         {
           "AV": 1,
@@ -2659,7 +2659,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 150,
-          "zone_name": "[unknown]"
+          "zone_name": "head"
         },
         {
           "AV": 2,
@@ -2669,7 +2669,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1400,
-          "zone_name": "[unknown]"
+          "zone_name": "left_leg"
         },
         {
           "AV": 2,
@@ -2679,7 +2679,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1400,
-          "zone_name": "[unknown]"
+          "zone_name": "right_leg"
         },
         {
           "AV": 2,
@@ -2699,7 +2699,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 1200,
-          "zone_name": "[unknown]"
+          "zone_name": "torso"
         },
         {
           "AV": 2,
@@ -2709,7 +2709,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 300,
-          "zone_name": "[unknown]"
+          "zone_name": "torso_armor"
         },
         {
           "AV": 2,
@@ -2719,7 +2719,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "helmet"
         },
         {
           "AV": 2,
@@ -2729,7 +2729,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "left_pauldron"
         },
         {
           "AV": 2,
@@ -2739,7 +2739,7 @@
           "MainCap": 0,
           "ToMain%": 0.3,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "right_pauldron"
         }
       ],
       "health": 750
@@ -8683,7 +8683,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": -1,
-          "zone_name": "l_front_armor_claw"
+          "zone_name": "l_tentacle_armor"
         },
         {
           "AV": 4,
@@ -8692,7 +8692,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": -1,
-          "zone_name": "[unknown]"
+          "zone_name": "m_tentacle_armor"
         },
         {
           "AV": 4,
@@ -8701,7 +8701,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": -1,
-          "zone_name": "[unknown]"
+          "zone_name": "r_tentacle_armor"
         }
       ],
       "health": 4000,

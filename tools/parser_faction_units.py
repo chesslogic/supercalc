@@ -63,579 +63,36 @@ from typing import Union
 from collections import defaultdict, OrderedDict
 from typing import Any, Dict
 
-ENEMY_SCOPE_TAGS_BY_UNIT_NAME: Dict[str, list[str]] = {
-    "AA Emplacement": ["structure"],
-    "Automaton Mortar Emplacement": ["structure"],
-    "Bile Titan": ["giant"],
-    "Bulk Fabricator": ["objective"],
-    "Cannon Turret": ["structure"],
-    "Charger Behemoth": ["giant"],
-    "Fabricator": ["objective"],
-    "Factory Strider": ["giant"],
-    "Factory Strider Gatling Gun": ["structure"],
-    "Fusion Autocannon": ["structure"],
-    "Harvester": ["giant"],
-    "Heavy Fusion Cannon": ["structure"],
-    "Hive Lord": ["giant"],
-    "Impaler": ["giant"],
-    "Infested Tower": ["objective"],
-    "Shrieker Nest": ["objective"],
-    "Spore Charger": ["giant"],
-    "Spore Lung": ["objective"],
-}
-
-# These overrides run on the parser's transformed zone shape, keyed by
-# signature plus occurrence order within matching signatures. That keeps them
-# resilient to opaque upstream names while avoiding blind renames if the zone
-# stats for a curated part ever change.
-CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME: Dict[str, list[Dict[str, Any]]] = {
-    "Agitator": [
-        {
-            "occurrence": 0,
-            "zone_name": "left_forearm",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0.75,
-                "health": 300,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_forearm",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0.75,
-                "health": 300,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_upper_arm",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0,
-                "ExMult": 0.45,
-                "ExTarget": "Part",
-                "MainCap": True,
-                "ToMain%": 0.8,
-                "health": 300,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_upper_arm",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0,
-                "ExMult": 0.45,
-                "ExTarget": "Part",
-                "MainCap": True,
-                "ToMain%": 0.8,
-                "health": 300,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "head",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": True,
-                "ToMain%": 1,
-                "health": 150,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_leg",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1400,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_leg",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1400,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "pelvis",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 1,
-                "health": 1400,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "torso",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 1,
-                "health": 1200,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "torso_armor",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExMult": 0.35,
-                "ExTarget": "Part",
-                "MainCap": False,
-                "ToMain%": 0.3,
-                "health": 300,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "helmet",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExMult": 0.35,
-                "ExTarget": "Part",
-                "MainCap": False,
-                "ToMain%": 0.3,
-                "health": 200,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "left_pauldron",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExMult": 0.35,
-                "ExTarget": "Part",
-                "MainCap": False,
-                "ToMain%": 0.3,
-                "health": 200,
-            },
-        },
-        {
-            "occurrence": 2,
-            "zone_name": "right_pauldron",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExMult": 0.35,
-                "ExTarget": "Part",
-                "MainCap": False,
-                "ToMain%": 0.3,
-                "health": 200,
-            },
-        },
-    ],
-    "Veracitor": [
-        {
-            "occurrence": 0,
-            "zone_name": "cockpit",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": True,
-                "ToMain%": 1,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "cockpit_weakspot",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": True,
-                "ToMain%": 1,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "chassis",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "head",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0,
-                "health": 300,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_carapace",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0.5,
-                "health": 400,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_carapace",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0.5,
-                "health": 400,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_internals",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 1,
-                "health": 600,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_internals",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 1,
-                "health": 600,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "pilot",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": True,
-                "ToMain%": 0,
-                "health": 700,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_shoulder",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "left_upper_arm",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 2,
-            "zone_name": "right_shoulder",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 3,
-            "zone_name": "right_upper_arm",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_arm_weakspot",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_forearm",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_arm_weakspot",
-            "signature": {
-                "AV": 1,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "right_forearm",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0,
-                "health": 800,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "left_hip",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "left_upper_leg",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 2,
-            "zone_name": "right_hip",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 3,
-            "zone_name": "right_upper_leg",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 1,
-            "zone_name": "left_lower_leg",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 2,
-            "zone_name": "right_lower_leg",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 3,
-            "zone_name": "rear_hip",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 4,
-            "zone_name": "rear_leg",
-            "signature": {
-                "AV": 3,
-                "Dur%": 0.5,
-                "ExTarget": "Main",
-                "IsFatal": True,
-                "MainCap": False,
-                "ToMain%": 0.75,
-                "health": 1600,
-            },
-        },
-        {
-            "occurrence": 0,
-            "zone_name": "shield",
-            "signature": {
-                "AV": 2,
-                "Dur%": 0,
-                "ExTarget": "Main",
-                "MainCap": True,
-                "ToMain%": 0,
-                "health": 1300,
-            },
-        },
-    ],
-}
-
-# --- Mapping helpers -------------------------------------------------------
-
-def normalize_faction(raw: str):
-    """Map fac_* folder segment to target faction label or None to ignore."""
-    r = raw.strip().lower().replace("_", "")
-    mapping = {
-        # desired three buckets
-        "bugs": "Terminid",
-        "cyborgs": "Automaton",
-        "cyborg": "Automaton",
-        "illuminate": "Illuminate",
-        "illuminates": "Illuminate",
-        # explicitly ignored
-        "superearth": None,
-        "helldivers": None,
-        "helldiver": None,
-        "human": None,
-        "humans": None,
-    }
-    return mapping.get(r, None)
-
-# --- Core parsing ----------------------------------------------------------
-
-def round_float(value: Any) -> Union[int, float]:
-    """Round float values to 2 decimal places. Returns int if value is whole number, float otherwise."""
-    if isinstance(value, float):
-        rounded = round(value, 2)
-        # Return as int if it's a whole number (e.g., 1.0 -> 1, but 0.4 -> 0.4)
-        return int(rounded) if rounded == int(rounded) else rounded
-    elif isinstance(value, (int, bool)):
-        return value
-    else:
-        # Try to convert to float and round
-        try:
-            fval = float(value)
-            rounded = round(fval, 2)
-            return int(rounded) if rounded == int(rounded) else rounded
-        except (ValueError, TypeError):
-            return value
-
+try:
+    from enemy_parser_constants import (
+        CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
+        ENEMY_SCOPE_TAGS_BY_UNIT_NAME,
+        INTERNAL_RAW_ZONE_NAME_KEY,
+        INTERNAL_ZONE_METADATA_KEYS,
+    )
+except ModuleNotFoundError:  # pragma: no cover - support package-style imports
+    from tools.enemy_parser_constants import (
+        CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
+        ENEMY_SCOPE_TAGS_BY_UNIT_NAME,
+        INTERNAL_RAW_ZONE_NAME_KEY,
+        INTERNAL_ZONE_METADATA_KEYS,
+    )
 
 def get_scope_tags_for_unit(unit_name: str) -> list[str]:
     return list(ENEMY_SCOPE_TAGS_BY_UNIT_NAME.get(str(unit_name or ""), []))
 
+def normalize_raw_zone_name(value: Any) -> str:
+    if value is None:
+        return ""
+    text = str(value)
+    if "^_^" in text:
+        text = text.split("^_^", 1)[0]
+    return text.strip()
+
 def normalize_zone_signature(zone: Dict[str, Any]) -> Dict[str, Any]:
     normalized: Dict[str, Any] = {}
     for key, value in zone.items():
-        if key == "zone_name":
+        if key == "zone_name" or str(key) in INTERNAL_ZONE_METADATA_KEYS:
             continue
         if key == "MainCap":
             normalized[key] = bool(value)
@@ -651,22 +108,37 @@ def serialize_zone_signature(zone: Dict[str, Any]) -> str:
         separators=(",", ":"),
     )
 
-def build_curated_zone_name_override_lookup() -> Dict[str, Dict[tuple[str, int], str]]:
-    lookup: Dict[str, Dict[tuple[str, int], str]] = {}
+def build_curated_zone_name_override_lookup() -> Dict[str, Dict[str, Dict[tuple[str, int], str]]]:
+    lookup: Dict[str, Dict[str, Dict[tuple[str, int], str]]] = {}
     for unit_name, overrides in CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME.items():
-        unit_lookup: Dict[tuple[str, int], str] = {}
+        raw_zone_name_lookup: Dict[tuple[str, int], str] = {}
+        signature_lookup: Dict[tuple[str, int], str] = {}
         for override in overrides:
             signature = override.get("signature")
             zone_name = str(override.get("zone_name") or "")
             occurrence = int(override.get("occurrence", 0) or 0)
-            if not isinstance(signature, dict) or not zone_name:
+            raw_zone_name = normalize_raw_zone_name(override.get("raw_zone_name"))
+            raw_occurrence = int(override.get("raw_occurrence", 0) or 0)
+            if not zone_name:
                 continue
-            key = (serialize_zone_signature(signature), occurrence)
-            if key in unit_lookup:
-                raise ValueError(f"Duplicate curated zone override for {unit_name}: {key}")
-            unit_lookup[key] = zone_name
-        if unit_lookup:
-            lookup[unit_name] = unit_lookup
+
+            if raw_zone_name:
+                raw_key = (raw_zone_name, raw_occurrence)
+                if raw_key in raw_zone_name_lookup:
+                    raise ValueError(f"Duplicate curated raw zone override for {unit_name}: {raw_key}")
+                raw_zone_name_lookup[raw_key] = zone_name
+
+            if isinstance(signature, dict):
+                signature_key = (serialize_zone_signature(signature), occurrence)
+                if signature_key in signature_lookup:
+                    raise ValueError(f"Duplicate curated zone signature override for {unit_name}: {signature_key}")
+                signature_lookup[signature_key] = zone_name
+
+        if raw_zone_name_lookup or signature_lookup:
+            lookup[unit_name] = {
+                "raw_zone_names": raw_zone_name_lookup,
+                "signatures": signature_lookup,
+            }
     return lookup
 
 CURATED_ZONE_NAME_OVERRIDE_LOOKUP_BY_UNIT_NAME = build_curated_zone_name_override_lookup()
@@ -676,15 +148,27 @@ def apply_curated_zone_name_overrides(unit_name: str, zones: list[Dict[str, Any]
     if not override_lookup:
         return
 
+    raw_zone_name_lookup = override_lookup.get("raw_zone_names", {})
+    signature_lookup = override_lookup.get("signatures", {})
+    seen_raw_zone_names: Dict[str, int] = defaultdict(int)
     seen_signatures: Dict[str, int] = defaultdict(int)
     for zone in zones:
         if not isinstance(zone, dict):
             continue
+
+        raw_zone_name = normalize_raw_zone_name(zone.get(INTERNAL_RAW_ZONE_NAME_KEY))
+        raw_occurrence = seen_raw_zone_names[raw_zone_name] if raw_zone_name else 0
         signature = serialize_zone_signature(zone)
         occurrence = seen_signatures[signature]
-        replacement = override_lookup.get((signature, occurrence))
+        replacement = None
+        if raw_zone_name:
+            replacement = raw_zone_name_lookup.get((raw_zone_name, raw_occurrence))
+        if not replacement:
+            replacement = signature_lookup.get((signature, occurrence))
         if replacement:
             zone["zone_name"] = replacement
+        if raw_zone_name:
+            seen_raw_zone_names[raw_zone_name] += 1
         seen_signatures[signature] += 1
 
 def sanitize_string(s: str) -> str:
@@ -710,6 +194,37 @@ def sanitize(obj: Union[dict, list, str, int, float, None]):
             out[k] = sanitize(v)
         return out
     return obj
+
+def normalize_faction(raw: str):
+    """Map fac_* folder segment to target faction label or None to ignore."""
+    r = raw.strip().lower().replace("_", "")
+    mapping = {
+        "bugs": "Terminid",
+        "cyborgs": "Automaton",
+        "cyborg": "Automaton",
+        "illuminate": "Illuminate",
+        "illuminates": "Illuminate",
+        "superearth": None,
+        "helldivers": None,
+        "helldiver": None,
+        "human": None,
+        "humans": None,
+    }
+    return mapping.get(r, None)
+
+def round_float(value: Any) -> Any:
+    try:
+        numeric = float(value)
+    except (ValueError, TypeError):
+        return value
+    if not math.isfinite(numeric):
+        return value
+    rounded = round(numeric, 2)
+    if rounded == 0:
+        rounded = 0.0
+    if float(rounded).is_integer():
+        return int(rounded)
+    return rounded
 
 IGNORED_ZONE_KEYS = {
     "affected_by_collision_impact",
@@ -823,7 +338,10 @@ def transform_zone(
 
     # Keep selected fields (sanitized if string)
     if "zone_name" in src and src["zone_name"] is not None:
-        out["zone_name"] = sanitize_string(str(src["zone_name"]))
+        raw_zone_name = normalize_raw_zone_name(src["zone_name"])
+        if raw_zone_name:
+            out[INTERNAL_RAW_ZONE_NAME_KEY] = raw_zone_name
+            out["zone_name"] = sanitize_string(raw_zone_name)
     
     # Keep health as-is, rename constitution to Con
     if "health" in src and src["health"] is not None:
@@ -911,9 +429,21 @@ def _best_candidate(candidates: list[Dict[str, Any]]) -> Dict[str, Any]:
     return sorted(candidates, key=_candidate_sort_key)[0]
 
 def _canonical_payload(candidate: Dict[str, Any]) -> Dict[str, Any]:
+    zones = candidate.get("damageable_zones")
+    canonical_zones = zones
+    if isinstance(zones, list):
+        canonical_zones = []
+        for zone in zones:
+            if isinstance(zone, dict):
+                canonical_zones.append(
+                    {key: value for key, value in zone.items() if str(key) not in INTERNAL_ZONE_METADATA_KEYS}
+                )
+                continue
+            canonical_zones.append(zone)
+
     payload = {
         "health": candidate.get("health"),
-        "damageable_zones": candidate.get("damageable_zones"),
+        "damageable_zones": canonical_zones,
     }
     if candidate.get("scope_tags"):
         payload["scope_tags"] = candidate.get("scope_tags")
