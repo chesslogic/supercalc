@@ -3,6 +3,7 @@ import { buildKillSummary } from './summary.js';
 import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 import { getCriticalZoneInfo } from './tactical-data.js';
+import { calculateBallisticDamageMultiplier, resolveBallisticFalloffProfileForWeapon } from '../weapons/falloff.js';
 
 function toNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -12,6 +13,11 @@ function toNumber(value, fallback = 0) {
 function toPositiveInteger(value, fallback = 1) {
   const numeric = Number(value);
   return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : fallback;
+}
+
+function toFiniteNumber(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
 }
 
 function normalizeZoneName(zone) {
@@ -186,6 +192,53 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
   };
 }
 
+function calculateAttackAgainstZoneAtDistance(attack, zone, {
+  hits = 1,
+  distanceMeters = 0,
+  falloffAttributes = null
+} = {}) {
+  const baseResult = calculateAttackAgainstZone(attack, zone, hits);
+  if (!baseResult || baseResult.isExplosion) {
+    return baseResult;
+  }
+
+  const normalizedDistance = Math.max(0, toFiniteNumber(distanceMeters) ?? 0);
+  if (normalizedDistance <= 0 || !falloffAttributes) {
+    return {
+      ...baseResult,
+      damageFalloffMultiplier: 1,
+      distanceMeters: normalizedDistance
+    };
+  }
+
+  const falloffMultiplier = calculateBallisticDamageMultiplier(falloffAttributes, normalizedDistance);
+  if (falloffMultiplier === null) {
+    return {
+      ...baseResult,
+      damageFalloffMultiplier: 1,
+      distanceMeters: normalizedDistance
+    };
+  }
+
+  const rawDamage = baseResult.rawBaseDamage
+    * baseResult.damageMultiplier
+    * baseResult.explosionModifier
+    * falloffMultiplier;
+  const damage = roundDamagePacket(rawDamage) ?? 0;
+  const rawDamageToMain = damage * baseResult.toMainPercent;
+  const damageToMain = roundDamagePacket(rawDamageToMain) ?? 0;
+
+  return {
+    ...baseResult,
+    damage,
+    damageToMain,
+    rawDamage,
+    rawDamageToMain,
+    damageFalloffMultiplier: falloffMultiplier,
+    distanceMeters: normalizedDistance
+  };
+}
+
 export function buildZoneAttackDetails(zone, selectedAttacks = [], hitCounts = []) {
   if (!zone || !Array.isArray(selectedAttacks) || selectedAttacks.length === 0) {
     return [];
@@ -201,13 +254,25 @@ export function summarizeZoneDamage({
   enemyMainHealth,
   selectedAttacks = [],
   hitCounts = [],
-  rpm
+  rpm,
+  weapon = null,
+  distanceMeters = 0
 }) {
   if (!zone) {
     return null;
   }
 
-  const attackDetails = buildZoneAttackDetails(zone, selectedAttacks, hitCounts);
+  const falloffResolution = weapon ? resolveBallisticFalloffProfileForWeapon(weapon) : null;
+  const falloffAttributes = falloffResolution?.status === 'available'
+    ? falloffResolution.profile?.attributes || null
+    : null;
+  const attackDetails = selectedAttacks.map((attack, index) =>
+    calculateAttackAgainstZoneAtDistance(attack, zone, {
+      hits: hitCounts[index],
+      distanceMeters,
+      falloffAttributes
+    })
+  );
   let totalDamagePerCycle = 0;
   let totalDamageToMainPerCycle = 0;
 
@@ -232,7 +297,9 @@ function buildProjectileAttackScenario({
   hits,
   enemy,
   projectileZoneIndex,
-  mainZoneIndex
+  mainZoneIndex,
+  distanceMeters = 0,
+  falloffAttributes = null
 }) {
   const scenario = buildEmptyAttackScenario(attack, hits, 'projectile');
   const zones = enemy?.zones || [];
@@ -241,7 +308,11 @@ function buildProjectileAttackScenario({
   }
 
   const targetZone = zones[projectileZoneIndex];
-  const attackResult = calculateAttackAgainstZone(attack, targetZone, hits);
+  const attackResult = calculateAttackAgainstZoneAtDistance(attack, targetZone, {
+    hits,
+    distanceMeters,
+    falloffAttributes
+  });
   const zoneDamage = attackResult.damage * attackResult.hits;
   const directMainDamage = projectileZoneIndex === mainZoneIndex ? zoneDamage : 0;
   const passthroughMainDamage = projectileZoneIndex === mainZoneIndex
@@ -353,11 +424,13 @@ function buildExplosionAttackScenario({
 
 export function summarizeEnemyTargetScenario({
   enemy,
+  weapon = null,
   selectedAttacks = [],
   hitCounts = [],
   rpm,
   projectileZoneIndex,
-  explosiveZoneIndices = []
+  explosiveZoneIndices = [],
+  distanceMeters = 0
 }) {
   if (!enemy?.zones || enemy.zones.length === 0) {
     return null;
@@ -381,6 +454,10 @@ export function summarizeEnemyTargetScenario({
   const attackDetails = [];
   let totalDirectMainDamagePerCycle = 0;
   let totalPassthroughMainDamagePerCycle = 0;
+  const falloffResolution = weapon ? resolveBallisticFalloffProfileForWeapon(weapon) : null;
+  const falloffAttributes = falloffResolution?.status === 'available'
+    ? falloffResolution.profile?.attributes || null
+    : null;
 
   selectedAttacks.forEach((attack, index) => {
     const hits = toPositiveInteger(hitCounts[index], 1);
@@ -393,12 +470,14 @@ export function summarizeEnemyTargetScenario({
         mainZoneIndex
       })
       : buildProjectileAttackScenario({
-        attack,
-        hits,
-        enemy,
-        projectileZoneIndex: normalizedProjectileZoneIndex,
-        mainZoneIndex
-      });
+          attack,
+          hits,
+          enemy,
+          projectileZoneIndex: normalizedProjectileZoneIndex,
+          mainZoneIndex,
+          distanceMeters,
+          falloffAttributes
+        });
 
     totalDirectMainDamagePerCycle += attackScenario.totalDirectMainDamagePerCycle;
     totalPassthroughMainDamagePerCycle += attackScenario.totalPassthroughMainDamagePerCycle;

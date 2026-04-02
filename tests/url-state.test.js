@@ -194,6 +194,7 @@ function snapshotCalculatorState() {
     enemyTargetTypes: [...calculatorState.enemyTargetTypes],
     diffDisplayMode: calculatorState.diffDisplayMode,
     recommendationRangeMeters: calculatorState.recommendationRangeMeters,
+    engagementRangeMeters: { ...calculatorState.engagementRangeMeters },
     weaponA: calculatorState.weaponA,
     weaponB: calculatorState.weaponB,
     selectedEnemy: calculatorState.selectedEnemy,
@@ -219,7 +220,7 @@ function restoreCalculatorState(snapshot) {
   calculatorState.overviewScope = snapshot.overviewScope;
   calculatorState.enemyTargetTypes = [...snapshot.enemyTargetTypes];
   calculatorState.diffDisplayMode = snapshot.diffDisplayMode;
-  calculatorState.recommendationRangeMeters = snapshot.recommendationRangeMeters;
+  calculatorState.engagementRangeMeters = { ...snapshot.engagementRangeMeters };
   calculatorState.weaponA = snapshot.weaponA;
   calculatorState.weaponB = snapshot.weaponB;
   calculatorState.selectedEnemy = snapshot.selectedEnemy;
@@ -332,7 +333,8 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   assert.deepEqual(JSON.parse(params.get('cab')), [0]);
   assert.deepEqual(JSON.parse(params.get('cha')), { 1: 3 });
   assert.equal(params.has('chb'), false);
-  assert.equal(params.get('crm'), '45');
+  assert.equal(params.get('cra'), '45');
+  assert.equal(params.get('crb'), '45');
   assert.deepEqual(JSON.parse(params.get('wty')), ['primary', 'support']);
   assert.deepEqual(JSON.parse(params.get('wsub')), ['sg']);
   assert.equal(params.get('wsq'), 'breaker');
@@ -435,7 +437,8 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.equal(calculatorState.overviewScope, 'automatons');
   assert.deepEqual(calculatorState.enemyTargetTypes, ['giant']);
   assert.equal(calculatorState.diffDisplayMode, 'percent');
-  assert.equal(calculatorState.recommendationRangeMeters, 60);
+  assert.equal(calculatorState.engagementRangeMeters.A, 60);
+  assert.equal(calculatorState.engagementRangeMeters.B, 60);
   assert.equal(calculatorState.weaponA?.name, 'Breaker');
   assert.equal(calculatorState.weaponB?.name, 'Railgun');
   assert.equal(calculatorState.selectedEnemy?.name, 'Practice Hulk');

@@ -223,23 +223,28 @@ function summarizeZoneForSlot({
   enemyMainHealth,
   weapon,
   selectedAttacks = [],
-  hitCounts = []
+  hitCounts = [],
+  distanceMeters = 0
 }) {
   const zoneSummary = enemy?.zones && Number.isInteger(zoneIndex)
     ? summarizeEnemyTargetScenario({
       enemy,
+      weapon,
       selectedAttacks,
       hitCounts,
       rpm: weapon?.rpm,
       projectileZoneIndex: zoneIndex,
-      explosiveZoneIndices: [zoneIndex]
+      explosiveZoneIndices: [zoneIndex],
+      distanceMeters
     })?.zoneSummaries?.[zoneIndex] || null
     : summarizeZoneDamage({
       zone,
       enemyMainHealth,
+      weapon,
       selectedAttacks,
       hitCounts,
-      rpm: weapon?.rpm
+      rpm: weapon?.rpm,
+      distanceMeters
     });
   const criticalInfo = getCriticalZoneInfo(enemy, zone);
   const outcomeKind = getZoneOutcomeKind({
@@ -437,7 +442,9 @@ export function buildZoneComparisonMetrics({
   selectedAttacksA = [],
   selectedAttacksB = [],
   hitCountsA = [],
-  hitCountsB = []
+  hitCountsB = [],
+  distanceMetersA = 0,
+  distanceMetersB = 0
 }) {
   const slotA = summarizeZoneForSlot({
     zone,
@@ -446,7 +453,8 @@ export function buildZoneComparisonMetrics({
     enemyMainHealth,
     weapon: weaponA,
     selectedAttacks: selectedAttacksA,
-    hitCounts: hitCountsA
+    hitCounts: hitCountsA,
+    distanceMeters: distanceMetersA
   });
   const slotB = summarizeZoneForSlot({
     zone,
@@ -455,7 +463,8 @@ export function buildZoneComparisonMetrics({
     enemyMainHealth,
     weapon: weaponB,
     selectedAttacks: selectedAttacksB,
-    hitCounts: hitCountsB
+    hitCounts: hitCountsB,
+    distanceMeters: distanceMetersB
   });
 
   return {
@@ -485,7 +494,9 @@ export function buildFocusedZoneComparisonRows({
   selectedAttacksA = [],
   selectedAttacksB = [],
   hitCountsA = [],
-  hitCountsB = []
+  hitCountsB = [],
+  distanceMetersA = 0,
+  distanceMetersB = 0
 }) {
   if (!enemy?.zones || enemy.zones.length === 0) {
     return [];
@@ -507,7 +518,9 @@ export function buildFocusedZoneComparisonRows({
         selectedAttacksA,
         selectedAttacksB,
         hitCountsA,
-        hitCountsB
+        hitCountsB,
+        distanceMetersA,
+        distanceMetersB
       })
     };
   });
@@ -522,7 +535,9 @@ export function buildOverviewRows({
   selectedAttacksA = [],
   selectedAttacksB = [],
   hitCountsA = [],
-  hitCountsB = []
+  hitCountsB = [],
+  distanceMetersA = 0,
+  distanceMetersB = 0
 }) {
   return filterEnemiesByTargetTypes(filterEnemiesByScope(units, scope), targetTypes)
     .flatMap((unit) => {
@@ -544,7 +559,9 @@ export function buildOverviewRows({
           selectedAttacksA,
           selectedAttacksB,
           hitCountsA,
-          hitCountsB
+          hitCountsB,
+          distanceMetersA,
+          distanceMetersB
         })
       }));
     });

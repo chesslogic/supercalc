@@ -330,6 +330,20 @@ tbody tr:hover {
   min-width:552px;
   padding-right: 32px;
 }
+.calculator-range-control{
+  flex:1 1 280px;
+  min-width:240px;
+}
+.calculator-range-slider{
+  width:100%;
+  margin:0;
+  accent-color:var(--accent);
+}
+.calculator-range-value{
+  min-width:88px;
+  text-align:right;
+  white-space:nowrap;
+}
 .calculator-clear-btn {
   position: absolute;
   right: 8px;

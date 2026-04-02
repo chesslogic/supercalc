@@ -3,6 +3,7 @@ import {
   DEFAULT_COMPARE_VIEW,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
+  getEngagementRangeMeters,
   getSelectedAttackKeys,
   getSelectedAttacks,
   getSelectedEnemyTargetTypes,
@@ -12,6 +13,7 @@ import {
   setCalculatorMode,
   setCompareView,
   setDiffDisplayMode,
+  setEngagementRangeMeters,
   setEnemySortState,
   setEnemyTableMode,
   setOverviewScope,
@@ -42,7 +44,8 @@ const DEFAULT_CALCULATOR_URL_STATE = {
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   enemyTargetTypes: getSelectedEnemyTargetTypes(),
   diffDisplayMode: 'absolute',
-  recommendationRangeMeters: DEFAULT_RECOMMENDATION_RANGE_METERS,
+  engagementRangeMetersA: DEFAULT_RECOMMENDATION_RANGE_METERS,
+  engagementRangeMetersB: DEFAULT_RECOMMENDATION_RANGE_METERS,
   weaponA: null,
   weaponB: null,
   selectedEnemy: null,
@@ -84,7 +87,8 @@ const URL_PARAM_KEYS = {
   overviewScope: 'cos',
   enemyTargetTypes: 'cett',
   diffDisplayMode: 'cddm',
-  recommendationRangeMeters: 'crm',
+  engagementRangeMetersA: 'cra',
+  engagementRangeMetersB: 'crb',
   weaponA: 'cwa',
   weaponB: 'cwb',
   selectedEnemy: 'cen',
@@ -381,7 +385,8 @@ export function buildUrlStateSnapshot({
       overviewScope: calculatorState.overviewScope,
       enemyTargetTypes: [...getSelectedEnemyTargetTypes()],
       diffDisplayMode: calculatorState.diffDisplayMode,
-      recommendationRangeMeters: calculatorState.recommendationRangeMeters,
+      engagementRangeMetersA: getEngagementRangeMeters('A'),
+      engagementRangeMetersB: getEngagementRangeMeters('B'),
       weaponA: getWeaponForSlot('A')?.name || null,
       weaponB: getWeaponForSlot('B')?.name || null,
       selectedEnemy: calculatorState.selectedEnemy?.name || null,
@@ -417,7 +422,8 @@ export function encodeUrlState({
   setParam(params, URL_PARAM_KEYS.overviewScope, calculator.overviewScope, DEFAULT_CALCULATOR_URL_STATE.overviewScope);
   setJsonParam(params, URL_PARAM_KEYS.enemyTargetTypes, calculator.enemyTargetTypes, DEFAULT_CALCULATOR_URL_STATE.enemyTargetTypes);
   setParam(params, URL_PARAM_KEYS.diffDisplayMode, calculator.diffDisplayMode, DEFAULT_CALCULATOR_URL_STATE.diffDisplayMode);
-  setParam(params, URL_PARAM_KEYS.recommendationRangeMeters, calculator.recommendationRangeMeters, DEFAULT_CALCULATOR_URL_STATE.recommendationRangeMeters);
+  setParam(params, URL_PARAM_KEYS.engagementRangeMetersA, calculator.engagementRangeMetersA, DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersA);
+  setParam(params, URL_PARAM_KEYS.engagementRangeMetersB, calculator.engagementRangeMetersB, DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersB);
   setParam(params, URL_PARAM_KEYS.weaponA, calculator.weaponA);
   setParam(params, URL_PARAM_KEYS.weaponB, calculator.weaponB);
   setParam(params, URL_PARAM_KEYS.selectedEnemy, calculator.selectedEnemy);
@@ -536,8 +542,18 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
       : DEFAULT_CALCULATOR_URL_STATE.enemyTargetTypes
   );
   setDiffDisplayMode(params.get(URL_PARAM_KEYS.diffDisplayMode) || DEFAULT_CALCULATOR_URL_STATE.diffDisplayMode);
-  setRecommendationRangeMeters(
-    params.get(URL_PARAM_KEYS.recommendationRangeMeters) ?? DEFAULT_CALCULATOR_URL_STATE.recommendationRangeMeters
+  const legacySharedRange = params.get('crm');
+  setEngagementRangeMeters(
+    'A',
+    params.get(URL_PARAM_KEYS.engagementRangeMetersA)
+      ?? legacySharedRange
+      ?? DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersA
+  );
+  setEngagementRangeMeters(
+    'B',
+    params.get(URL_PARAM_KEYS.engagementRangeMetersB)
+      ?? legacySharedRange
+      ?? DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersB
   );
 
   setSelectedWeapon('A', findWeaponByName(params.get(URL_PARAM_KEYS.weaponA)));

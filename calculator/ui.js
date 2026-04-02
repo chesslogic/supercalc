@@ -2,11 +2,13 @@
 import {
   calculatorState,
   getEnemyOptions,
+  getEngagementRangeMeters,
   getSelectedEnemyTargetTypes,
   getWeaponOptions,
   getWeaponSortModeOptionsForState,
   setCalculatorMode,
   setCompareView,
+  setEngagementRangeMeters,
   setSelectedEnemy,
   setWeaponSortMode,
   setSelectedWeapon
@@ -26,6 +28,7 @@ import { renderCalculation } from './calculation.js';
 
 let enemySelectorSetup = false;
 let shareButtonSetup = false;
+const ENGAGEMENT_RANGE_CONTROL_TITLE = 'Engagement distance used for displayed damage, shots, TTK, and recommendation breakpoint checks for this weapon slot.';
 
 export function getCalculatorModeButtonTitle(mode) {
   if (mode === 'compare') {
@@ -46,6 +49,11 @@ export function getEnemyOverviewOptionHtml(scope = 'all') {
   return `Overview <span class="overview-dropdown-meta">${summary}</span>`;
 }
 
+export function formatEngagementRangeDisplayValue(rangeMeters) {
+  const normalizedRange = Math.max(0, Math.round(Number(rangeMeters) || 0));
+  return normalizedRange === 0 ? 'Any / 0m' : `${normalizedRange}m`;
+}
+
 export function setupCalculator() {
   if (enemyState.units && enemyState.units.length > 0) {
     window.enemyDataLoaded = true;
@@ -54,6 +62,8 @@ export function setupCalculator() {
   setupModeToggle();
   setupWeaponSelector('A');
   setupWeaponSelector('B');
+  setupEngagementRangeControl('A');
+  setupEngagementRangeControl('B');
 
   if (!enemySelectorSetup) {
     setupEnemySelector();
@@ -101,6 +111,8 @@ function syncCalculatorModeUi() {
   const weaponSortSelect = document.getElementById('calculator-weapon-sort');
   const weaponRowB = document.getElementById('calculator-weapon-row-b');
   const weaponLabelA = document.getElementById('calculator-weapon-label-a');
+  const rangeRowB = document.getElementById('calculator-range-row-b');
+  const rangeLabelA = document.getElementById('calculator-range-label-a');
 
   const compareMode = calculatorState.mode === 'compare';
 
@@ -114,9 +126,13 @@ function syncCalculatorModeUi() {
     modeCompareButton.title = getCalculatorModeButtonTitle('compare');
   }
   weaponRowB?.classList.toggle('hidden', !compareMode);
+  rangeRowB?.classList.toggle('hidden', !compareMode);
 
   if (weaponLabelA) {
     weaponLabelA.textContent = compareMode ? 'Weapon A:' : 'Weapon:';
+  }
+  if (rangeLabelA) {
+    rangeLabelA.textContent = compareMode ? 'Range A:' : 'Range:';
   }
 
   if (weaponSortSelect) {
@@ -133,6 +149,8 @@ function syncCalculatorModeUi() {
 
   syncWeaponInputValue('A');
   syncWeaponInputValue('B');
+  syncEngagementRangeControl('A');
+  syncEngagementRangeControl('B');
   syncEnemyInputValue();
 }
 
@@ -160,6 +178,23 @@ function syncWeaponInputValue(slot) {
     || (slot === 'A' ? document.getElementById('calculator-weapon-input') : null);
   if (weaponInput) {
     weaponInput.value = getWeaponInputDisplayValue(slot);
+  }
+}
+
+function syncEngagementRangeControl(slot) {
+  const suffix = slot.toLowerCase();
+  const rangeInput = document.getElementById(`calculator-range-input-${suffix}`);
+  const rangeValue = document.getElementById(`calculator-range-value-${suffix}`);
+  const currentRange = getEngagementRangeMeters(slot);
+  const displayValue = formatEngagementRangeDisplayValue(currentRange);
+
+  if (rangeInput) {
+    rangeInput.value = String(currentRange);
+    rangeInput.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+  }
+  if (rangeValue) {
+    rangeValue.textContent = displayValue;
+    rangeValue.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
   }
 }
 
@@ -210,6 +245,33 @@ function setupModeToggle() {
     renderEnemyDetails();
     renderCalculation();
   });
+}
+
+function setupEngagementRangeControl(slot) {
+  const suffix = slot.toLowerCase();
+  const rangeInput = document.getElementById(`calculator-range-input-${suffix}`);
+  const rangeValue = document.getElementById(`calculator-range-value-${suffix}`);
+
+  if (!rangeInput || !rangeValue) {
+    console.warn(`[calculator] Range control DOM missing for slot ${slot}`);
+    return;
+  }
+
+  rangeInput.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+  rangeValue.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+
+  rangeInput.addEventListener('input', (event) => {
+    rangeValue.textContent = formatEngagementRangeDisplayValue(event.target.value);
+  });
+
+  rangeInput.addEventListener('change', (event) => {
+    setEngagementRangeMeters(slot, event.target.value);
+    syncEngagementRangeControl(slot);
+    renderEnemyDetails();
+    renderCalculation();
+  });
+
+  syncEngagementRangeControl(slot);
 }
 
 function setupWeaponSelector(slot) {

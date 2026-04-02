@@ -76,7 +76,10 @@ export const calculatorState = {
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   enemyTargetTypes: [...DEFAULT_ENEMY_TARGET_TYPES],
   diffDisplayMode: 'absolute',
-  recommendationRangeMeters: DEFAULT_RECOMMENDATION_RANGE_METERS,
+  engagementRangeMeters: {
+    A: DEFAULT_RECOMMENDATION_RANGE_METERS,
+    B: DEFAULT_RECOMMENDATION_RANGE_METERS
+  },
   weaponA: null,
   weaponB: null,
   selectedEnemy: null,
@@ -92,6 +95,22 @@ export const calculatorState = {
   },
   enemySort: { ...DEFAULT_ENEMY_SORT }
 };
+
+Object.defineProperty(calculatorState, 'recommendationRangeMeters', {
+  configurable: true,
+  enumerable: true,
+  get() {
+    return Math.max(
+      calculatorState.engagementRangeMeters.A ?? DEFAULT_RECOMMENDATION_RANGE_METERS,
+      calculatorState.engagementRangeMeters.B ?? DEFAULT_RECOMMENDATION_RANGE_METERS
+    );
+  },
+  set(value) {
+    const normalizedRange = normalizeRecommendationRangeMeters(value);
+    calculatorState.engagementRangeMeters.A = normalizedRange;
+    calculatorState.engagementRangeMeters.B = normalizedRange;
+  }
+});
 
 export function getWeaponOptions(slot = 'A') {
   if (!weaponsState.groups) {
@@ -214,9 +233,23 @@ export function setDiffDisplayMode(mode) {
 }
 
 export function setRecommendationRangeMeters(value) {
-  calculatorState.recommendationRangeMeters = normalizeRecommendationRangeMeters(value);
+  const normalizedRange = normalizeRecommendationRangeMeters(value);
+  calculatorState.engagementRangeMeters.A = normalizedRange;
+  calculatorState.engagementRangeMeters.B = normalizedRange;
   notifyCalculatorStateChange();
-  return calculatorState.recommendationRangeMeters;
+  return normalizedRange;
+}
+
+export function getEngagementRangeMeters(slot = 'A') {
+  return calculatorState.engagementRangeMeters[normalizeSlot(slot)] ?? DEFAULT_RECOMMENDATION_RANGE_METERS;
+}
+
+export function setEngagementRangeMeters(slot, value) {
+  const normalizedSlot = normalizeSlot(slot);
+  const normalizedRange = normalizeRecommendationRangeMeters(value);
+  calculatorState.engagementRangeMeters[normalizedSlot] = normalizedRange;
+  notifyCalculatorStateChange();
+  return normalizedRange;
 }
 
 export function setSelectedWeapon(slot, weapon) {

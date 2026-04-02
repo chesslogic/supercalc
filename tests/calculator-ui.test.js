@@ -33,6 +33,7 @@ import { filterEnemiesByScope, getEnemyDropdownQueryState } from '../calculator/
 import { filterEnemiesByTargetTypes, getEnemyTargetTypeOptions } from '../calculator/enemy-scope.js';
 import {
   ENEMY_OVERVIEW_DROPDOWN_CLASS,
+  formatEngagementRangeDisplayValue,
   getCalculatorModeButtonTitle,
   getEnemyOverviewOptionHtml,
   getWeaponInputDisplayValue
@@ -394,16 +395,37 @@ test('enemy table mode defaults to analysis and normalizes to supported values',
 });
 
 test('recommendation range meters normalize into a bounded integer', () => {
-  const previousRange = calculatorState.recommendationRangeMeters;
+  const previousRanges = { ...calculatorState.engagementRangeMeters };
 
   try {
     assert.equal(setRecommendationRangeMeters('30.7'), 31);
-    assert.equal(calculatorState.recommendationRangeMeters, 31);
+    assert.equal(calculatorState.engagementRangeMeters.A, 31);
+    assert.equal(calculatorState.engagementRangeMeters.B, 31);
     assert.equal(setRecommendationRangeMeters(-5), 0);
     assert.equal(setRecommendationRangeMeters(999), 500);
   } finally {
-    calculatorState.recommendationRangeMeters = previousRange;
+    calculatorState.engagementRangeMeters = previousRanges;
   }
+});
+
+test('recommendation range compatibility alias mirrors engagement ranges', () => {
+  const previousRanges = { ...calculatorState.engagementRangeMeters };
+
+  try {
+    calculatorState.recommendationRangeMeters = 45;
+    assert.equal(calculatorState.engagementRangeMeters.A, 45);
+    assert.equal(calculatorState.engagementRangeMeters.B, 45);
+
+    calculatorState.engagementRangeMeters = { A: 10, B: 30 };
+    assert.equal(calculatorState.recommendationRangeMeters, 30);
+  } finally {
+    calculatorState.engagementRangeMeters = previousRanges;
+  }
+});
+
+test('formatEngagementRangeDisplayValue shows Any for zero range', () => {
+  assert.equal(formatEngagementRangeDisplayValue(0), 'Any / 0m');
+  assert.equal(formatEngagementRangeDisplayValue(37), '37m');
 });
 
 test('single mode always shows the full enemy columns plus derived metrics', () => {

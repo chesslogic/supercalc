@@ -115,6 +115,14 @@
             </div>
           </div>
 
+          <div class="row calculator-range-row" id="calculator-range-row-a">
+            <span class="label" id="calculator-range-label-a">Range A:</span>
+            <div class="calculator-range-control">
+              <input type="range" id="calculator-range-input-a" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon A engagement range" />
+            </div>
+            <span id="calculator-range-value-a" class="status calculator-range-value"></span>
+          </div>
+
           <div class="row" id="calculator-weapon-row-b">
             <span class="label">Weapon B:</span>
             <div class="calculator-selector">
@@ -122,6 +130,24 @@
               <div id="calculator-weapon-dropdown-b" class="calculator-dropdown hidden"></div>
             </div>
           </div>
+
+          <div class="row calculator-range-row" id="calculator-range-row-b">
+            <span class="label">Range B:</span>
+            <div class="calculator-range-control">
+              <input type="range" id="calculator-range-input-b" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon B engagement range" />
+            </div>
+            <span id="calculator-range-value-b" class="status calculator-range-value"></span>
+          </div>
+
+          <datalist id="calculator-range-ticks">
+            <option value="0"></option>
+            <option value="1"></option>
+            <option value="10"></option>
+            <option value="30"></option>
+            <option value="50"></option>
+            <option value="75"></option>
+            <option value="100"></option>
+          </datalist>
           
           <div class="calculator-details-panel">
             <div id="calculator-weapon-details"></div>

@@ -379,20 +379,23 @@ function buildAttackRowRecommendation({
   weapon,
   attackRow,
   hitCount,
-  rangeFloorMeters
+  rangeFloorMeters,
+  engagementRangeMeters = 0,
+  highlightRangeFloorMeters = rangeFloorMeters
 }) {
   const zoneRows = buildFocusedZoneComparisonRows({
     enemy,
     weaponA: weapon,
     selectedAttacksA: [attackRow],
-    hitCountsA: [hitCount]
+    hitCountsA: [hitCount],
+    distanceMetersA: engagementRangeMeters
   });
   const candidates = zoneRows
     .map(({ zone, zoneIndex, metrics }) => buildZoneRecommendationCandidate({
       zone,
       zoneIndex,
       slotMetrics: metrics?.bySlot?.A,
-      rangeFloorMeters
+      rangeFloorMeters: highlightRangeFloorMeters
     }))
     .filter(Boolean)
     .sort(compareZoneRecommendationCandidates);
@@ -497,7 +500,8 @@ function compareWeaponRecommendationRows(left, right) {
 export function buildWeaponRecommendationRows({
   enemy,
   weapons = [],
-  rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS
+  rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
+  getEngagementRangeMetersForWeapon = null
 }) {
   if (!enemy?.zones || enemy.zones.length === 0 || !Array.isArray(weapons)) {
     return [];
@@ -515,7 +519,11 @@ export function buildWeaponRecommendationRows({
             weapon,
             attackRow
           }),
-          rangeFloorMeters: normalizedRangeFloor
+          rangeFloorMeters: normalizedRangeFloor,
+          engagementRangeMeters: typeof getEngagementRangeMetersForWeapon === 'function'
+            ? getEngagementRangeMetersForWeapon(weapon)
+            : 0,
+          highlightRangeFloorMeters: normalizedRangeFloor
         }))
         .filter(Boolean)
         .sort(compareAttackRowRecommendations);

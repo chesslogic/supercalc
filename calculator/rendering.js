@@ -11,6 +11,7 @@ import {
   calculatorState,
   getEnemyTargetTypeOptionsForState,
   getEnemyOptions,
+  getEngagementRangeMeters,
   getOverviewScopeOptionGroupsForState,
   getSelectedEnemyTargetTypes,
   getSelectedExplosiveZoneIndices,
@@ -959,7 +960,9 @@ function renderOverviewDetails(container) {
     selectedAttacksA,
     selectedAttacksB,
     hitCountsA,
-    hitCountsB
+    hitCountsB,
+    distanceMetersA: getEngagementRangeMeters('A'),
+    distanceMetersB: getEngagementRangeMeters('B')
   });
 
   if (overviewRows.length === 0) {
@@ -1237,7 +1240,9 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
     selectedAttacksA,
     selectedAttacksB,
     hitCountsA,
-    hitCountsB
+    hitCountsB,
+    distanceMetersA: getEngagementRangeMeters('A'),
+    distanceMetersB: getEngagementRangeMeters('B')
   });
 
   const sortedRows = sortEnemyZoneRows(zoneRows, {
