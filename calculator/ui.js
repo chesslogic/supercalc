@@ -23,7 +23,12 @@ import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
 import { copyShareableUrl } from './url-state.js';
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
-import { renderWeaponDetails, renderEnemyDetails } from './rendering.js';
+import {
+  refreshCalculatorViews,
+  refreshEnemyCalculationViews,
+  renderWeaponDetails,
+  renderEnemyDetails
+} from './rendering.js';
 import { renderCalculation } from './calculation.js';
 
 let enemySelectorSetup = false;
@@ -76,9 +81,7 @@ export function setupCalculator() {
   }
 
   syncCalculatorModeUi();
-  renderWeaponDetails();
-  renderEnemyDetails();
-  renderCalculation();
+  refreshCalculatorViews();
 }
 
 function setupShareButton() {
@@ -221,9 +224,7 @@ function setupModeToggle() {
 
     setCalculatorMode('single');
     syncCalculatorModeUi();
-    renderWeaponDetails();
-    renderEnemyDetails();
-    renderCalculation();
+    refreshCalculatorViews();
   });
 
   modeCompareButton.addEventListener('click', () => {
@@ -233,17 +234,13 @@ function setupModeToggle() {
 
     setCalculatorMode('compare');
     syncCalculatorModeUi();
-    renderWeaponDetails();
-    renderEnemyDetails();
-    renderCalculation();
+    refreshCalculatorViews();
   });
 
   weaponSortSelect?.addEventListener('change', (event) => {
     setWeaponSortMode(event.target.value);
     syncCalculatorModeUi();
-    renderWeaponDetails();
-    renderEnemyDetails();
-    renderCalculation();
+    refreshCalculatorViews();
   });
 }
 
@@ -267,8 +264,7 @@ function setupEngagementRangeControl(slot) {
   rangeInput.addEventListener('change', (event) => {
     setEngagementRangeMeters(slot, event.target.value);
     syncEngagementRangeControl(slot);
-    renderEnemyDetails();
-    renderCalculation();
+    refreshEnemyCalculationViews();
   });
 
   syncEngagementRangeControl(slot);
@@ -295,9 +291,7 @@ function setupWeaponSelector(slot) {
     event.stopPropagation();
     setSelectedWeapon(slot, null);
     syncWeaponInputValue(slot);
-    renderWeaponDetails();
-    renderEnemyDetails();
-    renderCalculation();
+    refreshCalculatorViews();
     populateDropdown('');
   });
   weaponSelector.appendChild(clearButton);
@@ -364,9 +358,7 @@ function setupWeaponSelector(slot) {
         setSelectedWeapon(slot, weapon);
         syncWeaponInputValue(slot);
         closeDropdown();
-        renderWeaponDetails();
-        renderEnemyDetails();
-        renderCalculation();
+        refreshCalculatorViews();
       });
       weaponDropdown.appendChild(item);
     });
@@ -438,8 +430,7 @@ function setupEnemySelector() {
     setCompareView('focused');
     setSelectedEnemy(null);
     syncEnemyInputValue();
-    renderEnemyDetails();
-    renderCalculation();
+    refreshEnemyCalculationViews();
     populateDropdown('');
   });
   enemySelector.appendChild(clearButton);
@@ -486,8 +477,7 @@ function setupEnemySelector() {
         setCompareView('overview');
         syncEnemyInputValue();
         closeDropdown();
-        renderEnemyDetails();
-        renderCalculation();
+        refreshEnemyCalculationViews();
       });
       enemyDropdown.appendChild(overviewItem);
     }
@@ -508,8 +498,7 @@ function setupEnemySelector() {
         setSelectedEnemy(enemy);
         syncEnemyInputValue();
         closeDropdown();
-        renderEnemyDetails();
-        renderCalculation();
+        refreshEnemyCalculationViews();
       });
       enemyDropdown.appendChild(item);
     });

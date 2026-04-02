@@ -14,7 +14,16 @@ import {
 import { buildHallOfFameEntries, buildOverviewRows, getAttackRowKey } from './compare-utils.js';
 import { splitAttacksByApplication } from './attack-types.js';
 import { formatDamageValue } from './damage-rounding.js';
+import {
+  formatEngagementRangeMeters,
+  getEngagementRangeSummaryText,
+  getRecommendationHighlightRangeFloorMeters,
+  getRecommendationRangeContextText,
+  getRecommendationRangeSummaryText,
+  RECOMMENDATION_RANGE_FLOOR_TITLE
+} from './engagement-range.js';
 import { EFFECTIVE_DISTANCE_TOOLTIP } from './effective-distance.js';
+import { renderResultPanel } from './result-panel.js';
 import { formatTtkSeconds } from './summary.js';
 import { getZoneOutcomeDescription, getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
@@ -34,25 +43,6 @@ function appendTtkLine(resultWrapper, ttkSeconds, hasRpm) {
   }
 
   resultWrapper.appendChild(ttkLine);
-}
-
-function formatEngagementRangeMeters(rangeMeters) {
-  const normalizedRange = Math.max(0, Math.round(Number(rangeMeters) || 0));
-  return normalizedRange === 0 ? 'Any / 0m' : `${normalizedRange}m`;
-}
-
-function getRecommendationHighlightRangeFloorMeters() {
-  return calculatorState.mode === 'compare'
-    ? Math.max(getEngagementRangeMeters('A'), getEngagementRangeMeters('B'))
-    : getEngagementRangeMeters('A');
-}
-
-function getEngagementRangeSummaryText() {
-  const rangeA = getEngagementRangeMeters('A');
-  const rangeB = getEngagementRangeMeters('B');
-  return calculatorState.mode === 'compare'
-    ? `A ${formatEngagementRangeMeters(rangeA)} • B ${formatEngagementRangeMeters(rangeB)}`
-    : formatEngagementRangeMeters(rangeA);
 }
 
 function getEmptyCalculationMessage(slot) {
@@ -634,38 +624,6 @@ function appendEmptyCalculationState(container, slot) {
   container.appendChild(emptyState);
 }
 
-function renderComparePanel(container, slot, results) {
-  const panel = document.createElement('section');
-  panel.className = 'calc-compare-panel';
-
-  const heading = document.createElement('div');
-  heading.className = 'calc-compare-heading';
-
-  const badge = document.createElement('span');
-  badge.className = `calc-compare-slot-badge calc-compare-slot-badge-${slot.toLowerCase()}`;
-  badge.textContent = slot;
-  heading.appendChild(badge);
-
-  const title = document.createElement('div');
-  title.className = 'calc-compare-title';
-  title.textContent = results?.weapon?.name || `Weapon ${slot}`;
-  heading.appendChild(title);
-
-  panel.appendChild(heading);
-
-  const body = document.createElement('div');
-  body.className = 'calc-compare-body';
-  panel.appendChild(body);
-
-  if (!results) {
-    appendEmptyCalculationState(body, slot);
-  } else {
-    renderCalculationContent(body, slot, results);
-  }
-
-  container.appendChild(panel);
-}
-
 function capitalizeWord(value) {
   if (!value) {
     return '';
@@ -816,7 +774,6 @@ function renderOverviewCalculation(container) {
   container.appendChild(wrapper);
 }
 
-const RECOMMENDATION_RANGE_FLOOR_TITLE = 'Minimum modeled distance that range-sensitive highlight flags must survive. In compare mode, the recommendation panel uses the higher of Weapon A and Weapon B engagement ranges as a shared floor. Unknown-range rows stay listed, but those highlights do not count until the breakpoint range is known.';
 const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are any recommendations that light up OH Kill, OH Crit, 2 Crit, Low OHKO, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
@@ -1142,16 +1099,14 @@ export function renderRecommendationPanel(container, enemy) {
 
   const body = document.createElement('div');
   body.className = 'calc-compare-body calc-recommend-body';
-  const highlightRangeFloorMeters = getRecommendationHighlightRangeFloorMeters();
-  const recommendationRangeSummary = calculatorState.mode === 'compare'
-    ? `${getEngagementRangeSummaryText()} (shared floor ${formatEngagementRangeMeters(highlightRangeFloorMeters)})`
-    : getEngagementRangeSummaryText();
+  const rangeA = getEngagementRangeMeters('A');
+  const rangeB = getEngagementRangeMeters('B');
+  const highlightRangeFloorMeters = getRecommendationHighlightRangeFloorMeters(calculatorState.mode, rangeA, rangeB);
+  const recommendationRangeSummary = getRecommendationRangeSummaryText(calculatorState.mode, rangeA, rangeB);
 
   const controlsNote = document.createElement('div');
   controlsNote.className = 'status calc-recommend-note';
-  controlsNote.textContent = calculatorState.mode === 'compare'
-    ? `Engagement ranges: ${getEngagementRangeSummaryText()}. Recommendation highlights use ${formatEngagementRangeMeters(highlightRangeFloorMeters)} as the shared compare floor. Unknown-range profiles stay listed, but they do not pass those flags.`
-    : `Engagement range: ${getEngagementRangeSummaryText()}. Recommendation highlights use the current range as the floor. Unknown-range profiles stay listed, but they do not pass those flags.`;
+  controlsNote.textContent = getRecommendationRangeContextText(calculatorState.mode, rangeA, rangeB);
   controlsNote.title = RECOMMENDATION_RANGE_FLOOR_TITLE;
   body.appendChild(controlsNote);
 
@@ -1364,8 +1319,16 @@ export function renderCalculation() {
     const compareWrapper = document.createElement('div');
     compareWrapper.className = 'calc-compare-results';
 
-    renderComparePanel(compareWrapper, 'A', calculateDamage('A'));
-    renderComparePanel(compareWrapper, 'B', calculateDamage('B'));
+    ['A', 'B'].forEach((slot) => {
+      const results = calculateDamage(slot);
+      renderResultPanel(compareWrapper, {
+        slot,
+        title: results?.weapon?.name || `Weapon ${slot}`,
+        showCompareShell: true,
+        renderContent: results ? (panelBody) => renderCalculationContent(panelBody, slot, results) : null,
+        renderEmpty: results ? null : (panelBody) => appendEmptyCalculationState(panelBody, slot)
+      });
+    });
 
     container.appendChild(compareWrapper);
     renderFocusedSupplementalPanels(container, calculatorState.selectedEnemy);
@@ -1373,11 +1336,15 @@ export function renderCalculation() {
   }
 
   const results = calculateDamage('A');
+  renderResultPanel(container, {
+    slot: 'A',
+    emptyText: getEmptyCalculationMessage('A'),
+    renderContent: results ? (panelBody) => renderCalculationContent(panelBody, 'A', results) : null,
+    renderEmpty: results ? null : (panelBody) => appendEmptyCalculationState(panelBody, 'A')
+  });
   if (!results) {
-    appendEmptyCalculationState(container, 'A');
     return;
   }
 
-  renderCalculationContent(container, 'A', results);
   renderFocusedSupplementalPanels(container, results.enemy);
 }

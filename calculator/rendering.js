@@ -42,6 +42,7 @@ import { splitAttacksByApplication } from './attack-types.js';
 import { renderCalculation } from './calculation.js';
 import { formatTtkSeconds } from './summary.js';
 import { tokenizeFormattedTtk } from './ttk-formatting.js';
+import { appendWeaponSelectionControls } from './weapon-selection.js';
 import {
   getZoneOutcomeDescription,
   getZoneOutcomeLabel
@@ -93,12 +94,35 @@ const ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS = [
   { key: 'ttkB', label: 'B TTK' },
   { key: 'ttkDiff', label: 'Diff TTK' }
 ];
+const METRIC_COLUMN_CONFIG = {
+  shots: { kind: 'slot', slot: 'A', valueType: 'shots' },
+  range: { kind: 'slot', slot: 'A', valueType: 'range' },
+  ttk: { kind: 'slot', slot: 'A', valueType: 'ttk' },
+  shotsA: { kind: 'slot', slot: 'A', valueType: 'shots' },
+  rangeA: { kind: 'slot', slot: 'A', valueType: 'range' },
+  ttkA: { kind: 'slot', slot: 'A', valueType: 'ttk' },
+  shotsB: { kind: 'slot', slot: 'B', valueType: 'shots' },
+  rangeB: { kind: 'slot', slot: 'B', valueType: 'range' },
+  ttkB: { kind: 'slot', slot: 'B', valueType: 'ttk' },
+  shotsDiff: { kind: 'diff', metricKey: 'diffShots', valueType: 'shots' },
+  ttkDiff: { kind: 'diff', metricKey: 'diffTtkSeconds', valueType: 'ttk' }
+};
 
 function createPlaceholder(container, text) {
   const noData = document.createElement('div');
   noData.textContent = text;
   noData.style.color = 'var(--muted)';
   container.appendChild(noData);
+}
+
+export function refreshEnemyCalculationViews() {
+  renderEnemyDetails();
+  renderCalculation();
+}
+
+export function refreshCalculatorViews() {
+  renderWeaponDetails();
+  refreshEnemyCalculationViews();
 }
 
 function appendOutcomeBadge(cell, outcomeKind) {
@@ -349,34 +373,6 @@ function formatWeaponCellValue(header, row, td, atkClass) {
   td.textContent = value === null || value === undefined ? '' : value;
 }
 
-function appendWeaponSelectionCell(tr, { slot, attackRow, attackKey }) {
-  const td = document.createElement('td');
-  td.style.padding = '4px 10px';
-  td.style.borderBottom = '1px solid var(--border)';
-  td.style.width = '30px';
-  td.style.textAlign = 'center';
-
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.disabled = !attackRow;
-  checkbox.checked = attackRow ? getSelectedAttackKeys(slot).includes(attackKey) : false;
-
-  if (!attackRow) {
-    checkbox.title = `Weapon ${slot} does not have this attack row`;
-  }
-
-  checkbox.addEventListener('change', () => {
-    setSelectedAttack(slot, attackKey, checkbox.checked);
-    renderEnemyDetails();
-    renderCalculation();
-  });
-
-  td.appendChild(checkbox);
-  tr.appendChild(td);
-
-  return checkbox;
-}
-
 function getWeaponDisplayRows() {
   const weaponA = getWeaponForSlot('A');
   const weaponB = getWeaponForSlot('B');
@@ -462,56 +458,8 @@ export function renderWeaponDetails() {
   rows.forEach((entry) => {
     const tr = document.createElement('tr');
     const displayRow = entry.displayRow;
-    const attackKey = entry.key;
     const atkClass = atkTypeKey ? classifyAtkType(displayRow, atkTypeKey) : null;
-
-    const checkboxA = appendWeaponSelectionCell(tr, {
-      slot: 'A',
-      attackRow: entry.rowA,
-      attackKey
-    });
-
-    let checkboxB = null;
-    if (compareMode) {
-      checkboxB = appendWeaponSelectionCell(tr, {
-        slot: 'B',
-        attackRow: entry.rowB,
-        attackKey
-      });
-    }
-
-    if (!compareMode) {
-      tr.style.cursor = 'pointer';
-      tr.addEventListener('click', (event) => {
-        if (event.target !== checkboxA) {
-          checkboxA.checked = !checkboxA.checked;
-          setSelectedAttack('A', attackKey, checkboxA.checked);
-          renderEnemyDetails();
-          renderCalculation();
-        }
-      });
-    } else {
-      const availableSlots = [entry.rowA ? 'A' : null, entry.rowB ? 'B' : null].filter(Boolean);
-      if (availableSlots.length === 1) {
-        tr.style.cursor = 'pointer';
-        tr.addEventListener('click', (event) => {
-          if (event.target === checkboxA || event.target === checkboxB) {
-            return;
-          }
-
-          const slot = availableSlots[0];
-          const targetCheckbox = slot === 'A' ? checkboxA : checkboxB;
-          if (!targetCheckbox) {
-            return;
-          }
-
-          targetCheckbox.checked = !targetCheckbox.checked;
-          setSelectedAttack(slot, attackKey, targetCheckbox.checked);
-          renderEnemyDetails();
-          renderCalculation();
-        });
-      }
-    }
+    appendWeaponSelectionControls(tr, entry, { compareMode });
 
     headers.forEach((header) => {
       const td = document.createElement('td');
@@ -782,8 +730,7 @@ function renderEnemyControls(enemy) {
           }));
         }
         setOverviewScope(value);
-        renderEnemyDetails();
-        renderCalculation();
+        refreshEnemyCalculationViews();
       }
     );
   }
@@ -795,8 +742,7 @@ function renderEnemyControls(enemy) {
     (value) => getSelectedEnemyTargetTypes().includes(value),
     (value) => {
       toggleSelectedEnemyTargetType(value);
-      renderEnemyDetails();
-      renderCalculation();
+      refreshEnemyCalculationViews();
     }
   );
 
@@ -812,8 +758,7 @@ function renderEnemyControls(enemy) {
         (value) => calculatorState.diffDisplayMode === value,
         (value) => {
           setDiffDisplayMode(value);
-          renderEnemyDetails();
-          renderCalculation();
+          refreshEnemyCalculationViews();
         }
       );
     }
@@ -988,43 +933,11 @@ function renderOverviewDetails(container) {
     }
 
     columns.forEach((column) => {
-      if (column.key === 'shotsA') {
-        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'shots', row.metrics));
-        return;
-      }
-
-      if (column.key === 'rangeA') {
-        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'range', row.metrics));
-        return;
-      }
-
-      if (column.key === 'shotsB') {
-        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'shots', row.metrics));
-        return;
-      }
-
-      if (column.key === 'rangeB') {
-        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'range', row.metrics));
-        return;
-      }
-
-      if (column.key === 'shotsDiff') {
-        tr.appendChild(buildDiffMetricCell(row.metrics.diffShots, 'shots', calculatorState.diffDisplayMode, row.metrics));
-        return;
-      }
-
-      if (column.key === 'ttkA') {
-        tr.appendChild(buildSingleMetricCell('A', row.metrics.bySlot.A, 'ttk', row.metrics));
-        return;
-      }
-
-      if (column.key === 'ttkB') {
-        tr.appendChild(buildSingleMetricCell('B', row.metrics.bySlot.B, 'ttk', row.metrics));
-        return;
-      }
-
-      if (column.key === 'ttkDiff') {
-        tr.appendChild(buildDiffMetricCell(row.metrics.diffTtkSeconds, 'ttk', calculatorState.diffDisplayMode, row.metrics));
+      const metricCell = buildMetricColumnCell(column.key, row.metrics, {
+        diffDisplayMode: calculatorState.diffDisplayMode
+      });
+      if (metricCell) {
+        tr.appendChild(metricCell);
         return;
       }
 
@@ -1083,6 +996,31 @@ function buildDiffMetricCell(value, valueType, diffDisplayMode = 'absolute', met
   return td;
 }
 
+function buildMetricColumnCell(columnKey, metrics, {
+  diffDisplayMode = 'absolute'
+} = {}) {
+  const config = METRIC_COLUMN_CONFIG[columnKey];
+  if (!config) {
+    return null;
+  }
+
+  if (config.kind === 'slot') {
+    return buildSingleMetricCell(
+      config.slot,
+      metrics?.bySlot?.[config.slot],
+      config.valueType,
+      metrics
+    );
+  }
+
+  return buildDiffMetricCell(
+    metrics?.[config.metricKey],
+    config.valueType,
+    diffDisplayMode,
+    metrics
+  );
+}
+
 function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowClick = false) {
   const radioTd = document.createElement('td');
   radioTd.style.padding = '4px 10px';
@@ -1098,8 +1036,7 @@ function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowClick = fa
   radio.checked = calculatorState.selectedZoneIndex === zoneIndex;
   radio.addEventListener('change', () => {
     setSelectedZoneIndex(zoneIndex);
-    renderEnemyDetails();
-    renderCalculation();
+    refreshEnemyCalculationViews();
   });
 
   if (enableRowClick) {
@@ -1108,8 +1045,7 @@ function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowClick = fa
       if (event.target !== radio) {
         radio.checked = true;
         setSelectedZoneIndex(zoneIndex);
-        renderEnemyDetails();
-        renderCalculation();
+        refreshEnemyCalculationViews();
       }
     });
   }
@@ -1131,8 +1067,7 @@ function appendEnemyExplosionCell(tr, zoneIndex, enableRowClick = false) {
   checkbox.checked = getSelectedExplosiveZoneIndices().includes(zoneIndex);
   checkbox.addEventListener('change', () => {
     setSelectedExplosiveZone(zoneIndex, checkbox.checked);
-    renderEnemyDetails();
-    renderCalculation();
+    refreshEnemyCalculationViews();
   });
 
   if (enableRowClick) {
@@ -1141,8 +1076,7 @@ function appendEnemyExplosionCell(tr, zoneIndex, enableRowClick = false) {
       if (event.target !== checkbox) {
         checkbox.checked = !checkbox.checked;
         setSelectedExplosiveZone(zoneIndex, checkbox.checked);
-        renderEnemyDetails();
-        renderCalculation();
+        refreshEnemyCalculationViews();
       }
     });
   }
@@ -1271,58 +1205,9 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
     }
 
     columns.forEach((column) => {
-      if (column.key === 'shots') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'shots', metrics));
-        return;
-      }
-
-      if (column.key === 'range') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'range', metrics));
-        return;
-      }
-
-      if (column.key === 'ttk') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk', metrics));
-        return;
-      }
-
-      if (column.key === 'shotsA') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'shots', metrics));
-        return;
-      }
-
-      if (column.key === 'rangeA') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'range', metrics));
-        return;
-      }
-
-      if (column.key === 'shotsB') {
-        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'shots', metrics));
-        return;
-      }
-
-      if (column.key === 'rangeB') {
-        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'range', metrics));
-        return;
-      }
-
-      if (column.key === 'shotsDiff') {
-        tr.appendChild(buildDiffMetricCell(metrics.diffShots, 'shots', 'absolute', metrics));
-        return;
-      }
-
-      if (column.key === 'ttkA') {
-        tr.appendChild(buildSingleMetricCell('A', metrics.bySlot.A, 'ttk', metrics));
-        return;
-      }
-
-      if (column.key === 'ttkB') {
-        tr.appendChild(buildSingleMetricCell('B', metrics.bySlot.B, 'ttk', metrics));
-        return;
-      }
-
-      if (column.key === 'ttkDiff') {
-        tr.appendChild(buildDiffMetricCell(metrics.diffTtkSeconds, 'ttk', 'absolute', metrics));
+      const metricCell = buildMetricColumnCell(column.key, metrics);
+      if (metricCell) {
+        tr.appendChild(metricCell);
         return;
       }
 
