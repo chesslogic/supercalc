@@ -26,6 +26,7 @@ import {
 import {
   getEnemyColumnsForState,
   getEnemyControlSections,
+  getFocusedTargetingModes,
   getWeaponRangeAdjustedCellDisplay,
   getOverviewColumnsForState,
   shouldShowEnemyControls,
@@ -340,6 +341,40 @@ test('scope controls are available before selection in both single and compare m
     hasFocusedEnemy: false
   }), true);
   assert.equal(shouldShowEnemyScopeControls({ mode: 'single' }), true);
+});
+
+test('focused targeting defaults to projectile selection unless attacks are explicitly explosive-only', () => {
+  const previousMode = calculatorState.mode;
+
+  try {
+    calculatorState.mode = 'single';
+    assert.deepEqual(getFocusedTargetingModes([], []), {
+      hasProjectileTargets: true,
+      hasExplosiveTargets: false
+    });
+
+    assert.deepEqual(getFocusedTargetingModes([{
+      'Atk Type': 'Explosion',
+      'Atk Name': 'Blast'
+    }], []), {
+      hasProjectileTargets: false,
+      hasExplosiveTargets: true
+    });
+
+    calculatorState.mode = 'compare';
+    assert.deepEqual(getFocusedTargetingModes([{
+      'Atk Type': 'Projectile',
+      'Atk Name': 'Bullet'
+    }], [{
+      'Atk Type': 'Explosion',
+      'Atk Name': 'Blast'
+    }]), {
+      hasProjectileTargets: true,
+      hasExplosiveTargets: true
+    });
+  } finally {
+    calculatorState.mode = previousMode;
+  }
 });
 
 test('enemy controls place scope and targets above the enemy selector', () => {
