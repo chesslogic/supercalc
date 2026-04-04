@@ -331,3 +331,66 @@ test('buildWeaponRecommendationRows preserves numbered unknown labels from proce
     enemyState.unitIndex = previousState.unitIndex;
   }
 });
+
+test('buildWeaponRecommendationRows prioritizes the selected zone when multiple direct targets qualify', () => {
+  const enemy = {
+    name: 'Priority Dummy',
+    health: 1000,
+    zones: [
+      makeZone('head', { health: 200, isFatal: true, av: 1, toMainPercent: 1 }),
+      makeZone('body', { health: 120, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Picker', {
+      rows: [makeAttackRow('Picker', 200, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows[0].bestZoneName, 'body');
+  assert.equal(rows[0].selectedZoneMatch, true);
+});
+
+test('buildWeaponRecommendationRows uses staged labels for gated Veracitor-style targets', () => {
+  const enemy = {
+    name: 'Veracitor',
+    health: 3000,
+    recommendationSequences: [
+      {
+        targetZoneName: 'pilot',
+        label: 'pilot (via head)',
+        suppressDirectTarget: true,
+        steps: [{ zoneName: 'head' }, { zoneName: 'pilot' }]
+      }
+    ],
+    zones: [
+      makeZone('head', { health: 300, av: 1, toMainPercent: 0 }),
+      makeZone('pilot', { health: 700, isFatal: true, av: 1, toMainPercent: 0 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Sequencer', {
+      rpm: 60,
+      rows: [makeAttackRow('Sequencer', 350, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].bestZoneName, 'pilot (via head)');
+  assert.equal(rows[0].isSequenceCandidate, true);
+  assert.deepEqual(rows[0].matchedZoneNames, ['head', 'pilot']);
+  assert.equal(rows[0].shotsToKill, 3);
+  assert.equal(rows[0].bestAttackRecommendation.candidates.some((candidate) => candidate.label === 'pilot'), false);
+});

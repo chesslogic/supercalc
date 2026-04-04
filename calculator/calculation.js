@@ -28,7 +28,7 @@ import { formatTtkSeconds } from './summary.js';
 import { getZoneOutcomeDescription, getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
 import { state as weaponsState } from '../weapons/data.js';
-import { buildWeaponRecommendationRows } from './recommendations.js';
+import { buildSelectedTargetRecommendationRows, buildWeaponRecommendationRows } from './recommendations.js';
 import { getEnemyTacticalInfoChips, getEnemyWeakspotBundles } from './tactical-data.js';
 
 function appendTtkLine(resultWrapper, ttkSeconds, hasRpm) {
@@ -842,6 +842,10 @@ function getRecommendationTargetTitle(row) {
   const outcomeDescription = getZoneOutcomeDescription(row?.bestOutcomeKind);
   const lines = [`Best-ranked target: ${zoneName}`];
 
+  if (Array.isArray(row?.matchedZoneNames) && row.matchedZoneNames.length > 1) {
+    lines.push(`Path: ${row.matchedZoneNames.join(' -> ')}`);
+  }
+
   if (outcomeLabel && outcomeDescription) {
     lines.push(`${outcomeLabel}: ${outcomeDescription}`);
   } else if (outcomeLabel) {
@@ -901,11 +905,9 @@ function getRecommendationFlagTitle(flagKey, value) {
 }
 
 function getRecommendationTipTitle(row, isFallbackRow = false) {
-  const lines = [
-    row?.tip
-      ? `Breakpoint note: ${row.tip}`
-      : 'No extra breakpoint note for this recommendation.'
-  ];
+  const lines = Array.isArray(row?.matchedZoneNames) && row.matchedZoneNames.length > 1
+    ? [`Staged path: ${row.matchedZoneNames.join(' -> ')}`]
+    : ['No extra breakpoint note for this recommendation.'];
 
   if (isFallbackRow) {
     lines.push('This row is shown as a fallback because nothing met the current highlight checks.');
@@ -1084,87 +1086,11 @@ function appendRecommendationCell(row, content, className = '', title = '') {
   row.appendChild(cell);
 }
 
-export function renderRecommendationPanel(container, enemy) {
-  const panel = document.createElement('section');
-  panel.className = 'calc-compare-panel calc-recommend-panel';
-
-  const heading = document.createElement('div');
-  heading.className = 'calc-compare-heading';
-
-  const title = document.createElement('div');
-  title.className = 'calc-compare-title';
-  title.textContent = `${enemy.name} weapon recommendations`;
-  heading.appendChild(title);
-  panel.appendChild(heading);
-
-  const body = document.createElement('div');
-  body.className = 'calc-compare-body calc-recommend-body';
-  const rangeA = getEngagementRangeMeters('A');
-  const rangeB = getEngagementRangeMeters('B');
-  const highlightRangeFloorMeters = getRecommendationHighlightRangeFloorMeters(calculatorState.mode, rangeA, rangeB);
-  const recommendationRangeSummary = getRecommendationRangeSummaryText(calculatorState.mode, rangeA, rangeB);
-
-  const controlsNote = document.createElement('div');
-  controlsNote.className = 'status calc-recommend-note';
-  controlsNote.textContent = getRecommendationRangeContextText(calculatorState.mode, rangeA, rangeB);
-  controlsNote.title = RECOMMENDATION_RANGE_FLOOR_TITLE;
-  body.appendChild(controlsNote);
-
-  if (!Array.isArray(weaponsState.groups) || weaponsState.groups.length === 0) {
-    const emptyState = document.createElement('div');
-    emptyState.className = 'muted';
-    emptyState.textContent = 'Weapon data is still loading.';
-    body.appendChild(emptyState);
-    panel.appendChild(body);
-    container.appendChild(panel);
-    return;
-  }
-
-  const recommendationRows = buildWeaponRecommendationRows({
-    enemy,
-    weapons: weaponsState.groups,
-    rangeFloorMeters: highlightRangeFloorMeters,
-    getEngagementRangeMetersForWeapon: (weapon) => {
-      const weaponA = getWeaponForSlot('A');
-      const weaponB = getWeaponForSlot('B');
-      if (weaponA && weaponA.name === weapon?.name) {
-        return getEngagementRangeMeters('A');
-      }
-      if (weaponB && weaponB.name === weapon?.name) {
-        return getEngagementRangeMeters('B');
-      }
-      return highlightRangeFloorMeters;
-    }
-  });
-  const flaggedRows = recommendationRows.filter((row) => (
-    row.hasOneShotKill
-    || row.hasOneShotCritical
-    || row.hasTwoShotCritical
-    || row.hasFastTtk
-    || row.hasLowOverkillOhko
-    || row.penetratesAll
-  ));
-  const usingFallbackRows = flaggedRows.length === 0;
-  const displayRows = (flaggedRows.length > 0 ? flaggedRows : recommendationRows).slice(0, 24);
-
-  const summary = document.createElement('div');
-  summary.className = 'calc-recommend-summary';
-  summary.title = getRecommendationSummaryTitle(!usingFallbackRows);
-  summary.textContent = flaggedRows.length > 0
-    ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).`
-    : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.`;
-  body.appendChild(summary);
-
-  if (displayRows.length === 0) {
-    const emptyState = document.createElement('div');
-    emptyState.className = 'muted';
-    emptyState.textContent = 'No recommendation rows are available for the current enemy.';
-    body.appendChild(emptyState);
-    panel.appendChild(body);
-    container.appendChild(panel);
-    return;
-  }
-
+function renderRecommendationTable({
+  body,
+  rows,
+  usingFallbackRows = false
+}) {
   const tableWrap = document.createElement('div');
   tableWrap.className = 'calc-recommend-table-wrap';
 
@@ -1185,7 +1111,7 @@ export function renderRecommendationPanel(container, enemy) {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  displayRows.forEach((row) => {
+  rows.forEach((row) => {
     const tableRow = document.createElement('tr');
 
     appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
@@ -1272,8 +1198,8 @@ export function renderRecommendationPanel(container, enemy) {
     );
     appendRecommendationCell(
       tableRow,
-      row.tip || '—',
-      row.tip ? '' : 'muted',
+      '—',
+      'muted',
       getRecommendationTipTitle(row, usingFallbackRows)
     );
 
@@ -1283,6 +1209,156 @@ export function renderRecommendationPanel(container, enemy) {
   table.appendChild(tbody);
   tableWrap.appendChild(table);
   body.appendChild(tableWrap);
+}
+
+function renderRecommendationSubsection({
+  body,
+  titleText,
+  summaryText,
+  summaryTitle = '',
+  rows,
+  usingFallbackRows = false
+}) {
+  const section = document.createElement('section');
+  section.className = 'calc-recommend-section';
+
+  const heading = document.createElement('div');
+  heading.className = 'calc-recommend-section-title';
+  heading.textContent = titleText;
+  section.appendChild(heading);
+
+  if (summaryText) {
+    const summary = document.createElement('div');
+    summary.className = 'calc-recommend-summary';
+    summary.textContent = summaryText;
+    if (summaryTitle) {
+      summary.title = summaryTitle;
+    }
+    section.appendChild(summary);
+  }
+
+  if (rows.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'muted';
+    emptyState.textContent = 'No recommendation rows are available for this target.';
+    section.appendChild(emptyState);
+  } else {
+    renderRecommendationTable({
+      body: section,
+      rows,
+      usingFallbackRows
+    });
+  }
+
+  body.appendChild(section);
+}
+
+export function renderRecommendationPanel(container, enemy) {
+  const panel = document.createElement('section');
+  panel.className = 'calc-compare-panel calc-recommend-panel';
+
+  const heading = document.createElement('div');
+  heading.className = 'calc-compare-heading';
+
+  const title = document.createElement('div');
+  title.className = 'calc-compare-title';
+  title.textContent = `${enemy.name} weapon recommendations`;
+  heading.appendChild(title);
+  panel.appendChild(heading);
+
+  const body = document.createElement('div');
+  body.className = 'calc-compare-body calc-recommend-body';
+  const rangeA = getEngagementRangeMeters('A');
+  const rangeB = getEngagementRangeMeters('B');
+  const highlightRangeFloorMeters = getRecommendationHighlightRangeFloorMeters(calculatorState.mode, rangeA, rangeB);
+  const recommendationRangeSummary = getRecommendationRangeSummaryText(calculatorState.mode, rangeA, rangeB);
+  const selectedZone = Number.isInteger(calculatorState.selectedZoneIndex)
+    ? enemy?.zones?.[calculatorState.selectedZoneIndex] || null
+    : null;
+
+  const controlsNote = document.createElement('div');
+  controlsNote.className = 'status calc-recommend-note';
+  controlsNote.textContent = getRecommendationRangeContextText(calculatorState.mode, rangeA, rangeB);
+  controlsNote.title = RECOMMENDATION_RANGE_FLOOR_TITLE;
+  body.appendChild(controlsNote);
+
+  if (!Array.isArray(weaponsState.groups) || weaponsState.groups.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'muted';
+    emptyState.textContent = 'Weapon data is still loading.';
+    body.appendChild(emptyState);
+    panel.appendChild(body);
+    container.appendChild(panel);
+    return;
+  }
+
+  const recommendationRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons: weaponsState.groups,
+    rangeFloorMeters: highlightRangeFloorMeters,
+    selectedZoneIndex: calculatorState.selectedZoneIndex,
+    getEngagementRangeMetersForWeapon: (weapon) => {
+      const weaponA = getWeaponForSlot('A');
+      const weaponB = getWeaponForSlot('B');
+      if (weaponA && weaponA.name === weapon?.name) {
+        return getEngagementRangeMeters('A');
+      }
+      if (weaponB && weaponB.name === weapon?.name) {
+        return getEngagementRangeMeters('B');
+      }
+      return highlightRangeFloorMeters;
+    }
+  });
+  const selectedTargetRows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons: weaponsState.groups,
+    rangeFloorMeters: highlightRangeFloorMeters,
+    selectedZoneIndex: calculatorState.selectedZoneIndex,
+    getEngagementRangeMetersForWeapon: (weapon) => {
+      const weaponA = getWeaponForSlot('A');
+      const weaponB = getWeaponForSlot('B');
+      if (weaponA && weaponA.name === weapon?.name) {
+        return getEngagementRangeMeters('A');
+      }
+      if (weaponB && weaponB.name === weapon?.name) {
+        return getEngagementRangeMeters('B');
+      }
+      return highlightRangeFloorMeters;
+    }
+  }).slice(0, 12);
+  const flaggedRows = recommendationRows.filter((row) => (
+    row.selectedZoneMatch
+    || row.hasOneShotKill
+    || row.hasOneShotCritical
+    || row.hasTwoShotCritical
+    || row.hasFastTtk
+    || row.hasLowOverkillOhko
+    || row.penetratesAll
+  ));
+  const usingFallbackRows = flaggedRows.length === 0;
+  const displayRows = (flaggedRows.length > 0 ? flaggedRows : recommendationRows).slice(0, 24);
+
+  if (selectedZone) {
+    renderRecommendationSubsection({
+      body,
+      titleText: `${selectedZone.zone_name} targeted recommendations`,
+      summaryText: selectedTargetRows.length > 0
+        ? `Best attack rows for removing or reaching the selected target using the current engagement settings (${recommendationRangeSummary}).`
+        : `No dedicated target rows are available for ${selectedZone.zone_name} using the current engagement settings (${recommendationRangeSummary}).`,
+      rows: selectedTargetRows
+    });
+  }
+
+  renderRecommendationSubsection({
+    body,
+    titleText: 'Overall recommendations',
+    summaryText: flaggedRows.length > 0
+      ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).`
+      : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.`,
+    summaryTitle: getRecommendationSummaryTitle(!usingFallbackRows),
+    rows: displayRows,
+    usingFallbackRows
+  });
   panel.appendChild(body);
   container.appendChild(panel);
 }

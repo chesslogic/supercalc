@@ -259,3 +259,86 @@ test('renderRecommendationPanel explains fallback rows and unknown range rows wh
     weaponsState.groups = previousGroups;
   }
 });
+
+test('renderRecommendationPanel shows staged recommendation paths in target and tip titles', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    weaponsState.groups = [
+      makeWeapon('Sequencer', {
+        rpm: 60,
+        rows: [makeAttackRow('Sequencer', 350, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Veracitor',
+      health: 3000,
+      recommendationSequences: [
+        {
+          targetZoneName: 'pilot',
+          label: 'pilot (via head)',
+          suppressDirectTarget: true,
+          steps: [{ zoneName: 'head' }, { zoneName: 'pilot' }]
+        }
+      ],
+      zones: [
+        makeZone('head', { health: 300, av: 1, toMainPercent: 0 }),
+        makeZone('pilot', { health: 700, isFatal: true, av: 1, toMainPercent: 0 })
+      ]
+    });
+
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+
+    assert.match(cells[2].title, /Best-ranked target: pilot \(via head\)/i);
+    assert.match(cells[2].title, /Path: head -> pilot/i);
+    assert.match(cells[12].title, /Staged path: head -> pilot/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel renders a selected-target subsection for direct part removal', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    weaponsState.groups = [
+      makeWeapon('Cleaner', {
+        rpm: 60,
+        rows: [makeAttackRow('Cleaner', 100, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Heavy Devastator',
+      health: 600,
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('right_arm', { health: 100, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const sectionTitles = collectElements(container, (element) => element.classList.contains('calc-recommend-section-title'));
+    const summaries = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'));
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+
+    assert.equal(sectionTitles[0]?.textContent, 'right_arm targeted recommendations');
+    assert.equal(sectionTitles[1]?.textContent, 'Overall recommendations');
+    assert.match(summaries[0]?.textContent || '', /selected target/i);
+    assert.match(cells[2].title, /Best-ranked target: right_arm/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});

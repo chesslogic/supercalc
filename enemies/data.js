@@ -118,9 +118,58 @@ function buildSearchText(unit) {
     unit.sourceProvenance,
     unit.sourceNote,
     ...unit.scopeTags,
+    ...(unit.recommendationSequences || []).map((sequence) => sequence.label || ''),
     ...unit.zones.map((zone) => zone.zone_name || ''),
     ...unit.zones.map((zone) => Object.values(zone).map((value) => String(value || '')))
   ].flat().map((value) => String(value || '').toLowerCase()).join(' ');
+}
+
+function normalizeRecommendationSequenceStep(step) {
+  if (typeof step === 'string') {
+    const zoneName = String(step).trim();
+    return zoneName ? { zoneName } : null;
+  }
+
+  const zoneName = String(
+    step?.zoneName
+    || step?.zone
+    || step?.zone_name
+    || step?.target_zone
+    || ''
+  ).trim();
+  return zoneName ? { zoneName } : null;
+}
+
+function normalizeRecommendationSequences(rawSequences = []) {
+  return (Array.isArray(rawSequences) ? rawSequences : [])
+    .map((sequence) => {
+      const targetZoneName = String(
+        sequence?.targetZoneName
+        || sequence?.targetZone
+        || sequence?.target_zone
+        || ''
+      ).trim();
+      const steps = (Array.isArray(sequence?.steps) ? sequence.steps : [])
+        .map(normalizeRecommendationSequenceStep)
+        .filter(Boolean);
+      if (!targetZoneName || steps.length === 0) {
+        return null;
+      }
+
+      const label = String(sequence?.label || '').trim() || (
+        steps.length > 1
+          ? `${targetZoneName} (via ${steps.slice(0, -1).map((step) => step.zoneName).join(' + ')})`
+          : targetZoneName
+      );
+
+      return {
+        targetZoneName,
+        label,
+        steps,
+        suppressDirectTarget: sequence?.suppressDirectTarget === true || sequence?.suppress_direct_target === true
+      };
+    })
+    .filter(Boolean);
 }
 
 function buildEnemyUnit({
@@ -140,6 +189,7 @@ function buildEnemyUnit({
     isInline: Boolean(parentUnit),
     parentEnemyName: parentUnit?.name || String(unitData.parent_enemy || '').trim() || null,
     showInSelector: unitData.show_in_selector !== false,
+    recommendationSequences: normalizeRecommendationSequences(unitData.recommendation_sequences),
     sourceProvenance: String(unitData.source_provenance || '').trim(),
     sourceNote: String(unitData.source_note || '').trim()
   };

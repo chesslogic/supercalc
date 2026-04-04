@@ -1074,6 +1074,18 @@ tbody tr:hover {
   font-size:13px;
 }
 
+.calc-recommend-section{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.calc-recommend-section-title{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+}
+
 .calc-recommend-table-wrap{
   max-height:420px;
   overflow:auto;

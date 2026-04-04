@@ -2,6 +2,7 @@ import { buildFocusedZoneComparisonRows } from './compare-utils.js';
 import { isExplosiveAttack } from './attack-types.js';
 import { getZoneDisplayedKillPath } from './zone-damage.js';
 import { compareWeaponOptionBaseOrder, getWeaponRowMultiplicity } from './weapon-dropdown.js';
+import { calculateTtkSeconds } from './summary.js';
 
 export const DEFAULT_RECOMMENDATION_RANGE_METERS = 30;
 export const LOW_OVERKILL_RATIO_THRESHOLD = 0.25;
@@ -77,6 +78,10 @@ function getOutcomePriority(outcomeKind) {
 
 function getRangeMeters(distanceInfo) {
   return distanceInfo?.isAvailable ? toFiniteNumber(distanceInfo.meters) : null;
+}
+
+function cloneDistanceInfo(distanceInfo) {
+  return distanceInfo ? { ...distanceInfo } : null;
 }
 
 function getRecommendationAttackName(attackRow) {
@@ -258,31 +263,12 @@ export function isLowOverkillOhko({
   return ((damagePerCycle - targetHealth) / targetHealth) <= LOW_OVERKILL_RATIO_THRESHOLD;
 }
 
-function buildRecommendationTip(candidate) {
-  if (candidate?.criticalInfo?.tip) {
-    return candidate.criticalInfo.tip;
-  }
-
-  if (candidate?.outcomeKind === 'fatal' && /(?:head|face)/i.test(candidate.zone?.zone_name || '')) {
-    return 'Head breakpoint.';
-  }
-
-  if (candidate?.outcomeKind === 'main') {
-    return 'Main-routing breakpoint.';
-  }
-
-  if (candidate?.outcomeKind === 'utility') {
-    return 'Part break only.';
-  }
-
-  return '';
-}
-
 function buildZoneRecommendationCandidate({
   zone,
   zoneIndex,
   slotMetrics,
-  rangeFloorMeters
+  rangeFloorMeters,
+  selectedZoneIndex = null
 }) {
   if (!slotMetrics?.damagesZone || slotMetrics.shotsToKill === null) {
     return null;
@@ -292,6 +278,7 @@ function buildZoneRecommendationCandidate({
   const rangeQualified = rangeStatus === 'qualified';
   const lethalOutcome = slotMetrics.outcomeKind === 'fatal' || slotMetrics.outcomeKind === 'main';
   const criticalOutcome = slotMetrics.outcomeKind === 'critical';
+  const qualifiesForFastTtk = lethalOutcome || criticalOutcome;
 
   const candidate = {
     zone,
@@ -304,23 +291,189 @@ function buildZoneRecommendationCandidate({
     rangeQualified,
     criticalInfo: slotMetrics.criticalInfo || null,
     zoneSummary: slotMetrics.zoneSummary,
+    label: zone?.zone_name || '',
+    matchedZoneNames: [zone?.zone_name || ''].filter(Boolean),
+    targetsSelectedZone: Number.isInteger(selectedZoneIndex) && zoneIndex === selectedZoneIndex,
+    selectedZoneMatch: Number.isInteger(selectedZoneIndex) && zoneIndex === selectedZoneIndex,
+    isSequenceCandidate: false,
     isOneShotKill: rangeQualified && lethalOutcome && slotMetrics.shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill <= 2,
-    hasFastTtk: rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < 0.6,
+    hasFastTtk: qualifiesForFastTtk && rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < 0.6,
     hasLowOverkillOhko: rangeQualified && ['fatal', 'main', 'critical'].includes(slotMetrics.outcomeKind) && isLowOverkillOhko({
       zoneSummary: slotMetrics.zoneSummary,
       outcomeKind: slotMetrics.outcomeKind,
       shotsToKill: slotMetrics.shotsToKill
     })
   };
-
-  candidate.tip = buildRecommendationTip(candidate);
   return candidate;
 }
 
+function normalizeRecommendationSequence(sequence) {
+  const targetZoneName = String(
+    sequence?.targetZoneName
+    || sequence?.targetZone
+    || sequence?.target_zone
+    || ''
+  ).trim();
+  const steps = (Array.isArray(sequence?.steps) ? sequence.steps : [])
+    .map((step) => {
+      const zoneName = String(step?.zoneName || step?.zone || step?.zone_name || '').trim();
+      return zoneName ? { zoneName } : null;
+    })
+    .filter(Boolean);
+  if (!targetZoneName || steps.length === 0) {
+    return null;
+  }
+
+  return {
+    targetZoneName,
+    label: String(sequence?.label || '').trim() || targetZoneName,
+    steps,
+    suppressDirectTarget: sequence?.suppressDirectTarget === true || sequence?.suppress_direct_target === true
+  };
+}
+
+function buildSequenceDistanceInfo(stepCandidates = []) {
+  const availableSteps = stepCandidates.filter((candidate) => candidate?.effectiveDistance?.isAvailable);
+  if (availableSteps.length === 0) {
+    return cloneDistanceInfo(stepCandidates[stepCandidates.length - 1]?.effectiveDistance);
+  }
+
+  const limitingMeters = Math.min(...availableSteps.map((candidate) => candidate.effectiveDistance.meters));
+  const stepLines = stepCandidates.map((candidate, index) => {
+    const stepLabel = candidate?.label || candidate?.zone?.zone_name || `Step ${index + 1}`;
+    const rangeText = candidate?.effectiveDistance?.text || '?';
+    return `${index + 1}. ${stepLabel}: ${rangeText}`;
+  });
+
+  return {
+    ...availableSteps[0].effectiveDistance,
+    meters: limitingMeters,
+    sortValue: limitingMeters,
+    text: availableSteps.find((candidate) => candidate.effectiveDistance.meters === limitingMeters)?.effectiveDistance?.text
+      || availableSteps[0].effectiveDistance.text,
+    title: `Staged recommendation path.\n${stepLines.join('\n')}`,
+    isAvailable: true
+  };
+}
+
+function buildSequenceRecommendationCandidate({
+  sequence,
+  directCandidates,
+  weapon,
+  selectedZoneIndex = null
+}) {
+  const normalizedSequence = normalizeRecommendationSequence(sequence);
+  if (!normalizedSequence) {
+    return null;
+  }
+
+  const stepCandidates = normalizedSequence.steps.map((step) => {
+    const normalizedZoneName = normalizeText(step.zoneName);
+    return directCandidates.find((candidate) => normalizeText(candidate?.zone?.zone_name) === normalizedZoneName) || null;
+  });
+  if (stepCandidates.some((candidate) => !candidate)) {
+    return null;
+  }
+
+  const finalCandidate = stepCandidates[stepCandidates.length - 1];
+  const shotsToKill = stepCandidates.reduce((sum, candidate) => sum + (candidate?.shotsToKill || 0), 0);
+  const ttkSeconds = calculateTtkSeconds(shotsToKill, toFiniteNumber(weapon?.rpm));
+  const rangeStatus = stepCandidates.some((candidate) => candidate.rangeStatus === 'failed')
+    ? 'failed'
+    : (stepCandidates.every((candidate) => candidate.rangeStatus === 'qualified') ? 'qualified' : 'unknown');
+  const rangeQualified = rangeStatus === 'qualified';
+  const outcomeKind = finalCandidate.outcomeKind;
+  const lethalOutcome = outcomeKind === 'fatal' || outcomeKind === 'main';
+  const criticalOutcome = outcomeKind === 'critical';
+  const qualifiesForFastTtk = lethalOutcome || criticalOutcome;
+
+  return {
+    ...finalCandidate,
+    label: normalizedSequence.label,
+    matchedZoneNames: normalizedSequence.steps.map((step) => step.zoneName),
+    targetsSelectedZone: Number.isInteger(selectedZoneIndex)
+      && finalCandidate.zoneIndex === selectedZoneIndex,
+    selectedZoneMatch: Number.isInteger(selectedZoneIndex)
+      && stepCandidates.some((candidate) => candidate.zoneIndex === selectedZoneIndex),
+    isSequenceCandidate: true,
+    sequence: normalizedSequence,
+    sequenceSteps: stepCandidates,
+    shotsToKill,
+    ttkSeconds,
+    effectiveDistance: buildSequenceDistanceInfo(stepCandidates),
+    rangeStatus,
+    rangeQualified,
+    isOneShotKill: rangeQualified && lethalOutcome && shotsToKill === 1,
+    isOneShotCritical: rangeQualified && criticalOutcome && shotsToKill === 1,
+    isTwoShotCritical: rangeQualified && criticalOutcome && shotsToKill <= 2,
+    hasFastTtk: qualifiesForFastTtk && rangeQualified && ttkSeconds !== null && ttkSeconds < 0.6,
+    hasLowOverkillOhko: false
+  };
+}
+
+function getSuppressedDirectTargetNames(enemy) {
+  return new Set(
+    (Array.isArray(enemy?.recommendationSequences) ? enemy.recommendationSequences : [])
+      .map(normalizeRecommendationSequence)
+      .filter((sequence) => sequence?.suppressDirectTarget)
+      .map((sequence) => normalizeText(sequence.targetZoneName))
+      .filter(Boolean)
+  );
+}
+
+function buildRecommendationCandidates({
+  enemy,
+  weapon,
+  attackRow,
+  hitCount,
+  engagementRangeMeters = 0,
+  highlightRangeFloorMeters,
+  selectedZoneIndex = null
+}) {
+  const zoneRows = buildFocusedZoneComparisonRows({
+    enemy,
+    weaponA: weapon,
+    selectedAttacksA: [attackRow],
+    hitCountsA: [hitCount],
+    distanceMetersA: engagementRangeMeters
+  });
+  const suppressedDirectTargetNames = getSuppressedDirectTargetNames(enemy);
+  const allDirectCandidates = zoneRows
+    .map(({ zone, zoneIndex, metrics }) => buildZoneRecommendationCandidate({
+      zone,
+      zoneIndex,
+      slotMetrics: metrics?.bySlot?.A,
+      rangeFloorMeters: highlightRangeFloorMeters,
+      selectedZoneIndex
+    }))
+    .filter(Boolean);
+  const directCandidates = allDirectCandidates
+    .filter((candidate) => !suppressedDirectTargetNames.has(normalizeText(candidate.zone?.zone_name)));
+
+  const sequenceCandidates = (Array.isArray(enemy?.recommendationSequences) ? enemy.recommendationSequences : [])
+    .map((sequence) => buildSequenceRecommendationCandidate({
+      sequence,
+      directCandidates: allDirectCandidates,
+      weapon,
+      selectedZoneIndex
+    }))
+    .filter(Boolean);
+
+  return {
+    zoneRows,
+    candidates: [...directCandidates, ...sequenceCandidates].sort(compareZoneRecommendationCandidates)
+  };
+}
+
 function compareZoneRecommendationCandidates(left, right) {
-  let comparison = compareBooleanDescending(left.isOneShotKill, right.isOneShotKill);
+  let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.isOneShotKill, right.isOneShotKill);
   if (comparison !== 0) {
     return comparison;
   }
@@ -381,24 +534,18 @@ function buildAttackRowRecommendation({
   hitCount,
   rangeFloorMeters,
   engagementRangeMeters = 0,
-  highlightRangeFloorMeters = rangeFloorMeters
+  highlightRangeFloorMeters = rangeFloorMeters,
+  selectedZoneIndex = null
 }) {
-  const zoneRows = buildFocusedZoneComparisonRows({
+  const { zoneRows, candidates } = buildRecommendationCandidates({
     enemy,
-    weaponA: weapon,
-    selectedAttacksA: [attackRow],
-    hitCountsA: [hitCount],
-    distanceMetersA: engagementRangeMeters
+    weapon,
+    attackRow,
+    hitCount,
+    engagementRangeMeters,
+    highlightRangeFloorMeters,
+    selectedZoneIndex
   });
-  const candidates = zoneRows
-    .map(({ zone, zoneIndex, metrics }) => buildZoneRecommendationCandidate({
-      zone,
-      zoneIndex,
-      slotMetrics: metrics?.bySlot?.A,
-      rangeFloorMeters: highlightRangeFloorMeters
-    }))
-    .filter(Boolean)
-    .sort(compareZoneRecommendationCandidates);
 
   if (candidates.length === 0) {
     return null;
@@ -409,6 +556,7 @@ function buildAttackRowRecommendation({
     hitCount,
     bestCandidate: candidates[0],
     candidates,
+    hasSelectedZoneMatch: candidates.some((candidate) => candidate.selectedZoneMatch),
     penetratesAll: zoneRows.length > 0 && zoneRows.every((row) => row?.metrics?.bySlot?.A?.damagesZone),
     hasOneShotKill: candidates.some((candidate) => candidate.isOneShotKill),
     hasOneShotCritical: candidates.some((candidate) => candidate.isOneShotCritical),
@@ -420,7 +568,12 @@ function buildAttackRowRecommendation({
 }
 
 function compareAttackRowRecommendations(left, right) {
-  let comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
+  let comparison = compareBooleanDescending(left.hasSelectedZoneMatch, right.hasSelectedZoneMatch);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
   if (comparison !== 0) {
     return comparison;
   }
@@ -459,7 +612,12 @@ function compareAttackRowRecommendations(left, right) {
 }
 
 function compareWeaponRecommendationRows(left, right) {
-  let comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
+  let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
   if (comparison !== 0) {
     return comparison;
   }
@@ -501,7 +659,8 @@ export function buildWeaponRecommendationRows({
   enemy,
   weapons = [],
   rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
-  getEngagementRangeMetersForWeapon = null
+  getEngagementRangeMetersForWeapon = null,
+  selectedZoneIndex = null
 }) {
   if (!enemy?.zones || enemy.zones.length === 0 || !Array.isArray(weapons)) {
     return [];
@@ -523,7 +682,8 @@ export function buildWeaponRecommendationRows({
           engagementRangeMeters: typeof getEngagementRangeMetersForWeapon === 'function'
             ? getEngagementRangeMetersForWeapon(weapon)
             : 0,
-          highlightRangeFloorMeters: normalizedRangeFloor
+          highlightRangeFloorMeters: normalizedRangeFloor,
+          selectedZoneIndex
         }))
         .filter(Boolean)
         .sort(compareAttackRowRecommendations);
@@ -540,7 +700,7 @@ export function buildWeaponRecommendationRows({
         attackName: bestAttackRecommendation.attackRow?.['Atk Name'] || bestAttackRecommendation.attackRow?.Name || 'Attack',
         hitCount: bestAttackRecommendation.hitCount,
         bestZone: bestCandidate.zone,
-        bestZoneName: bestCandidate.zone?.zone_name || '',
+        bestZoneName: bestCandidate.label || bestCandidate.zone?.zone_name || '',
         bestOutcomeKind: bestCandidate.outcomeKind,
         shotsToKill: bestCandidate.shotsToKill,
         ttkSeconds: bestCandidate.ttkSeconds,
@@ -552,7 +712,93 @@ export function buildWeaponRecommendationRows({
         hasFastTtk: bestAttackRecommendation.hasFastTtk,
         hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
         penetratesAll: bestAttackRecommendation.penetratesAll,
-        tip: bestCandidate.tip,
+        matchedZoneNames: bestCandidate.matchedZoneNames || [],
+        selectedZoneMatch: Boolean(bestAttackRecommendation.hasSelectedZoneMatch),
+        isSequenceCandidate: Boolean(bestCandidate.isSequenceCandidate),
+        bestAttackRecommendation,
+        attackRecommendations
+      };
+    })
+    .filter(Boolean)
+    .sort(compareWeaponRecommendationRows);
+}
+
+export function buildSelectedTargetRecommendationRows({
+  enemy,
+  weapons = [],
+  rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
+  getEngagementRangeMetersForWeapon = null,
+  selectedZoneIndex = null
+}) {
+  if (!Number.isInteger(selectedZoneIndex) || !enemy?.zones?.[selectedZoneIndex]) {
+    return [];
+  }
+
+  const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
+  return weapons
+    .map((weapon) => {
+      const attackRecommendations = (weapon?.rows || [])
+        .map((attackRow) => buildAttackRowRecommendation({
+          enemy,
+          weapon,
+          attackRow,
+          hitCount: getRecommendationAttackHitCount({
+            weapon,
+            attackRow
+          }),
+          rangeFloorMeters: normalizedRangeFloor,
+          engagementRangeMeters: typeof getEngagementRangeMetersForWeapon === 'function'
+            ? getEngagementRangeMetersForWeapon(weapon)
+            : 0,
+          highlightRangeFloorMeters: normalizedRangeFloor,
+          selectedZoneIndex
+        }))
+        .filter(Boolean)
+        .map((recommendation) => ({
+          ...recommendation,
+          candidates: recommendation.candidates.filter((candidate) => candidate.targetsSelectedZone)
+        }))
+        .filter((recommendation) => recommendation.candidates.length > 0)
+        .map((recommendation) => ({
+          ...recommendation,
+          bestCandidate: [...recommendation.candidates].sort(compareZoneRecommendationCandidates)[0],
+          hasSelectedZoneMatch: true,
+          hasOneShotKill: recommendation.candidates.some((candidate) => candidate.isOneShotKill),
+          hasOneShotCritical: recommendation.candidates.some((candidate) => candidate.isOneShotCritical),
+          hasTwoShotCritical: recommendation.candidates.some((candidate) => candidate.isTwoShotCritical),
+          hasFastTtk: recommendation.candidates.some((candidate) => candidate.hasFastTtk),
+          hasLowOverkillOhko: recommendation.candidates.some((candidate) => candidate.hasLowOverkillOhko),
+          hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
+        }))
+        .sort(compareAttackRowRecommendations);
+
+      if (attackRecommendations.length === 0) {
+        return null;
+      }
+
+      const bestAttackRecommendation = attackRecommendations[0];
+      const bestCandidate = bestAttackRecommendation.bestCandidate;
+      return {
+        weapon,
+        attackRow: bestAttackRecommendation.attackRow,
+        attackName: bestAttackRecommendation.attackRow?.['Atk Name'] || bestAttackRecommendation.attackRow?.Name || 'Attack',
+        hitCount: bestAttackRecommendation.hitCount,
+        bestZone: bestCandidate.zone,
+        bestZoneName: bestCandidate.label || bestCandidate.zone?.zone_name || '',
+        bestOutcomeKind: bestCandidate.outcomeKind,
+        shotsToKill: bestCandidate.shotsToKill,
+        ttkSeconds: bestCandidate.ttkSeconds,
+        effectiveDistance: bestCandidate.effectiveDistance,
+        rangeStatus: bestCandidate.rangeStatus,
+        hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
+        hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
+        hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
+        hasFastTtk: bestAttackRecommendation.hasFastTtk,
+        hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
+        penetratesAll: bestAttackRecommendation.penetratesAll,
+        matchedZoneNames: bestCandidate.matchedZoneNames || [],
+        selectedZoneMatch: true,
+        isSequenceCandidate: Boolean(bestCandidate.isSequenceCandidate),
         bestAttackRecommendation,
         attackRecommendations
       };
