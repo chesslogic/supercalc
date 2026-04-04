@@ -342,3 +342,43 @@ test('renderRecommendationPanel renders a selected-target subsection for direct 
     weaponsState.groups = previousGroups;
   }
 });
+
+test('renderRecommendationPanel keeps overall recommendations enemy-wide when a target is selected', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    weaponsState.groups = [
+      makeWeapon('Generalist', {
+        rpm: 60,
+        rows: [makeAttackRow('Generalist', 220, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Heavy Devastator',
+      health: 600,
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('right_arm', { health: 100, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const sectionTitles = collectElements(container, (element) => element.classList.contains('calc-recommend-section-title'));
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const firstTargetCells = collectElements(tables[0], (element) => element.tagName === 'TD');
+    const secondTargetCells = collectElements(tables[1], (element) => element.tagName === 'TD');
+
+    assert.equal(sectionTitles[0]?.textContent, 'right_arm targeted recommendations');
+    assert.equal(sectionTitles[1]?.textContent, 'Overall recommendations');
+    assert.match(firstTargetCells[2].title, /Best-ranked target: right_arm/i);
+    assert.match(secondTargetCells[2].title, /Best-ranked target: head/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});

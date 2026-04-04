@@ -1296,7 +1296,6 @@ export function renderRecommendationPanel(container, enemy) {
     enemy,
     weapons: weaponsState.groups,
     rangeFloorMeters: highlightRangeFloorMeters,
-    selectedZoneIndex: calculatorState.selectedZoneIndex,
     getEngagementRangeMetersForWeapon: (weapon) => {
       const weaponA = getWeaponForSlot('A');
       const weaponB = getWeaponForSlot('B');
@@ -1327,8 +1326,7 @@ export function renderRecommendationPanel(container, enemy) {
     }
   }).slice(0, 12);
   const flaggedRows = recommendationRows.filter((row) => (
-    row.selectedZoneMatch
-    || row.hasOneShotKill
+    row.hasOneShotKill
     || row.hasOneShotCritical
     || row.hasTwoShotCritical
     || row.hasFastTtk
