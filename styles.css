@@ -310,7 +310,10 @@ tbody tr:hover {
   min-width:60px
 }
 .calculator-selector{
-  position:relative; display:inline-block
+  position:relative;
+  display:block;
+  flex:1 1 480px;
+  min-width:320px;
 }
 .calculator-mode-toggle{
   display:flex;
@@ -327,12 +330,20 @@ tbody tr:hover {
   background:#202020;
 }
 .calculator-selector .input{
-  min-width:552px;
+  width:100%;
+  min-width:320px;
   padding-right: 32px;
+}
+.calculator-range-group{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex:1 1 320px;
+  min-width:280px;
 }
 .calculator-range-control{
   flex:1 1 280px;
-  min-width:240px;
+  min-width:180px;
 }
 .calculator-range-slider{
   width:100%;
@@ -370,7 +381,7 @@ tbody tr:hover {
   color: var(--text);
 }
 .calculator-dropdown{
-  position:absolute; top:100%; left:0; background:#1b1b1b; border:2px solid var(--border); max-height:300px; overflow-y:auto; z-index:1000; margin-top:2px; min-width:552px
+  position:absolute; top:100%; left:0; background:#1b1b1b; border:2px solid var(--border); max-height:300px; overflow-y:auto; z-index:1000; margin-top:2px; min-width:100%; width:100%
 }
 .calculator-dropdown.hidden{display:none}
 .dropdown-item{
@@ -393,6 +404,11 @@ tbody tr:hover {
   font-size:11px;
   font-weight:400;
   margin-left:6px;
+}
+@media (max-width: 1240px){
+  .calculator-range-group{
+    flex-basis:100%;
+  }
 }
 .weapon-dropdown-item{
   display:flex;

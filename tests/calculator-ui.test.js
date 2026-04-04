@@ -39,6 +39,10 @@ import {
   getWeaponInputDisplayValue
 } from '../calculator/ui.js';
 import {
+  ENGAGEMENT_RANGE_STOPS,
+  findNearestEngagementRangeStop
+} from '../calculator/engagement-range.js';
+import {
   compareWeaponOptionsByApDescending,
   getWeaponDropdownApInfo,
   getWeaponOptionDisplayModel,
@@ -426,6 +430,18 @@ test('recommendation range compatibility alias mirrors engagement ranges', () =>
 test('formatEngagementRangeDisplayValue shows Any for zero range', () => {
   assert.equal(formatEngagementRangeDisplayValue(0), 'Any / 0m');
   assert.equal(formatEngagementRangeDisplayValue(37), '37m');
+});
+
+test('engagement range slider snapping prefers preset stops', () => {
+  assert.deepEqual(
+    ENGAGEMENT_RANGE_STOPS,
+    [0, 1, 10, 30, 50, 75, 100, 150, 200, 300, 500]
+  );
+  assert.equal(findNearestEngagementRangeStop(0), 0);
+  assert.equal(findNearestEngagementRangeStop(2), 1);
+  assert.equal(findNearestEngagementRangeStop(20), 30);
+  assert.equal(findNearestEngagementRangeStop(49), 50);
+  assert.equal(findNearestEngagementRangeStop(260), 300);
 });
 
 test('single mode always shows the full enemy columns plus derived metrics', () => {

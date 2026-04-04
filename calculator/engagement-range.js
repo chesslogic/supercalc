@@ -1,8 +1,25 @@
 export const RECOMMENDATION_RANGE_FLOOR_TITLE = 'Minimum modeled distance that range-sensitive highlight flags must survive. In compare mode, the recommendation panel uses the higher of Weapon A and Weapon B engagement ranges as a shared floor. Unknown-range rows stay listed, but those highlights do not count until the breakpoint range is known.';
+export const ENGAGEMENT_RANGE_STOPS = [0, 1, 10, 30, 50, 75, 100, 150, 200, 300, 500];
 
 export function formatEngagementRangeMeters(rangeMeters) {
   const normalizedRange = Math.max(0, Math.round(Number(rangeMeters) || 0));
   return normalizedRange === 0 ? 'Any / 0m' : `${normalizedRange}m`;
+}
+
+export function findNearestEngagementRangeStop(value) {
+  const numericValue = Math.max(0, Number(value) || 0);
+
+  return ENGAGEMENT_RANGE_STOPS.reduce((bestStop, currentStop) => {
+    const bestDiff = Math.abs(bestStop - numericValue);
+    const currentDiff = Math.abs(currentStop - numericValue);
+    if (currentDiff < bestDiff) {
+      return currentStop;
+    }
+    if (currentDiff === bestDiff && currentStop > bestStop) {
+      return currentStop;
+    }
+    return bestStop;
+  }, ENGAGEMENT_RANGE_STOPS[0]);
 }
 
 export function getRecommendationHighlightRangeFloorMeters(mode, rangeA, rangeB) {

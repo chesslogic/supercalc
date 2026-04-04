@@ -109,18 +109,17 @@
               <input type="text" id="calculator-weapon-input" class="input" placeholder="Search and select a weapon..." autocomplete="off" />
               <div id="calculator-weapon-dropdown" class="calculator-dropdown hidden"></div>
             </div>
+            <div class="calculator-range-group" id="calculator-range-group-a">
+              <span class="label" id="calculator-range-label-a">Range A:</span>
+              <div class="calculator-range-control">
+                <input type="range" id="calculator-range-input-a" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon A engagement range" />
+              </div>
+              <span id="calculator-range-value-a" class="status calculator-range-value"></span>
+            </div>
             <div id="calculator-weapon-loading" class="loading-indicator hidden">
               <div class="spinner"></div>
               <span>Loading weapon data...</span>
             </div>
-          </div>
-
-          <div class="row calculator-range-row" id="calculator-range-row-a">
-            <span class="label" id="calculator-range-label-a">Range A:</span>
-            <div class="calculator-range-control">
-              <input type="range" id="calculator-range-input-a" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon A engagement range" />
-            </div>
-            <span id="calculator-range-value-a" class="status calculator-range-value"></span>
           </div>
 
           <div class="row" id="calculator-weapon-row-b">
@@ -129,14 +128,13 @@
               <input type="text" id="calculator-weapon-input-b" class="input" placeholder="Search and select a second weapon..." autocomplete="off" />
               <div id="calculator-weapon-dropdown-b" class="calculator-dropdown hidden"></div>
             </div>
-          </div>
-
-          <div class="row calculator-range-row" id="calculator-range-row-b">
-            <span class="label">Range B:</span>
-            <div class="calculator-range-control">
-              <input type="range" id="calculator-range-input-b" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon B engagement range" />
+            <div class="calculator-range-group" id="calculator-range-group-b">
+              <span class="label">Range B:</span>
+              <div class="calculator-range-control">
+                <input type="range" id="calculator-range-input-b" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon B engagement range" />
+              </div>
+              <span id="calculator-range-value-b" class="status calculator-range-value"></span>
             </div>
-            <span id="calculator-range-value-b" class="status calculator-range-value"></span>
           </div>
 
           <datalist id="calculator-range-ticks">
@@ -147,6 +145,10 @@
             <option value="50"></option>
             <option value="75"></option>
             <option value="100"></option>
+            <option value="150"></option>
+            <option value="200"></option>
+            <option value="300"></option>
+            <option value="500"></option>
           </datalist>
           
           <div class="calculator-details-panel">

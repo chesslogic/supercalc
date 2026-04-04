@@ -14,6 +14,11 @@ import {
   setSelectedWeapon
 } from './data.js';
 import {
+  ENGAGEMENT_RANGE_STOPS,
+  findNearestEngagementRangeStop,
+  formatEngagementRangeMeters
+} from './engagement-range.js';
+import {
   filterEnemiesByTargetTypes,
   getEnemyScopeSummaryLabel,
   getEnemyUnitFrontLabel
@@ -55,8 +60,7 @@ export function getEnemyOverviewOptionHtml(scope = 'all') {
 }
 
 export function formatEngagementRangeDisplayValue(rangeMeters) {
-  const normalizedRange = Math.max(0, Math.round(Number(rangeMeters) || 0));
-  return normalizedRange === 0 ? 'Any / 0m' : `${normalizedRange}m`;
+  return formatEngagementRangeMeters(rangeMeters);
 }
 
 export function setupCalculator() {
@@ -114,7 +118,7 @@ function syncCalculatorModeUi() {
   const weaponSortSelect = document.getElementById('calculator-weapon-sort');
   const weaponRowB = document.getElementById('calculator-weapon-row-b');
   const weaponLabelA = document.getElementById('calculator-weapon-label-a');
-  const rangeRowB = document.getElementById('calculator-range-row-b');
+  const rangeGroupB = document.getElementById('calculator-range-group-b');
   const rangeLabelA = document.getElementById('calculator-range-label-a');
 
   const compareMode = calculatorState.mode === 'compare';
@@ -129,7 +133,7 @@ function syncCalculatorModeUi() {
     modeCompareButton.title = getCalculatorModeButtonTitle('compare');
   }
   weaponRowB?.classList.toggle('hidden', !compareMode);
-  rangeRowB?.classList.toggle('hidden', !compareMode);
+  rangeGroupB?.classList.toggle('hidden', !compareMode);
 
   if (weaponLabelA) {
     weaponLabelA.textContent = compareMode ? 'Weapon A:' : 'Weapon:';
@@ -256,13 +260,24 @@ function setupEngagementRangeControl(slot) {
 
   rangeInput.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
   rangeValue.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+  rangeInput.min = String(ENGAGEMENT_RANGE_STOPS[0]);
+  rangeInput.max = String(ENGAGEMENT_RANGE_STOPS[ENGAGEMENT_RANGE_STOPS.length - 1]);
+  rangeInput.step = '1';
+
+  const applySnappedRangeValue = (value) => {
+    const snappedValue = findNearestEngagementRangeStop(value);
+    rangeInput.value = String(snappedValue);
+    rangeValue.textContent = formatEngagementRangeDisplayValue(snappedValue);
+    return snappedValue;
+  };
 
   rangeInput.addEventListener('input', (event) => {
-    rangeValue.textContent = formatEngagementRangeDisplayValue(event.target.value);
+    applySnappedRangeValue(event.target.value);
   });
 
   rangeInput.addEventListener('change', (event) => {
-    setEngagementRangeMeters(slot, event.target.value);
+    const snappedValue = applySnappedRangeValue(event.target.value);
+    setEngagementRangeMeters(slot, snappedValue);
     syncEngagementRangeControl(slot);
     refreshEnemyCalculationViews();
   });
