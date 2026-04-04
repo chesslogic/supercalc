@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildSelectedTargetRecommendationRows,
   buildWeaponRecommendationRows,
   normalizeRecommendationRangeMeters
 } from '../calculator/recommendations.js';
@@ -393,4 +394,36 @@ test('buildWeaponRecommendationRows uses staged labels for gated Veracitor-style
   assert.deepEqual(rows[0].matchedZoneNames, ['head', 'pilot']);
   assert.equal(rows[0].shotsToKill, 3);
   assert.equal(rows[0].bestAttackRecommendation.candidates.some((candidate) => candidate.label === 'pilot'), false);
+});
+
+test('buildSelectedTargetRecommendationRows ignores enemy-wide penetration when ranking a target', () => {
+  const enemy = {
+    name: 'Target Sort Dummy',
+    health: 2000,
+    zones: [
+      makeZone('head', { health: 200, isFatal: true, av: 1, toMainPercent: 1 }),
+      makeZone('left_hip', { health: 1600, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Broad Tool', {
+      index: 0,
+      rows: [makeAttackRow('Broad Tool', 400, 2)]
+    }),
+    makeWeapon('Target Tool', {
+      index: 1,
+      rows: [makeAttackRow('Target Tool', 1600, 2)]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows[0].weapon.name, 'Target Tool');
+  assert.equal(rows[0].bestZoneName, 'left_hip');
+  assert.equal(rows[0].hasOneShotKill, true);
 });

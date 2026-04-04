@@ -655,6 +655,74 @@ function compareWeaponRecommendationRows(left, right) {
   return compareWeaponOptionBaseOrder(left.weapon, right.weapon);
 }
 
+function compareTargetAttackRowRecommendations(left, right) {
+  let comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasOneShotCritical, right.hasOneShotCritical);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasTwoShotCritical, right.hasTwoShotCritical);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasQualifiedPath, right.hasQualifiedPath);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
+}
+
+function compareTargetWeaponRecommendationRows(left, right) {
+  let comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasOneShotCritical, right.hasOneShotCritical);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasTwoShotCritical, right.hasTwoShotCritical);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareTargetAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return compareWeaponOptionBaseOrder(left.weapon, right.weapon);
+}
+
 export function buildWeaponRecommendationRows({
   enemy,
   weapons = [],
@@ -770,7 +838,7 @@ export function buildSelectedTargetRecommendationRows({
           hasLowOverkillOhko: recommendation.candidates.some((candidate) => candidate.hasLowOverkillOhko),
           hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
         }))
-        .sort(compareAttackRowRecommendations);
+        .sort(compareTargetAttackRowRecommendations);
 
       if (attackRecommendations.length === 0) {
         return null;
@@ -804,5 +872,5 @@ export function buildSelectedTargetRecommendationRows({
       };
     })
     .filter(Boolean)
-    .sort(compareWeaponRecommendationRows);
+    .sort(compareTargetWeaponRecommendationRows);
 }
