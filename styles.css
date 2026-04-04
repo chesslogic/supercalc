@@ -494,6 +494,7 @@ tbody tr:hover {
 }
 .calculator-table tbody td{padding:4px 10px; border-bottom:1px solid var(--border)}
 .calculator-table tbody tr:hover{background:rgba(255,255,255,.03)}
+.calculator-table tbody td.calc-range-adjusted-cell{cursor:help; white-space:nowrap}
 
 /* Styled checkboxes and radio buttons */
 .calculator-table input[type="checkbox"],

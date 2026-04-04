@@ -25,6 +25,7 @@ import {
 } from '../calculator/data.js';
 import {
   getEnemyColumnsForState,
+  getWeaponRangeAdjustedCellDisplay,
   getOverviewColumnsForState,
   shouldShowEnemyControls,
   shouldShowEnemyScopeControls
@@ -57,12 +58,22 @@ import {
   getExplosiveDisplayInfo
 } from '../calculator/explosive-display.js';
 import { buildCompareTtkTooltip } from '../calculator/compare-tooltips.js';
+import { formatDamageValue } from '../calculator/damage-rounding.js';
 import {
   getEnemyZoneConDisplayInfo,
   getEnemyZoneHealthDisplayInfo,
   MAIN_CON_ANY_DEATH_TOOLTIP,
   ZERO_BLEED_CON_TOOLTIP
 } from '../calculator/enemy-zone-display.js';
+import {
+  calculateBallisticDamageAtDistance,
+  ingestBallisticFalloffCsvText,
+  resetBallisticFalloffProfiles
+} from '../weapons/falloff.js';
+
+const UI_TEST_FALLOFF_CSV = `Category,Weapon,Caliber,Mass,Velocity,Drag
+Primary,AR-23 Liberator,5.5,4.5,900,0.3
+Marksman,R-63 Diligence,8,8.5,960,0.2`;
 
 test('enemy dropdown keeps real enemies visible when overview is the current compare selection', () => {
   const state = getEnemyDropdownQueryState('Overview', {
@@ -386,6 +397,153 @@ function makeAttackRow(ap, dmg, dur = dmg) {
     DUR: dur
   };
 }
+
+test('weapon details DMG cells can show range-adjusted projectile damage with a base-value tooltip', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  try {
+    const weapon = makeWeapon('Liberator', {
+      code: 'AR-23',
+      rows: [{
+        ...makeAttackRow(2, 90, 22),
+        'Atk Type': 'Projectile'
+      }]
+    });
+    const attackRow = weapon.rows[0];
+    const display = getWeaponRangeAdjustedCellDisplay('DMG', {
+      displayRow: attackRow,
+      rowA: attackRow,
+      rowB: null
+    }, {
+      compareMode: false,
+      weaponA: weapon,
+      rangeA: 100
+    });
+
+    const expectedDamage = formatDamageValue(calculateBallisticDamageAtDistance(90, {
+      caliber: 5.5,
+      mass: 4.5,
+      velocity: 900,
+      drag: 0.3
+    }, 100));
+    assert.equal(display?.text, expectedDamage);
+    assert.equal(display?.isAdjusted, true);
+    assert.match(display?.title || '', /Weapon A DMG at 100m:/i);
+    assert.match(display?.title || '', /base 90/i);
+    assert.match(display?.title || '', /reduction/i);
+  } finally {
+    resetBallisticFalloffProfiles();
+  }
+});
+
+test('weapon details leave explosive DMG cells raw and explain why on hover', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  try {
+    const weapon = makeWeapon('Grenade Launcher', {
+      code: 'GL-21',
+      rows: [{
+        ...makeAttackRow(3, 400, 400),
+        'Atk Type': 'Explosion'
+      }]
+    });
+    const attackRow = weapon.rows[0];
+    const display = getWeaponRangeAdjustedCellDisplay('DMG', {
+      displayRow: attackRow,
+      rowA: attackRow,
+      rowB: null
+    }, {
+      compareMode: false,
+      weaponA: weapon,
+      rangeA: 100
+    });
+
+    assert.equal(display?.text, '400');
+    assert.equal(display?.isAdjusted, false);
+    assert.match(display?.title || '', /explosive row, no ballistic falloff/i);
+  } finally {
+    resetBallisticFalloffProfiles();
+  }
+});
+
+test('weapon details split compare-mode DMG cells when A and B ranges differ', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  try {
+    const attackRowA = {
+      ...makeAttackRow(2, 90, 22),
+      'Atk Type': 'Projectile'
+    };
+    const attackRowB = {
+      ...makeAttackRow(2, 90, 22),
+      'Atk Type': 'Projectile'
+    };
+    const weaponA = makeWeapon('Liberator', {
+      code: 'AR-23',
+      rows: [attackRowA]
+    });
+    const weaponB = makeWeapon('Diligence', {
+      code: 'R-63',
+      rows: [attackRowB]
+    });
+    const display = getWeaponRangeAdjustedCellDisplay('DMG', {
+      displayRow: attackRowA,
+      rowA: attackRowA,
+      rowB: attackRowB
+    }, {
+      compareMode: true,
+      weaponA,
+      weaponB,
+      rangeA: 100,
+      rangeB: 50
+    });
+
+    const expectedA = formatDamageValue(calculateBallisticDamageAtDistance(90, {
+      caliber: 5.5,
+      mass: 4.5,
+      velocity: 900,
+      drag: 0.3
+    }, 100));
+    const expectedB = formatDamageValue(calculateBallisticDamageAtDistance(90, {
+      caliber: 8,
+      mass: 8.5,
+      velocity: 960,
+      drag: 0.2
+    }, 50));
+
+    assert.equal(display?.text, `A ${expectedA} • B ${expectedB}`);
+    assert.equal(display?.isAdjusted, true);
+    assert.equal(display?.isSplit, true);
+    assert.match(display?.title || '', /Weapon A DMG at 100m:/i);
+    assert.match(display?.title || '', /Weapon B DMG at 50m:/i);
+  } finally {
+    resetBallisticFalloffProfiles();
+  }
+});
+
+test('weapon details keep zero-range DMG cells unchanged', () => {
+  const weapon = makeWeapon('Liberator', {
+    code: 'AR-23',
+    rows: [{
+      ...makeAttackRow(2, 90, 22),
+      'Atk Type': 'Projectile'
+    }]
+  });
+  const attackRow = weapon.rows[0];
+
+  assert.equal(getWeaponRangeAdjustedCellDisplay('DMG', {
+    displayRow: attackRow,
+    rowA: attackRow,
+    rowB: null
+  }, {
+    compareMode: false,
+    weaponA: weapon,
+    rangeA: 0
+  }), null);
+});
 
 test('enemy table mode defaults to analysis and normalizes to supported values', () => {
   setEnemyTableMode('analysis');
