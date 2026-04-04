@@ -478,18 +478,21 @@ test('buildOverviewRows flattens units and filters by faction scope', () => {
       faction: 'Terminid',
       name: 'Stalker',
       health: 800,
+      scopeTags: ['elite'],
       zones: [makeZone('Main'), makeZone('head', { isFatal: true })]
     },
     {
       faction: 'Terminid',
       name: 'Predator Hunter',
       health: 250,
+      scopeTags: ['medium'],
       zones: [makeZone('Main')]
     },
     {
       faction: 'Automaton',
       name: 'Devastator',
       health: 900,
+      scopeTags: ['medium'],
       zones: [makeZone('Main')]
     }
   ];
@@ -539,6 +542,7 @@ test('buildOverviewRows filters overview rows by selected enemy target types', (
       faction: 'Terminid',
       name: 'Stalker',
       health: 800,
+      scopeTags: ['elite'],
       zones: [makeZone('Main')]
     },
     {

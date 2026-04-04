@@ -40,7 +40,7 @@ import {
 } from './compare-utils.js';
 import { isExplosiveAttack, splitAttacksByApplication } from './attack-types.js';
 import { renderCalculation } from './calculation.js';
-import { formatDamageValue } from './damage-rounding.js';
+import { formatDamageValue, roundDamagePacket } from './damage-rounding.js';
 import { formatEngagementRangeMeters } from './engagement-range.js';
 import { formatTtkSeconds } from './summary.js';
 import { tokenizeFormattedTtk } from './ttk-formatting.js';
@@ -290,7 +290,7 @@ function buildWeaponRangeSlotDisplay({
     };
   }
 
-  const adjustedText = formatDamageValue(adjustedValue);
+  const adjustedText = formatDamageValue(roundDamagePacket(adjustedValue));
   const reductionText = formatPercentValue(reductionPercent);
 
   return {

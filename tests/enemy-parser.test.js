@@ -187,7 +187,7 @@ test('parser derives Constitution bleed rates and only marks zero-bleed zones wh
   }
 });
 
-test('parser emits scope tags for curated giant, structure, and objective targets', () => {
+test('parser emits scope tags for curated tier, giant, structure, and objective targets', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
   const inputPath = join(tempDir, 'input.json');
   const outputPath = join(tempDir, 'output.json');
@@ -225,9 +225,14 @@ test('parser emits scope tags for curated giant, structure, and objective target
 
   try {
     const fixture = {
-      'content/fac_bugs/giants/hive_lord': buildFixtureUnit('Hive Lord', 12000),
-      'content/fac_cyborgs/objectives/fabricator': buildFixtureUnit('Fabricator', 2500),
-      'content/fac_illuminate/defense/cannon_turret': buildFixtureUnit('Cannon Turret', 3000)
+      'content/fac_bugs/chaff/bile_spitter': buildFixtureUnit('Bile Spitter', 60),
+      'content/fac_bugs/medium/warrior': buildFixtureUnit('Warrior', 325),
+      'content/fac_bugs/elite/stalker': buildFixtureUnit('Stalker', 800),
+      'content/fac_bugs/tanks/charger': buildFixtureUnit('Charger', 2400),
+      'content/fac_bugs/giants/dragonroach': buildFixtureUnit('Dragonroach', 6500),
+      'content/fac_cyborgs/objectives/ballistic_missile': buildFixtureUnit('Ballistic Missile', 2100),
+      'content/fac_illuminate/defense/lightning_spire': buildFixtureUnit('Lightning Spire', 500),
+      'content/fac_illuminate/giants/leviathan': buildFixtureUnit('Leviathan', 15000)
     };
 
     writeFileSync(inputPath, JSON.stringify(fixture, null, 2));
@@ -238,9 +243,14 @@ test('parser emits scope tags for curated giant, structure, and objective target
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 
     const parsed = JSON.parse(readFileSync(outputPath, 'utf8'));
-    assert.deepEqual(parsed.Terminid['Hive Lord'].scope_tags, ['giant']);
-    assert.deepEqual(parsed.Automaton.Fabricator.scope_tags, ['objective']);
-    assert.deepEqual(parsed.Illuminate['Cannon Turret'].scope_tags, ['structure']);
+    assert.deepEqual(parsed.Terminid['Bile Spitter'].scope_tags, ['chaff']);
+    assert.deepEqual(parsed.Terminid.Warrior.scope_tags, ['medium']);
+    assert.deepEqual(parsed.Terminid.Stalker.scope_tags, ['elite']);
+    assert.deepEqual(parsed.Terminid.Charger.scope_tags, ['tank']);
+    assert.deepEqual(parsed.Terminid.Dragonroach.scope_tags, ['giant']);
+    assert.deepEqual(parsed.Automaton['Ballistic Missile'].scope_tags, ['objective']);
+    assert.deepEqual(parsed.Illuminate['Lightning Spire'].scope_tags, ['structure']);
+    assert.deepEqual(parsed.Illuminate.Leviathan.scope_tags, ['giant']);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

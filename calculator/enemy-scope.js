@@ -27,11 +27,35 @@ FRONT_DEFINITIONS.forEach((front) => {
   });
 });
 
+const UNIT_TARGET_TYPE_IDS = ['chaff', 'medium', 'elite', 'tank'];
+
 export const ENEMY_TARGET_TYPE_DEFINITIONS = [
   {
-    id: 'unit',
-    label: 'Units',
-    summaryLabel: 'Units',
+    id: 'chaff',
+    label: 'Chaff',
+    summaryLabel: 'Chaff',
+    requiredTag: 'chaff',
+    defaultSelected: true
+  },
+  {
+    id: 'medium',
+    label: 'Medium',
+    summaryLabel: 'Medium',
+    requiredTag: 'medium',
+    defaultSelected: true
+  },
+  {
+    id: 'elite',
+    label: 'Elite',
+    summaryLabel: 'Elite',
+    requiredTag: 'elite',
+    defaultSelected: true
+  },
+  {
+    id: 'tank',
+    label: 'Tank',
+    summaryLabel: 'Tank',
+    requiredTag: 'tank',
     defaultSelected: true
   },
   {
@@ -63,6 +87,26 @@ ENEMY_TARGET_TYPE_DEFINITIONS.forEach((definition) => {
   ENEMY_TARGET_TYPE_LOOKUP.set(normalizeText(definition.label), definition.id);
   ENEMY_TARGET_TYPE_LOOKUP.set(normalizeText(definition.summaryLabel), definition.id);
 });
+
+const ENEMY_TARGET_TYPE_ALIAS_LOOKUP = new Map([
+  [normalizeText('unit'), UNIT_TARGET_TYPE_IDS],
+  [normalizeText('units'), UNIT_TARGET_TYPE_IDS]
+]);
+
+function expandEnemyTargetTypeIds(targetTypeId) {
+  const normalizedTargetTypeId = normalizeText(targetTypeId);
+  if (!normalizedTargetTypeId) {
+    return [];
+  }
+
+  const aliasedTargetTypeIds = ENEMY_TARGET_TYPE_ALIAS_LOOKUP.get(normalizedTargetTypeId);
+  if (aliasedTargetTypeIds) {
+    return [...aliasedTargetTypeIds];
+  }
+
+  const normalizedId = ENEMY_TARGET_TYPE_LOOKUP.get(normalizedTargetTypeId);
+  return normalizedId ? [normalizedId] : [];
+}
 
 export const DEFAULT_ENEMY_TARGET_TYPE_IDS = ENEMY_TARGET_TYPE_DEFINITIONS
   .filter((definition) => definition.defaultSelected)
@@ -283,7 +327,7 @@ export function filterEnemiesByScope(units = [], scope = 'all') {
 }
 
 export function normalizeEnemyTargetTypeId(targetTypeId = 'unit') {
-  return ENEMY_TARGET_TYPE_LOOKUP.get(normalizeText(targetTypeId)) || null;
+  return expandEnemyTargetTypeIds(targetTypeId)[0] || null;
 }
 
 export function normalizeEnemyTargetTypeIds(targetTypeIds = DEFAULT_ENEMY_TARGET_TYPE_IDS) {
@@ -294,24 +338,36 @@ export function normalizeEnemyTargetTypeIds(targetTypeIds = DEFAULT_ENEMY_TARGET
   const seen = new Set();
   const normalizedIds = [];
   targetTypeIds.forEach((targetTypeId) => {
-    const normalizedId = normalizeEnemyTargetTypeId(targetTypeId);
-    if (!normalizedId || seen.has(normalizedId)) {
-      return;
-    }
+    expandEnemyTargetTypeIds(targetTypeId).forEach((normalizedId) => {
+      if (!normalizedId || seen.has(normalizedId)) {
+        return;
+      }
 
-    seen.add(normalizedId);
-    normalizedIds.push(normalizedId);
+      seen.add(normalizedId);
+      normalizedIds.push(normalizedId);
+    });
   });
 
   return normalizedIds;
 }
 
-export function getEnemyTargetTypeDefinition(targetTypeId = 'unit') {
-  const normalizedId = normalizeEnemyTargetTypeId(targetTypeId);
-  return ENEMY_TARGET_TYPE_DEFINITIONS.find((definition) => definition.id === normalizedId) || null;
+export function getEnemyTargetTypeDefinition(targetTypeId = UNIT_TARGET_TYPE_IDS[0]) {
+  const normalizedIds = expandEnemyTargetTypeIds(targetTypeId);
+  if (normalizedIds.length !== 1) {
+    return null;
+  }
+
+  return ENEMY_TARGET_TYPE_DEFINITIONS.find((definition) => definition.id === normalizedIds[0]) || null;
 }
 
 export function matchesEnemyTargetType(unit, targetTypeId = 'unit') {
+  if (typeof targetTypeId === 'string') {
+    const normalizedIds = normalizeEnemyTargetTypeIds([targetTypeId]);
+    if (normalizedIds.length > 1) {
+      return normalizedIds.some((normalizedId) => matchesEnemyTargetType(unit, normalizedId));
+    }
+  }
+
   const definition = typeof targetTypeId === 'string'
     ? getEnemyTargetTypeDefinition(targetTypeId)
     : targetTypeId;
@@ -320,12 +376,6 @@ export function matchesEnemyTargetType(unit, targetTypeId = 'unit') {
   }
 
   const scopeTags = getEnemyUnitScopeTags(unit);
-  if (definition.id === 'unit') {
-    return ENEMY_TARGET_TYPE_DEFINITIONS
-      .filter((entry) => entry.requiredTag)
-      .every((entry) => !scopeTags.includes(entry.requiredTag));
-  }
-
   return scopeTags.includes(definition.requiredTag);
 }
 

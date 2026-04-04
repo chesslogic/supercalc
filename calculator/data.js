@@ -213,14 +213,18 @@ export function setSelectedEnemyTargetTypes(targetTypeIds) {
 }
 
 export function toggleSelectedEnemyTargetType(targetTypeId) {
-  const normalizedTargetTypeId = normalizeEnemyTargetTypeIds([targetTypeId])[0] || null;
-  if (!normalizedTargetTypeId) {
+  const normalizedTargetTypeIds = normalizeEnemyTargetTypeIds([targetTypeId]);
+  if (normalizedTargetTypeIds.length === 0) {
     return [...calculatorState.enemyTargetTypes];
   }
 
-  const nextTargetTypes = calculatorState.enemyTargetTypes.includes(normalizedTargetTypeId)
-    ? calculatorState.enemyTargetTypes.filter((value) => value !== normalizedTargetTypeId)
-    : [...calculatorState.enemyTargetTypes, normalizedTargetTypeId];
+  const selectedTargetTypeIds = new Set(calculatorState.enemyTargetTypes);
+  const allSelected = normalizedTargetTypeIds.every((normalizedTargetTypeId) => (
+    selectedTargetTypeIds.has(normalizedTargetTypeId)
+  ));
+  const nextTargetTypes = allSelected
+    ? calculatorState.enemyTargetTypes.filter((value) => !normalizedTargetTypeIds.includes(value))
+    : [...calculatorState.enemyTargetTypes, ...normalizedTargetTypeIds];
 
   calculatorState.enemyTargetTypes = normalizeEnemyTargetTypeIds(nextTargetTypes);
   notifyCalculatorStateChange();

@@ -58,7 +58,7 @@ import {
   getExplosiveDisplayInfo
 } from '../calculator/explosive-display.js';
 import { buildCompareTtkTooltip } from '../calculator/compare-tooltips.js';
-import { formatDamageValue } from '../calculator/damage-rounding.js';
+import { formatDamageValue, roundDamagePacket } from '../calculator/damage-rounding.js';
 import {
   getEnemyZoneConDisplayInfo,
   getEnemyZoneHealthDisplayInfo,
@@ -109,7 +109,7 @@ test('calculator defaults to focused compare mode with all scopes enabled', () =
   assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
   assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
   assert.equal(DEFAULT_OVERVIEW_SCOPE, 'all');
-  assert.deepEqual(DEFAULT_ENEMY_TARGET_TYPES, ['unit', 'giant']);
+  assert.deepEqual(DEFAULT_ENEMY_TARGET_TYPES, ['chaff', 'medium', 'elite', 'tank', 'giant']);
   assert.equal(DEFAULT_WEAPON_SORT_MODE, 'grouped');
 });
 
@@ -157,9 +157,12 @@ test('enemy dropdown scope filtering works from the underlying enemy dataset', (
   );
 });
 
-test('enemy target type filtering distinguishes units, giants, structures, and objectives', () => {
+test('enemy target type filtering distinguishes unit tiers, giants, structures, and objectives', () => {
   const enemies = [
-    { name: 'Stalker', faction: 'Terminid' },
+    { name: 'Scavenger', faction: 'Terminid', scopeTags: ['chaff'] },
+    { name: 'Warrior', faction: 'Terminid', scopeTags: ['medium'] },
+    { name: 'Stalker', faction: 'Terminid', scopeTags: ['elite'] },
+    { name: 'Charger', faction: 'Terminid', scopeTags: ['tank'] },
     { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] },
     { name: 'AA Emplacement', faction: 'Automaton', scopeTags: ['structure'] },
     { name: 'Shrieker Nest', faction: 'Terminid', scopeTags: ['objective'] }
@@ -167,27 +170,27 @@ test('enemy target type filtering distinguishes units, giants, structures, and o
 
   assert.deepEqual(
     filterEnemiesByTargetTypes(enemies, ['unit']).map((enemy) => enemy.name),
-    ['Stalker']
+    ['Scavenger', 'Warrior', 'Stalker', 'Charger']
   );
   assert.deepEqual(
-    filterEnemiesByTargetTypes(enemies, ['giant', 'objective']).map((enemy) => enemy.name),
-    ['Bile Titan', 'Shrieker Nest']
+    filterEnemiesByTargetTypes(enemies, ['medium', 'tank', 'objective']).map((enemy) => enemy.name),
+    ['Warrior', 'Charger', 'Shrieker Nest']
   );
   assert.deepEqual(
     getEnemyTargetTypeOptions(enemies).map(({ id }) => id),
-    ['unit', 'giant', 'structure', 'objective']
+    ['chaff', 'medium', 'elite', 'tank', 'giant', 'structure', 'objective']
   );
 });
 
 test('enemy target type options only include categories present in the dataset', () => {
   const enemies = [
-    { name: 'Stalker', faction: 'Terminid' },
+    { name: 'Warrior', faction: 'Terminid', scopeTags: ['medium'] },
     { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] }
   ];
 
   assert.deepEqual(
     getEnemyTargetTypeOptions(enemies).map(({ id }) => id),
-    ['unit', 'giant']
+    ['medium', 'giant']
   );
 });
 
@@ -308,13 +311,16 @@ test('enemy target type selection normalizes ids and toggles independently', () 
 
   try {
     setSelectedEnemyTargetTypes(['Objectives', 'unit', 'unit']);
-    assert.deepEqual(getSelectedEnemyTargetTypes(), ['objective', 'unit']);
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['objective', 'chaff', 'medium', 'elite', 'tank']);
 
     toggleSelectedEnemyTargetType('structure');
-    assert.deepEqual(getSelectedEnemyTargetTypes(), ['objective', 'unit', 'structure']);
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['objective', 'chaff', 'medium', 'elite', 'tank', 'structure']);
 
     toggleSelectedEnemyTargetType('Objectives');
-    assert.deepEqual(getSelectedEnemyTargetTypes(), ['unit', 'structure']);
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['chaff', 'medium', 'elite', 'tank', 'structure']);
+
+    toggleSelectedEnemyTargetType('unit');
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['structure']);
   } finally {
     calculatorState.enemyTargetTypes = previousTargetTypes;
   }
@@ -421,12 +427,12 @@ test('weapon details DMG cells can show range-adjusted projectile damage with a 
       rangeA: 100
     });
 
-    const expectedDamage = formatDamageValue(calculateBallisticDamageAtDistance(90, {
+    const expectedDamage = formatDamageValue(roundDamagePacket(calculateBallisticDamageAtDistance(90, {
       caliber: 5.5,
       mass: 4.5,
       velocity: 900,
       drag: 0.3
-    }, 100));
+    }, 100)));
     assert.equal(display?.text, expectedDamage);
     assert.equal(display?.isAdjusted, true);
     assert.match(display?.title || '', /Weapon A DMG at 100m:/i);
@@ -501,18 +507,18 @@ test('weapon details split compare-mode DMG cells when A and B ranges differ', (
       rangeB: 50
     });
 
-    const expectedA = formatDamageValue(calculateBallisticDamageAtDistance(90, {
+    const expectedA = formatDamageValue(roundDamagePacket(calculateBallisticDamageAtDistance(90, {
       caliber: 5.5,
       mass: 4.5,
       velocity: 900,
       drag: 0.3
-    }, 100));
-    const expectedB = formatDamageValue(calculateBallisticDamageAtDistance(90, {
+    }, 100)));
+    const expectedB = formatDamageValue(roundDamagePacket(calculateBallisticDamageAtDistance(90, {
       caliber: 8,
       mass: 8.5,
       velocity: 960,
       drag: 0.2
-    }, 50));
+    }, 50)));
 
     assert.equal(display?.text, `A ${expectedA} • B ${expectedB}`);
     assert.equal(display?.isAdjusted, true);

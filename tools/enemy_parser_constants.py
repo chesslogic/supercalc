@@ -8,24 +8,125 @@ from typing import Any, Dict
 INTERNAL_RAW_ZONE_NAME_KEY = '_raw_zone_name'
 INTERNAL_ZONE_METADATA_KEYS = frozenset({'_raw_zone_name'})
 
-ENEMY_SCOPE_TAGS_BY_UNIT_NAME: Dict[str, list[str]] = {'AA Emplacement': ['structure'],
- 'Automaton Mortar Emplacement': ['structure'],
- 'Bile Titan': ['giant'],
- 'Bulk Fabricator': ['objective'],
- 'Cannon Turret': ['structure'],
- 'Charger Behemoth': ['giant'],
- 'Fabricator': ['objective'],
- 'Factory Strider': ['giant'],
- 'Factory Strider Gatling Gun': ['structure'],
- 'Fusion Autocannon': ['structure'],
- 'Harvester': ['giant'],
- 'Heavy Fusion Cannon': ['structure'],
- 'Hive Lord': ['giant'],
- 'Impaler': ['giant'],
- 'Infested Tower': ['objective'],
- 'Shrieker Nest': ['objective'],
- 'Spore Charger': ['giant'],
- 'Spore Lung': ['objective']}
+def build_enemy_scope_tags_by_unit_name(
+    scope_tag_groups: Dict[str, tuple[str, ...]],
+) -> Dict[str, list[str]]:
+    scope_tags_by_unit_name: Dict[str, list[str]] = {}
+    for scope_tag, unit_names in scope_tag_groups.items():
+        for unit_name in unit_names:
+            scope_tags_by_unit_name.setdefault(unit_name, []).append(scope_tag)
+    return scope_tags_by_unit_name
+
+
+ENEMY_SCOPE_TAG_GROUPS: Dict[str, tuple[str, ...]] = {
+    'chaff': (
+        'Assault Raider',
+        'Bile Spitter',
+        'Brawler',
+        'Commissar',
+        'Marauder',
+        'MG Raider',
+        'Pouncer',
+        'Pyro Trooper',
+        'Raider',
+        'Rocket Raider',
+        'Scavenger',
+        'Scout Raider',
+        'Shrieker',
+        'Spore Burst Scavenger',
+        'Trooper',
+        'Voteless',
+        'Watcher',
+    ),
+    'medium': (
+        'Berserker',
+        'Bile Warrior',
+        'Conflagration Devastator',
+        'Devastator',
+        'Elevated Overseer',
+        'Heavy Devastator',
+        'Hive Guard',
+        'Hunter',
+        'Incendiary MG Devastator',
+        'Obtruder',
+        'Overseer',
+        'Predator Hunter',
+        'Rocket Devastator',
+        'Rupture Warrior',
+        'Scout Strider',
+        'Spore Burst Hunter',
+        'Spore Burst Warrior',
+        'Warrior',
+    ),
+    'elite': (
+        'Agitator',
+        'Alpha Commander',
+        'Bile Spewer',
+        'Brood Commander',
+        'Crescent Overseer',
+        'Gazer',
+        'Gunship',
+        'Nursing Spewer',
+        'Predator Stalker',
+        'Radical',
+        'Rupture Spewer',
+        'Stalker',
+        'Stingray',
+    ),
+    'tank': (
+        'Annihilator Tank',
+        'Barrager Tank',
+        'Charger',
+        'Charger Behemoth',
+        'Dropship',
+        'Fleshmob',
+        'Gatekeeper',
+        'Hulk',
+        'Hulk Bruiser',
+        'Hulk Firebomber',
+        'Hulk Obliterator',
+        'Hulk Scorcher',
+        'Reinforced Scout Strider',
+        'Rupture Charger',
+        'Shredder Tank',
+        'Spore Charger',
+        'Veracitor',
+        'War Strider',
+        'Xenobite Ardent',
+    ),
+    'giant': (
+        'Bile Titan',
+        'Dragonroach',
+        'Factory Strider',
+        'Harvester',
+        'Hive Lord',
+        'Impaler',
+        'Leviathan',
+        'Vox Engine',
+    ),
+    'structure': (
+        'AA Emplacement',
+        'Automaton Mortar Emplacement',
+        'Cannon Turret',
+        'Factory Strider Gatling Gun',
+        'Fusion Autocannon',
+        'Fusion Repeater',
+        'Heavy Fusion Cannon',
+        'Heavy Fusion Repeater',
+        'Lightning Spire',
+    ),
+    'objective': (
+        'Ballistic Missile',
+        'Bulk Fabricator',
+        'Fabricator',
+        'Infested Tower',
+        'Shrieker Nest',
+        'Spore Lung',
+        'Warp Ship',
+    ),
+}
+
+ENEMY_SCOPE_TAGS_BY_UNIT_NAME = build_enemy_scope_tags_by_unit_name(ENEMY_SCOPE_TAG_GROUPS)
 
 # These overrides prefer the raw imported zone_name/ThinHash plus occurrence
 # order within matching raw names. They can also fall back to the parser's
