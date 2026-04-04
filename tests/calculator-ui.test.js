@@ -25,6 +25,7 @@ import {
 } from '../calculator/data.js';
 import {
   getEnemyColumnsForState,
+  getEnemyControlSections,
   getWeaponRangeAdjustedCellDisplay,
   getOverviewColumnsForState,
   shouldShowEnemyControls,
@@ -339,6 +340,47 @@ test('scope controls are available before selection in both single and compare m
     hasFocusedEnemy: false
   }), true);
   assert.equal(shouldShowEnemyScopeControls({ mode: 'single' }), true);
+});
+
+test('enemy controls place scope and targets above the enemy selector', () => {
+  assert.deepEqual(
+    getEnemyControlSections({
+      mode: 'single',
+      compareView: 'focused',
+      hasFocusedEnemy: false,
+      enemyTableMode: 'analysis'
+    }),
+    {
+      beforeEnemySelector: ['scope', 'targets'],
+      afterEnemySelector: []
+    }
+  );
+
+  assert.deepEqual(
+    getEnemyControlSections({
+      mode: 'compare',
+      compareView: 'focused',
+      hasFocusedEnemy: true,
+      enemyTableMode: 'stats'
+    }),
+    {
+      beforeEnemySelector: ['scope', 'targets'],
+      afterEnemySelector: ['view', 'grouping']
+    }
+  );
+
+  assert.deepEqual(
+    getEnemyControlSections({
+      mode: 'compare',
+      compareView: 'overview',
+      hasFocusedEnemy: false,
+      enemyTableMode: 'analysis'
+    }),
+    {
+      beforeEnemySelector: ['scope', 'targets'],
+      afterEnemySelector: ['view', 'grouping', 'diff']
+    }
+  );
 });
 
 test('scope options keep the three base fronts in gameplay order before extras', () => {

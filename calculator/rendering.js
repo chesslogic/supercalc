@@ -748,6 +748,44 @@ export function shouldShowEnemyScopeControls({
   return mode === 'compare' || mode === 'single';
 }
 
+export function getEnemyControlSections({
+  mode = 'single',
+  compareView = 'focused',
+  hasFocusedEnemy = false,
+  enemyTableMode = 'analysis'
+} = {}) {
+  if (!shouldShowEnemyControls({ mode, compareView, hasFocusedEnemy })) {
+    return {
+      beforeEnemySelector: [],
+      afterEnemySelector: []
+    };
+  }
+
+  const overviewActive = mode === 'compare' && compareView === 'overview';
+  const beforeEnemySelector = [];
+  const afterEnemySelector = [];
+
+  if (shouldShowEnemyScopeControls({ mode })) {
+    beforeEnemySelector.push('scope');
+  }
+  beforeEnemySelector.push('targets');
+
+  if (mode === 'compare' && (overviewActive || hasFocusedEnemy)) {
+    afterEnemySelector.push('view');
+  }
+  if (overviewActive || hasFocusedEnemy) {
+    afterEnemySelector.push('grouping');
+  }
+  if (overviewActive && enemyTableMode === 'analysis') {
+    afterEnemySelector.push('diff');
+  }
+
+  return {
+    beforeEnemySelector,
+    afterEnemySelector
+  };
+}
+
 function getEnemyBaseColumns() {
   return getEnemyBaseColumnsForState({
     mode: calculatorState.mode,
@@ -857,95 +895,70 @@ function getFocusedTargetingModes(selectedAttacksA, selectedAttacksB) {
   };
 }
 
-function renderEnemyControls(enemy) {
-  const controlsContainer = document.getElementById('calculator-enemy-controls');
-  if (!controlsContainer) {
-    return;
-  }
-
-  controlsContainer.innerHTML = '';
-
-  const overviewActive = calculatorState.mode === 'compare' && calculatorState.compareView === 'overview';
-  const hasFocusedEnemy = Boolean(enemy && enemy.zones && enemy.zones.length > 0);
-  if (!shouldShowEnemyControls({
-    mode: calculatorState.mode,
-    compareView: calculatorState.compareView,
-    hasFocusedEnemy
-  })) {
-    controlsContainer.classList.add('hidden');
-    return;
-  }
-
-  controlsContainer.classList.remove('hidden');
-
-  const toolbar = document.createElement('div');
-  toolbar.className = 'calculator-toolbar';
-
-  if (calculatorState.mode === 'compare' && (overviewActive || hasFocusedEnemy)) {
-    appendToolbarButtonGroup(
-      toolbar,
-      'View:',
-      [
-        { value: 'analysis', label: 'Analysis' },
-        { value: 'stats', label: 'Stats' }
-      ],
-      (value) => calculatorState.enemyTableMode === value,
-      (value) => {
-        setEnemyTableMode(value);
-        ensureEnemySortKeyVisible(overviewActive ? getOverviewColumns() : getEnemyColumns());
-        renderEnemyDetails();
-      }
-    );
-  }
-
-  if (overviewActive || hasFocusedEnemy) {
-    appendToolbarButtonGroup(
-      toolbar,
-      'Grouping:',
-      [
-        { value: 'none', label: 'No grouping' },
-        { value: 'outcome', label: 'Group by outcome' }
-      ],
-      (value) => calculatorState.enemySort.groupMode === value,
-      (value) => {
-        setEnemyGroupMode(value);
-        renderEnemyDetails();
-      }
-    );
-  }
-
-  if (shouldShowEnemyScopeControls({ mode: calculatorState.mode })) {
-    appendToolbarSelectGroup(
-      toolbar,
-      'Scope:',
-      getOverviewScopeOptionGroupsForState(),
-      calculatorState.overviewScope,
-      (value) => {
-        if (overviewActive) {
-          ensureEnemySortKeyVisible(getOverviewColumnsForState({
-            enemyTableMode: calculatorState.enemyTableMode,
-            overviewScope: value
-          }));
+function appendEnemyToolbarControl(toolbar, controlId, { overviewActive = false } = {}) {
+  switch (controlId) {
+    case 'view':
+      appendToolbarButtonGroup(
+        toolbar,
+        'View:',
+        [
+          { value: 'analysis', label: 'Analysis' },
+          { value: 'stats', label: 'Stats' }
+        ],
+        (value) => calculatorState.enemyTableMode === value,
+        (value) => {
+          setEnemyTableMode(value);
+          ensureEnemySortKeyVisible(overviewActive ? getOverviewColumns() : getEnemyColumns());
+          renderEnemyDetails();
         }
-        setOverviewScope(value);
-        refreshEnemyCalculationViews();
-      }
-    );
-  }
-
-  appendToolbarButtonGroup(
-    toolbar,
-    'Targets:',
-    getEnemyTargetTypeOptionsForState().map((option) => ({ value: option.id, label: option.label })),
-    (value) => getSelectedEnemyTargetTypes().includes(value),
-    (value) => {
-      toggleSelectedEnemyTargetType(value);
-      refreshEnemyCalculationViews();
-    }
-  );
-
-  if (overviewActive) {
-    if (calculatorState.enemyTableMode === 'analysis') {
+      );
+      break;
+    case 'grouping':
+      appendToolbarButtonGroup(
+        toolbar,
+        'Grouping:',
+        [
+          { value: 'none', label: 'No grouping' },
+          { value: 'outcome', label: 'Group by outcome' }
+        ],
+        (value) => calculatorState.enemySort.groupMode === value,
+        (value) => {
+          setEnemyGroupMode(value);
+          renderEnemyDetails();
+        }
+      );
+      break;
+    case 'scope':
+      appendToolbarSelectGroup(
+        toolbar,
+        'Scope:',
+        getOverviewScopeOptionGroupsForState(),
+        calculatorState.overviewScope,
+        (value) => {
+          if (overviewActive) {
+            ensureEnemySortKeyVisible(getOverviewColumnsForState({
+              enemyTableMode: calculatorState.enemyTableMode,
+              overviewScope: value
+            }));
+          }
+          setOverviewScope(value);
+          refreshEnemyCalculationViews();
+        }
+      );
+      break;
+    case 'targets':
+      appendToolbarButtonGroup(
+        toolbar,
+        'Targets:',
+        getEnemyTargetTypeOptionsForState().map((option) => ({ value: option.id, label: option.label })),
+        (value) => getSelectedEnemyTargetTypes().includes(value),
+        (value) => {
+          toggleSelectedEnemyTargetType(value);
+          refreshEnemyCalculationViews();
+        }
+      );
+      break;
+    case 'diff':
       appendToolbarButtonGroup(
         toolbar,
         'Diff:',
@@ -959,11 +972,64 @@ function renderEnemyControls(enemy) {
           refreshEnemyCalculationViews();
         }
       );
-    }
+      break;
+    default:
+      break;
   }
+}
+
+function renderEnemyControls(enemy) {
+  const prefilterContainer = document.getElementById('calculator-enemy-prefilters');
+  const controlsContainer = document.getElementById('calculator-enemy-controls');
+  if (!prefilterContainer || !controlsContainer) {
+    return;
+  }
+
+  prefilterContainer.innerHTML = '';
+  controlsContainer.innerHTML = '';
+
+  const overviewActive = calculatorState.mode === 'compare' && calculatorState.compareView === 'overview';
+  const hasFocusedEnemy = Boolean(enemy && enemy.zones && enemy.zones.length > 0);
+  if (!shouldShowEnemyControls({
+    mode: calculatorState.mode,
+    compareView: calculatorState.compareView,
+    hasFocusedEnemy
+  })) {
+    prefilterContainer.classList.add('hidden');
+    controlsContainer.classList.add('hidden');
+    return;
+  }
+
+  const controlSections = getEnemyControlSections({
+    mode: calculatorState.mode,
+    compareView: calculatorState.compareView,
+    hasFocusedEnemy,
+    enemyTableMode: calculatorState.enemyTableMode
+  });
+
+  const prefilterToolbar = document.createElement('div');
+  prefilterToolbar.className = 'calculator-toolbar';
+  controlSections.beforeEnemySelector.forEach((controlId) => {
+    appendEnemyToolbarControl(prefilterToolbar, controlId, { overviewActive });
+  });
+  if (prefilterToolbar.children.length > 0) {
+    prefilterContainer.classList.remove('hidden');
+    prefilterContainer.appendChild(prefilterToolbar);
+  } else {
+    prefilterContainer.classList.add('hidden');
+  }
+
+  controlsContainer.classList.remove('hidden');
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'calculator-toolbar';
+  controlSections.afterEnemySelector.forEach((controlId) => {
+    appendEnemyToolbarControl(toolbar, controlId, { overviewActive });
+  });
 
   const note = document.createElement('span');
   note.className = 'status calculator-toolbar-note';
+  note.classList.toggle('is-standalone', controlSections.afterEnemySelector.length === 0);
   if (calculatorState.mode !== 'compare') {
     note.textContent = hasFocusedEnemy
       ? 'Single mode shows the full enemy table, including raw stats plus Shots, Range, and TTK. Scope and target filters also affect the enemy dropdown.'
