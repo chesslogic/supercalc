@@ -128,6 +128,12 @@ ENEMY_SCOPE_TAG_GROUPS: Dict[str, tuple[str, ...]] = {
 
 ENEMY_SCOPE_TAGS_BY_UNIT_NAME = build_enemy_scope_tags_by_unit_name(ENEMY_SCOPE_TAG_GROUPS)
 
+ENEMY_UNIT_METADATA_BY_NAME: Dict[str, Dict[str, Any]] = {
+    'Xenobite Ardent': {
+        'show_in_selector': False,
+    },
+}
+
 # These overrides prefer the raw imported zone_name/ThinHash plus occurrence
 # order within matching raw names. They can also fall back to the parser's
 # transformed zone signature plus occurrence order for legacy/manual entries.

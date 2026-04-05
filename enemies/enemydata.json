@@ -6805,7 +6805,8 @@
       "health": 800,
       "scope_tags": [
         "tank"
-      ]
+      ],
+      "show_in_selector": false
     }
   },
   "Terminid": {

@@ -28,6 +28,40 @@ FRONT_DEFINITIONS.forEach((front) => {
 });
 
 const UNIT_TARGET_TYPE_IDS = ['chaff', 'medium', 'elite', 'tank'];
+const ILLUMINATE_COMMON_SCOPE_ID = 'illuminate-common';
+const ILLUMINATE_COMMON_UNIT_NAMES = [
+  'Crescent Overseer',
+  'Elevated Overseer',
+  'Fleshmob',
+  'Harvester',
+  'Leviathan',
+  'Overseer',
+  'Stingray',
+  'Voteless',
+  'Warp Ship',
+  'Watcher'
+];
+const ILLUMINATE_APPROPRIATORS_EXCLUSIVE_UNIT_NAMES = [
+  'Gatekeeper',
+  'Obtruder',
+  'Veracitor'
+];
+const ILLUMINATE_ARMY_ROLE_DEFINITIONS = [
+  {
+    id: 'common',
+    frontId: 'illuminate',
+    text: 'C',
+    label: 'Common Army',
+    includeNames: ILLUMINATE_COMMON_UNIT_NAMES
+  },
+  {
+    id: 'exclusive',
+    frontId: 'illuminate',
+    text: 'E',
+    label: 'Appropriators Exclusive',
+    includeNames: ILLUMINATE_APPROPRIATORS_EXCLUSIVE_UNIT_NAMES
+  }
+];
 
 export const ENEMY_TARGET_TYPE_DEFINITIONS = [
   {
@@ -186,11 +220,20 @@ const ENEMY_SCOPE_DEFINITIONS = [
     summaryLabel: 'Illuminate'
   },
   {
+    id: ILLUMINATE_COMMON_SCOPE_ID,
+    frontId: 'illuminate',
+    label: 'Illuminate Common',
+    summaryLabel: 'Illuminate Common',
+    includeNames: ILLUMINATE_COMMON_UNIT_NAMES,
+    showSubgroupBadge: false
+  },
+  {
     id: 'mindless-masses',
     frontId: 'illuminate',
     label: 'Mindless Masses',
     summaryLabel: 'Mindless Masses',
     excludeNames: [
+      'Crescent Overseer',
       'Elevated Overseer',
       'Gatekeeper',
       'Obtruder',
@@ -311,8 +354,21 @@ export function getEnemySubscopeDefinitionsForUnit(unit) {
     definition.frontId === front.id
     && definition.id !== front.id
     && definition.kind !== 'all'
+    && definition.showSubgroupBadge !== false
     && matchesEnemyScope(unit, definition)
   ));
+}
+
+export function getEnemyArmyRoleDefinitionForUnit(unit) {
+  const front = getEnemyUnitFront(unit);
+  if (!front || front.id !== 'illuminate') {
+    return null;
+  }
+
+  const unitName = unit?.name ?? '';
+  return ILLUMINATE_ARMY_ROLE_DEFINITIONS.find((definition) => (
+    matchesNameList(unitName, definition.includeNames)
+  )) || null;
 }
 
 export function getEnemyPrimaryTargetTypeDefinition(unit) {

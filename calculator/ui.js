@@ -19,6 +19,7 @@ import {
   formatEngagementRangeMeters
 } from './engagement-range.js';
 import {
+  getEnemyArmyRoleDefinitionForUnit,
   filterEnemiesByTargetTypes,
   getEnemyScopeSummaryLabel,
   getEnemyPrimaryTargetTypeDefinition,
@@ -107,6 +108,7 @@ export function getEnemyDropdownItemModel(enemy = null) {
   const frontId = front?.id || '';
   const frontLabel = front?.label || String(enemy?.faction || '').trim() || 'Unknown';
   const subgroupDefinitions = getEnemySubscopeDefinitionsForUnit(enemy);
+  const armyRoleDefinition = getEnemyArmyRoleDefinitionForUnit(enemy);
   const targetTypeDefinition = getEnemyPrimaryTargetTypeDefinition(enemy);
 
   const frontBadge = {
@@ -119,6 +121,13 @@ export function getEnemyDropdownItemModel(enemy = null) {
     text: definition.summaryLabel,
     label: definition.label || definition.summaryLabel
   }));
+  const armyRoleBadge = armyRoleDefinition
+    ? {
+      id: armyRoleDefinition.id,
+      text: armyRoleDefinition.text,
+      label: armyRoleDefinition.label
+    }
+    : null;
   const targetBadge = targetTypeDefinition
     ? {
       id: targetTypeDefinition.id,
@@ -129,6 +138,7 @@ export function getEnemyDropdownItemModel(enemy = null) {
   const titleParts = [
     frontLabel,
     ...subgroupBadges.map((badge) => badge.label),
+    armyRoleBadge?.label,
     targetBadge?.label
   ].filter(Boolean);
 
@@ -137,6 +147,7 @@ export function getEnemyDropdownItemModel(enemy = null) {
     frontLabel,
     frontBadge,
     subgroupBadges,
+    armyRoleBadge,
     targetBadge,
     metaTitle: titleParts.join(' • '),
     searchText: [
@@ -144,6 +155,7 @@ export function getEnemyDropdownItemModel(enemy = null) {
       enemy?.faction,
       frontLabel,
       ...subgroupBadges.map((badge) => badge.label),
+      armyRoleBadge?.label,
       targetBadge?.label
     ]
       .filter(Boolean)
@@ -199,6 +211,17 @@ function buildEnemyDropdownItemElement(enemy) {
       classNames: ['enemy-dropdown-badge-subgroup']
     });
   });
+
+  if (itemModel.armyRoleBadge) {
+    appendEnemyDropdownBadge(meta, {
+      text: itemModel.armyRoleBadge.text,
+      title: buildEnemyBadgeTitle(itemModel.armyRoleBadge.label, 'Illuminate role'),
+      classNames: [
+        'enemy-dropdown-badge-army-role',
+        `enemy-dropdown-badge-army-role-${itemModel.armyRoleBadge.id}`
+      ]
+    });
+  }
 
   if (itemModel.targetBadge) {
     appendEnemyDropdownBadge(meta, {

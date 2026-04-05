@@ -66,6 +66,7 @@ from typing import Any, Dict
 try:
     from enemy_parser_constants import (
         CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
+        ENEMY_UNIT_METADATA_BY_NAME,
         ENEMY_SCOPE_TAGS_BY_UNIT_NAME,
         INTERNAL_RAW_ZONE_NAME_KEY,
         INTERNAL_ZONE_METADATA_KEYS,
@@ -73,6 +74,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - support package-style imports
     from tools.enemy_parser_constants import (
         CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
+        ENEMY_UNIT_METADATA_BY_NAME,
         ENEMY_SCOPE_TAGS_BY_UNIT_NAME,
         INTERNAL_RAW_ZONE_NAME_KEY,
         INTERNAL_ZONE_METADATA_KEYS,
@@ -80,6 +82,9 @@ except ModuleNotFoundError:  # pragma: no cover - support package-style imports
 
 def get_scope_tags_for_unit(unit_name: str) -> list[str]:
     return list(ENEMY_SCOPE_TAGS_BY_UNIT_NAME.get(str(unit_name or ""), []))
+
+def get_unit_metadata_for_unit(unit_name: str) -> Dict[str, Any]:
+    return dict(ENEMY_UNIT_METADATA_BY_NAME.get(str(unit_name or ""), {}))
 
 def normalize_raw_zone_name(value: Any) -> str:
     if value is None:
@@ -447,6 +452,8 @@ def _canonical_payload(candidate: Dict[str, Any]) -> Dict[str, Any]:
     }
     if candidate.get("scope_tags"):
         payload["scope_tags"] = candidate.get("scope_tags")
+    if candidate.get("show_in_selector") is False:
+        payload["show_in_selector"] = False
     return payload
 
 def _payload_signature(candidate: Dict[str, Any]) -> str:
@@ -577,6 +584,9 @@ def parse_enemy_units(src: dict) -> tuple[dict, dict]:
         scope_tags = get_scope_tags_for_unit(unit_name)
         if scope_tags:
             current["scope_tags"] = scope_tags
+        unit_metadata = get_unit_metadata_for_unit(unit_name)
+        if unit_metadata:
+            current.update(unit_metadata)
 
         per_faction_candidates[faction][unit_name].append(current)
 

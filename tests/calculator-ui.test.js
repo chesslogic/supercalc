@@ -145,14 +145,14 @@ test('enemy dropdown scope filtering works from the underlying enemy dataset', (
     { name: 'Predator Hunter', faction: 'Terminid' },
     { name: 'Berserker', faction: 'Automaton' },
     { name: 'Agitator', faction: 'Automaton' },
-    { name: 'Observer', faction: 'Illuminate' },
+    { name: 'Overseer', faction: 'Illuminate' },
     { name: 'Fleshmob', faction: 'Illuminate' },
     { name: 'Gatekeeper', faction: 'Illuminate' }
   ];
 
   assert.deepEqual(
     filterEnemiesByScope(enemies, 'all').map((enemy) => enemy.name),
-    ['Stalker', 'Predator Hunter', 'Berserker', 'Agitator', 'Observer', 'Fleshmob', 'Gatekeeper']
+    ['Stalker', 'Predator Hunter', 'Berserker', 'Agitator', 'Overseer', 'Fleshmob', 'Gatekeeper']
   );
   assert.deepEqual(
     filterEnemiesByScope(enemies, 'Automatons').map((enemy) => enemy.name),
@@ -164,11 +164,15 @@ test('enemy dropdown scope filtering works from the underlying enemy dataset', (
   );
   assert.deepEqual(
     filterEnemiesByScope(enemies, 'Mindless Masses').map((enemy) => enemy.name),
-    ['Observer', 'Fleshmob']
+    ['Overseer', 'Fleshmob']
   );
   assert.deepEqual(
     filterEnemiesByScope(enemies, 'Appropriators').map((enemy) => enemy.name),
-    ['Observer', 'Gatekeeper']
+    ['Overseer', 'Gatekeeper']
+  );
+  assert.deepEqual(
+    filterEnemiesByScope(enemies, 'Illuminate Common').map((enemy) => enemy.name),
+    ['Overseer', 'Fleshmob']
   );
 });
 
@@ -549,7 +553,7 @@ test('scope options keep the three base fronts in gameplay order before extras',
       { name: 'Spore Burst Scavenger', faction: 'Terminid' },
       { name: 'Agitator', faction: 'Automaton' },
       { name: 'Hulk Firebomber', faction: 'Automaton' },
-      { name: 'Observer', faction: 'Illuminate' },
+      { name: 'Overseer', faction: 'Illuminate' },
       { name: 'Fleshmob', faction: 'Illuminate' },
       { name: 'Gatekeeper', faction: 'Illuminate' }
     ];
@@ -563,6 +567,7 @@ test('scope options keep the three base fronts in gameplay order before extras',
       ['cyborg-legion', 'Cyborg Legion'],
       ['incineration-corps', 'Incineration Corps'],
       ['illuminate', 'All Illuminate'],
+      ['illuminate-common', 'Illuminate Common'],
       ['mindless-masses', 'Mindless Masses'],
       ['appropriators', 'Appropriators']
     ]);
@@ -577,6 +582,7 @@ test('overview dropdown option uses a dedicated highlighted presentation', () =>
   assert.match(getEnemyOverviewOptionHtml('all'), /enemy-dropdown-meta/i);
   assert.match(getEnemyOverviewOptionHtml('all'), /compare all matching enemies/i);
   assert.match(getEnemyOverviewOptionHtml('Appropriators'), /compare matching appropriators enemies/i);
+  assert.match(getEnemyOverviewOptionHtml('Illuminate Common'), /compare matching illuminate common enemies/i);
 });
 
 test('enemy dropdown item model exposes faction, subgroup, and target badges', () => {
@@ -589,6 +595,7 @@ test('enemy dropdown item model exposes faction, subgroup, and target badges', (
   assert.equal(model.frontBadge.text, 'BUG');
   assert.equal(model.frontBadge.label, 'Terminids');
   assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Predator Strain']);
+  assert.equal(model.armyRoleBadge, null);
   assert.deepEqual(model.targetBadge, {
     id: 'elite',
     text: 'E',
@@ -600,9 +607,9 @@ test('enemy dropdown item model exposes faction, subgroup, and target badges', (
   assert.match(model.searchText, /predator strain/i);
 });
 
-test('enemy dropdown item model can expose overlapping Illuminate subgroups', () => {
+test('enemy dropdown item model can expose overlapping Illuminate subgroups and a common-role badge', () => {
   const model = getEnemyDropdownItemModel({
-    name: 'Observer',
+    name: 'Overseer',
     faction: 'Illuminate',
     scopeTags: ['medium']
   });
@@ -612,11 +619,40 @@ test('enemy dropdown item model can expose overlapping Illuminate subgroups', ()
     model.subgroupBadges.map((badge) => badge.text),
     ['Mindless Masses', 'Appropriators']
   );
+  assert.deepEqual(model.armyRoleBadge, {
+    id: 'common',
+    text: 'C',
+    label: 'Common Army'
+  });
   assert.deepEqual(model.targetBadge, {
     id: 'medium',
     text: 'M',
     label: 'Medium'
   });
+  assert.match(model.metaTitle, /Common Army/i);
+  assert.match(model.searchText, /common army/i);
+});
+
+test('enemy dropdown item model can expose an Illuminate exclusive-role badge', () => {
+  const model = getEnemyDropdownItemModel({
+    name: 'Veracitor',
+    faction: 'Illuminate',
+    scopeTags: ['tank']
+  });
+
+  assert.equal(model.frontBadge.text, 'ILL');
+  assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Appropriators']);
+  assert.deepEqual(model.armyRoleBadge, {
+    id: 'exclusive',
+    text: 'E',
+    label: 'Appropriators Exclusive'
+  });
+  assert.deepEqual(model.targetBadge, {
+    id: 'tank',
+    text: 'T',
+    label: 'Tank'
+  });
+  assert.match(model.metaTitle, /Appropriators Exclusive/i);
 });
 
 function makeWeapon(name, {

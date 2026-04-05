@@ -187,7 +187,7 @@ test('parser derives Constitution bleed rates and only marks zero-bleed zones wh
   }
 });
 
-test('parser emits scope tags for curated tier, giant, structure, and objective targets', () => {
+test('parser emits scope tags and selector visibility metadata for curated units', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
   const inputPath = join(tempDir, 'input.json');
   const outputPath = join(tempDir, 'output.json');
@@ -233,7 +233,8 @@ test('parser emits scope tags for curated tier, giant, structure, and objective 
       'content/fac_cyborgs/objectives/ballistic_missile': buildFixtureUnit('Ballistic Missile', 2100),
       'content/fac_illuminate/defense/lightning_spire': buildFixtureUnit('Lightning Spire', 500),
       'content/fac_illuminate/units/obtruder': buildFixtureUnit('Obtruder', 400),
-      'content/fac_illuminate/giants/leviathan': buildFixtureUnit('Leviathan', 15000)
+      'content/fac_illuminate/giants/leviathan': buildFixtureUnit('Leviathan', 15000),
+      'content/fac_illuminate/units/xenobite_ardent': buildFixtureUnit('Xenobite Ardent', 800)
     };
 
     writeFileSync(inputPath, JSON.stringify(fixture, null, 2));
@@ -253,6 +254,8 @@ test('parser emits scope tags for curated tier, giant, structure, and objective 
     assert.deepEqual(parsed.Illuminate['Lightning Spire'].scope_tags, ['structure']);
     assert.deepEqual(parsed.Illuminate.Obtruder.scope_tags, ['chaff']);
     assert.deepEqual(parsed.Illuminate.Leviathan.scope_tags, ['giant']);
+    assert.deepEqual(parsed.Illuminate['Xenobite Ardent'].scope_tags, ['tank']);
+    assert.equal(parsed.Illuminate['Xenobite Ardent'].show_in_selector, false);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
@@ -772,4 +775,5 @@ test('checked-in enemydata keeps curated enemy scope tags', () => {
   const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
 
   assert.deepEqual(enemydata.Illuminate.Obtruder.scope_tags, ['chaff']);
+  assert.equal(enemydata.Illuminate['Xenobite Ardent'].show_in_selector, false);
 });
