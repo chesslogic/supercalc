@@ -204,8 +204,12 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
     const outcomeBadge = collectElements(container, (element) => element.classList.contains('calc-zone-context'))[0];
 
     assert.equal(
-      headers.find((element) => element.textContent === 'OH Kill')?.title,
-      'One-shot kill highlight at the current range floor.'
+      headers.find((element) => element.textContent === 'Low')?.title,
+      'Low-overkill kill or critical highlight with 25% or less extra damage.'
+    );
+    assert.equal(
+      headers.find((element) => element.textContent === 'Crit')?.title,
+      'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.'
     );
     assert.match(headers.find((element) => element.textContent === 'Target')?.title || '', /target zone/i);
     assert.match(cells[1].title, /5 hits per firing cycle/i);
@@ -215,7 +219,7 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
     assert.match(cells[4].title, /weapon's RPM/i);
     assert.match(cells[5].title, /qualifies for range-sensitive highlights/i);
     assert.equal(outcomeBadge.title, 'Killing this part kills the enemy');
-    assert.equal(flags[0].title, 'Meets the one-shot kill highlight at the current range floor.');
+    assert.equal(flags[0].title, 'Meets the low-overkill one-shot highlight with 25% or less extra damage.');
     assert.match(summary.title, /Rows without those highlights are hidden from this table/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
@@ -252,8 +256,8 @@ test('renderRecommendationPanel explains fallback rows and unknown range rows wh
     assert.match(summary.textContent, /fallback rows/i);
     assert.match(summary.title, /falls back to the best-ranked row for each weapon/i);
     assert.match(cells[5].title, /row stays listed, but range-sensitive highlights do not count/i);
-    assert.equal(flags[0].title, 'Does not currently meet the one-shot kill highlight.');
-    assert.match(cells[12].title, /fallback because nothing met the current highlight checks/i);
+    assert.equal(flags[0].title, 'Does not currently meet the low-overkill one-shot highlight.');
+    assert.match(cells[10].title, /fallback because nothing met the current highlight checks/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     weaponsState.groups = previousGroups;
@@ -296,7 +300,7 @@ test('renderRecommendationPanel shows staged recommendation paths in target and 
 
     assert.match(cells[2].title, /Best-ranked target: pilot \(via head\)/i);
     assert.match(cells[2].title, /Path: head -> pilot/i);
-    assert.match(cells[12].title, /Staged path: head -> pilot/i);
+    assert.match(cells[10].title, /Staged path: head -> pilot/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

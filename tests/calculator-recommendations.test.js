@@ -73,7 +73,8 @@ function makeExplosionAttackRow(name, damage, ap = 3) {
 }
 
 const TEST_FALLOFF_CSV = `Category,Weapon,Caliber,Mass,Velocity,Drag,,2m,5m,15m,25m,50m,75m,100m,150m,200m
-Primary / Assault Rifle,AR-23 Liberator,5.5,4.5,900,0.3,,0.70%,0.75%,2.15%,3.76%,6.82%,10.20%,13.34%,18.98%,23.96%`;
+Primary / Assault Rifle,AR-23 Liberator,5.5,4.5,900,0.3,,0.70%,0.75%,2.15%,3.76%,6.82%,10.20%,13.34%,18.98%,23.96%
+Marksman / DMR,R-63 Diligence,8,8.5,960,0.15,,0.30%,0.45%,1.10%,1.90%,3.80%,5.70%,7.50%,11.20%,14.90%`;
 
 test('buildWeaponRecommendationRows separates one-shot kills from one-shot critical disables', () => {
   const enemy = {
@@ -101,13 +102,48 @@ test('buildWeaponRecommendationRows separates one-shot kills from one-shot criti
     rangeFloorMeters: 0
   });
 
-  assert.equal(rows[0].weapon.name, 'Killshot');
-  assert.equal(rows[0].hasOneShotKill, true);
-  assert.equal(rows[0].bestOutcomeKind, 'fatal');
+  const killshotRow = rows.find((row) => row.weapon.name === 'Killshot');
+  const disarmerRow = rows.find((row) => row.weapon.name === 'Disarmer');
 
-  assert.equal(rows[1].weapon.name, 'Disarmer');
-  assert.equal(rows[1].hasOneShotCritical, true);
-  assert.equal(rows[1].bestOutcomeKind, 'critical');
+  assert.ok(killshotRow);
+  assert.ok(disarmerRow);
+  assert.equal(killshotRow.hasOneShotKill, true);
+  assert.equal(killshotRow.bestOutcomeKind, 'fatal');
+  assert.equal(disarmerRow.hasOneShotCritical, true);
+  assert.equal(disarmerRow.hasCriticalRecommendation, true);
+  assert.equal(disarmerRow.bestOutcomeKind, 'critical');
+});
+
+test('buildWeaponRecommendationRows prioritizes low-overkill rows before generic one-shot kills', () => {
+  const enemy = {
+    name: 'Priority Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Overkill', {
+      index: 0,
+      rows: [makeAttackRow('Overkill', 160, 2)]
+    }),
+    makeWeapon('Efficient', {
+      index: 1,
+      rows: [makeAttackRow('Efficient', 105, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'Efficient');
+  assert.equal(rows[0].hasLowOverkillOhko, true);
+  assert.equal(rows[1].weapon.name, 'Overkill');
+  assert.equal(rows[1].hasLowOverkillOhko, false);
+  assert.equal(rows[1].hasOneShotKill, true);
 });
 
 test('buildWeaponRecommendationRows drops one-shot range-qualified flags when the floor is too high', () => {
@@ -147,6 +183,43 @@ test('buildWeaponRecommendationRows drops one-shot range-qualified flags when th
   assert.equal(pointBlankRows[0].hasOneShotKill, true);
   assert.equal(beyondRangeRows[0].hasOneShotKill, false);
   assert.equal(beyondRangeRows[0].rangeStatus, 'failed');
+});
+
+test('buildWeaponRecommendationRows prefers shorter effective range when low-overkill rows otherwise tie', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
+
+  const enemy = {
+    name: 'Range Tie Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Short Reach', {
+      code: 'AR-23',
+      rows: [makeAttackRow('5.5x50mm FULL METAL JACKET_P', 105, 2)]
+    }),
+    makeWeapon('Long Reach', {
+      code: 'R-63',
+      rows: [makeAttackRow('8x60mm FULL METAL JACKET_P', 105, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'Short Reach');
+  assert.equal(rows[0].hasLowOverkillOhko, true);
+  assert.equal(rows[1].weapon.name, 'Long Reach');
+  assert.equal(rows[1].hasLowOverkillOhko, true);
+  assert.ok(rows[0].effectiveDistance?.isAvailable);
+  assert.ok(rows[1].effectiveDistance?.isAvailable);
+  assert.ok(rows[0].effectiveDistance.meters < rows[1].effectiveDistance.meters);
 });
 
 test('buildWeaponRecommendationRows models realistic landed pellets for shotgun recommendations', () => {

@@ -774,7 +774,7 @@ function renderOverviewCalculation(container) {
   container.appendChild(wrapper);
 }
 
-const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are any recommendations that light up OH Kill, OH Crit, 2 Crit, Low OHKO, <0.6s, or Pen All.';
+const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Low, Crit, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
   { label: 'Attack', title: 'Best-ranked attack row for this weapon.' },
@@ -785,26 +785,16 @@ const RECOMMENDATION_HEADER_DEFINITIONS = [
     label: 'Range',
     title: `${EFFECTIVE_DISTANCE_TOOLTIP}\nUnknown-range rows stay listed, but range-sensitive highlights only count when the breakpoint qualifies.`
   },
-  { label: 'OH Kill', title: 'One-shot kill highlight at the current range floor.' },
-  { label: 'OH Crit', title: 'One-shot critical-disable highlight at the current range floor.' },
-  { label: '2 Crit', title: 'Two-shot critical-disable highlight at the current range floor.' },
-  { label: 'Low OHKO', title: 'One-shot kill or critical highlight with 25% or less extra damage.' },
+  { label: 'Low', title: 'Low-overkill kill or critical highlight with 25% or less extra damage.' },
+  { label: 'Crit', title: 'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.' },
   { label: '<0.6s', title: 'Fast-TTK highlight for rows under 0.6 seconds at the current range floor.' },
   { label: 'Pen All', title: 'Highlights attack rows that can damage every zone on the current enemy.' },
   { label: 'Tip', title: 'Short note explaining why this breakpoint stands out or what path it follows.' }
 ];
 const RECOMMENDATION_FLAG_TITLES = {
-  oneShotKill: {
-    active: 'Meets the one-shot kill highlight at the current range floor.',
-    inactive: 'Does not currently meet the one-shot kill highlight.'
-  },
-  oneShotCritical: {
-    active: 'Meets the one-shot critical-disable highlight at the current range floor.',
-    inactive: 'Does not currently meet the one-shot critical-disable highlight.'
-  },
-  twoShotCritical: {
-    active: 'Meets the two-shot critical-disable highlight at the current range floor.',
-    inactive: 'Does not currently meet the two-shot critical-disable highlight.'
+  criticalRecommendation: {
+    active: 'Meets the critical-disable highlight at the current range floor (one or two shots).',
+    inactive: 'Does not currently meet the critical-disable highlight.'
   },
   lowOverkillOhko: {
     active: 'Meets the low-overkill one-shot highlight with 25% or less extra damage.',
@@ -1151,33 +1141,17 @@ function renderRecommendationTable({
     appendRecommendationCell(
       tableRow,
       createRecommendationFlag(
-        row.hasOneShotKill,
-        'Yes',
-        getRecommendationFlagTitle('oneShotKill', row.hasOneShotKill)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
-        row.hasOneShotCritical,
-        'Yes',
-        getRecommendationFlagTitle('oneShotCritical', row.hasOneShotCritical)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
-        row.hasTwoShotCritical,
-        'Yes',
-        getRecommendationFlagTitle('twoShotCritical', row.hasTwoShotCritical)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
         row.hasLowOverkillOhko,
         'Yes',
         getRecommendationFlagTitle('lowOverkillOhko', row.hasLowOverkillOhko)
+      )
+    );
+    appendRecommendationCell(
+      tableRow,
+      createRecommendationFlag(
+        row.hasCriticalRecommendation,
+        'Yes',
+        getRecommendationFlagTitle('criticalRecommendation', row.hasCriticalRecommendation)
       )
     );
     appendRecommendationCell(
@@ -1326,11 +1300,9 @@ export function renderRecommendationPanel(container, enemy) {
     }
   }).slice(0, 12);
   const flaggedRows = recommendationRows.filter((row) => (
-    row.hasOneShotKill
-    || row.hasOneShotCritical
-    || row.hasTwoShotCritical
+    row.hasLowOverkillOhko
+    || row.hasCriticalRecommendation
     || row.hasFastTtk
-    || row.hasLowOverkillOhko
     || row.penetratesAll
   ));
   const usingFallbackRows = flaggedRows.length === 0;

@@ -240,6 +240,17 @@ function getDisplayedDamagePerCycle(zoneSummary, outcomeKind) {
   return null;
 }
 
+function isCriticalRecommendation({
+  outcomeKind,
+  shotsToKill,
+  rangeQualified
+}) {
+  return rangeQualified
+    && outcomeKind === 'critical'
+    && shotsToKill !== null
+    && shotsToKill <= 2;
+}
+
 export function isLowOverkillOhko({
   zoneSummary,
   outcomeKind,
@@ -279,6 +290,11 @@ function buildZoneRecommendationCandidate({
   const lethalOutcome = slotMetrics.outcomeKind === 'fatal' || slotMetrics.outcomeKind === 'main';
   const criticalOutcome = slotMetrics.outcomeKind === 'critical';
   const qualifiesForFastTtk = lethalOutcome || criticalOutcome;
+  const criticalRecommendation = isCriticalRecommendation({
+    outcomeKind: slotMetrics.outcomeKind,
+    shotsToKill: slotMetrics.shotsToKill,
+    rangeQualified
+  });
 
   const candidate = {
     zone,
@@ -299,6 +315,7 @@ function buildZoneRecommendationCandidate({
     isOneShotKill: rangeQualified && lethalOutcome && slotMetrics.shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill <= 2,
+    hasCriticalRecommendation: criticalRecommendation,
     hasFastTtk: qualifiesForFastTtk && rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < 0.6,
     hasLowOverkillOhko: rangeQualified && ['fatal', 'main', 'critical'].includes(slotMetrics.outcomeKind) && isLowOverkillOhko({
       zoneSummary: slotMetrics.zoneSummary,
@@ -388,6 +405,11 @@ function buildSequenceRecommendationCandidate({
   const lethalOutcome = outcomeKind === 'fatal' || outcomeKind === 'main';
   const criticalOutcome = outcomeKind === 'critical';
   const qualifiesForFastTtk = lethalOutcome || criticalOutcome;
+  const criticalRecommendation = isCriticalRecommendation({
+    outcomeKind,
+    shotsToKill,
+    rangeQualified
+  });
 
   return {
     ...finalCandidate,
@@ -408,6 +430,7 @@ function buildSequenceRecommendationCandidate({
     isOneShotKill: rangeQualified && lethalOutcome && shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && shotsToKill <= 2,
+    hasCriticalRecommendation: criticalRecommendation,
     hasFastTtk: qualifiesForFastTtk && rangeQualified && ttkSeconds !== null && ttkSeconds < 0.6,
     hasLowOverkillOhko: false
   };
@@ -473,22 +496,12 @@ function compareZoneRecommendationCandidates(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.isOneShotKill, right.isOneShotKill);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
   comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.isOneShotCritical, right.isOneShotCritical);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.isTwoShotCritical, right.isTwoShotCritical);
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
   if (comparison !== 0) {
     return comparison;
   }
@@ -519,7 +532,7 @@ function compareZoneRecommendationCandidates(left, right) {
     return comparison;
   }
 
-  comparison = compareNullableNumber(getRangeMeters(left.effectiveDistance), getRangeMeters(right.effectiveDistance), 'desc');
+  comparison = compareNullableNumber(getRangeMeters(left.effectiveDistance), getRangeMeters(right.effectiveDistance), 'asc');
   if (comparison !== 0) {
     return comparison;
   }
@@ -561,6 +574,7 @@ function buildAttackRowRecommendation({
     hasOneShotKill: candidates.some((candidate) => candidate.isOneShotKill),
     hasOneShotCritical: candidates.some((candidate) => candidate.isOneShotCritical),
     hasTwoShotCritical: candidates.some((candidate) => candidate.isTwoShotCritical),
+    hasCriticalRecommendation: candidates.some((candidate) => candidate.hasCriticalRecommendation),
     hasFastTtk: candidates.some((candidate) => candidate.hasFastTtk),
     hasLowOverkillOhko: candidates.some((candidate) => candidate.hasLowOverkillOhko),
     hasQualifiedPath: candidates.some((candidate) => candidate.rangeStatus === 'qualified')
@@ -573,22 +587,12 @@ function compareAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
   comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasOneShotCritical, right.hasOneShotCritical);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasTwoShotCritical, right.hasTwoShotCritical);
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
   if (comparison !== 0) {
     return comparison;
   }
@@ -603,21 +607,16 @@ function compareAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.penetratesAll, right.penetratesAll);
+  comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
   if (comparison !== 0) {
     return comparison;
   }
 
-  return compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
+  return compareBooleanDescending(left.penetratesAll, right.penetratesAll);
 }
 
 function compareWeaponRecommendationRows(left, right) {
   let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
   if (comparison !== 0) {
     return comparison;
   }
@@ -627,12 +626,7 @@ function compareWeaponRecommendationRows(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasOneShotCritical, right.hasOneShotCritical);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasTwoShotCritical, right.hasTwoShotCritical);
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
   if (comparison !== 0) {
     return comparison;
   }
@@ -642,12 +636,12 @@ function compareWeaponRecommendationRows(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.penetratesAll, right.penetratesAll);
+  comparison = compareAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation);
+  comparison = compareBooleanDescending(left.penetratesAll, right.penetratesAll);
   if (comparison !== 0) {
     return comparison;
   }
@@ -656,22 +650,12 @@ function compareWeaponRecommendationRows(left, right) {
 }
 
 function compareTargetAttackRowRecommendations(left, right) {
-  let comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
+  let comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasOneShotCritical, right.hasOneShotCritical);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasTwoShotCritical, right.hasTwoShotCritical);
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
   if (comparison !== 0) {
     return comparison;
   }
@@ -690,22 +674,12 @@ function compareTargetAttackRowRecommendations(left, right) {
 }
 
 function compareTargetWeaponRecommendationRows(left, right) {
-  let comparison = compareBooleanDescending(left.hasOneShotKill, right.hasOneShotKill);
+  let comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasOneShotCritical, right.hasOneShotCritical);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasTwoShotCritical, right.hasTwoShotCritical);
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
   if (comparison !== 0) {
     return comparison;
   }
@@ -777,6 +751,7 @@ export function buildWeaponRecommendationRows({
         hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
         hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
         hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
+        hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
         hasFastTtk: bestAttackRecommendation.hasFastTtk,
         hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
         penetratesAll: bestAttackRecommendation.penetratesAll,
@@ -834,6 +809,7 @@ export function buildSelectedTargetRecommendationRows({
           hasOneShotKill: recommendation.candidates.some((candidate) => candidate.isOneShotKill),
           hasOneShotCritical: recommendation.candidates.some((candidate) => candidate.isOneShotCritical),
           hasTwoShotCritical: recommendation.candidates.some((candidate) => candidate.isTwoShotCritical),
+          hasCriticalRecommendation: recommendation.candidates.some((candidate) => candidate.hasCriticalRecommendation),
           hasFastTtk: recommendation.candidates.some((candidate) => candidate.hasFastTtk),
           hasLowOverkillOhko: recommendation.candidates.some((candidate) => candidate.hasLowOverkillOhko),
           hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
@@ -861,6 +837,7 @@ export function buildSelectedTargetRecommendationRows({
         hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
         hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
         hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
+        hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
         hasFastTtk: bestAttackRecommendation.hasFastTtk,
         hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
         penetratesAll: bestAttackRecommendation.penetratesAll,
