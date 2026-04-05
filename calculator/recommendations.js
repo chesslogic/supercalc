@@ -19,11 +19,12 @@ const RANGE_STATUS_ORDER = {
 
 const OUTCOME_PRIORITY = {
   fatal: 0,
-  main: 1,
-  critical: 2,
-  limb: 3,
-  utility: 4,
-  none: 5
+  doomed: 1,
+  main: 2,
+  critical: 3,
+  limb: 4,
+  utility: 5,
+  none: 6
 };
 
 const RECOMMENDATION_IMPLICIT_REPEAT_RULES = [
@@ -288,8 +289,9 @@ function buildZoneRecommendationCandidate({
   const rangeStatus = getRecommendationRangeStatus(slotMetrics.effectiveDistance, rangeFloorMeters);
   const rangeQualified = rangeStatus === 'qualified';
   const lethalOutcome = slotMetrics.outcomeKind === 'fatal' || slotMetrics.outcomeKind === 'main';
+  const decisiveOutcome = lethalOutcome || slotMetrics.outcomeKind === 'doomed';
   const criticalOutcome = slotMetrics.outcomeKind === 'critical';
-  const qualifiesForFastTtk = lethalOutcome || criticalOutcome;
+  const qualifiesForFastTtk = decisiveOutcome || criticalOutcome;
   const criticalRecommendation = isCriticalRecommendation({
     outcomeKind: slotMetrics.outcomeKind,
     shotsToKill: slotMetrics.shotsToKill,
@@ -403,8 +405,9 @@ function buildSequenceRecommendationCandidate({
   const rangeQualified = rangeStatus === 'qualified';
   const outcomeKind = finalCandidate.outcomeKind;
   const lethalOutcome = outcomeKind === 'fatal' || outcomeKind === 'main';
+  const decisiveOutcome = lethalOutcome || outcomeKind === 'doomed';
   const criticalOutcome = outcomeKind === 'critical';
-  const qualifiesForFastTtk = lethalOutcome || criticalOutcome;
+  const qualifiesForFastTtk = decisiveOutcome || criticalOutcome;
   const criticalRecommendation = isCriticalRecommendation({
     outcomeKind,
     shotsToKill,

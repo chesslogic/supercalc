@@ -858,22 +858,59 @@ test('fatal zones with zero damage still behave as impossible, not instant kills
 
 test('zone outcome labels expose fixed badge text and row ttk semantics', () => {
   assert.equal(getZoneOutcomeLabel('fatal'), 'Kill');
+  assert.equal(getZoneOutcomeLabel('doomed'), 'Doomed');
   assert.equal(getZoneOutcomeLabel('main'), 'Main');
   assert.equal(getZoneOutcomeLabel('critical'), 'Critical');
   assert.equal(getZoneOutcomeLabel('limb'), 'Limb');
   assert.equal(getZoneOutcomeLabel('utility'), 'Part');
 
   assert.equal(getZoneOutcomeDescription('fatal'), 'Killing this part kills the enemy');
+  assert.equal(getZoneOutcomeDescription('doomed'), 'Destroying this fatal part dooms the enemy by forcing Main Constitution and bleedout.');
   assert.equal(getZoneOutcomeDescription('main'), 'This path kills through main health');
   assert.equal(getZoneOutcomeDescription('critical'), 'Destroying this critical part removes an important threat or utility before the body kill.');
   assert.equal(getZoneOutcomeDescription('limb'), 'This part can be removed before main would die');
   assert.equal(getZoneOutcomeDescription('utility'), 'This part can be removed, but destroying it does not kill the enemy');
 
   assert.equal(getZoneDisplayedTtkSeconds('fatal', { zoneShotsToKill: 1, zoneTtkSeconds: 0, mainTtkSeconds: 2 }), 0);
+  assert.equal(getZoneDisplayedTtkSeconds('doomed', { zoneShotsToKill: 1, zoneTtkSeconds: 0, mainTtkSeconds: 2 }), 0);
   assert.equal(getZoneDisplayedTtkSeconds('main', { zoneTtkSeconds: 2, mainTtkSeconds: 1 }), 1);
   assert.equal(getZoneDisplayedTtkSeconds('critical', { zoneTtkSeconds: 0.5, mainTtkSeconds: 1 }), 0.5);
   assert.equal(getZoneDisplayedTtkSeconds('limb', { zoneTtkSeconds: 0, mainTtkSeconds: 1 }), 0);
   assert.equal(getZoneDisplayedTtkSeconds('utility', { zoneTtkSeconds: 0, mainTtkSeconds: null }), 0);
+});
+
+test('fatal routes with any-death Main Constitution surface as doomed breakpoints', () => {
+  const enemy = getEnemyByName('Voteless');
+  const zone = enemy.zones.find((entry) => entry.zone_name === 'Legs_left');
+  assert.ok(zone);
+
+  const summary = summarizeZoneDamage({
+    zone,
+    enemyMainHealth: enemy.health,
+    selectedAttacks: [{
+      'Atk Name': 'Leg Break',
+      'Atk Type': 'projectile',
+      DMG: 80,
+      DUR: 0,
+      AP: 1
+    }],
+    hitCounts: [1],
+    rpm: 60
+  });
+  const outcomeKind = getZoneOutcomeKind({
+    enemy,
+    zone,
+    totalDamagePerCycle: summary.totalDamagePerCycle,
+    totalDamageToMainPerCycle: summary.totalDamageToMainPerCycle,
+    killSummary: summary.killSummary
+  });
+
+  assert.equal(summary.killSummary.zoneShotsToKill, 1);
+  assert.equal(summary.killSummary.mainShotsToKill, 7);
+  assert.equal(outcomeKind, 'doomed');
+  assert.equal(getZoneDisplayedKillPath(outcomeKind, summary.killSummary), 'zone');
+  assert.equal(getZoneDisplayedShotsToKill(outcomeKind, summary.killSummary), 1);
+  assert.equal(getZoneDisplayedTtkSeconds(outcomeKind, summary.killSummary), 0);
 });
 
 test('critical zone rules identify Heavy Devastator right arm as a tactical disable target', () => {

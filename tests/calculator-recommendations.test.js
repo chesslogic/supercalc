@@ -115,6 +115,44 @@ test('buildWeaponRecommendationRows separates one-shot kills from one-shot criti
   assert.equal(disarmerRow.bestOutcomeKind, 'critical');
 });
 
+test('buildWeaponRecommendationRows keeps doomed breakpoints distinct from one-shot kills', () => {
+  const enemy = {
+    name: 'Doomed Dummy',
+    health: 500,
+    zones: [
+      {
+        zone_name: 'Main',
+        health: 500,
+        Con: 100,
+        ConRate: 5,
+        ConAppliesAnyDeath: true,
+        AV: 0,
+        'Dur%': 0,
+        'ToMain%': 1,
+        ExTarget: 'Main'
+      },
+      makeZone('leg', { health: 100, isFatal: true, av: 1, toMainPercent: 0.1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Doomer', {
+      index: 0,
+      rows: [makeAttackRow('Doomer', 100, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bestOutcomeKind, 'doomed');
+  assert.equal(rows[0].hasOneShotKill, false);
+  assert.equal(rows[0].hasFastTtk, true);
+});
+
 test('buildWeaponRecommendationRows prioritizes low-overkill rows before generic one-shot kills', () => {
   const enemy = {
     name: 'Priority Dummy',

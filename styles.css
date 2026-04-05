@@ -962,6 +962,12 @@ tbody tr:hover {
   background: rgba(255, 107, 107, 0.08);
 }
 
+.calc-zone-context-doomed {
+  color: #e3b341;
+  border-color: rgba(227, 179, 65, 0.45);
+  background: rgba(227, 179, 65, 0.08);
+}
+
 .calc-zone-context-main {
   color: var(--accent);
   border-color: rgba(88, 166, 255, 0.45);

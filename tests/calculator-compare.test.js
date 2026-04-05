@@ -692,6 +692,33 @@ test('sortEnemyZoneRows can group by outcome before sorting a side-specific ttk 
   assert.equal(sorted[4].groupStart, true);
 });
 
+test('sortEnemyZoneRows orders doomed outcomes between kill and main groups', () => {
+  const rows = [
+    makeSortRow(0, 'utility', { outcomeKindA: 'utility', ttkA: 0.5 }),
+    makeSortRow(1, 'critical', { outcomeKindA: 'critical', ttkA: 0.75 }),
+    makeSortRow(2, 'main-transfer', { outcomeKindA: 'main', ttkA: 0.25 }),
+    makeSortRow(3, 'doomed', { outcomeKindA: 'doomed', ttkA: 0.1 }),
+    makeSortRow(4, 'kill', { outcomeKindA: 'fatal', ttkA: 0.2 })
+  ];
+
+  const sorted = sortEnemyZoneRows(rows, {
+    mode: 'single',
+    sortKey: 'ttk',
+    sortDir: 'asc',
+    groupMode: 'outcome',
+    pinMain: false
+  });
+
+  assert.deepEqual(
+    sorted.map((row) => row.zone.zone_name),
+    ['kill', 'doomed', 'main-transfer', 'critical', 'utility']
+  );
+  assert.equal(sorted[1].groupStart, true);
+  assert.equal(sorted[2].groupStart, true);
+  assert.equal(sorted[3].groupStart, true);
+  assert.equal(sorted[4].groupStart, true);
+});
+
 test('sortEnemyZoneRows keeps the literal Main zone first regardless of sort direction', () => {
   const rows = [
     makeSortRow(0, 'arm', { shotsA: 2 }),

@@ -59,6 +59,34 @@ export function findMainZoneIndex(enemy) {
   return 0;
 }
 
+function getPositiveBleedAnyDeathMainZone(enemy) {
+  const mainZoneIndex = findMainZoneIndex(enemy);
+  if (!isValidZoneIndex(enemy?.zones || [], mainZoneIndex)) {
+    return null;
+  }
+
+  const mainZone = enemy.zones[mainZoneIndex];
+  const mainCon = toFiniteNumber(mainZone?.Con) ?? 0;
+  if (!mainZone?.ConAppliesAnyDeath || mainCon <= 0 || hasZeroBleedConstitution(mainZone)) {
+    return null;
+  }
+
+  return mainZone;
+}
+
+function isDoomedFatalRoute({
+  enemy,
+  zone,
+  hasZoneDamage,
+  zoneShotsToKill
+}) {
+  if (!zone?.IsFatal || !hasZoneDamage || zoneShotsToKill === null) {
+    return false;
+  }
+
+  return Boolean(getPositiveBleedAnyDeathMainZone(enemy));
+}
+
 function buildZoneSummary({
   zone,
   zoneAttackDetails = [],
@@ -550,6 +578,10 @@ export function getZoneOutcomeKind({
   }
 
   if (zone?.IsFatal && hasZoneDamage) {
+    if (isDoomedFatalRoute({ enemy, zone, hasZoneDamage, zoneShotsToKill })) {
+      return 'doomed';
+    }
+
     return 'fatal';
   }
 
@@ -571,6 +603,10 @@ export function getZoneOutcomeKind({
 export function getZoneOutcomeLabel(kind) {
   if (kind === 'fatal') {
     return 'Kill';
+  }
+
+  if (kind === 'doomed') {
+    return 'Doomed';
   }
 
   if (kind === 'main') {
@@ -595,6 +631,10 @@ export function getZoneOutcomeLabel(kind) {
 export function getZoneOutcomeDescription(kind) {
   if (kind === 'fatal') {
     return 'Killing this part kills the enemy';
+  }
+
+  if (kind === 'doomed') {
+    return 'Destroying this fatal part dooms the enemy by forcing Main Constitution and bleedout.';
   }
 
   if (kind === 'main') {
@@ -636,6 +676,16 @@ export function getZoneDisplayedKillPath(kind, killSummary) {
   }
 
   if (kind === 'fatal') {
+    if (zoneShotsToKill !== null) {
+      return 'zone';
+    }
+
+    if (killSummary.mainShotsToKill !== null) {
+      return 'main';
+    }
+  }
+
+  if (kind === 'doomed') {
     if (zoneShotsToKill !== null) {
       return 'zone';
     }

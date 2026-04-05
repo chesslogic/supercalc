@@ -17,30 +17,33 @@ import { getCriticalZoneInfo } from './tactical-data.js';
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
   fatal: 0,
-  main: 1,
-  critical: 2,
-  limb: 3,
-  utility: 4,
-  none: 5
-};
-
-const COMPARE_OUTCOME_GROUP_ORDER = {
-  main: 0,
-  oneSided: 1,
-  fatal: 2,
+  doomed: 1,
+  main: 2,
   critical: 3,
   limb: 4,
   utility: 5,
   none: 6
 };
 
+const COMPARE_OUTCOME_GROUP_ORDER = {
+  main: 0,
+  oneSided: 1,
+  fatal: 2,
+  doomed: 3,
+  critical: 4,
+  limb: 5,
+  utility: 6,
+  none: 7
+};
+
 const ONE_SIDED_OUTCOME_GROUP_ORDER = {
   main: 0,
   fatal: 1,
-  critical: 2,
-  limb: 3,
-  utility: 4,
-  none: 5
+  doomed: 2,
+  critical: 3,
+  limb: 4,
+  utility: 5,
+  none: 6
 };
 
 function normalizeText(value) {
@@ -572,8 +575,10 @@ function isLethalHallOfFameRow(row) {
   return zoneName === 'main'
     || Boolean(row?.zone?.IsFatal)
     || row?.metrics?.bySlot?.A?.outcomeKind === 'fatal'
+    || row?.metrics?.bySlot?.A?.outcomeKind === 'doomed'
     || row?.metrics?.bySlot?.A?.outcomeKind === 'main'
     || row?.metrics?.bySlot?.B?.outcomeKind === 'fatal'
+    || row?.metrics?.bySlot?.B?.outcomeKind === 'doomed'
     || row?.metrics?.bySlot?.B?.outcomeKind === 'main';
 }
 

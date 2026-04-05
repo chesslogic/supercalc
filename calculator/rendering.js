@@ -1133,7 +1133,7 @@ function renderEnemyControls(enemy) {
       ? 'Diff columns are computed as B - A. One-sided damage wins sort beyond finite deltas, and outcome grouping currently follows B because you are sorting a B column.'
       : 'Diff columns are computed as B - A. One-sided damage wins sort beyond finite deltas, and outcome grouping follows A by default.';
   } else {
-    note.textContent = 'Outcome grouping follows the Kill, Main, Critical, Limb, Part badge order.';
+    note.textContent = 'Outcome grouping follows the Kill, Doomed, Main, Critical, Limb, Part badge order.';
   }
   toolbar.appendChild(note);
 
