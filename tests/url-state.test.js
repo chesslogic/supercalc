@@ -41,6 +41,8 @@ const {
   setCalculatorStateChangeListener,
   setCompareView,
   setDiffDisplayMode,
+  setEnemyDropdownSortDir,
+  setEnemyDropdownSortMode,
   setEnemySortState,
   setEnemyTableMode,
   setOverviewScope,
@@ -189,6 +191,8 @@ function snapshotCalculatorState() {
     mode: calculatorState.mode,
     compareView: calculatorState.compareView,
     weaponSortMode: calculatorState.weaponSortMode,
+    enemyDropdownSortMode: calculatorState.enemyDropdownSortMode,
+    enemyDropdownSortDir: calculatorState.enemyDropdownSortDir,
     enemyTableMode: calculatorState.enemyTableMode,
     overviewScope: calculatorState.overviewScope,
     enemyTargetTypes: [...calculatorState.enemyTargetTypes],
@@ -216,6 +220,8 @@ function restoreCalculatorState(snapshot) {
   calculatorState.mode = snapshot.mode;
   calculatorState.compareView = snapshot.compareView;
   calculatorState.weaponSortMode = snapshot.weaponSortMode;
+  calculatorState.enemyDropdownSortMode = snapshot.enemyDropdownSortMode;
+  calculatorState.enemyDropdownSortDir = snapshot.enemyDropdownSortDir;
   calculatorState.enemyTableMode = snapshot.enemyTableMode;
   calculatorState.overviewScope = snapshot.overviewScope;
   calculatorState.enemyTargetTypes = [...snapshot.enemyTargetTypes];
@@ -291,6 +297,8 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
 
   setCalculatorMode('single');
   setWeaponSortMode('ap-desc');
+  setEnemyDropdownSortMode('alphabetical');
+  setEnemyDropdownSortDir('desc');
   setEnemyTableMode('stats');
   setOverviewScope('automatons');
   setSelectedEnemyTargetTypes(['giant']);
@@ -326,6 +334,8 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   assert.equal(params.get('cm'), 'single');
   assert.equal(params.get('cwa'), 'Breaker');
   assert.equal(params.get('cwb'), 'Dominator');
+  assert.equal(params.get('ceds'), 'alphabetical');
+  assert.equal(params.get('cedd'), 'desc');
   assert.equal(params.get('cen'), 'Target Dummy');
   assert.equal(params.get('csz'), '1');
   assert.equal(params.has('cez'), false);
@@ -372,6 +382,8 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
 
   setCalculatorMode('single');
   setWeaponSortMode('ap-desc');
+  setEnemyDropdownSortMode('alphabetical');
+  setEnemyDropdownSortDir('desc');
   setEnemyTableMode('stats');
   setOverviewScope('automatons');
   setSelectedEnemyTargetTypes(['giant']);
@@ -403,6 +415,8 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
 
   setCalculatorMode('compare');
   setWeaponSortMode('grouped');
+  setEnemyDropdownSortMode('targets');
+  setEnemyDropdownSortDir('asc');
   setEnemyTableMode('analysis');
   setOverviewScope('all');
   setSelectedEnemyTargetTypes(['unit', 'giant']);
@@ -433,6 +447,8 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.equal(hydrated.activeTab, 'weapons');
   assert.equal(calculatorState.mode, 'single');
   assert.equal(calculatorState.weaponSortMode, 'ap-desc');
+  assert.equal(calculatorState.enemyDropdownSortMode, 'alphabetical');
+  assert.equal(calculatorState.enemyDropdownSortDir, 'desc');
   assert.equal(calculatorState.enemyTableMode, 'stats');
   assert.equal(calculatorState.overviewScope, 'automatons');
   assert.deepEqual(calculatorState.enemyTargetTypes, ['giant']);

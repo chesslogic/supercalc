@@ -5,6 +5,7 @@ import {
 } from './enemy-scope.js';
 
 export const DEFAULT_ENEMY_DROPDOWN_SORT_MODE = 'targets';
+export const DEFAULT_ENEMY_DROPDOWN_SORT_DIR = 'asc';
 
 const ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS = [
   {
@@ -50,6 +51,10 @@ export function normalizeEnemyDropdownSortMode(sortMode = DEFAULT_ENEMY_DROPDOWN
     || DEFAULT_ENEMY_DROPDOWN_SORT_MODE;
 }
 
+export function normalizeEnemyDropdownSortDir(sortDir = DEFAULT_ENEMY_DROPDOWN_SORT_DIR) {
+  return String(sortDir ?? '').trim().toLowerCase() === 'desc' ? 'desc' : DEFAULT_ENEMY_DROPDOWN_SORT_DIR;
+}
+
 export function getEnemyDropdownSortModeOptions() {
   return ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS.map((definition) => ({ ...definition }));
 }
@@ -78,9 +83,11 @@ export function filterEnemiesByScope(options = [], scope = 'All') {
 }
 
 export function sortEnemyDropdownOptions(options = [], {
-  sortMode = DEFAULT_ENEMY_DROPDOWN_SORT_MODE
+  sortMode = DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
+  sortDir = DEFAULT_ENEMY_DROPDOWN_SORT_DIR
 } = {}) {
   const normalizedSortMode = normalizeEnemyDropdownSortMode(sortMode);
+  const normalizedSortDir = normalizeEnemyDropdownSortDir(sortDir);
   const visibleOptions = Array.isArray(options) ? options : [];
   const frontRankByFaction = new Map();
 
@@ -92,6 +99,11 @@ export function sortEnemyDropdownOptions(options = [], {
   });
 
   const originalIndexByEnemy = new Map(visibleOptions.map((enemy, index) => [enemy, index]));
+  const applySortDirection = (comparison) => (
+    normalizedSortDir === 'desc'
+      ? comparison * -1
+      : comparison
+  );
 
   return [...visibleOptions].sort((left, right) => {
     let comparison = compareNullableNumbers(
@@ -103,19 +115,19 @@ export function sortEnemyDropdownOptions(options = [], {
     }
 
     if (normalizedSortMode === 'targets') {
-      comparison = compareNullableNumbers(getEnemyTargetTypeRank(left), getEnemyTargetTypeRank(right));
+      comparison = applySortDirection(compareNullableNumbers(getEnemyTargetTypeRank(left), getEnemyTargetTypeRank(right)));
       if (comparison !== 0) {
         return comparison;
       }
     }
 
-    comparison = compareEnemyNames(left, right);
+    comparison = applySortDirection(compareEnemyNames(left, right));
     if (comparison !== 0) {
       return comparison;
     }
 
     if (normalizedSortMode !== 'targets') {
-      comparison = compareNullableNumbers(getEnemyTargetTypeRank(left), getEnemyTargetTypeRank(right));
+      comparison = applySortDirection(compareNullableNumbers(getEnemyTargetTypeRank(left), getEnemyTargetTypeRank(right)));
       if (comparison !== 0) {
         return comparison;
       }

@@ -637,7 +637,8 @@ function setupEnemySelector() {
         || itemModel.searchText.includes(effectiveQuery)
       ))
       .map(({ enemy }) => enemy), {
-      sortMode: calculatorState.enemyDropdownSortMode
+      sortMode: calculatorState.enemyDropdownSortMode,
+      sortDir: calculatorState.enemyDropdownSortDir
     });
 
     enemyDropdown.innerHTML = '';

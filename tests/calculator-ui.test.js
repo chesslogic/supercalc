@@ -7,6 +7,7 @@ import {
   calculatorState,
   DEFAULT_CALCULATOR_MODE,
   DEFAULT_COMPARE_VIEW,
+  DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_ENEMY_TARGET_TYPES,
   DEFAULT_OVERVIEW_SCOPE,
@@ -38,6 +39,7 @@ import {
   filterEnemiesByScope,
   getEnemyDropdownQueryState,
   getEnemyDropdownSortModeOptions,
+  normalizeEnemyDropdownSortDir,
   normalizeEnemyDropdownSortMode,
   sortEnemyDropdownOptions
 } from '../calculator/selector-utils.js';
@@ -120,6 +122,7 @@ test('calculator defaults to focused compare mode with all scopes enabled', () =
   assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
   assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
   assert.equal(DEFAULT_OVERVIEW_SCOPE, 'all');
+  assert.equal(DEFAULT_ENEMY_DROPDOWN_SORT_DIR, 'asc');
   assert.equal(DEFAULT_ENEMY_DROPDOWN_SORT_MODE, 'targets');
   assert.deepEqual(DEFAULT_ENEMY_TARGET_TYPES, ['chaff', 'medium', 'elite', 'tank', 'giant']);
   assert.equal(DEFAULT_WEAPON_SORT_MODE, 'grouped');
@@ -218,6 +221,8 @@ test('enemy dropdown sort modes default to target-scale ordering within each fac
   assert.equal(normalizeEnemyDropdownSortMode(), 'targets');
   assert.equal(normalizeEnemyDropdownSortMode('type'), 'targets');
   assert.equal(normalizeEnemyDropdownSortMode('alphabetic'), 'alphabetical');
+  assert.equal(normalizeEnemyDropdownSortDir(), 'asc');
+  assert.equal(normalizeEnemyDropdownSortDir('desc'), 'desc');
   assert.deepEqual(
     getEnemyDropdownSortModeOptions(),
     [
@@ -230,8 +235,16 @@ test('enemy dropdown sort modes default to target-scale ordering within each fac
     ['Scavenger', 'Warrior', 'Bile Titan', 'Trooper', 'Hulk']
   );
   assert.deepEqual(
+    sortEnemyDropdownOptions(enemies, { sortMode: 'targets', sortDir: 'desc' }).map((enemy) => enemy.name),
+    ['Bile Titan', 'Warrior', 'Scavenger', 'Hulk', 'Trooper']
+  );
+  assert.deepEqual(
     sortEnemyDropdownOptions(enemies, { sortMode: 'alphabetical' }).map((enemy) => enemy.name),
     ['Bile Titan', 'Scavenger', 'Warrior', 'Hulk', 'Trooper']
+  );
+  assert.deepEqual(
+    sortEnemyDropdownOptions(enemies, { sortMode: 'alphabetical', sortDir: 'desc' }).map((enemy) => enemy.name),
+    ['Warrior', 'Scavenger', 'Bile Titan', 'Trooper', 'Hulk']
   );
 });
 

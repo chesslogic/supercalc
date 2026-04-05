@@ -1,6 +1,7 @@
 import {
   calculatorState,
   DEFAULT_COMPARE_VIEW,
+  DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
@@ -14,6 +15,7 @@ import {
   setCalculatorMode,
   setCompareView,
   setDiffDisplayMode,
+  setEnemyDropdownSortDir,
   setEnemyDropdownSortMode,
   setEngagementRangeMeters,
   setEnemySortState,
@@ -43,6 +45,7 @@ const DEFAULT_CALCULATOR_URL_STATE = {
   compareView: DEFAULT_COMPARE_VIEW,
   weaponSortMode: DEFAULT_WEAPON_SORT_MODE,
   enemyDropdownSortMode: DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
+  enemyDropdownSortDir: DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   enemyTableMode: 'analysis',
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   enemyTargetTypes: getSelectedEnemyTargetTypes(),
@@ -87,6 +90,7 @@ const URL_PARAM_KEYS = {
   compareView: 'cv',
   weaponSortMode: 'cws',
   enemyDropdownSortMode: 'ceds',
+  enemyDropdownSortDir: 'cedd',
   enemyTableMode: 'cetm',
   overviewScope: 'cos',
   enemyTargetTypes: 'cett',
@@ -386,6 +390,7 @@ export function buildUrlStateSnapshot({
       compareView: calculatorState.compareView,
       weaponSortMode: calculatorState.weaponSortMode,
       enemyDropdownSortMode: calculatorState.enemyDropdownSortMode,
+      enemyDropdownSortDir: calculatorState.enemyDropdownSortDir,
       enemyTableMode: calculatorState.enemyTableMode,
       overviewScope: calculatorState.overviewScope,
       enemyTargetTypes: [...getSelectedEnemyTargetTypes()],
@@ -424,6 +429,7 @@ export function encodeUrlState({
   setParam(params, URL_PARAM_KEYS.compareView, calculator.compareView, DEFAULT_CALCULATOR_URL_STATE.compareView);
   setParam(params, URL_PARAM_KEYS.weaponSortMode, calculator.weaponSortMode, DEFAULT_CALCULATOR_URL_STATE.weaponSortMode);
   setParam(params, URL_PARAM_KEYS.enemyDropdownSortMode, calculator.enemyDropdownSortMode, DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortMode);
+  setParam(params, URL_PARAM_KEYS.enemyDropdownSortDir, calculator.enemyDropdownSortDir, DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortDir);
   setParam(params, URL_PARAM_KEYS.enemyTableMode, calculator.enemyTableMode, DEFAULT_CALCULATOR_URL_STATE.enemyTableMode);
   setParam(params, URL_PARAM_KEYS.overviewScope, calculator.overviewScope, DEFAULT_CALCULATOR_URL_STATE.overviewScope);
   setJsonParam(params, URL_PARAM_KEYS.enemyTargetTypes, calculator.enemyTargetTypes, DEFAULT_CALCULATOR_URL_STATE.enemyTargetTypes);
@@ -541,6 +547,7 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
   setCalculatorMode(params.get(URL_PARAM_KEYS.calculatorMode) || DEFAULT_CALCULATOR_URL_STATE.mode);
   setWeaponSortMode(params.get(URL_PARAM_KEYS.weaponSortMode) || DEFAULT_CALCULATOR_URL_STATE.weaponSortMode);
   setEnemyDropdownSortMode(params.get(URL_PARAM_KEYS.enemyDropdownSortMode) || DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortMode);
+  setEnemyDropdownSortDir(params.get(URL_PARAM_KEYS.enemyDropdownSortDir) || DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortDir);
   setEnemyTableMode(params.get(URL_PARAM_KEYS.enemyTableMode) || DEFAULT_CALCULATOR_URL_STATE.enemyTableMode);
   setOverviewScope(params.get(URL_PARAM_KEYS.overviewScope) || DEFAULT_CALCULATOR_URL_STATE.overviewScope);
   setSelectedEnemyTargetTypes(

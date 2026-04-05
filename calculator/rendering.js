@@ -21,6 +21,7 @@ import {
   getSelectedAttacks,
   getWeaponForSlot,
   setDiffDisplayMode,
+  setEnemyDropdownSortDir,
   setEnemyDropdownSortMode,
   setEnemyGroupMode,
   setEnemyTableMode,
@@ -1052,10 +1053,20 @@ function appendEnemyToolbarControl(toolbar, controlId, { overviewActive = false 
       appendToolbarButtonGroup(
         toolbar,
         'Sort:',
-        getEnemyDropdownSortModeOptionsForState().map((option) => ({ value: option.id, label: option.label })),
+        getEnemyDropdownSortModeOptionsForState().map((option) => ({
+          value: option.id,
+          label: calculatorState.enemyDropdownSortMode === option.id
+            ? `${option.label} ${calculatorState.enemyDropdownSortDir === 'desc' ? '↓' : '↑'}`
+            : option.label
+        })),
         (value) => calculatorState.enemyDropdownSortMode === value,
         (value) => {
-          setEnemyDropdownSortMode(value);
+          if (calculatorState.enemyDropdownSortMode === value) {
+            setEnemyDropdownSortDir(calculatorState.enemyDropdownSortDir === 'desc' ? 'asc' : 'desc');
+          } else {
+            setEnemyDropdownSortMode(value);
+            setEnemyDropdownSortDir('asc');
+          }
           refreshEnemyCalculationViews();
         }
       );
