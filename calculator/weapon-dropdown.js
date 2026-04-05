@@ -66,6 +66,10 @@ function compareText(a, b) {
   return String(a || '').localeCompare(String(b || ''));
 }
 
+function normalizeWeaponTaxonomyValue(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 function toSortableApValue(value) {
   return value === null ? Number.NEGATIVE_INFINITY : value;
 }
@@ -297,12 +301,34 @@ export function getWeaponOptionPriorityBucket(option, referenceWeapon) {
   return 2;
 }
 
+function getWeaponOptionReferenceSimilarityRank(option, referenceWeapon) {
+  const referenceSub = normalizeWeaponTaxonomyValue(referenceWeapon?.sub);
+  const optionSub = normalizeWeaponTaxonomyValue(option?.sub);
+  if (referenceSub && optionSub && optionSub === referenceSub) {
+    return 0;
+  }
+
+  const referenceType = normalizeWeaponTaxonomyValue(referenceWeapon?.type);
+  const optionType = normalizeWeaponTaxonomyValue(option?.type);
+  if (referenceType && optionType && optionType === referenceType) {
+    return 1;
+  }
+
+  return 2;
+}
+
 export function sortWeaponOptionsForReference(options = [], referenceWeapon = null) {
   return [...options].sort((a, b) => {
     const bucketDiff = getWeaponOptionPriorityBucket(a, referenceWeapon)
       - getWeaponOptionPriorityBucket(b, referenceWeapon);
     if (bucketDiff !== 0) {
       return bucketDiff;
+    }
+
+    const similarityDiff = getWeaponOptionReferenceSimilarityRank(a, referenceWeapon)
+      - getWeaponOptionReferenceSimilarityRank(b, referenceWeapon);
+    if (similarityDiff !== 0) {
+      return similarityDiff;
     }
 
     return compareWeaponOptionBaseOrder(a, b);

@@ -1049,6 +1049,30 @@ test('compare-mode AP sorting floats same-AP peers before the rest', () => {
   assert.deepEqual(names.slice(0, 2), ['Tenderizer', 'Diligence']);
 });
 
+test('compare-mode AP sorting keeps same-subtype weapons together inside a matched AP bucket', () => {
+  const referenceWeapon = makeWeapon('Pacifier', {
+    type: 'Primary',
+    sub: 'AR',
+    code: 'AR-72',
+    rows: [makeAttackRow(3, 95, 23)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('One-Two (UBGL)', { type: 'Primary', sub: 'GL', code: 'CB-9', rows: [makeAttackRow(3, 320, 320)] }),
+    makeWeapon('Blitzer', { type: 'Primary', sub: 'NRG', code: 'ARC-12', rows: [makeAttackRow(3, 250, 250)] }),
+    makeWeapon('Adjudicator', { type: 'Primary', sub: 'AR', code: 'BR-14', rows: [makeAttackRow(3, 95, 23)] }),
+    makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', rows: [makeAttackRow(3, 75, 10)] }),
+    makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
+  ], referenceWeapon);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Coyote',
+    'Adjudicator',
+    'Blitzer',
+    'One-Two (UBGL)',
+    'Grenade Launcher'
+  ]);
+});
+
 test('compare-mode AP sorting keeps caveated mixed-profile weapons between clean matches and the rest', () => {
   const referenceWeapon = makeWeapon('Adjudicator', {
     type: 'Primary',
@@ -1078,7 +1102,7 @@ test('compare-mode AP sorting keeps caveated mixed-profile weapons between clean
   ]);
 });
 
-test('compare-mode AP sorting groups anti-tank weapons together for AP5+ references', () => {
+test('compare-mode AP sorting keeps same launcher families ahead within AP5+ matches', () => {
   const referenceWeapon = makeWeapon('Recoilless Rifle', {
     type: 'Support',
     sub: 'RL',
@@ -1093,8 +1117,8 @@ test('compare-mode AP sorting groups anti-tank weapons together for AP5+ referen
   ], referenceWeapon);
 
   assert.deepEqual(sorted.map((weapon) => weapon.name), [
-    'Quasar Cannon',
     'Commando',
+    'Quasar Cannon',
     'Coyote',
     'HMG Emplacement'
   ]);
