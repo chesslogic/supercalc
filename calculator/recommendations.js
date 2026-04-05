@@ -766,17 +766,24 @@ export function buildWeaponRecommendationRows({
     .sort(compareWeaponRecommendationRows);
 }
 
-export function buildSelectedTargetRecommendationRows({
+function buildTargetRecommendationRows({
   enemy,
   weapons = [],
   rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
   getEngagementRangeMetersForWeapon = null,
-  selectedZoneIndex = null
+  targetZoneIndices = [],
+  selectedZoneIndexForBias = null,
+  selectedZoneMatch = false
 }) {
-  if (!Number.isInteger(selectedZoneIndex) || !enemy?.zones?.[selectedZoneIndex]) {
+  const normalizedTargetZoneIndices = [...new Set(
+    (Array.isArray(targetZoneIndices) ? targetZoneIndices : [])
+      .filter((zoneIndex) => Number.isInteger(zoneIndex) && enemy?.zones?.[zoneIndex])
+  )];
+  if (normalizedTargetZoneIndices.length === 0) {
     return [];
   }
 
+  const targetZoneIndexSet = new Set(normalizedTargetZoneIndices);
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
   return weapons
     .map((weapon) => {
@@ -794,18 +801,18 @@ export function buildSelectedTargetRecommendationRows({
             ? getEngagementRangeMetersForWeapon(weapon)
             : 0,
           highlightRangeFloorMeters: normalizedRangeFloor,
-          selectedZoneIndex
+          selectedZoneIndex: selectedZoneIndexForBias
         }))
         .filter(Boolean)
         .map((recommendation) => ({
           ...recommendation,
-          candidates: recommendation.candidates.filter((candidate) => candidate.targetsSelectedZone)
+          candidates: recommendation.candidates.filter((candidate) => targetZoneIndexSet.has(candidate.zoneIndex))
         }))
         .filter((recommendation) => recommendation.candidates.length > 0)
         .map((recommendation) => ({
           ...recommendation,
           bestCandidate: [...recommendation.candidates].sort(compareZoneRecommendationCandidates)[0],
-          hasSelectedZoneMatch: true,
+          hasSelectedZoneMatch: selectedZoneMatch,
           hasOneShotKill: recommendation.candidates.some((candidate) => candidate.isOneShotKill),
           hasOneShotCritical: recommendation.candidates.some((candidate) => candidate.isOneShotCritical),
           hasTwoShotCritical: recommendation.candidates.some((candidate) => candidate.isTwoShotCritical),
@@ -842,7 +849,7 @@ export function buildSelectedTargetRecommendationRows({
         hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
         penetratesAll: bestAttackRecommendation.penetratesAll,
         matchedZoneNames: bestCandidate.matchedZoneNames || [],
-        selectedZoneMatch: true,
+        selectedZoneMatch,
         isSequenceCandidate: Boolean(bestCandidate.isSequenceCandidate),
         bestAttackRecommendation,
         attackRecommendations
@@ -850,4 +857,39 @@ export function buildSelectedTargetRecommendationRows({
     })
     .filter(Boolean)
     .sort(compareTargetWeaponRecommendationRows);
+}
+
+export function buildSelectedTargetRecommendationRows({
+  enemy,
+  weapons = [],
+  rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
+  getEngagementRangeMetersForWeapon = null,
+  selectedZoneIndex = null
+}) {
+  return buildTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters,
+    getEngagementRangeMetersForWeapon,
+    targetZoneIndices: [selectedZoneIndex],
+    selectedZoneIndexForBias: selectedZoneIndex,
+    selectedZoneMatch: true
+  });
+}
+
+export function buildRelatedTargetRecommendationRows({
+  enemy,
+  weapons = [],
+  rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
+  getEngagementRangeMetersForWeapon = null,
+  relatedZoneIndices = []
+}) {
+  return buildTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters,
+    getEngagementRangeMetersForWeapon,
+    targetZoneIndices: relatedZoneIndices,
+    selectedZoneMatch: false
+  });
 }

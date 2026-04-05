@@ -621,6 +621,30 @@ tbody tr:hover {
 .calculator-table tbody td{padding:4px 10px; border-bottom:1px solid var(--border)}
 .calculator-table tbody tr:hover{background:rgba(255,255,255,.03)}
 .calculator-table tbody td.calc-range-adjusted-cell{cursor:help; white-space:nowrap}
+.calculator-table tbody tr.calc-zone-link-selected-anchor td,
+.calculator-table tbody tr.calc-zone-link-hover-anchor td{
+  background: rgba(88, 164, 255, 0.10);
+}
+.calculator-table tbody tr.calc-zone-link-selected-group td,
+.calculator-table tbody tr.calc-zone-link-hover-group td{
+  background: rgba(255, 96, 96, 0.10);
+}
+.calculator-table tbody tr.calc-zone-link-selected-mirror td,
+.calculator-table tbody tr.calc-zone-link-hover-mirror td{
+  background: rgba(255, 210, 74, 0.09);
+}
+.calculator-table tbody tr.calc-zone-link-selected-anchor td:first-child,
+.calculator-table tbody tr.calc-zone-link-hover-anchor td:first-child{
+  box-shadow: inset 3px 0 0 rgba(88, 164, 255, 0.9);
+}
+.calculator-table tbody tr.calc-zone-link-selected-group td:first-child,
+.calculator-table tbody tr.calc-zone-link-hover-group td:first-child{
+  box-shadow: inset 3px 0 0 rgba(255, 96, 96, 0.9);
+}
+.calculator-table tbody tr.calc-zone-link-selected-mirror td:first-child,
+.calculator-table tbody tr.calc-zone-link-hover-mirror td:first-child{
+  box-shadow: inset 3px 0 0 rgba(255, 210, 74, 0.9);
+}
 
 /* Styled checkboxes and radio buttons */
 .calculator-table input[type="checkbox"],

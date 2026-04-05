@@ -37,6 +37,14 @@ class TestClassList {
     this.syncElement();
   }
 
+  remove(...tokens) {
+    tokens
+      .flatMap((token) => String(token || '').split(/\s+/))
+      .filter(Boolean)
+      .forEach((token) => this.tokens.delete(token));
+    this.syncElement();
+  }
+
   contains(token) {
     return this.tokens.has(token);
   }
@@ -340,6 +348,66 @@ test('renderRecommendationPanel renders a selected-target subsection for direct 
     assert.equal(sectionTitles[1]?.textContent, 'Overall recommendations');
     assert.match(summaries[0]?.textContent || '', /selected target/i);
     assert.match(cells[2].title, /Best-ranked target: right_arm/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel adds related routes for linked priority targets behind a selected outer part', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    weaponsState.groups = [
+      makeWeapon('Cleaner', {
+        rpm: 60,
+        rows: [makeAttackRow('Cleaner', 100, 4)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Heavy Devastator',
+      health: 600,
+      zoneRelationGroups: [
+        {
+          id: 'left-arm',
+          label: 'Left arm',
+          zoneNames: ['shoulderplate_left', 'left_arm'],
+          mirrorGroupIds: ['right-arm'],
+          priorityTargetZoneNames: ['left_arm']
+        },
+        {
+          id: 'right-arm',
+          label: 'Right arm',
+          zoneNames: ['shoulderplate_right', 'right_arm'],
+          mirrorGroupIds: ['left-arm'],
+          priorityTargetZoneNames: ['right_arm']
+        }
+      ],
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('shoulderplate_left', { health: 150, av: 4, toMainPercent: 0 }),
+        makeZone('left_arm', { health: 100, av: 1, toMainPercent: 0.5 }),
+        makeZone('right_arm', { health: 100, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const sectionTitles = collectElements(container, (element) => element.classList.contains('calc-recommend-section-title'));
+    const summaries = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'));
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const relatedTargetCells = collectElements(tables[1], (element) => element.tagName === 'TD');
+
+    assert.equal(sectionTitles[0]?.textContent, 'shoulderplate_left targeted recommendations');
+    assert.equal(sectionTitles[1]?.textContent, 'shoulderplate_left related routes');
+    assert.equal(sectionTitles[2]?.textContent, 'Overall recommendations');
+    assert.match(summaries[1]?.textContent || '', /Linked priority targets/i);
+    assert.match(summaries[1]?.textContent || '', /left_arm/i);
+    assert.match(relatedTargetCells[2].title, /Best-ranked target: left_arm/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildRelatedTargetRecommendationRows,
   buildSelectedTargetRecommendationRows,
   buildWeaponRecommendationRows,
   normalizeRecommendationRangeMeters
@@ -499,4 +500,39 @@ test('buildSelectedTargetRecommendationRows ignores enemy-wide penetration when 
   assert.equal(rows[0].weapon.name, 'Target Tool');
   assert.equal(rows[0].bestZoneName, 'left_hip');
   assert.equal(rows[0].hasOneShotKill, true);
+});
+
+test('buildRelatedTargetRecommendationRows ranks linked targets without pretending they were directly selected', () => {
+  const enemy = {
+    name: 'Heavy Devastator',
+    health: 600,
+    zones: [
+      makeZone('shoulderplate_left', { health: 150, av: 4, toMainPercent: 0 }),
+      makeZone('left_arm', { health: 100, av: 1, toMainPercent: 0.5 }),
+      makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Pad Breaker', {
+      index: 0,
+      rows: [makeAttackRow('Pad Breaker', 150, 4)]
+    }),
+    makeWeapon('Arm Cleaner', {
+      index: 1,
+      rows: [makeAttackRow('Arm Cleaner', 100, 2)]
+    })
+  ];
+
+  const rows = buildRelatedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    relatedZoneIndices: [1]
+  });
+
+  assert.equal(rows[0].weapon.name, 'Arm Cleaner');
+  assert.equal(rows[0].bestZoneName, 'left_arm');
+  assert.equal(rows[0].selectedZoneMatch, false);
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].bestOutcomeKind, 'limb');
 });

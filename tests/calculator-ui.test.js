@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { state as weaponsState } from '../weapons/data.js';
-import { enemyState, getEnemyUnitByName, processEnemyData } from '../enemies/data.js';
+import { enemyState, getEnemyUnitByName, getZoneRelationContext, processEnemyData } from '../enemies/data.js';
 import {
   calculatorState,
   DEFAULT_CALCULATOR_MODE,
@@ -27,6 +27,7 @@ import {
   getEnemyColumnsForState,
   getEnemyControlSections,
   getFocusedTargetingModes,
+  getZoneRelationHighlightKind,
   getWeaponRangeAdjustedCellDisplay,
   getOverviewColumnsForState,
   shouldShowEnemyControls,
@@ -295,6 +296,75 @@ test('processEnemyData assigns stable numbered labels to unknown zones within an
         ['[unknown 2]', '[unknown]']
       ]
     );
+  } finally {
+    enemyState.factions = previousState.factions;
+    enemyState.units = previousState.units;
+    enemyState.inlineUnits = previousState.inlineUnits;
+    enemyState.filteredUnits = previousState.filteredUnits;
+    enemyState.filterActive = previousState.filterActive;
+    enemyState.sortKey = previousState.sortKey;
+    enemyState.sortDir = previousState.sortDir;
+    enemyState.factionIndex = previousState.factionIndex;
+    enemyState.searchIndex = previousState.searchIndex;
+    enemyState.unitIndex = previousState.unitIndex;
+  }
+});
+
+test('processEnemyData normalizes zone relations for same-limb, mirror, and priority targets', () => {
+  const previousState = {
+    factions: enemyState.factions,
+    units: enemyState.units,
+    inlineUnits: enemyState.inlineUnits,
+    filteredUnits: enemyState.filteredUnits,
+    filterActive: enemyState.filterActive,
+    sortKey: enemyState.sortKey,
+    sortDir: enemyState.sortDir,
+    factionIndex: enemyState.factionIndex,
+    searchIndex: enemyState.searchIndex,
+    unitIndex: enemyState.unitIndex
+  };
+
+  try {
+    processEnemyData({
+      Illuminate: {
+        'Relation Walker': {
+          health: 3000,
+          damageable_zones: [
+            { zone_name: 'left_hip', health: 400, IsFatal: true },
+            { zone_name: 'left_upper_leg', health: 500 },
+            { zone_name: 'right_hip', health: 400, IsFatal: true }
+          ],
+          zone_relation_groups: [
+            {
+              id: 'left-leg',
+              label: 'Left leg',
+              zones: ['left_hip', 'left_upper_leg'],
+              mirror_group: 'right-leg',
+              priority_target_zones: ['left_hip']
+            },
+            {
+              id: 'right-leg',
+              label: 'Right leg',
+              zones: ['right_hip'],
+              mirror_group: 'left-leg',
+              priority_target_zones: ['right_hip']
+            }
+          ]
+        }
+      }
+    });
+
+    const unit = getEnemyUnitByName('Relation Walker');
+    const relationContext = getZoneRelationContext(unit, 'left_upper_leg');
+
+    assert.deepEqual(relationContext?.groupLabels, ['Left leg']);
+    assert.deepEqual(new Set(relationContext?.sameZoneNames || []), new Set(['left_hip', 'left_upper_leg']));
+    assert.deepEqual(new Set(relationContext?.mirrorZoneNames || []), new Set(['right_hip']));
+    assert.deepEqual(relationContext?.priorityTargetZoneNames, ['left_hip']);
+    assert.equal(getZoneRelationHighlightKind(unit, 'left_upper_leg', 'left_upper_leg'), 'anchor');
+    assert.equal(getZoneRelationHighlightKind(unit, 'left_upper_leg', 'left_hip'), 'group');
+    assert.equal(getZoneRelationHighlightKind(unit, 'left_upper_leg', 'right_hip'), 'mirror');
+    assert.equal(getZoneRelationHighlightKind(unit, 'left_upper_leg', 'torso'), null);
   } finally {
     enemyState.factions = previousState.factions;
     enemyState.units = previousState.units;

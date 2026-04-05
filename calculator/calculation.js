@@ -23,12 +23,17 @@ import {
   RECOMMENDATION_RANGE_FLOOR_TITLE
 } from './engagement-range.js';
 import { EFFECTIVE_DISTANCE_TOOLTIP } from './effective-distance.js';
+import { getZoneRelationContext } from '../enemies/data.js';
 import { renderResultPanel } from './result-panel.js';
 import { formatTtkSeconds } from './summary.js';
 import { getZoneOutcomeDescription, getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
 import { renderEnemyDetails } from './rendering.js';
 import { state as weaponsState } from '../weapons/data.js';
-import { buildSelectedTargetRecommendationRows, buildWeaponRecommendationRows } from './recommendations.js';
+import {
+  buildRelatedTargetRecommendationRows,
+  buildSelectedTargetRecommendationRows,
+  buildWeaponRecommendationRows
+} from './recommendations.js';
 import { getEnemyTacticalInfoChips, getEnemyWeakspotBundles } from './tactical-data.js';
 
 function appendTtkLine(resultWrapper, ttkSeconds, hasRpm) {
@@ -77,6 +82,29 @@ function getEmptyCalculationMessage(slot) {
 
 function isValidZoneIndex(zones, zoneIndex) {
   return Number.isInteger(zoneIndex) && zoneIndex >= 0 && zoneIndex < zones.length;
+}
+
+function normalizeZoneNameKey(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function getZoneIndicesByNames(enemy, zoneNames = []) {
+  const normalizedZoneNames = new Set(
+    (Array.isArray(zoneNames) ? zoneNames : [])
+      .map((zoneName) => normalizeZoneNameKey(zoneName))
+      .filter(Boolean)
+  );
+  if (normalizedZoneNames.size === 0) {
+    return [];
+  }
+
+  return (enemy?.zones || [])
+    .map((zone, zoneIndex) => (
+      normalizedZoneNames.has(normalizeZoneNameKey(zone?.zone_name))
+        ? zoneIndex
+        : null
+    ))
+    .filter((zoneIndex) => zoneIndex !== null);
 }
 
 function resolveFocusZoneIndex({
@@ -1249,6 +1277,22 @@ export function renderRecommendationPanel(container, enemy) {
   const selectedZone = Number.isInteger(calculatorState.selectedZoneIndex)
     ? enemy?.zones?.[calculatorState.selectedZoneIndex] || null
     : null;
+  const selectedZoneRelationContext = selectedZone
+    ? getZoneRelationContext(enemy, selectedZone)
+    : null;
+  const selectedZoneIsPriorityTarget = Boolean(
+    selectedZone
+    && selectedZoneRelationContext?.priorityTargetZoneNames
+      ?.map((zoneName) => normalizeZoneNameKey(zoneName))
+      ?.includes(normalizeZoneNameKey(selectedZone.zone_name))
+  );
+  const relatedTargetZoneIndices = selectedZoneRelationContext && !selectedZoneIsPriorityTarget
+    ? getZoneIndicesByNames(enemy, selectedZoneRelationContext.priorityTargetZoneNames)
+        .filter((zoneIndex) => zoneIndex !== calculatorState.selectedZoneIndex)
+    : [];
+  const relatedTargetZoneNames = relatedTargetZoneIndices
+    .map((zoneIndex) => enemy?.zones?.[zoneIndex]?.zone_name || '')
+    .filter(Boolean);
 
   const controlsNote = document.createElement('div');
   controlsNote.className = 'status calc-recommend-note';
@@ -1299,6 +1343,23 @@ export function renderRecommendationPanel(container, enemy) {
       return highlightRangeFloorMeters;
     }
   }).slice(0, 12);
+  const relatedTargetRows = buildRelatedTargetRecommendationRows({
+    enemy,
+    weapons: weaponsState.groups,
+    rangeFloorMeters: highlightRangeFloorMeters,
+    relatedZoneIndices: relatedTargetZoneIndices,
+    getEngagementRangeMetersForWeapon: (weapon) => {
+      const weaponA = getWeaponForSlot('A');
+      const weaponB = getWeaponForSlot('B');
+      if (weaponA && weaponA.name === weapon?.name) {
+        return getEngagementRangeMeters('A');
+      }
+      if (weaponB && weaponB.name === weapon?.name) {
+        return getEngagementRangeMeters('B');
+      }
+      return highlightRangeFloorMeters;
+    }
+  }).slice(0, 12);
   const flaggedRows = recommendationRows.filter((row) => (
     row.hasLowOverkillOhko
     || row.hasCriticalRecommendation
@@ -1316,6 +1377,17 @@ export function renderRecommendationPanel(container, enemy) {
         ? `Best attack rows for removing or reaching the selected target using the current engagement settings (${recommendationRangeSummary}).`
         : `No dedicated target rows are available for ${selectedZone.zone_name} using the current engagement settings (${recommendationRangeSummary}).`,
       rows: selectedTargetRows
+    });
+  }
+
+  if (selectedZone && relatedTargetZoneNames.length > 0) {
+    renderRecommendationSubsection({
+      body,
+      titleText: `${selectedZone.zone_name} related routes`,
+      summaryText: relatedTargetRows.length > 0
+        ? `Linked priority targets in ${selectedZoneRelationContext?.groupLabels?.join(' / ') || 'this anatomy group'}: ${relatedTargetZoneNames.join(', ')}. Hover the enemy table to see linked and mirrored parts.`
+        : `Linked priority targets in ${selectedZoneRelationContext?.groupLabels?.join(' / ') || 'this anatomy group'}: ${relatedTargetZoneNames.join(', ')}. No related routes are currently available with the current engagement settings (${recommendationRangeSummary}).`,
+      rows: relatedTargetRows
     });
   }
 

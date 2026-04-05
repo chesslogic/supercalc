@@ -909,6 +909,32 @@
         }
       ],
       "health": 750,
+      "zone_relation_groups": [
+        {
+          "id": "left-arm",
+          "label": "Left arm",
+          "zones": [
+            "shoulderplate_left",
+            "left_arm"
+          ],
+          "mirror_group": "right-arm",
+          "priority_target_zones": [
+            "left_arm"
+          ]
+        },
+        {
+          "id": "right-arm",
+          "label": "Right arm",
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
+          ],
+          "mirror_group": "left-arm",
+          "priority_target_zones": [
+            "right_arm"
+          ]
+        }
+      ],
       "scope_tags": [
         "medium"
       ]
@@ -1052,6 +1078,32 @@
         }
       ],
       "health": 750,
+      "zone_relation_groups": [
+        {
+          "id": "left-arm",
+          "label": "Left arm",
+          "zones": [
+            "shoulderplate_left",
+            "left_arm"
+          ],
+          "mirror_group": "right-arm",
+          "priority_target_zones": [
+            "left_arm"
+          ]
+        },
+        {
+          "id": "right-arm",
+          "label": "Right arm",
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
+          ],
+          "mirror_group": "left-arm",
+          "priority_target_zones": [
+            "right_arm"
+          ]
+        }
+      ],
       "scope_tags": [
         "medium"
       ]
@@ -1838,6 +1890,32 @@
         }
       ],
       "health": 750,
+      "zone_relation_groups": [
+        {
+          "id": "left-arm",
+          "label": "Left arm",
+          "zones": [
+            "shoulderplate_left",
+            "left_arm"
+          ],
+          "mirror_group": "right-arm",
+          "priority_target_zones": [
+            "left_arm"
+          ]
+        },
+        {
+          "id": "right-arm",
+          "label": "Right arm",
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
+          ],
+          "mirror_group": "left-arm",
+          "priority_target_zones": [
+            "right_arm"
+          ]
+        }
+      ],
       "scope_tags": [
         "medium"
       ]
@@ -2445,6 +2523,32 @@
         }
       ],
       "health": 750,
+      "zone_relation_groups": [
+        {
+          "id": "left-arm",
+          "label": "Left arm",
+          "zones": [
+            "shoulderplate_left",
+            "left_arm"
+          ],
+          "mirror_group": "right-arm",
+          "priority_target_zones": [
+            "left_arm"
+          ]
+        },
+        {
+          "id": "right-arm",
+          "label": "Right arm",
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
+          ],
+          "mirror_group": "left-arm",
+          "priority_target_zones": [
+            "right_arm"
+          ]
+        }
+      ],
       "scope_tags": [
         "medium"
       ]
@@ -3098,6 +3202,32 @@
         }
       ],
       "health": 750,
+      "zone_relation_groups": [
+        {
+          "id": "left-arm",
+          "label": "Left arm",
+          "zones": [
+            "shoulderplate_left",
+            "left_arm"
+          ],
+          "mirror_group": "right-arm",
+          "priority_target_zones": [
+            "left_arm"
+          ]
+        },
+        {
+          "id": "right-arm",
+          "label": "Right arm",
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
+          ],
+          "mirror_group": "left-arm",
+          "priority_target_zones": [
+            "right_arm"
+          ]
+        }
+      ],
       "scope_tags": [
         "medium"
       ]
@@ -5271,6 +5401,64 @@
         }
       ],
       "health": 3000,
+      "zone_relation_groups": [
+        {
+          "id": "left-leg",
+          "label": "Left leg",
+          "zones": [
+            "left_hip",
+            "left_upper_leg_top",
+            "left_upper_leg",
+            "left_middle_leg",
+            "left_lower_leg",
+            "left_upper_leg_internal",
+            "left_middle_leg_internal"
+          ],
+          "mirror_group": "right-leg",
+          "priority_target_zones": [
+            "left_hip",
+            "left_upper_leg_internal",
+            "left_middle_leg_internal"
+          ]
+        },
+        {
+          "id": "right-leg",
+          "label": "Right leg",
+          "zones": [
+            "right_hip",
+            "right_upper_leg_top",
+            "right_upper_leg",
+            "right_middle_leg",
+            "right_lower_leg",
+            "right_upper_leg_internal",
+            "right_middle_leg_internal"
+          ],
+          "mirror_group": "left-leg",
+          "priority_target_zones": [
+            "right_hip",
+            "right_upper_leg_internal",
+            "right_middle_leg_internal"
+          ]
+        },
+        {
+          "id": "rear-leg",
+          "label": "Rear leg",
+          "zones": [
+            "back_hip",
+            "back_upper_leg_top",
+            "back_upper_leg",
+            "back_middle_leg",
+            "back_lower_leg",
+            "back_upper_leg_internal",
+            "back_middle_leg_internal"
+          ],
+          "priority_target_zones": [
+            "back_hip",
+            "back_upper_leg_internal",
+            "back_middle_leg_internal"
+          ]
+        }
+      ],
       "scope_tags": [
         "giant"
       ]

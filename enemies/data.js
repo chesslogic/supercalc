@@ -118,6 +118,8 @@ function buildSearchText(unit) {
     unit.sourceProvenance,
     unit.sourceNote,
     ...unit.scopeTags,
+    ...(unit.zoneRelationGroups || []).map((group) => group.label || ''),
+    ...(unit.zoneRelationGroups || []).flatMap((group) => group.priorityTargetZoneNames || []),
     ...(unit.recommendationSequences || []).map((sequence) => sequence.label || ''),
     ...unit.zones.map((zone) => zone.zone_name || ''),
     ...unit.zones.map((zone) => Object.values(zone).map((value) => String(value || '')))
@@ -172,6 +174,161 @@ function normalizeRecommendationSequences(rawSequences = []) {
     .filter(Boolean);
 }
 
+function normalizeZoneRelationZoneName(value) {
+  return String(value ?? '').trim();
+}
+
+function normalizeZoneRelationZoneKey(value) {
+  return normalizeZoneRelationZoneName(value).toLowerCase();
+}
+
+function normalizeZoneRelationGroupIds(value) {
+  const rawValues = Array.isArray(value) ? value : [value];
+  return [...new Set(
+    rawValues
+      .map((entry) => String(entry ?? '').trim())
+      .filter(Boolean)
+  )];
+}
+
+function normalizeZoneRelationGroups(rawGroups = [], zones = []) {
+  const canonicalZoneNamesByKey = new Map(
+    (Array.isArray(zones) ? zones : [])
+      .map((zone) => normalizeZoneRelationZoneName(zone?.zone_name))
+      .filter(Boolean)
+      .map((zoneName) => [normalizeZoneRelationZoneKey(zoneName), zoneName])
+  );
+
+  return (Array.isArray(rawGroups) ? rawGroups : [])
+    .map((group) => {
+      const id = String(group?.id || group?.label || '').trim();
+      if (!id) {
+        return null;
+      }
+
+      const zoneNames = [...new Set(
+        (Array.isArray(group?.zones) ? group.zones : [])
+          .map((zoneName) => canonicalZoneNamesByKey.get(normalizeZoneRelationZoneKey(zoneName)) || null)
+          .filter(Boolean)
+      )];
+      if (zoneNames.length === 0) {
+        return null;
+      }
+
+      const priorityTargetZoneNames = [...new Set(
+        (
+          group?.priorityTargetZones
+          || group?.priority_target_zones
+          || group?.relatedTargetZones
+          || group?.related_target_zones
+          || group?.relatedLethalZones
+          || group?.related_lethal_zones
+          || []
+        )
+          .map((zoneName) => canonicalZoneNamesByKey.get(normalizeZoneRelationZoneKey(zoneName)) || null)
+          .filter(Boolean)
+      )];
+
+      return {
+        id,
+        label: String(group?.label || id).trim() || id,
+        zoneNames,
+        mirrorGroupIds: normalizeZoneRelationGroupIds(
+          group?.mirrorGroupIds
+          || group?.mirror_group_ids
+          || group?.mirrorGroups
+          || group?.mirror_groups
+          || group?.mirrorGroupId
+          || group?.mirror_group
+        ),
+        priorityTargetZoneNames
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildZoneRelationLookup(zoneRelationGroups = []) {
+  const groupsById = new Map();
+  const groupIdsByZoneName = new Map();
+
+  zoneRelationGroups.forEach((group) => {
+    groupsById.set(group.id, group);
+    group.zoneNames.forEach((zoneName) => {
+      const zoneKey = normalizeZoneRelationZoneKey(zoneName);
+      if (!groupIdsByZoneName.has(zoneKey)) {
+        groupIdsByZoneName.set(zoneKey, new Set());
+      }
+      groupIdsByZoneName.get(zoneKey).add(group.id);
+    });
+  });
+
+  return {
+    groupsById,
+    groupIdsByZoneName
+  };
+}
+
+function getZoneRelationLookup(enemy) {
+  if (enemy?.zoneRelationLookup?.groupsById instanceof Map && enemy?.zoneRelationLookup?.groupIdsByZoneName instanceof Map) {
+    return enemy.zoneRelationLookup;
+  }
+
+  if (Array.isArray(enemy?.zoneRelationGroups) && enemy.zoneRelationGroups.length > 0) {
+    return buildZoneRelationLookup(enemy.zoneRelationGroups);
+  }
+
+  return null;
+}
+
+export function getZoneRelationContext(enemy, zoneReference) {
+  const zoneName = typeof zoneReference === 'number'
+    ? enemy?.zones?.[zoneReference]?.zone_name
+    : normalizeZoneRelationZoneName(zoneReference?.zone_name ?? zoneReference);
+  const zoneKey = normalizeZoneRelationZoneKey(zoneName);
+  if (!zoneKey) {
+    return null;
+  }
+
+  const relationLookup = getZoneRelationLookup(enemy);
+  const groupIds = relationLookup?.groupIdsByZoneName?.get(zoneKey);
+  if (!groupIds || groupIds.size === 0) {
+    return null;
+  }
+
+  const groupLabels = new Set();
+  const sameZoneNames = new Set();
+  const mirrorZoneNames = new Set();
+  const priorityTargetZoneNames = new Set();
+
+  [...groupIds].forEach((groupId) => {
+    const group = relationLookup.groupsById.get(groupId);
+    if (!group) {
+      return;
+    }
+
+    groupLabels.add(group.label);
+    group.zoneNames.forEach((entry) => sameZoneNames.add(entry));
+    group.priorityTargetZoneNames.forEach((entry) => priorityTargetZoneNames.add(entry));
+
+    group.mirrorGroupIds.forEach((mirrorGroupId) => {
+      const mirrorGroup = relationLookup.groupsById.get(mirrorGroupId);
+      if (!mirrorGroup) {
+        return;
+      }
+      mirrorGroup.zoneNames.forEach((entry) => mirrorZoneNames.add(entry));
+    });
+  });
+
+  return {
+    zoneName: zoneName || '',
+    groupIds: [...groupIds],
+    groupLabels: [...groupLabels],
+    sameZoneNames: [...sameZoneNames],
+    mirrorZoneNames: [...mirrorZoneNames],
+    priorityTargetZoneNames: [...priorityTargetZoneNames]
+  };
+}
+
 function buildEnemyUnit({
   factionName,
   unitName,
@@ -179,12 +336,18 @@ function buildEnemyUnit({
   parentUnit = null
 }) {
   const zones = buildUnitZones(unitData.damageable_zones);
+  const zoneRelationGroups = normalizeZoneRelationGroups(
+    unitData.zone_relation_groups || unitData.zone_relationship_groups,
+    zones
+  );
   return {
     faction: factionName,
     name: unitName,
     health: unitData.health,
     scopeTags: normalizeScopeTags(unitData.scope_tags, parentUnit?.scopeTags || []),
     zones,
+    zoneRelationGroups,
+    zoneRelationLookup: buildZoneRelationLookup(zoneRelationGroups),
     zoneCount: zones.length,
     isInline: Boolean(parentUnit),
     parentEnemyName: parentUnit?.name || String(unitData.parent_enemy || '').trim() || null,
