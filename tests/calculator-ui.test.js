@@ -62,6 +62,7 @@ import {
   getWeaponOptionDisplayModel,
   getWeaponRowPreviewHitCount,
   getWeaponSortModeOptions,
+  normalizeWeaponSortMode,
   sortWeaponOptions,
   sortWeaponOptionsForReference
 } from '../calculator/weapon-dropdown.js';
@@ -970,8 +971,9 @@ test('weapon sort mode options expose the compare-only reference mode only in co
   );
   assert.deepEqual(
     getWeaponSortModeOptions({ mode: 'compare' }).map((option) => option.id),
-    ['grouped', 'ap-desc', 'match-reference']
+    ['grouped', 'ap-desc', 'match-reference-subtype', 'match-reference-slot']
   );
+  assert.equal(normalizeWeaponSortMode('match-reference', { mode: 'compare' }), 'match-reference-subtype');
 });
 
 test('weapon dropdown AP preview ignores zero or insignificant high-AP rows', () => {
@@ -1059,7 +1061,7 @@ test('sortWeaponOptions falls back to grouped order when reference sorting has n
 
   assert.deepEqual(
     sortWeaponOptions(options, {
-      sortMode: 'match-reference',
+      sortMode: 'match-reference-subtype',
       mode: 'compare',
       referenceWeapon: null
     }).map((weapon) => weapon.name),
@@ -1157,6 +1159,30 @@ test('compare-mode AP sorting keeps same launcher families ahead within AP5+ mat
     'Quasar Cannon',
     'Coyote',
     'HMG Emplacement'
+  ]);
+});
+
+test('compare-mode AP sorting can prioritize slot matches over subtype matches', () => {
+  const referenceWeapon = makeWeapon('Pacifier', {
+    type: 'Primary',
+    sub: 'AR',
+    code: 'AR-72',
+    rows: [makeAttackRow(3, 95, 23)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('One-Two (UBGL)', { type: 'Primary', sub: 'GL', code: 'CB-9', rows: [makeAttackRow(3, 320, 320)] }),
+    makeWeapon('Blitzer', { type: 'Primary', sub: 'NRG', code: 'ARC-12', rows: [makeAttackRow(3, 250, 250)] }),
+    makeWeapon('Adjudicator', { type: 'Primary', sub: 'AR', code: 'BR-14', rows: [makeAttackRow(3, 95, 23)] }),
+    makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
+  ], referenceWeapon, {
+    sortMode: 'match-reference-slot'
+  });
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Adjudicator',
+    'Blitzer',
+    'One-Two (UBGL)',
+    'Grenade Launcher'
   ]);
 });
 
@@ -1273,10 +1299,10 @@ test('weapon sort mode options for state drop compare-only modes in single mode'
 
   try {
     setCalculatorMode('compare');
-    setWeaponSortMode('match-reference');
+    setWeaponSortMode('match-reference-subtype');
     assert.deepEqual(
       getWeaponSortModeOptionsForState().map((option) => option.id),
-      ['grouped', 'ap-desc', 'match-reference']
+      ['grouped', 'ap-desc', 'match-reference-subtype', 'match-reference-slot']
     );
 
     setCalculatorMode('single');

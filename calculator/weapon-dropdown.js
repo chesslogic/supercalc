@@ -13,11 +13,20 @@ export const WEAPON_SORT_MODE_DEFINITIONS = [
     label: 'AP high -> low'
   },
   {
-    id: 'match-reference',
-    label: 'Match other weapon AP',
+    id: 'match-reference-subtype',
+    label: 'Same AP, then subtype',
+    compareOnly: true
+  },
+  {
+    id: 'match-reference-slot',
+    label: 'Same AP, then slot',
     compareOnly: true
   }
 ];
+
+const WEAPON_SORT_MODE_ALIASES = new Map([
+  ['match-reference', 'match-reference-subtype']
+]);
 export const WEAPON_DROPDOWN_MULTIPROJECTILE_PREVIEW_RULES = [
   {
     id: 'all-directional-fragments',
@@ -152,7 +161,8 @@ export function normalizeWeaponSortMode(sortMode, {
   const normalizedMode = String(mode || 'single').trim().toLowerCase() === 'compare'
     ? 'compare'
     : 'single';
-  const normalizedSortMode = String(sortMode || DEFAULT_WEAPON_SORT_MODE).trim().toLowerCase();
+  const rawSortMode = String(sortMode || DEFAULT_WEAPON_SORT_MODE).trim().toLowerCase();
+  const normalizedSortMode = WEAPON_SORT_MODE_ALIASES.get(rawSortMode) || rawSortMode;
   const availableModes = getWeaponSortModeOptions({ mode: normalizedMode });
 
   return availableModes.find((entry) => entry.id === normalizedSortMode)?.id || DEFAULT_WEAPON_SORT_MODE;
@@ -301,23 +311,49 @@ export function getWeaponOptionPriorityBucket(option, referenceWeapon) {
   return 2;
 }
 
-function getWeaponOptionReferenceSimilarityRank(option, referenceWeapon) {
+function getWeaponOptionReferenceSimilarityRank(option, referenceWeapon, priority = 'subtype') {
   const referenceSub = normalizeWeaponTaxonomyValue(referenceWeapon?.sub);
   const optionSub = normalizeWeaponTaxonomyValue(option?.sub);
-  if (referenceSub && optionSub && optionSub === referenceSub) {
+  const hasMatchingSubtype = referenceSub && optionSub && optionSub === referenceSub;
+  const referenceType = normalizeWeaponTaxonomyValue(referenceWeapon?.type);
+  const optionType = normalizeWeaponTaxonomyValue(option?.type);
+  const hasMatchingType = referenceType && optionType && optionType === referenceType;
+
+  if (priority === 'slot') {
+    if (hasMatchingType && hasMatchingSubtype) {
+      return 0;
+    }
+    if (hasMatchingType) {
+      return 1;
+    }
+    if (hasMatchingSubtype) {
+      return 2;
+    }
+    return 3;
+  }
+
+  if (hasMatchingType && hasMatchingSubtype) {
     return 0;
   }
 
-  const referenceType = normalizeWeaponTaxonomyValue(referenceWeapon?.type);
-  const optionType = normalizeWeaponTaxonomyValue(option?.type);
-  if (referenceType && optionType && optionType === referenceType) {
+  if (hasMatchingSubtype) {
     return 1;
   }
+  if (hasMatchingType) {
+    return 2;
+  }
 
-  return 2;
+  return 3;
 }
 
-export function sortWeaponOptionsForReference(options = [], referenceWeapon = null) {
+function getReferenceSortPriority(sortMode = 'match-reference-subtype') {
+  return sortMode === 'match-reference-slot' ? 'slot' : 'subtype';
+}
+
+export function sortWeaponOptionsForReference(options = [], referenceWeapon = null, {
+  sortMode = 'match-reference-subtype'
+} = {}) {
+  const referencePriority = getReferenceSortPriority(sortMode);
   return [...options].sort((a, b) => {
     const bucketDiff = getWeaponOptionPriorityBucket(a, referenceWeapon)
       - getWeaponOptionPriorityBucket(b, referenceWeapon);
@@ -325,8 +361,8 @@ export function sortWeaponOptionsForReference(options = [], referenceWeapon = nu
       return bucketDiff;
     }
 
-    const similarityDiff = getWeaponOptionReferenceSimilarityRank(a, referenceWeapon)
-      - getWeaponOptionReferenceSimilarityRank(b, referenceWeapon);
+    const similarityDiff = getWeaponOptionReferenceSimilarityRank(a, referenceWeapon, referencePriority)
+      - getWeaponOptionReferenceSimilarityRank(b, referenceWeapon, referencePriority);
     if (similarityDiff !== 0) {
       return similarityDiff;
     }
@@ -344,9 +380,12 @@ export function sortWeaponOptions(options = [], {
   switch (normalizedSortMode) {
     case 'ap-desc':
       return [...options].sort(compareWeaponOptionsByApDescending);
-    case 'match-reference':
+    case 'match-reference-subtype':
+    case 'match-reference-slot':
       return referenceWeapon
-        ? sortWeaponOptionsForReference(options, referenceWeapon)
+        ? sortWeaponOptionsForReference(options, referenceWeapon, {
+          sortMode: normalizedSortMode
+        })
         : [...options].sort(compareWeaponOptionBaseOrder);
     case 'grouped':
     default:
