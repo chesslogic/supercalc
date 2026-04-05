@@ -232,6 +232,7 @@ test('parser emits scope tags for curated tier, giant, structure, and objective 
       'content/fac_bugs/giants/dragonroach': buildFixtureUnit('Dragonroach', 6500),
       'content/fac_cyborgs/objectives/ballistic_missile': buildFixtureUnit('Ballistic Missile', 2100),
       'content/fac_illuminate/defense/lightning_spire': buildFixtureUnit('Lightning Spire', 500),
+      'content/fac_illuminate/units/obtruder': buildFixtureUnit('Obtruder', 400),
       'content/fac_illuminate/giants/leviathan': buildFixtureUnit('Leviathan', 15000)
     };
 
@@ -250,6 +251,7 @@ test('parser emits scope tags for curated tier, giant, structure, and objective 
     assert.deepEqual(parsed.Terminid.Dragonroach.scope_tags, ['giant']);
     assert.deepEqual(parsed.Automaton['Ballistic Missile'].scope_tags, ['objective']);
     assert.deepEqual(parsed.Illuminate['Lightning Spire'].scope_tags, ['structure']);
+    assert.deepEqual(parsed.Illuminate.Obtruder.scope_tags, ['chaff']);
     assert.deepEqual(parsed.Illuminate.Leviathan.scope_tags, ['giant']);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
@@ -764,4 +766,10 @@ test('checked-in enemydata keeps curated enemy zone names', () => {
   assert.ok(sporeChargerNames.includes('spore_flesh_6'));
 
   assert.ok(enemydata.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
+});
+
+test('checked-in enemydata keeps curated enemy scope tags', () => {
+  const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
+
+  assert.deepEqual(enemydata.Illuminate.Obtruder.scope_tags, ['chaff']);
 });

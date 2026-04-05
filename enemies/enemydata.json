@@ -563,7 +563,7 @@
       ],
       "health": 750,
       "scope_tags": [
-        "medium"
+        "chaff"
       ]
     },
     "Brawler": {
@@ -5517,7 +5517,7 @@
       ],
       "health": 400,
       "scope_tags": [
-        "medium"
+        "chaff"
       ]
     },
     "Overseer": {
