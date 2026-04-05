@@ -38,6 +38,7 @@ import {
   ENEMY_OVERVIEW_DROPDOWN_CLASS,
   formatEngagementRangeDisplayValue,
   getCalculatorModeButtonTitle,
+  getEnemyDropdownItemModel,
   getEnemyOverviewOptionHtml,
   getWeaponInputDisplayValue
 } from '../calculator/ui.js';
@@ -452,8 +453,50 @@ test('scope options keep the three base fronts in gameplay order before extras',
 
 test('overview dropdown option uses a dedicated highlighted presentation', () => {
   assert.equal(ENEMY_OVERVIEW_DROPDOWN_CLASS, 'dropdown-item dropdown-item-overview');
+  assert.match(getEnemyOverviewOptionHtml('all'), /enemy-dropdown-name/i);
+  assert.match(getEnemyOverviewOptionHtml('all'), /enemy-dropdown-meta/i);
   assert.match(getEnemyOverviewOptionHtml('all'), /compare all matching enemies/i);
   assert.match(getEnemyOverviewOptionHtml('Appropriators'), /compare matching appropriators enemies/i);
+});
+
+test('enemy dropdown item model exposes faction, subgroup, and target badges', () => {
+  const model = getEnemyDropdownItemModel({
+    name: 'Predator Hunter',
+    faction: 'Terminid',
+    scopeTags: ['elite']
+  });
+
+  assert.equal(model.frontBadge.text, 'BUG');
+  assert.equal(model.frontBadge.label, 'Terminids');
+  assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Predator Strain']);
+  assert.deepEqual(model.targetBadge, {
+    id: 'elite',
+    text: 'E',
+    label: 'Elite'
+  });
+  assert.match(model.metaTitle, /Terminids/i);
+  assert.match(model.metaTitle, /Predator Strain/i);
+  assert.match(model.metaTitle, /Elite/i);
+  assert.match(model.searchText, /predator strain/i);
+});
+
+test('enemy dropdown item model can expose overlapping Illuminate subgroups', () => {
+  const model = getEnemyDropdownItemModel({
+    name: 'Observer',
+    faction: 'Illuminate',
+    scopeTags: ['medium']
+  });
+
+  assert.equal(model.frontBadge.text, 'ILL');
+  assert.deepEqual(
+    model.subgroupBadges.map((badge) => badge.text),
+    ['Mindless Masses', 'Appropriators']
+  );
+  assert.deepEqual(model.targetBadge, {
+    id: 'medium',
+    text: 'M',
+    label: 'Medium'
+  });
 });
 
 function makeWeapon(name, {

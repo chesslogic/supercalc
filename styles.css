@@ -385,10 +385,131 @@ tbody tr:hover {
 }
 .calculator-dropdown.hidden{display:none}
 .dropdown-item{
-  padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border); color:var(--text)
+  padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border); color:var(--text); background-color:#1b1b1b
 }
-.dropdown-item:hover{background:#242424; color:var(--accent)}
+.dropdown-item:hover{background-color:#242424; color:var(--accent)}
 .dropdown-item:last-child{border-bottom:none}
+.enemy-dropdown-item,
+.dropdown-item-overview{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.enemy-dropdown-item-front-terminids{
+  border-left:3px solid rgba(99, 175, 67, 0.8);
+  padding-left:9px;
+  background-image:linear-gradient(90deg, rgba(99, 175, 67, 0.11), rgba(99, 175, 67, 0) 52%);
+}
+.enemy-dropdown-item-front-automatons{
+  border-left:3px solid rgba(200, 68, 46, 0.85);
+  padding-left:9px;
+  background-image:linear-gradient(90deg, rgba(200, 68, 46, 0.13), rgba(200, 68, 46, 0) 52%);
+}
+.enemy-dropdown-item-front-illuminate{
+  border-left:3px solid rgba(38, 154, 182, 0.85);
+  padding-left:9px;
+  background-image:linear-gradient(90deg, rgba(38, 154, 182, 0.13), rgba(38, 154, 182, 0) 52%);
+}
+.enemy-dropdown-name{
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.enemy-dropdown-meta{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  flex:0 1 auto;
+  min-width:0;
+  max-width:58%;
+}
+.enemy-dropdown-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:18px;
+  padding:0 6px;
+  border:1px solid var(--border);
+  background:#202020;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.45px;
+  line-height:1;
+  white-space:nowrap;
+  text-transform:uppercase;
+}
+.enemy-dropdown-badge-front{
+  min-width:32px;
+}
+.enemy-dropdown-badge-front-terminids{
+  background:rgba(99, 175, 67, 0.22);
+  border-color:rgba(99, 175, 67, 0.45);
+  color:#d7f2bf;
+}
+.enemy-dropdown-badge-front-automatons{
+  background:rgba(200, 68, 46, 0.22);
+  border-color:rgba(200, 68, 46, 0.45);
+  color:#ffd0c7;
+}
+.enemy-dropdown-badge-front-illuminate{
+  background:rgba(38, 154, 182, 0.22);
+  border-color:rgba(38, 154, 182, 0.45);
+  color:#cff2fb;
+}
+.enemy-dropdown-badge-subgroup{
+  max-width:132px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-transform:none;
+  letter-spacing:.15px;
+  color:var(--text);
+}
+.enemy-dropdown-badge-target{
+  min-width:18px;
+  padding:0;
+  font-size:11px;
+}
+.enemy-dropdown-badge-target-chaff{
+  background:rgba(189, 189, 189, 0.18);
+  border-color:rgba(189, 189, 189, 0.35);
+  color:#f0f0f0;
+}
+.enemy-dropdown-badge-target-medium{
+  background:rgba(88, 166, 255, 0.18);
+  border-color:rgba(88, 166, 255, 0.35);
+  color:#cfe5ff;
+}
+.enemy-dropdown-badge-target-elite{
+  background:rgba(248, 248, 51, 0.18);
+  border-color:rgba(248, 248, 51, 0.35);
+  color:#fff7ad;
+}
+.enemy-dropdown-badge-target-tank{
+  background:rgba(255, 154, 60, 0.18);
+  border-color:rgba(255, 154, 60, 0.35);
+  color:#ffe0c0;
+}
+.enemy-dropdown-badge-target-giant{
+  background:rgba(255, 75, 65, 0.18);
+  border-color:rgba(255, 75, 65, 0.35);
+  color:#ffd3d0;
+}
+.enemy-dropdown-badge-target-structure{
+  background:rgba(140, 140, 140, 0.2);
+  border-color:rgba(140, 140, 140, 0.35);
+  color:#f5f5f5;
+}
+.enemy-dropdown-badge-target-objective{
+  background:rgba(76, 175, 80, 0.2);
+  border-color:rgba(76, 175, 80, 0.35);
+  color:#d8f4d9;
+}
 .dropdown-item-overview{
   background:linear-gradient(90deg, rgba(255, 220, 0, 0.12), rgba(255, 220, 0, 0.03));
   border-left:3px solid var(--accent);
@@ -403,7 +524,7 @@ tbody tr:hover {
   color:var(--muted);
   font-size:11px;
   font-weight:400;
-  margin-left:6px;
+  text-align:right;
 }
 @media (max-width: 1240px){
   .calculator-range-group{

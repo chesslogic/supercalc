@@ -301,6 +301,27 @@ export function getEnemyScopeSummaryLabel(scope = 'all') {
   return getEnemyScopeDefinition(scope).summaryLabel;
 }
 
+export function getEnemySubscopeDefinitionsForUnit(unit) {
+  const front = getEnemyUnitFront(unit);
+  if (!front) {
+    return [];
+  }
+
+  return ENEMY_SCOPE_DEFINITIONS.filter((definition) => (
+    definition.frontId === front.id
+    && definition.id !== front.id
+    && definition.kind !== 'all'
+    && matchesEnemyScope(unit, definition)
+  ));
+}
+
+export function getEnemyPrimaryTargetTypeDefinition(unit) {
+  const scopeTags = getEnemyUnitScopeTags(unit);
+  return ENEMY_TARGET_TYPE_DEFINITIONS.find((definition) => (
+    scopeTags.includes(definition.requiredTag)
+  )) || null;
+}
+
 export function matchesEnemyScope(unit, scope = 'all') {
   const definition = typeof scope === 'string' ? getEnemyScopeDefinition(scope) : scope;
   if (!definition || definition.kind === 'all') {

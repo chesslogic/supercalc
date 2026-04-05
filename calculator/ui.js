@@ -21,7 +21,9 @@ import {
 import {
   filterEnemiesByTargetTypes,
   getEnemyScopeSummaryLabel,
-  getEnemyUnitFrontLabel
+  getEnemyPrimaryTargetTypeDefinition,
+  getEnemySubscopeDefinitionsForUnit,
+  getEnemyUnitFront
 } from './enemy-scope.js';
 import { filterEnemiesByScope, getEnemyDropdownQueryState } from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
@@ -39,6 +41,20 @@ import { renderCalculation } from './calculation.js';
 let enemySelectorSetup = false;
 let shareButtonSetup = false;
 const ENGAGEMENT_RANGE_CONTROL_TITLE = 'Engagement distance used for displayed damage, shots, TTK, and recommendation breakpoint checks for this weapon slot.';
+const ENEMY_FRONT_BADGE_TEXT = {
+  terminids: 'BUG',
+  automatons: 'BOT',
+  illuminate: 'ILL'
+};
+const ENEMY_TARGET_BADGE_TEXT = {
+  chaff: 'C',
+  medium: 'M',
+  elite: 'E',
+  tank: 'T',
+  giant: 'G',
+  structure: 'S',
+  objective: 'O'
+};
 
 export function getCalculatorModeButtonTitle(mode) {
   if (mode === 'compare') {
@@ -56,7 +72,140 @@ export function getEnemyOverviewOptionHtml(scope = 'all') {
     ? 'compare all matching enemies'
     : `compare matching ${summaryLabel} enemies`;
 
-  return `Overview <span class="overview-dropdown-meta">${summary}</span>`;
+  return `<span class="enemy-dropdown-name">Overview</span><span class="enemy-dropdown-meta"><span class="overview-dropdown-meta">${summary}</span></span>`;
+}
+
+function buildEnemyBadgeTitle(label, prefix) {
+  const normalizedLabel = String(label || '').trim();
+  if (!normalizedLabel) {
+    return '';
+  }
+
+  return prefix ? `${prefix}: ${normalizedLabel}` : normalizedLabel;
+}
+
+function getEnemyBadgeText(fallbackLabel, lookup, key) {
+  const badgeText = lookup[String(key || '').trim().toLowerCase()];
+  if (badgeText) {
+    return badgeText;
+  }
+
+  const normalizedLabel = String(fallbackLabel || '').trim();
+  if (!normalizedLabel) {
+    return '?';
+  }
+
+  return normalizedLabel.slice(0, 3).toUpperCase();
+}
+
+export function getEnemyDropdownItemModel(enemy = null) {
+  const front = getEnemyUnitFront(enemy);
+  const frontId = front?.id || '';
+  const frontLabel = front?.label || String(enemy?.faction || '').trim() || 'Unknown';
+  const subgroupDefinitions = getEnemySubscopeDefinitionsForUnit(enemy);
+  const targetTypeDefinition = getEnemyPrimaryTargetTypeDefinition(enemy);
+
+  const frontBadge = {
+    id: frontId,
+    text: getEnemyBadgeText(frontLabel, ENEMY_FRONT_BADGE_TEXT, frontId),
+    label: frontLabel
+  };
+  const subgroupBadges = subgroupDefinitions.map((definition) => ({
+    id: definition.id,
+    text: definition.summaryLabel,
+    label: definition.label || definition.summaryLabel
+  }));
+  const targetBadge = targetTypeDefinition
+    ? {
+      id: targetTypeDefinition.id,
+      text: getEnemyBadgeText(targetTypeDefinition.label, ENEMY_TARGET_BADGE_TEXT, targetTypeDefinition.id),
+      label: targetTypeDefinition.summaryLabel || targetTypeDefinition.label
+    }
+    : null;
+  const titleParts = [
+    frontLabel,
+    ...subgroupBadges.map((badge) => badge.label),
+    targetBadge?.label
+  ].filter(Boolean);
+
+  return {
+    frontId,
+    frontLabel,
+    frontBadge,
+    subgroupBadges,
+    targetBadge,
+    metaTitle: titleParts.join(' • '),
+    searchText: [
+      enemy?.name,
+      enemy?.faction,
+      frontLabel,
+      ...subgroupBadges.map((badge) => badge.label),
+      targetBadge?.label
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+  };
+}
+
+function appendEnemyDropdownBadge(container, {
+  text,
+  title = '',
+  classNames = []
+} = {}) {
+  if (!container || !text) {
+    return null;
+  }
+
+  const badge = document.createElement('span');
+  badge.className = ['enemy-dropdown-badge', ...classNames].filter(Boolean).join(' ');
+  badge.textContent = text;
+  if (title) {
+    badge.title = title;
+  }
+  container.appendChild(badge);
+  return badge;
+}
+
+function buildEnemyDropdownItemElement(enemy) {
+  const itemModel = getEnemyDropdownItemModel(enemy);
+  const item = document.createElement('div');
+  const frontClassSuffix = itemModel.frontId ? `enemy-dropdown-item-front-${itemModel.frontId}` : '';
+  item.className = ['dropdown-item', 'enemy-dropdown-item', frontClassSuffix].filter(Boolean).join(' ');
+  item.title = [enemy?.name, itemModel.metaTitle].filter(Boolean).join('\n');
+
+  const name = document.createElement('span');
+  name.className = 'enemy-dropdown-name';
+  name.textContent = enemy?.name || '';
+  item.appendChild(name);
+
+  const meta = document.createElement('span');
+  meta.className = 'enemy-dropdown-meta';
+
+  appendEnemyDropdownBadge(meta, {
+    text: itemModel.frontBadge.text,
+    title: buildEnemyBadgeTitle(itemModel.frontBadge.label, 'Faction'),
+    classNames: ['enemy-dropdown-badge-front', itemModel.frontId ? `enemy-dropdown-badge-front-${itemModel.frontId}` : '']
+  });
+
+  itemModel.subgroupBadges.forEach((badgeModel) => {
+    appendEnemyDropdownBadge(meta, {
+      text: badgeModel.text,
+      title: buildEnemyBadgeTitle(badgeModel.label, 'Subfaction'),
+      classNames: ['enemy-dropdown-badge-subgroup']
+    });
+  });
+
+  if (itemModel.targetBadge) {
+    appendEnemyDropdownBadge(meta, {
+      text: itemModel.targetBadge.text,
+      title: buildEnemyBadgeTitle(itemModel.targetBadge.label, 'Target scale'),
+      classNames: ['enemy-dropdown-badge-target', `enemy-dropdown-badge-target-${itemModel.targetBadge.id}`]
+    });
+  }
+
+  item.appendChild(meta);
+  return item;
 }
 
 export function formatEngagementRangeDisplayValue(rangeMeters) {
@@ -474,11 +623,15 @@ function setupEnemySelector() {
 
     const scopedOptions = filterEnemiesByScope(options, calculatorState.overviewScope);
     const targetFilteredOptions = filterEnemiesByTargetTypes(scopedOptions, getSelectedEnemyTargetTypes());
-    const filteredOptions = targetFilteredOptions.filter((enemy) =>
-      enemy.name.toLowerCase().includes(effectiveQuery) ||
-      getEnemyUnitFrontLabel(enemy).toLowerCase().includes(effectiveQuery) ||
-      String(enemy.faction || '').toLowerCase().includes(effectiveQuery)
-    );
+    const filteredOptions = targetFilteredOptions
+      .map((enemy) => ({
+        enemy,
+        itemModel: getEnemyDropdownItemModel(enemy)
+      }))
+      .filter(({ enemy, itemModel }) => (
+        String(enemy?.name || '').toLowerCase().includes(effectiveQuery)
+        || itemModel.searchText.includes(effectiveQuery)
+      ));
 
     enemyDropdown.innerHTML = '';
 
@@ -505,10 +658,8 @@ function setupEnemySelector() {
       return;
     }
 
-    filteredOptions.forEach((enemy) => {
-      const item = document.createElement('div');
-      item.className = 'dropdown-item';
-      item.innerHTML = `${enemy.name} <span style="color:var(--muted); font-size:11px;">(${getEnemyUnitFrontLabel(enemy)})</span>`;
+    filteredOptions.forEach(({ enemy }) => {
+      const item = buildEnemyDropdownItemElement(enemy);
       item.addEventListener('click', () => {
         setSelectedEnemy(enemy);
         syncEnemyInputValue();
