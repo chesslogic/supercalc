@@ -7,6 +7,7 @@ import {
   calculatorState,
   DEFAULT_CALCULATOR_MODE,
   DEFAULT_COMPARE_VIEW,
+  DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_ENEMY_TARGET_TYPES,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
@@ -33,7 +34,13 @@ import {
   shouldShowEnemyControls,
   shouldShowEnemyScopeControls
 } from '../calculator/rendering.js';
-import { filterEnemiesByScope, getEnemyDropdownQueryState } from '../calculator/selector-utils.js';
+import {
+  filterEnemiesByScope,
+  getEnemyDropdownQueryState,
+  getEnemyDropdownSortModeOptions,
+  normalizeEnemyDropdownSortMode,
+  sortEnemyDropdownOptions
+} from '../calculator/selector-utils.js';
 import { filterEnemiesByTargetTypes, getEnemyTargetTypeOptions } from '../calculator/enemy-scope.js';
 import {
   ENEMY_OVERVIEW_DROPDOWN_CLASS,
@@ -113,6 +120,7 @@ test('calculator defaults to focused compare mode with all scopes enabled', () =
   assert.equal(DEFAULT_CALCULATOR_MODE, 'compare');
   assert.equal(DEFAULT_COMPARE_VIEW, 'focused');
   assert.equal(DEFAULT_OVERVIEW_SCOPE, 'all');
+  assert.equal(DEFAULT_ENEMY_DROPDOWN_SORT_MODE, 'targets');
   assert.deepEqual(DEFAULT_ENEMY_TARGET_TYPES, ['chaff', 'medium', 'elite', 'tank', 'giant']);
   assert.equal(DEFAULT_WEAPON_SORT_MODE, 'grouped');
 });
@@ -195,6 +203,35 @@ test('enemy target type options only include categories present in the dataset',
   assert.deepEqual(
     getEnemyTargetTypeOptions(enemies).map(({ id }) => id),
     ['medium', 'giant']
+  );
+});
+
+test('enemy dropdown sort modes default to target-scale ordering within each faction group', () => {
+  const enemies = [
+    { name: 'Warrior', faction: 'Terminid', scopeTags: ['medium'] },
+    { name: 'Scavenger', faction: 'Terminid', scopeTags: ['chaff'] },
+    { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] },
+    { name: 'Hulk', faction: 'Automaton', scopeTags: ['tank'] },
+    { name: 'Trooper', faction: 'Automaton', scopeTags: ['chaff'] }
+  ];
+
+  assert.equal(normalizeEnemyDropdownSortMode(), 'targets');
+  assert.equal(normalizeEnemyDropdownSortMode('type'), 'targets');
+  assert.equal(normalizeEnemyDropdownSortMode('alphabetic'), 'alphabetical');
+  assert.deepEqual(
+    getEnemyDropdownSortModeOptions(),
+    [
+      { id: 'targets', label: 'Targets' },
+      { id: 'alphabetical', label: 'Alphabetical' }
+    ]
+  );
+  assert.deepEqual(
+    sortEnemyDropdownOptions(enemies, { sortMode: 'targets' }).map((enemy) => enemy.name),
+    ['Scavenger', 'Warrior', 'Bile Titan', 'Trooper', 'Hulk']
+  );
+  assert.deepEqual(
+    sortEnemyDropdownOptions(enemies, { sortMode: 'alphabetical' }).map((enemy) => enemy.name),
+    ['Bile Titan', 'Scavenger', 'Warrior', 'Hulk', 'Trooper']
   );
 });
 
@@ -457,7 +494,7 @@ test('enemy controls place scope and targets above the enemy selector', () => {
       enemyTableMode: 'analysis'
     }),
     {
-      beforeEnemySelector: ['scope', 'targets'],
+      beforeEnemySelector: ['scope', 'targets', 'sort'],
       afterEnemySelector: []
     }
   );
@@ -470,7 +507,7 @@ test('enemy controls place scope and targets above the enemy selector', () => {
       enemyTableMode: 'stats'
     }),
     {
-      beforeEnemySelector: ['scope', 'targets'],
+      beforeEnemySelector: ['scope', 'targets', 'sort'],
       afterEnemySelector: ['view', 'grouping']
     }
   );
@@ -483,7 +520,7 @@ test('enemy controls place scope and targets above the enemy selector', () => {
       enemyTableMode: 'analysis'
     }),
     {
-      beforeEnemySelector: ['scope', 'targets'],
+      beforeEnemySelector: ['scope', 'targets', 'sort'],
       afterEnemySelector: ['view', 'grouping', 'diff']
     }
   );

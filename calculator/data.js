@@ -18,6 +18,11 @@ import {
   sortWeaponOptions
 } from './weapon-dropdown.js';
 import {
+  DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
+  getEnemyDropdownSortModeOptions,
+  normalizeEnemyDropdownSortMode
+} from './selector-utils.js';
+import {
   DEFAULT_RECOMMENDATION_RANGE_METERS,
   normalizeRecommendationRangeMeters
 } from './recommendations.js';
@@ -32,6 +37,7 @@ export const DEFAULT_COMPARE_VIEW = 'focused';
 export const DEFAULT_OVERVIEW_SCOPE = 'all';
 export const DEFAULT_ENEMY_TARGET_TYPES = [...DEFAULT_ENEMY_TARGET_TYPE_IDS];
 export { DEFAULT_WEAPON_SORT_MODE };
+export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -72,6 +78,7 @@ export const calculatorState = {
   mode: DEFAULT_CALCULATOR_MODE,
   compareView: DEFAULT_COMPARE_VIEW,
   weaponSortMode: DEFAULT_WEAPON_SORT_MODE,
+  enemyDropdownSortMode: DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   enemyTableMode: 'analysis',
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   enemyTargetTypes: [...DEFAULT_ENEMY_TARGET_TYPES],
@@ -158,6 +165,10 @@ export function getEnemyTargetTypeOptionsForState() {
   return getEnemyTargetTypeOptions(getEnemyOptions());
 }
 
+export function getEnemyDropdownSortModeOptionsForState() {
+  return getEnemyDropdownSortModeOptions();
+}
+
 export function getWeaponSortModeOptionsForState() {
   return getWeaponSortModeOptions({ mode: calculatorState.mode });
 }
@@ -185,6 +196,11 @@ export function setWeaponSortMode(sortMode) {
   calculatorState.weaponSortMode = normalizeWeaponSortMode(sortMode, {
     mode: calculatorState.mode
   });
+  notifyCalculatorStateChange();
+}
+
+export function setEnemyDropdownSortMode(sortMode) {
+  calculatorState.enemyDropdownSortMode = normalizeEnemyDropdownSortMode(sortMode);
   notifyCalculatorStateChange();
 }
 

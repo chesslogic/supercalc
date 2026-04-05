@@ -9,6 +9,7 @@ import {
 } from '../colors.js';
 import {
   calculatorState,
+  getEnemyDropdownSortModeOptionsForState,
   getEnemyTargetTypeOptionsForState,
   getEnemyOptions,
   getEngagementRangeMeters,
@@ -20,6 +21,7 @@ import {
   getSelectedAttacks,
   getWeaponForSlot,
   setDiffDisplayMode,
+  setEnemyDropdownSortMode,
   setEnemyGroupMode,
   setEnemyTableMode,
   setOverviewScope,
@@ -854,6 +856,7 @@ export function getEnemyControlSections({
     beforeEnemySelector.push('scope');
   }
   beforeEnemySelector.push('targets');
+  beforeEnemySelector.push('sort');
 
   if (mode === 'compare' && (overviewActive || hasFocusedEnemy)) {
     afterEnemySelector.push('view');
@@ -1041,6 +1044,18 @@ function appendEnemyToolbarControl(toolbar, controlId, { overviewActive = false 
         (value) => getSelectedEnemyTargetTypes().includes(value),
         (value) => {
           toggleSelectedEnemyTargetType(value);
+          refreshEnemyCalculationViews();
+        }
+      );
+      break;
+    case 'sort':
+      appendToolbarButtonGroup(
+        toolbar,
+        'Sort:',
+        getEnemyDropdownSortModeOptionsForState().map((option) => ({ value: option.id, label: option.label })),
+        (value) => calculatorState.enemyDropdownSortMode === value,
+        (value) => {
+          setEnemyDropdownSortMode(value);
           refreshEnemyCalculationViews();
         }
       );

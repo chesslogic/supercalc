@@ -25,7 +25,11 @@ import {
   getEnemySubscopeDefinitionsForUnit,
   getEnemyUnitFront
 } from './enemy-scope.js';
-import { filterEnemiesByScope, getEnemyDropdownQueryState } from './selector-utils.js';
+import {
+  filterEnemiesByScope,
+  getEnemyDropdownQueryState,
+  sortEnemyDropdownOptions
+} from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
 import { copyShareableUrl } from './url-state.js';
 import { state as weaponsState } from '../weapons/data.js';
@@ -623,7 +627,7 @@ function setupEnemySelector() {
 
     const scopedOptions = filterEnemiesByScope(options, calculatorState.overviewScope);
     const targetFilteredOptions = filterEnemiesByTargetTypes(scopedOptions, getSelectedEnemyTargetTypes());
-    const filteredOptions = targetFilteredOptions
+    const filteredOptions = sortEnemyDropdownOptions(targetFilteredOptions
       .map((enemy) => ({
         enemy,
         itemModel: getEnemyDropdownItemModel(enemy)
@@ -631,7 +635,10 @@ function setupEnemySelector() {
       .filter(({ enemy, itemModel }) => (
         String(enemy?.name || '').toLowerCase().includes(effectiveQuery)
         || itemModel.searchText.includes(effectiveQuery)
-      ));
+      ))
+      .map(({ enemy }) => enemy), {
+      sortMode: calculatorState.enemyDropdownSortMode
+    });
 
     enemyDropdown.innerHTML = '';
 
