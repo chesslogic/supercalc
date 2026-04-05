@@ -49,6 +49,7 @@ import {
   formatEngagementRangeDisplayValue,
   getCalculatorModeButtonTitle,
   getEnemyDropdownItemModel,
+  getEnemyDropdownOptionsForQuery,
   getEnemyOverviewOptionHtml,
   getWeaponInputDisplayValue
 } from '../calculator/ui.js';
@@ -138,6 +139,28 @@ test('enemy dropdown treats the selected enemy label as display text rather than
 
   assert.equal(state.effectiveQuery, '');
   assert.equal(state.showOverviewOption, false);
+});
+
+test('enemy dropdown option pipeline returns renderable enemy objects', () => {
+  const enemies = [
+    { name: 'Overseer', faction: 'Illuminate', scopeTags: ['medium'] },
+    { name: 'Fleshmob', faction: 'Illuminate', scopeTags: ['tank'] },
+    { name: 'Gatekeeper', faction: 'Illuminate', scopeTags: ['tank'] }
+  ];
+
+  const { filteredOptions, showOverviewOption } = getEnemyDropdownOptionsForQuery('', {
+    options: enemies,
+    mode: 'compare',
+    compareView: 'overview',
+    overviewScope: 'Illuminate Common',
+    targetTypeIds: ['medium', 'tank'],
+    sortMode: 'targets',
+    sortDir: 'asc'
+  });
+
+  assert.equal(showOverviewOption, true);
+  assert.deepEqual(filteredOptions.map((enemy) => enemy.name), ['Overseer', 'Fleshmob']);
+  assert.ok(filteredOptions.every((enemy) => enemy?.faction === 'Illuminate'));
 });
 
 test('enemy dropdown scope filtering works from the underlying enemy dataset', () => {

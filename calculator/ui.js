@@ -164,6 +164,56 @@ export function getEnemyDropdownItemModel(enemy = null) {
   };
 }
 
+export function getEnemyDropdownOptionsForQuery(query = '', {
+  options = getEnemyOptions(),
+  mode = calculatorState.mode,
+  compareView = calculatorState.compareView,
+  selectedEnemyName = calculatorState.selectedEnemy?.name || '',
+  overviewScope = calculatorState.overviewScope,
+  targetTypeIds = getSelectedEnemyTargetTypes(),
+  sortMode = calculatorState.enemyDropdownSortMode,
+  sortDir = calculatorState.enemyDropdownSortDir
+} = {}) {
+  const {
+    effectiveQuery,
+    showOverviewOption
+  } = getEnemyDropdownQueryState(query, {
+    mode,
+    compareView,
+    selectedEnemyName
+  });
+
+  if (!options || options.length === 0) {
+    return {
+      effectiveQuery,
+      showOverviewOption,
+      filteredOptions: []
+    };
+  }
+
+  const scopedOptions = filterEnemiesByScope(options, overviewScope);
+  const targetFilteredOptions = filterEnemiesByTargetTypes(scopedOptions, targetTypeIds);
+  const filteredOptions = sortEnemyDropdownOptions(targetFilteredOptions
+    .map((enemy) => ({
+      enemy,
+      itemModel: getEnemyDropdownItemModel(enemy)
+    }))
+    .filter(({ enemy, itemModel }) => (
+      String(enemy?.name || '').toLowerCase().includes(effectiveQuery)
+      || itemModel.searchText.includes(effectiveQuery)
+    ))
+    .map(({ enemy }) => enemy), {
+    sortMode,
+    sortDir
+  });
+
+  return {
+    effectiveQuery,
+    showOverviewOption,
+    filteredOptions
+  };
+}
+
 function appendEnemyDropdownBadge(container, {
   text,
   title = '',
@@ -629,17 +679,21 @@ function setupEnemySelector() {
   let isOpen = false;
 
   function populateDropdown(query = '') {
-    const options = getEnemyOptions();
     const {
-      effectiveQuery,
+      filteredOptions,
       showOverviewOption
-    } = getEnemyDropdownQueryState(query, {
+    } = getEnemyDropdownOptionsForQuery(query, {
+      options: getEnemyOptions(),
       mode: calculatorState.mode,
       compareView: calculatorState.compareView,
-      selectedEnemyName: calculatorState.selectedEnemy?.name || ''
+      selectedEnemyName: calculatorState.selectedEnemy?.name || '',
+      overviewScope: calculatorState.overviewScope,
+      targetTypeIds: getSelectedEnemyTargetTypes(),
+      sortMode: calculatorState.enemyDropdownSortMode,
+      sortDir: calculatorState.enemyDropdownSortDir
     });
 
-    if (!options || options.length === 0) {
+    if (!enemyState.units || enemyState.units.length === 0) {
       enemyDropdown.innerHTML = '';
       const noResults = document.createElement('div');
       noResults.className = 'dropdown-item';
@@ -647,22 +701,6 @@ function setupEnemySelector() {
       enemyDropdown.appendChild(noResults);
       return;
     }
-
-    const scopedOptions = filterEnemiesByScope(options, calculatorState.overviewScope);
-    const targetFilteredOptions = filterEnemiesByTargetTypes(scopedOptions, getSelectedEnemyTargetTypes());
-    const filteredOptions = sortEnemyDropdownOptions(targetFilteredOptions
-      .map((enemy) => ({
-        enemy,
-        itemModel: getEnemyDropdownItemModel(enemy)
-      }))
-      .filter(({ enemy, itemModel }) => (
-        String(enemy?.name || '').toLowerCase().includes(effectiveQuery)
-        || itemModel.searchText.includes(effectiveQuery)
-      ))
-      .map(({ enemy }) => enemy), {
-      sortMode: calculatorState.enemyDropdownSortMode,
-      sortDir: calculatorState.enemyDropdownSortDir
-    });
 
     enemyDropdown.innerHTML = '';
 
@@ -689,7 +727,7 @@ function setupEnemySelector() {
       return;
     }
 
-    filteredOptions.forEach(({ enemy }) => {
+    filteredOptions.forEach((enemy) => {
       const item = buildEnemyDropdownItemElement(enemy);
       item.addEventListener('click', () => {
         setSelectedEnemy(enemy);
