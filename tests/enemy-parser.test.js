@@ -549,12 +549,171 @@ test('parser prefers raw zone-name anchors when curated stats drift', () => {
   assert.ok(parsed.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
 });
 
-test('checked-in enemydata keeps curated Agitator, Radical, Veracitor, and Impaler names', () => {
+test('parser applies additional Gatekeeper, Gazer, Leviathan, Fleshmob, and Spore Charger overrides', () => {
+  const fixture = {
+    'content/fac_illuminate/gatekeeper/gatekeeper': buildFixtureUnit('Gatekeeper', [
+      { zone_name: 'Main', AV: 4, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 2500 },
+      { zone_name: 'pilot_seat', AV: 4, 'Dur%': 0.8, ExMult: 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 0.75, health: 1200 },
+      { zone_name: '0x7c69c9f9', AV: 1, 'Dur%': 0.8, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 800 },
+      { zone_name: '0x6c40f976', AV: 4, 'Dur%': 0.8, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 0.75, health: 1600 },
+      { zone_name: '0x73757f26', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0, health: 50 },
+      { zone_name: '0x2119e2ef', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 400 },
+      { zone_name: '0x533fbac2', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 400 },
+      { zone_name: '0xba20d30a', AV: 2, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0x3477f0dc', AV: 2, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0x082351f2', AV: 1, 'Dur%': 0.8, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0x23128279', AV: 2, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 0, health: 700 },
+      { zone_name: '0xa2d33d88', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: 'left_arm', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', MainCap: 0, 'ToMain%': 1, health: 1600 },
+      { zone_name: '0xf73f6af7', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: '0x0d324590', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0, health: 800 },
+      { zone_name: 'left_gun', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0, health: 800 },
+      { zone_name: '0x9581cfa6', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: 'right_arm', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', MainCap: 0, 'ToMain%': 1, health: 1600 },
+      { zone_name: '0x49807680', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: '0xd19627fc', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0, health: 800 },
+      { zone_name: 'right_gun', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0, health: 800 },
+      { zone_name: 'left_hip', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: 'left_leg', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0xdb9c1921', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: '0xba4db2cb', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: 'right_hip', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: 'right_leg', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0xcb1fee34', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: '0xd5d99116', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: 'back_hip', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0xb709fe1c', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 800 },
+      { zone_name: '0xe5fca454', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: '0x972f7b8f', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.2, health: 200 },
+      { zone_name: 'shield', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0, health: 1300 }
+    ]),
+    'content/fac_illuminate/gazer/gazer': buildFixtureUnit('Gazer', [
+      { zone_name: 'Main', AV: 5, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 900 },
+      { zone_name: '0x6d417d28', AV: 1, 'Dur%': 0, ExTarget: 'Part', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 700 },
+      { zone_name: '0xf3e71f7b', AV: 5, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 900 },
+      { zone_name: '0x01970f62', AV: 5, 'Dur%': 0, ExTarget: 'Part', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 900 }
+    ]),
+    'content/fac_illuminate/leviathan/leviathan': buildFixtureUnit('Leviathan', [
+      { zone_name: 'Main', AV: 4, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 15000 },
+      { zone_name: '[unknown]', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 7000 },
+      { zone_name: '[unknown]', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5500 },
+      { zone_name: '[unknown]', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5500 },
+      { zone_name: 'seg1_center', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5500 },
+      { zone_name: 'seg1_wing_right', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5000 },
+      { zone_name: 'seg1_wing_left', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5000 },
+      { zone_name: 'seg2_center', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5500 },
+      { zone_name: 'seg2_wing_right', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 3900 },
+      { zone_name: 'seg2_wing_left', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 3900 },
+      { zone_name: 'seg3_center', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 5000 },
+      { zone_name: 'seg3_wing_right', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 3000 },
+      { zone_name: 'seg3_wing_left', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 3000 },
+      { zone_name: 'seg4_center', AV: 5, 'Dur%': 0, ExMult: 0.65, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 3900 },
+      { zone_name: 'rotator', AV: 5, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 3000 }
+    ]),
+    'content/fac_illuminate/fleshmob/fleshmob': buildFixtureUnit('Fleshmob', [
+      { zone_name: 'Main', AV: 0, 'Dur%': 0.4, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 5000 },
+      { zone_name: '[unknown]', AV: 0, 'Dur%': 0.4, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.25, health: 200 },
+      { zone_name: '[unknown]', AV: 0, 'Dur%': 0.4, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.25, health: 200 },
+      { zone_name: '[unknown]', AV: 0, 'Dur%': 0.4, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.25, health: 200 },
+      { zone_name: '[unknown]', AV: 0, 'Dur%': 0.4, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.25, health: 200 }
+    ]),
+    'content/fac_bugs/charger_spore/charger_spore': buildFixtureUnit('Spore Charger', [
+      { zone_name: 'Main', AV: 4, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 2400 },
+      { zone_name: '[unknown]', AV: 1, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.2, health: 500 },
+      { zone_name: '[unknown]', AV: 1, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.2, health: 500 },
+      { zone_name: '[unknown]', AV: 1, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.2, health: 500 },
+      { zone_name: '[unknown]', AV: 1, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.2, health: 500 },
+      { zone_name: '[unknown]', AV: 1, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.2, health: 500 },
+      { zone_name: '[unknown]', AV: 1, 'Dur%': 1, ExTarget: 'Main', MainCap: 1, 'ToMain%': 0.2, health: 500 }
+    ])
+  };
+
+  const parsed = parseEnemyUnitsFixture(fixture);
+
+  assert.deepEqual(
+    parsed.Illuminate.Gatekeeper.damageable_zones.map((zone) => zone.zone_name),
+    [
+      'Main',
+      'cockpit',
+      'cockpit_weakspot',
+      'chassis',
+      'shield_generator',
+      'left_carapace',
+      'right_carapace',
+      'left_internals',
+      'right_internals',
+      'rear_weakspot',
+      'pilot',
+      'left_shoulder_armor',
+      'left_arm',
+      'left_arm_armor',
+      'left_gun_weakspot',
+      'left_gun',
+      'right_shoulder_armor',
+      'right_arm',
+      'right_arm_armor',
+      'right_gun_weakspot',
+      'right_gun',
+      'left_hip',
+      'left_leg',
+      'left_leg_armor_1',
+      'left_leg_armor_2',
+      'right_hip',
+      'right_leg',
+      'right_leg_armor_1',
+      'right_leg_armor_2',
+      'back_hip',
+      'back_leg',
+      'back_leg_armor_1',
+      'back_leg_armor_2',
+      'shield'
+    ]
+  );
+  assert.deepEqual(
+    parsed.Illuminate.Gazer.damageable_zones.map((zone) => zone.zone_name),
+    ['Main', 'eye', '0xf3e71f7b', 'body']
+  );
+  assert.deepEqual(
+    parsed.Illuminate.Leviathan.damageable_zones.map((zone) => zone.zone_name),
+    [
+      'Main',
+      'front_vertebra',
+      'front_fin_1',
+      'front_fin_2',
+      'forward_middle_vertebra',
+      'forward_middle_fin_right',
+      'forward_middle_fin_left',
+      'rearward_middle_vertebra',
+      'rearward_middle_fin_right',
+      'rearward_middle_fin_left',
+      'rear_vertebra',
+      'rear_fin_right',
+      'rear_fin_left',
+      'tail',
+      'warp_disc'
+    ]
+  );
+  assert.deepEqual(
+    parsed.Illuminate.Fleshmob.damageable_zones.map((zone) => zone.zone_name),
+    ['Main', 'arm_zone_1', 'arm_zone_2', 'arm_zone_3', 'arm_zone_4']
+  );
+  assert.deepEqual(
+    parsed.Terminid['Spore Charger'].damageable_zones.map((zone) => zone.zone_name),
+    ['Main', 'spore_flesh_1', 'spore_flesh_2', 'spore_flesh_3', 'spore_flesh_4', 'spore_flesh_5', 'spore_flesh_6']
+  );
+});
+
+test('checked-in enemydata keeps curated enemy zone names', () => {
   const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
   const agitatorNames = enemydata.Automaton.Agitator.damageable_zones.map((zone) => zone.zone_name);
   const radicalNames = enemydata.Automaton.Radical.damageable_zones.map((zone) => zone.zone_name);
   const veracitorNames = enemydata.Illuminate.Veracitor.damageable_zones.map((zone) => zone.zone_name);
+  const gatekeeperNames = enemydata.Illuminate.Gatekeeper.damageable_zones.map((zone) => zone.zone_name);
+  const gazerNames = enemydata.Illuminate.Gazer.damageable_zones.map((zone) => zone.zone_name);
+  const leviathanNames = enemydata.Illuminate.Leviathan.damageable_zones.map((zone) => zone.zone_name);
+  const fleshmobNames = enemydata.Illuminate.Fleshmob.damageable_zones.map((zone) => zone.zone_name);
   const impalerNames = enemydata.Terminid.Impaler.damageable_zones.map((zone) => zone.zone_name);
+  const sporeChargerNames = enemydata.Terminid['Spore Charger'].damageable_zones.map((zone) => zone.zone_name);
 
   assert.ok(!agitatorNames.includes('[unknown]'));
   assert.ok(agitatorNames.includes('helmet'));
@@ -572,10 +731,37 @@ test('checked-in enemydata keeps curated Agitator, Radical, Veracitor, and Impal
   assert.ok(veracitorNames.includes('right_upper_arm'));
   assert.ok(veracitorNames.includes('rear_leg'));
 
+  assert.ok(!gatekeeperNames.includes('pilot_seat'));
+  assert.ok(!gatekeeperNames.some((name) => /^0x[0-9a-f]+$/i.test(name)));
+  assert.ok(gatekeeperNames.includes('cockpit'));
+  assert.ok(gatekeeperNames.includes('shield_generator'));
+  assert.ok(gatekeeperNames.includes('rear_weakspot'));
+  assert.ok(gatekeeperNames.includes('left_gun_weakspot'));
+  assert.ok(gatekeeperNames.includes('back_leg_armor_2'));
+
+  assert.ok(!gazerNames.includes('0x6d417d28'));
+  assert.ok(!gazerNames.includes('0x01970f62'));
+  assert.ok(gazerNames.includes('eye'));
+  assert.ok(gazerNames.includes('body'));
+
+  assert.ok(!leviathanNames.includes('[unknown]'));
+  assert.ok(leviathanNames.includes('front_vertebra'));
+  assert.ok(leviathanNames.includes('forward_middle_vertebra'));
+  assert.ok(leviathanNames.includes('rearward_middle_fin_left'));
+  assert.ok(leviathanNames.includes('warp_disc'));
+
+  assert.ok(fleshmobNames.includes('arm_zone_1'));
+  assert.ok(fleshmobNames.includes('arm_zone_4'));
+
   assert.ok(!impalerNames.includes('[unknown]'));
   assert.ok(!impalerNames.includes('l_front_armor_claw'));
   assert.ok(impalerNames.includes('l_tentacle_armor'));
   assert.ok(impalerNames.includes('m_tentacle_armor'));
   assert.ok(impalerNames.includes('r_tentacle_armor'));
+
+  assert.ok(!sporeChargerNames.includes('[unknown]'));
+  assert.ok(sporeChargerNames.includes('spore_flesh_1'));
+  assert.ok(sporeChargerNames.includes('spore_flesh_6'));
+
   assert.ok(enemydata.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
 });

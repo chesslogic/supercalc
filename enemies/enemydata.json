@@ -4529,7 +4529,7 @@
           "MainCap": 1,
           "ToMain%": 0.25,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "arm_zone_1"
         },
         {
           "AV": 0,
@@ -4538,7 +4538,7 @@
           "MainCap": 1,
           "ToMain%": 0.25,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "arm_zone_2"
         },
         {
           "AV": 0,
@@ -4547,7 +4547,7 @@
           "MainCap": 1,
           "ToMain%": 0.25,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "arm_zone_3"
         },
         {
           "AV": 0,
@@ -4556,7 +4556,7 @@
           "MainCap": 1,
           "ToMain%": 0.25,
           "health": 200,
-          "zone_name": "[unknown]"
+          "zone_name": "arm_zone_4"
         }
       ],
       "health": 5000,
@@ -4584,7 +4584,7 @@
           "MainCap": 1,
           "ToMain%": 0.75,
           "health": 1200,
-          "zone_name": "pilot_seat"
+          "zone_name": "cockpit"
         },
         {
           "AV": 1,
@@ -4594,7 +4594,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 800,
-          "zone_name": "0x7c69c9f9"
+          "zone_name": "cockpit_weakspot"
         },
         {
           "AV": 4,
@@ -4604,7 +4604,7 @@
           "MainCap": 0,
           "ToMain%": 0.75,
           "health": 1600,
-          "zone_name": "0x6c40f976"
+          "zone_name": "chassis"
         },
         {
           "AV": 4,
@@ -4613,7 +4613,7 @@
           "MainCap": 0,
           "ToMain%": 0,
           "health": 50,
-          "zone_name": "0x73757f26"
+          "zone_name": "shield_generator"
         },
         {
           "AV": 4,
@@ -4622,7 +4622,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 400,
-          "zone_name": "0x2119e2ef"
+          "zone_name": "left_carapace"
         },
         {
           "AV": 4,
@@ -4631,7 +4631,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 400,
-          "zone_name": "0x533fbac2"
+          "zone_name": "right_carapace"
         },
         {
           "AV": 2,
@@ -4641,7 +4641,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 800,
-          "zone_name": "0xba20d30a"
+          "zone_name": "left_internals"
         },
         {
           "AV": 2,
@@ -4651,7 +4651,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 800,
-          "zone_name": "0x3477f0dc"
+          "zone_name": "right_internals"
         },
         {
           "AV": 1,
@@ -4661,7 +4661,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 800,
-          "zone_name": "0x082351f2"
+          "zone_name": "rear_weakspot"
         },
         {
           "AV": 2,
@@ -4671,7 +4671,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 700,
-          "zone_name": "0x23128279"
+          "zone_name": "pilot"
         },
         {
           "AV": 4,
@@ -4680,7 +4680,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xa2d33d88"
+          "zone_name": "left_shoulder_armor"
         },
         {
           "AV": 3,
@@ -4698,7 +4698,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xf73f6af7"
+          "zone_name": "left_arm_armor"
         },
         {
           "AV": 2,
@@ -4707,7 +4707,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 800,
-          "zone_name": "0x0d324590"
+          "zone_name": "left_gun_weakspot"
         },
         {
           "AV": 4,
@@ -4725,7 +4725,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0x9581cfa6"
+          "zone_name": "right_shoulder_armor"
         },
         {
           "AV": 3,
@@ -4743,7 +4743,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0x49807680"
+          "zone_name": "right_arm_armor"
         },
         {
           "AV": 2,
@@ -4752,7 +4752,7 @@
           "MainCap": 1,
           "ToMain%": 0,
           "health": 800,
-          "zone_name": "0xd19627fc"
+          "zone_name": "right_gun_weakspot"
         },
         {
           "AV": 4,
@@ -4790,7 +4790,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xdb9c1921"
+          "zone_name": "left_leg_armor_1"
         },
         {
           "AV": 4,
@@ -4799,7 +4799,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xba4db2cb"
+          "zone_name": "left_leg_armor_2"
         },
         {
           "AV": 3,
@@ -4828,7 +4828,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xcb1fee34"
+          "zone_name": "right_leg_armor_1"
         },
         {
           "AV": 4,
@@ -4837,7 +4837,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xd5d99116"
+          "zone_name": "right_leg_armor_2"
         },
         {
           "AV": 3,
@@ -4857,7 +4857,7 @@
           "MainCap": 0,
           "ToMain%": 1,
           "health": 800,
-          "zone_name": "0xb709fe1c"
+          "zone_name": "back_leg"
         },
         {
           "AV": 4,
@@ -4866,7 +4866,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0xe5fca454"
+          "zone_name": "back_leg_armor_1"
         },
         {
           "AV": 4,
@@ -4875,7 +4875,7 @@
           "MainCap": 0,
           "ToMain%": 0.2,
           "health": 200,
-          "zone_name": "0x972f7b8f"
+          "zone_name": "back_leg_armor_2"
         },
         {
           "AV": 2,
@@ -4911,7 +4911,7 @@
           "MainCap": true,
           "ToMain%": 1,
           "health": 700,
-          "zone_name": "0x6d417d28"
+          "zone_name": "eye"
         },
         {
           "AV": 5,
@@ -4931,7 +4931,7 @@
           "MainCap": true,
           "ToMain%": 1,
           "health": 900,
-          "zone_name": "0x01970f62"
+          "zone_name": "body"
         }
       ],
       "health": 900,
@@ -5294,7 +5294,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 7000,
-          "zone_name": "[unknown]"
+          "zone_name": "front_vertebra"
         },
         {
           "AV": 5,
@@ -5304,7 +5304,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5500,
-          "zone_name": "[unknown]"
+          "zone_name": "front_fin_1"
         },
         {
           "AV": 5,
@@ -5314,7 +5314,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5500,
-          "zone_name": "[unknown]"
+          "zone_name": "front_fin_2"
         },
         {
           "AV": 5,
@@ -5324,7 +5324,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5500,
-          "zone_name": "seg1_center"
+          "zone_name": "forward_middle_vertebra"
         },
         {
           "AV": 5,
@@ -5334,7 +5334,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5000,
-          "zone_name": "seg1_wing_right"
+          "zone_name": "forward_middle_fin_right"
         },
         {
           "AV": 5,
@@ -5344,7 +5344,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5000,
-          "zone_name": "seg1_wing_left"
+          "zone_name": "forward_middle_fin_left"
         },
         {
           "AV": 5,
@@ -5354,7 +5354,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5500,
-          "zone_name": "seg2_center"
+          "zone_name": "rearward_middle_vertebra"
         },
         {
           "AV": 5,
@@ -5364,7 +5364,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3900,
-          "zone_name": "seg2_wing_right"
+          "zone_name": "rearward_middle_fin_right"
         },
         {
           "AV": 5,
@@ -5374,7 +5374,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3900,
-          "zone_name": "seg2_wing_left"
+          "zone_name": "rearward_middle_fin_left"
         },
         {
           "AV": 5,
@@ -5384,7 +5384,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 5000,
-          "zone_name": "seg3_center"
+          "zone_name": "rear_vertebra"
         },
         {
           "AV": 5,
@@ -5394,7 +5394,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3000,
-          "zone_name": "seg3_wing_right"
+          "zone_name": "rear_fin_right"
         },
         {
           "AV": 5,
@@ -5404,7 +5404,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3000,
-          "zone_name": "seg3_wing_left"
+          "zone_name": "rear_fin_left"
         },
         {
           "AV": 5,
@@ -5414,7 +5414,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3900,
-          "zone_name": "seg4_center"
+          "zone_name": "tail"
         },
         {
           "AV": 5,
@@ -5423,7 +5423,7 @@
           "MainCap": 1,
           "ToMain%": 1,
           "health": 3000,
-          "zone_name": "rotator"
+          "zone_name": "warp_disc"
         }
       ],
       "health": 15000,
@@ -10322,7 +10322,7 @@
           "MainCap": 1,
           "ToMain%": 0.2,
           "health": 500,
-          "zone_name": "[unknown]"
+          "zone_name": "spore_flesh_1"
         },
         {
           "AV": 1,
@@ -10331,7 +10331,7 @@
           "MainCap": 1,
           "ToMain%": 0.2,
           "health": 500,
-          "zone_name": "[unknown]"
+          "zone_name": "spore_flesh_2"
         },
         {
           "AV": 1,
@@ -10340,7 +10340,7 @@
           "MainCap": 1,
           "ToMain%": 0.2,
           "health": 500,
-          "zone_name": "[unknown]"
+          "zone_name": "spore_flesh_3"
         },
         {
           "AV": 1,
@@ -10349,7 +10349,7 @@
           "MainCap": 1,
           "ToMain%": 0.2,
           "health": 500,
-          "zone_name": "[unknown]"
+          "zone_name": "spore_flesh_4"
         },
         {
           "AV": 1,
@@ -10358,7 +10358,7 @@
           "MainCap": 1,
           "ToMain%": 0.2,
           "health": 500,
-          "zone_name": "[unknown]"
+          "zone_name": "spore_flesh_5"
         },
         {
           "AV": 1,
@@ -10367,7 +10367,7 @@
           "MainCap": 1,
           "ToMain%": 0.2,
           "health": 500,
-          "zone_name": "[unknown]"
+          "zone_name": "spore_flesh_6"
         },
         {
           "AV": 1,

@@ -2,3 +2,7 @@
 
 # Local reference-only notes
 tools/issues/
+
+# Python cache artifacts
+__pycache__/
+*.pyc
