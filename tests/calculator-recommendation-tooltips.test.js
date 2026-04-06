@@ -13,6 +13,7 @@ if (!globalThis.localStorage) {
 
 const { calculatorState } = await import('../calculator/data.js');
 const { renderRecommendationPanel } = await import('../calculator/calculation.js');
+const { buildWeaponRecommendationRows } = await import('../calculator/recommendations.js');
 const { state: weaponsState } = await import('../weapons/data.js');
 
 class TestClassList {
@@ -592,6 +593,70 @@ test('renderRecommendationPanel keeps overall recommendations enemy-wide when a 
     assert.equal(sectionTitles[1]?.textContent, 'Overall recommendations');
     assert.match(firstTargetCells[2].title, /Best-ranked target: right_arm/i);
     assert.match(secondTargetCells[2].title, /Best-ranked target: head/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel backfills distinct overall weakspots after ranking', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    weaponsState.groups = [
+      ...Array.from({ length: 24 }, (_, index) => makeWeapon(`Pilot Hunter ${index + 1}`, {
+        index,
+        type: 'Primary',
+        rpm: 60,
+        rows: [makeAttackRow(`Pilot Hunter ${index + 1}`, 105, 3)]
+      })),
+      makeWeapon('Engine Hunter', {
+        index: 24,
+        type: 'Primary',
+        rpm: 60,
+        rows: [makeAttackRow('Engine Hunter', 150, 2)]
+      })
+    ];
+
+    const enemy = {
+      name: 'Diversity Dummy',
+      health: 500,
+      zones: [
+        makeZone('pilot', { health: 100, isFatal: true, av: 2, toMainPercent: 1 }),
+        makeZone('engine', { health: 130, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    };
+    const rankedRows = buildWeaponRecommendationRows({
+      enemy,
+      weapons: weaponsState.groups,
+      rangeFloorMeters: 0
+    });
+
+    assert.equal(rankedRows.length, 25);
+    assert.ok(rankedRows.slice(0, 24).every((row) => row.bestZoneName === 'pilot'));
+    assert.equal(rankedRows[24].weapon.name, 'Engine Hunter');
+    assert.equal(rankedRows[24].bestZoneName, 'engine');
+
+    const container = renderPanelForTest(enemy);
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+    const targetCells = collectElements(tables[0], (element) => (
+      element.tagName === 'TD'
+      && /Best-ranked target:/i.test(element.title)
+    ));
+    const targetTitles = targetCells.map((cell) => cell.title);
+
+    assert.equal(weaponNames.length, 24);
+    assert.ok(weaponNames.includes('Engine Hunter'));
+    assert.equal(targetTitles.length, 24);
+    assert.ok(targetTitles.some((title) => /Best-ranked target: engine/i.test(title)));
+    assert.ok(targetTitles.some((title) => /Best-ranked target: pilot/i.test(title)));
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
