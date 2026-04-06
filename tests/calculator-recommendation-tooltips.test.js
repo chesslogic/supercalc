@@ -415,6 +415,66 @@ test('renderRecommendationPanel adds related routes for linked priority targets 
   }
 });
 
+test('renderRecommendationPanel keeps related routes visible when the selected part is itself the linked priority target', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 2;
+    weaponsState.groups = [
+      makeWeapon('Cleaner', {
+        rpm: 60,
+        rows: [makeAttackRow('Cleaner', 100, 4)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Heavy Devastator',
+      zoneRelationGroups: [
+        {
+          id: 'left-arm',
+          label: 'Left arm',
+          zoneNames: ['shoulderplate_left', 'left_arm'],
+          mirrorGroupIds: ['right-arm'],
+          priorityTargetZoneNames: ['left_arm']
+        },
+        {
+          id: 'right-arm',
+          label: 'Right arm',
+          zoneNames: ['shoulderplate_right', 'right_arm'],
+          mirrorGroupIds: ['left-arm'],
+          priorityTargetZoneNames: ['right_arm']
+        }
+      ],
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('shoulderplate_left', { health: 150, av: 4, toMainPercent: 0 }),
+        makeZone('left_arm', { health: 100, av: 1, toMainPercent: 0.5 }),
+        makeZone('right_arm', { health: 100, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const sectionTitles = collectElements(container, (element) => element.classList.contains('calc-recommend-section-title'));
+    const summaries = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'));
+    const mutedMessages = collectElements(container, (element) => element.classList.contains('muted'));
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+
+    assert.equal(sectionTitles[0]?.textContent, 'left_arm targeted recommendations');
+    assert.equal(sectionTitles[1]?.textContent, 'left_arm related routes');
+    assert.equal(sectionTitles[2]?.textContent, 'Overall recommendations');
+    assert.match(summaries[1]?.textContent || '', /left_arm is itself a linked priority target/i);
+    assert.match(summaries[1]?.textContent || '', /shoulderplate_left/i);
+    assert.match(mutedMessages.find((element) => /already a linked priority target/i.test(element.textContent))?.textContent || '', /exact target rows above/i);
+    assert.equal(tables.length, 2);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
 test('renderRecommendationPanel keeps overall recommendations enemy-wide when a target is selected', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;

@@ -107,6 +107,58 @@ function getZoneIndicesByNames(enemy, zoneNames = []) {
     .filter((zoneIndex) => zoneIndex !== null);
 }
 
+function getUniqueZoneNameList(zoneNames = [], {
+  excludeZoneNames = []
+} = {}) {
+  const excludedZoneNames = new Set(
+    (Array.isArray(excludeZoneNames) ? excludeZoneNames : [])
+      .map((zoneName) => normalizeZoneNameKey(zoneName))
+      .filter(Boolean)
+  );
+
+  return [...new Set(
+    (Array.isArray(zoneNames) ? zoneNames : [])
+      .map((zoneName) => String(zoneName ?? '').trim())
+      .filter((zoneName) => zoneName && !excludedZoneNames.has(normalizeZoneNameKey(zoneName)))
+  )];
+}
+
+function getRelatedRouteSummaryText({
+  selectedZone,
+  selectedZoneIsPriorityTarget = false,
+  relatedRouteGroupLabelText = 'this anatomy group',
+  allPriorityTargetZoneNames = [],
+  relatedRouteZoneNames = [],
+  hasRelatedTargetRows = false,
+  recommendationRangeSummary = ''
+}) {
+  const priorityTargetText = allPriorityTargetZoneNames.join(', ') || selectedZone?.zone_name || 'this linked target';
+  const relatedRoutePartText = selectedZoneIsPriorityTarget && relatedRouteZoneNames.length > 0
+    ? ` Other linked route parts: ${relatedRouteZoneNames.join(', ')}.`
+    : '';
+
+  if (hasRelatedTargetRows) {
+    return `Linked priority targets in ${relatedRouteGroupLabelText}: ${priorityTargetText}.${relatedRoutePartText} Hover the enemy table to see linked and mirrored parts.`;
+  }
+
+  if (selectedZoneIsPriorityTarget) {
+    return `Linked priority targets in ${relatedRouteGroupLabelText}: ${priorityTargetText}.${relatedRoutePartText} ${selectedZone?.zone_name || 'The selected part'} is itself a linked priority target.`;
+  }
+
+  return `Linked priority targets in ${relatedRouteGroupLabelText}: ${priorityTargetText}. No related routes are currently available with the current engagement settings (${recommendationRangeSummary}).`;
+}
+
+function getRelatedRouteEmptyStateText({
+  selectedZone,
+  selectedZoneIsPriorityTarget = false
+}) {
+  if (selectedZoneIsPriorityTarget) {
+    return `${selectedZone?.zone_name || 'The selected part'} is already a linked priority target, so the exact target rows above already cover the route endpoint.`;
+  }
+
+  return 'No recommendation rows are available for this target.';
+}
+
 function resolveFocusZoneIndex({
   enemy,
   selectedAttacks = [],
@@ -1219,7 +1271,8 @@ function renderRecommendationSubsection({
   summaryText,
   summaryTitle = '',
   rows,
-  usingFallbackRows = false
+  usingFallbackRows = false,
+  emptyStateText = 'No recommendation rows are available for this target.'
 }) {
   const section = document.createElement('section');
   section.className = 'calc-recommend-section';
@@ -1242,7 +1295,7 @@ function renderRecommendationSubsection({
   if (rows.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.className = 'muted';
-    emptyState.textContent = 'No recommendation rows are available for this target.';
+    emptyState.textContent = emptyStateText;
     section.appendChild(emptyState);
   } else {
     renderRecommendationTable({
@@ -1286,13 +1339,29 @@ export function renderRecommendationPanel(container, enemy) {
       ?.map((zoneName) => normalizeZoneNameKey(zoneName))
       ?.includes(normalizeZoneNameKey(selectedZone.zone_name))
   );
-  const relatedTargetZoneIndices = selectedZoneRelationContext && !selectedZoneIsPriorityTarget
+  const allPriorityTargetZoneIndices = selectedZoneRelationContext
     ? getZoneIndicesByNames(enemy, selectedZoneRelationContext.priorityTargetZoneNames)
-        .filter((zoneIndex) => zoneIndex !== calculatorState.selectedZoneIndex)
     : [];
+  const allPriorityTargetZoneNames = allPriorityTargetZoneIndices
+    .map((zoneIndex) => enemy?.zones?.[zoneIndex]?.zone_name || '')
+    .filter(Boolean);
+  const relatedRouteZoneNames = selectedZoneRelationContext
+    ? getUniqueZoneNameList(selectedZoneRelationContext.sameZoneNames || [], {
+        excludeZoneNames: [selectedZone?.zone_name || '']
+      })
+    : [];
+  const relatedTargetZoneIndices = allPriorityTargetZoneIndices
+    .filter((zoneIndex) => zoneIndex !== calculatorState.selectedZoneIndex);
   const relatedTargetZoneNames = relatedTargetZoneIndices
     .map((zoneIndex) => enemy?.zones?.[zoneIndex]?.zone_name || '')
     .filter(Boolean);
+  const relatedRouteGroupLabelText = selectedZoneRelationContext?.groupLabels?.join(' / ') || 'this anatomy group';
+  const shouldRenderRelatedRoutes = Boolean(
+    selectedZone
+    && selectedZoneRelationContext
+    && allPriorityTargetZoneNames.length > 0
+    && (relatedTargetZoneNames.length > 0 || relatedRouteZoneNames.length > 0)
+  );
 
   const controlsNote = document.createElement('div');
   controlsNote.className = 'status calc-recommend-note';
@@ -1380,14 +1449,24 @@ export function renderRecommendationPanel(container, enemy) {
     });
   }
 
-  if (selectedZone && relatedTargetZoneNames.length > 0) {
+  if (shouldRenderRelatedRoutes) {
     renderRecommendationSubsection({
       body,
       titleText: `${selectedZone.zone_name} related routes`,
-      summaryText: relatedTargetRows.length > 0
-        ? `Linked priority targets in ${selectedZoneRelationContext?.groupLabels?.join(' / ') || 'this anatomy group'}: ${relatedTargetZoneNames.join(', ')}. Hover the enemy table to see linked and mirrored parts.`
-        : `Linked priority targets in ${selectedZoneRelationContext?.groupLabels?.join(' / ') || 'this anatomy group'}: ${relatedTargetZoneNames.join(', ')}. No related routes are currently available with the current engagement settings (${recommendationRangeSummary}).`,
-      rows: relatedTargetRows
+      summaryText: getRelatedRouteSummaryText({
+        selectedZone,
+        selectedZoneIsPriorityTarget,
+        relatedRouteGroupLabelText,
+        allPriorityTargetZoneNames,
+        relatedRouteZoneNames,
+        hasRelatedTargetRows: relatedTargetRows.length > 0,
+        recommendationRangeSummary
+      }),
+      rows: relatedTargetRows,
+      emptyStateText: getRelatedRouteEmptyStateText({
+        selectedZone,
+        selectedZoneIsPriorityTarget
+      })
     });
   }
 
