@@ -212,8 +212,8 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
     const outcomeBadge = collectElements(container, (element) => element.classList.contains('calc-zone-context'))[0];
 
     assert.equal(
-      headers.find((element) => element.textContent === 'Low')?.title,
-      'Low-overkill kill or critical highlight with 25% or less extra damage.'
+      headers.find((element) => element.textContent === 'Margin')?.title,
+      'Numeric one-shot kill or critical margin. Highlighted Margin rows stay at +25% or less extra damage at the current range floor.'
     );
     assert.equal(
       headers.find((element) => element.textContent === 'Crit')?.title,
@@ -227,7 +227,8 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
     assert.match(cells[4].title, /weapon's RPM/i);
     assert.match(cells[5].title, /qualifies for range-sensitive highlights/i);
     assert.equal(outcomeBadge.title, 'Killing this part kills the enemy');
-    assert.equal(flags[0].title, 'Meets the low-overkill one-shot highlight with 25% or less extra damage.');
+    assert.equal(flags[0].textContent, '+3%');
+    assert.equal(flags[0].title, 'One-shot margin: +3%. Meets the Margin highlight at the current range floor (+25% or less extra damage).');
     assert.match(summary.title, /Rows without those highlights are hidden from this table/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
@@ -264,7 +265,7 @@ test('renderRecommendationPanel explains fallback rows and unknown range rows wh
     assert.match(summary.textContent, /fallback rows/i);
     assert.match(summary.title, /falls back to the best-ranked row for each weapon/i);
     assert.match(cells[5].title, /row stays listed, but range-sensitive highlights do not count/i);
-    assert.equal(flags[0].title, 'Does not currently meet the low-overkill one-shot highlight.');
+    assert.equal(flags[0].title, 'Margin is shown for one-shot kill or critical rows when displayed damage per cycle can be compared against the target health.');
     assert.match(cells[10].title, /fallback because nothing met the current highlight checks/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
@@ -508,6 +509,88 @@ test('renderRecommendationPanel keeps overall recommendations enemy-wide when a 
     assert.equal(sectionTitles[1]?.textContent, 'Overall recommendations');
     assert.match(firstTargetCells[2].title, /Best-ranked target: right_arm/i);
     assert.match(secondTargetCells[2].title, /Best-ranked target: head/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel backfills core weapon-type coverage in overall recommendations', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    weaponsState.groups = [
+      ...Array.from({ length: 24 }, (_, index) => makeWeapon(`Primary ${index + 1}`, {
+        index,
+        type: 'Primary',
+        rpm: 60,
+        rows: [makeAttackRow(`Primary ${index + 1}`, 101, 2)]
+      })),
+      makeWeapon('Secondary A', {
+        index: 30,
+        type: 'Secondary',
+        rpm: 60,
+        rows: [makeAttackRow('Secondary A', 110, 2)]
+      }),
+      makeWeapon('Secondary B', {
+        index: 31,
+        type: 'Secondary',
+        rpm: 60,
+        rows: [makeAttackRow('Secondary B', 111, 2)]
+      }),
+      makeWeapon('Grenade A', {
+        index: 32,
+        type: 'Grenade',
+        rpm: 60,
+        rows: [makeAttackRow('Grenade A', 115, 2)]
+      }),
+      makeWeapon('Grenade B', {
+        index: 33,
+        type: 'Grenade',
+        rpm: 60,
+        rows: [makeAttackRow('Grenade B', 116, 2)]
+      }),
+      makeWeapon('Support A', {
+        index: 34,
+        type: 'Support',
+        rpm: 60,
+        rows: [makeAttackRow('Support A', 120, 2)]
+      }),
+      makeWeapon('Support B', {
+        index: 35,
+        type: 'Support',
+        rpm: 60,
+        rows: [makeAttackRow('Support B', 121, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Coverage Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.equal(weaponNames.length, 24);
+    assert.match(summary?.textContent || '', /core weapon-type coverage is backfilled where available/i);
+    assert.ok(weaponNames.includes('Secondary A'));
+    assert.ok(weaponNames.includes('Secondary B'));
+    assert.ok(weaponNames.includes('Grenade A'));
+    assert.ok(weaponNames.includes('Grenade B'));
+    assert.ok(weaponNames.includes('Support A'));
+    assert.ok(weaponNames.includes('Support B'));
+    assert.ok(weaponNames.some((name) => /^Primary /.test(name)));
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

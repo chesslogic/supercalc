@@ -5,7 +5,7 @@ import { compareWeaponOptionBaseOrder, getWeaponRowMultiplicity } from './weapon
 import { calculateTtkSeconds } from './summary.js';
 
 export const DEFAULT_RECOMMENDATION_RANGE_METERS = 30;
-export const LOW_OVERKILL_RATIO_THRESHOLD = 0.25;
+export const RECOMMENDATION_MARGIN_RATIO_THRESHOLD = 0.25;
 export const RECOMMENDATION_SHOTGUN_HIT_SHARE = 0.4;
 export const RECOMMENDATION_MAX_SHOTGUN_HITS = 6;
 export const RECOMMENDATION_FRAGMENT_HIT_CAP = 3;
@@ -71,6 +71,15 @@ function compareNullableNumber(left, right, direction = 'asc') {
   return direction === 'desc'
     ? (right - left)
     : (left - right);
+}
+
+function compareRecommendationMargins(left, right) {
+  let comparison = compareBooleanDescending(left?.qualifiesForMargin, right?.qualifiesForMargin);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return compareNullableNumber(left?.marginRatio, right?.marginRatio, 'asc');
 }
 
 function getOutcomePriority(outcomeKind) {
@@ -252,13 +261,13 @@ function isCriticalRecommendation({
     && shotsToKill <= 2;
 }
 
-export function isLowOverkillOhko({
+function getRecommendationMarginInfo({
   zoneSummary,
   outcomeKind,
   shotsToKill
 }) {
-  if (shotsToKill !== 1) {
-    return false;
+  if (shotsToKill !== 1 || !['fatal', 'main', 'critical'].includes(outcomeKind)) {
+    return null;
   }
 
   const targetHealth = getDisplayedTargetHealth(zoneSummary, outcomeKind);
@@ -269,10 +278,15 @@ export function isLowOverkillOhko({
     || targetHealth <= 0
     || damagePerCycle < targetHealth
   ) {
-    return false;
+    return null;
   }
 
-  return ((damagePerCycle - targetHealth) / targetHealth) <= LOW_OVERKILL_RATIO_THRESHOLD;
+  const ratio = (damagePerCycle - targetHealth) / targetHealth;
+  return {
+    ratio,
+    percent: Math.max(0, Math.round(ratio * 100)),
+    qualifies: ratio <= RECOMMENDATION_MARGIN_RATIO_THRESHOLD
+  };
 }
 
 function buildZoneRecommendationCandidate({
@@ -297,6 +311,11 @@ function buildZoneRecommendationCandidate({
     shotsToKill: slotMetrics.shotsToKill,
     rangeQualified
   });
+  const marginInfo = getRecommendationMarginInfo({
+    zoneSummary: slotMetrics.zoneSummary,
+    outcomeKind: slotMetrics.outcomeKind,
+    shotsToKill: slotMetrics.shotsToKill
+  });
 
   const candidate = {
     zone,
@@ -314,16 +333,14 @@ function buildZoneRecommendationCandidate({
     targetsSelectedZone: Number.isInteger(selectedZoneIndex) && zoneIndex === selectedZoneIndex,
     selectedZoneMatch: Number.isInteger(selectedZoneIndex) && zoneIndex === selectedZoneIndex,
     isSequenceCandidate: false,
+    marginRatio: marginInfo?.ratio ?? null,
+    marginPercent: marginInfo?.percent ?? null,
+    qualifiesForMargin: Boolean(rangeQualified && marginInfo?.qualifies),
     isOneShotKill: rangeQualified && lethalOutcome && slotMetrics.shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill <= 2,
     hasCriticalRecommendation: criticalRecommendation,
-    hasFastTtk: qualifiesForFastTtk && rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < 0.6,
-    hasLowOverkillOhko: rangeQualified && ['fatal', 'main', 'critical'].includes(slotMetrics.outcomeKind) && isLowOverkillOhko({
-      zoneSummary: slotMetrics.zoneSummary,
-      outcomeKind: slotMetrics.outcomeKind,
-      shotsToKill: slotMetrics.shotsToKill
-    })
+    hasFastTtk: qualifiesForFastTtk && rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < 0.6
   };
   return candidate;
 }
@@ -430,12 +447,14 @@ function buildSequenceRecommendationCandidate({
     effectiveDistance: buildSequenceDistanceInfo(stepCandidates),
     rangeStatus,
     rangeQualified,
+    marginRatio: null,
+    marginPercent: null,
+    qualifiesForMargin: false,
     isOneShotKill: rangeQualified && lethalOutcome && shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && shotsToKill <= 2,
     hasCriticalRecommendation: criticalRecommendation,
-    hasFastTtk: qualifiesForFastTtk && rangeQualified && ttkSeconds !== null && ttkSeconds < 0.6,
-    hasLowOverkillOhko: false
+    hasFastTtk: qualifiesForFastTtk && rangeQualified && ttkSeconds !== null && ttkSeconds < 0.6
   };
 }
 
@@ -499,7 +518,7 @@ function compareZoneRecommendationCandidates(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  comparison = compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -572,6 +591,9 @@ function buildAttackRowRecommendation({
     hitCount,
     bestCandidate: candidates[0],
     candidates,
+    marginRatio: candidates[0]?.marginRatio ?? null,
+    marginPercent: candidates[0]?.marginPercent ?? null,
+    qualifiesForMargin: candidates.some((candidate) => candidate.qualifiesForMargin),
     hasSelectedZoneMatch: candidates.some((candidate) => candidate.selectedZoneMatch),
     penetratesAll: zoneRows.length > 0 && zoneRows.every((row) => row?.metrics?.bySlot?.A?.damagesZone),
     hasOneShotKill: candidates.some((candidate) => candidate.isOneShotKill),
@@ -579,7 +601,6 @@ function buildAttackRowRecommendation({
     hasTwoShotCritical: candidates.some((candidate) => candidate.isTwoShotCritical),
     hasCriticalRecommendation: candidates.some((candidate) => candidate.hasCriticalRecommendation),
     hasFastTtk: candidates.some((candidate) => candidate.hasFastTtk),
-    hasLowOverkillOhko: candidates.some((candidate) => candidate.hasLowOverkillOhko),
     hasQualifiedPath: candidates.some((candidate) => candidate.rangeStatus === 'qualified')
   };
 }
@@ -590,7 +611,7 @@ function compareAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  comparison = compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -624,7 +645,7 @@ function compareWeaponRecommendationRows(left, right) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  comparison = compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -653,7 +674,7 @@ function compareWeaponRecommendationRows(left, right) {
 }
 
 function compareTargetAttackRowRecommendations(left, right) {
-  let comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  let comparison = compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -677,7 +698,7 @@ function compareTargetAttackRowRecommendations(left, right) {
 }
 
 function compareTargetWeaponRecommendationRows(left, right) {
-  let comparison = compareBooleanDescending(left.hasLowOverkillOhko, right.hasLowOverkillOhko);
+  let comparison = compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -751,12 +772,14 @@ export function buildWeaponRecommendationRows({
         ttkSeconds: bestCandidate.ttkSeconds,
         effectiveDistance: bestCandidate.effectiveDistance,
         rangeStatus: bestCandidate.rangeStatus,
+        marginRatio: bestAttackRecommendation.marginRatio,
+        marginPercent: bestAttackRecommendation.marginPercent,
+        qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
         hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
         hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
         hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
         hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
         hasFastTtk: bestAttackRecommendation.hasFastTtk,
-        hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
         penetratesAll: bestAttackRecommendation.penetratesAll,
         matchedZoneNames: bestCandidate.matchedZoneNames || [],
         selectedZoneMatch: Boolean(bestAttackRecommendation.hasSelectedZoneMatch),
@@ -812,18 +835,23 @@ function buildTargetRecommendationRows({
           candidates: recommendation.candidates.filter((candidate) => targetZoneIndexSet.has(candidate.zoneIndex))
         }))
         .filter((recommendation) => recommendation.candidates.length > 0)
-        .map((recommendation) => ({
-          ...recommendation,
-          bestCandidate: [...recommendation.candidates].sort(compareZoneRecommendationCandidates)[0],
-          hasSelectedZoneMatch: selectedZoneMatch,
-          hasOneShotKill: recommendation.candidates.some((candidate) => candidate.isOneShotKill),
-          hasOneShotCritical: recommendation.candidates.some((candidate) => candidate.isOneShotCritical),
-          hasTwoShotCritical: recommendation.candidates.some((candidate) => candidate.isTwoShotCritical),
-          hasCriticalRecommendation: recommendation.candidates.some((candidate) => candidate.hasCriticalRecommendation),
-          hasFastTtk: recommendation.candidates.some((candidate) => candidate.hasFastTtk),
-          hasLowOverkillOhko: recommendation.candidates.some((candidate) => candidate.hasLowOverkillOhko),
-          hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
-        }))
+        .map((recommendation) => {
+          const bestCandidate = [...recommendation.candidates].sort(compareZoneRecommendationCandidates)[0];
+          return {
+            ...recommendation,
+            bestCandidate,
+            marginRatio: bestCandidate?.marginRatio ?? null,
+            marginPercent: bestCandidate?.marginPercent ?? null,
+            qualifiesForMargin: recommendation.candidates.some((candidate) => candidate.qualifiesForMargin),
+            hasSelectedZoneMatch: selectedZoneMatch,
+            hasOneShotKill: recommendation.candidates.some((candidate) => candidate.isOneShotKill),
+            hasOneShotCritical: recommendation.candidates.some((candidate) => candidate.isOneShotCritical),
+            hasTwoShotCritical: recommendation.candidates.some((candidate) => candidate.isTwoShotCritical),
+            hasCriticalRecommendation: recommendation.candidates.some((candidate) => candidate.hasCriticalRecommendation),
+            hasFastTtk: recommendation.candidates.some((candidate) => candidate.hasFastTtk),
+            hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
+          };
+        })
         .sort(compareTargetAttackRowRecommendations);
 
       if (attackRecommendations.length === 0) {
@@ -844,12 +872,14 @@ function buildTargetRecommendationRows({
         ttkSeconds: bestCandidate.ttkSeconds,
         effectiveDistance: bestCandidate.effectiveDistance,
         rangeStatus: bestCandidate.rangeStatus,
+        marginRatio: bestAttackRecommendation.marginRatio,
+        marginPercent: bestAttackRecommendation.marginPercent,
+        qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
         hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
         hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
         hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
         hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
         hasFastTtk: bestAttackRecommendation.hasFastTtk,
-        hasLowOverkillOhko: bestAttackRecommendation.hasLowOverkillOhko,
         penetratesAll: bestAttackRecommendation.penetratesAll,
         matchedZoneNames: bestCandidate.matchedZoneNames || [],
         selectedZoneMatch,

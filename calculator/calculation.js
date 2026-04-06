@@ -32,7 +32,8 @@ import { state as weaponsState } from '../weapons/data.js';
 import {
   buildRelatedTargetRecommendationRows,
   buildSelectedTargetRecommendationRows,
-  buildWeaponRecommendationRows
+  buildWeaponRecommendationRows,
+  RECOMMENDATION_MARGIN_RATIO_THRESHOLD
 } from './recommendations.js';
 import { getEnemyTacticalInfoChips, getEnemyWeakspotBundles } from './tactical-data.js';
 
@@ -854,7 +855,11 @@ function renderOverviewCalculation(container) {
   container.appendChild(wrapper);
 }
 
-const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Low, Crit, <0.6s, or Pen All.';
+const RECOMMENDATION_MARGIN_THRESHOLD_PERCENT = Math.round(RECOMMENDATION_MARGIN_RATIO_THRESHOLD * 100);
+const RECOMMENDATION_DISPLAY_LIMIT = 24;
+const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
+const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
+const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
   { label: 'Attack', title: 'Best-ranked attack row for this weapon.' },
@@ -865,7 +870,7 @@ const RECOMMENDATION_HEADER_DEFINITIONS = [
     label: 'Range',
     title: `${EFFECTIVE_DISTANCE_TOOLTIP}\nUnknown-range rows stay listed, but range-sensitive highlights only count when the breakpoint qualifies.`
   },
-  { label: 'Low', title: 'Low-overkill kill or critical highlight with 25% or less extra damage.' },
+  { label: 'Margin', title: `Numeric one-shot kill or critical margin. Highlighted Margin rows stay at +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage at the current range floor.` },
   { label: 'Crit', title: 'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.' },
   { label: '<0.6s', title: 'Fast-TTK highlight for rows under 0.6 seconds at the current range floor.' },
   { label: 'Pen All', title: 'Highlights attack rows that can damage every zone on the current enemy.' },
@@ -875,10 +880,6 @@ const RECOMMENDATION_FLAG_TITLES = {
   criticalRecommendation: {
     active: 'Meets the critical-disable highlight at the current range floor (one or two shots).',
     inactive: 'Does not currently meet the critical-disable highlight.'
-  },
-  lowOverkillOhko: {
-    active: 'Meets the low-overkill one-shot highlight with 25% or less extra damage.',
-    inactive: 'Does not currently meet the low-overkill one-shot highlight.'
   },
   fastTtk: {
     active: 'Meets the sub-0.6s TTK highlight at the current range floor.',
@@ -904,6 +905,82 @@ function getRecommendationSummaryTitle(hasHighlightedRows) {
   return hasHighlightedRows
     ? `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nRows without those highlights are hidden from this table.`
     : `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nNothing matches right now, so the table falls back to the best-ranked row for each weapon.`;
+}
+
+function normalizeRecommendationWeaponType(type) {
+  return String(type ?? '').trim().toLowerCase();
+}
+
+function getRecommendationCoreType(row) {
+  const normalizedType = normalizeRecommendationWeaponType(row?.weapon?.type);
+  return RECOMMENDATION_CORE_TYPE_ORDER.includes(normalizedType)
+    ? normalizedType
+    : null;
+}
+
+function buildOverallRecommendationDisplayRows(rows, limit = RECOMMENDATION_DISPLAY_LIMIT) {
+  const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  const normalizedLimit = Math.max(0, Number.isFinite(limit) ? Math.trunc(limit) : RECOMMENDATION_DISPLAY_LIMIT);
+  if (sourceRows.length <= normalizedLimit) {
+    return {
+      rows: sourceRows.slice(0, normalizedLimit),
+      supplementedCoreTypes: []
+    };
+  }
+
+  const availableCoreTypes = RECOMMENDATION_CORE_TYPE_ORDER.filter((type) => (
+    sourceRows.some((row) => getRecommendationCoreType(row) === type)
+  ));
+  const reservedCoreSlots = Math.min(
+    normalizedLimit,
+    availableCoreTypes.length * RECOMMENDATION_CORE_TYPE_MINIMUM
+  );
+  const topSeedCount = Math.max(0, normalizedLimit - reservedCoreSlots);
+  const selectedRows = sourceRows.slice(0, topSeedCount);
+  const selectedRowSet = new Set(selectedRows);
+  const supplementedCoreTypes = [];
+
+  availableCoreTypes.forEach((type) => {
+    const totalAvailableForType = sourceRows.filter((row) => getRecommendationCoreType(row) === type).length;
+    const targetCount = Math.min(RECOMMENDATION_CORE_TYPE_MINIMUM, totalAvailableForType);
+    let currentCount = selectedRows.filter((row) => getRecommendationCoreType(row) === type).length;
+    let supplemented = false;
+
+    for (const row of sourceRows) {
+      if (currentCount >= targetCount || selectedRows.length >= normalizedLimit) {
+        break;
+      }
+      if (selectedRowSet.has(row) || getRecommendationCoreType(row) !== type) {
+        continue;
+      }
+
+      selectedRows.push(row);
+      selectedRowSet.add(row);
+      currentCount += 1;
+      supplemented = true;
+    }
+
+    if (supplemented) {
+      supplementedCoreTypes.push(type);
+    }
+  });
+
+  for (const row of sourceRows) {
+    if (selectedRows.length >= normalizedLimit) {
+      break;
+    }
+    if (selectedRowSet.has(row)) {
+      continue;
+    }
+
+    selectedRows.push(row);
+    selectedRowSet.add(row);
+  }
+
+  return {
+    rows: selectedRows,
+    supplementedCoreTypes
+  };
 }
 
 function getRecommendationTargetTitle(row) {
@@ -965,6 +1042,25 @@ function getRecommendationRangeTitle(row) {
   return `${baseTitle}\nThis breakpoint qualifies for range-sensitive highlights at the current range floor.`;
 }
 
+function getRecommendationMarginLabel(row) {
+  if (!Number.isFinite(row?.marginPercent)) {
+    return '—';
+  }
+
+  return `+${Math.max(0, Math.round(row.marginPercent))}%`;
+}
+
+function getRecommendationMarginTitle(row) {
+  const marginLabel = getRecommendationMarginLabel(row);
+  if (marginLabel !== '—') {
+    return row?.qualifiesForMargin
+      ? `One-shot margin: ${marginLabel}. Meets the Margin highlight at the current range floor (+${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage).`
+      : `One-shot margin: ${marginLabel}. Does not currently meet the Margin highlight (+${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage at the current range floor).`;
+  }
+
+  return 'Margin is shown for one-shot kill or critical rows when displayed damage per cycle can be compared against the target health.';
+}
+
 function getRecommendationFlagTitle(flagKey, value) {
   const metadata = RECOMMENDATION_FLAG_TITLES[flagKey];
   if (!metadata) {
@@ -1000,13 +1096,13 @@ function createOutcomeBadge(outcomeKind) {
   return badge;
 }
 
-function createRecommendationFlag(value, label = 'Yes', title = '') {
+function createRecommendationFlag(value, label = 'Yes', title = '', inactiveLabel = '—') {
   const flag = document.createElement('span');
   flag.className = `calc-recommend-flag ${value ? 'is-true' : 'is-false'}`;
   if (title) {
     flag.title = title;
   }
-  flag.textContent = value ? label : '—';
+  flag.textContent = value ? label : inactiveLabel;
   return flag;
 }
 
@@ -1221,9 +1317,10 @@ function renderRecommendationTable({
     appendRecommendationCell(
       tableRow,
       createRecommendationFlag(
-        row.hasLowOverkillOhko,
-        'Yes',
-        getRecommendationFlagTitle('lowOverkillOhko', row.hasLowOverkillOhko)
+        row.qualifiesForMargin,
+        getRecommendationMarginLabel(row),
+        getRecommendationMarginTitle(row),
+        getRecommendationMarginLabel(row)
       )
     );
     appendRecommendationCell(
@@ -1430,13 +1527,19 @@ export function renderRecommendationPanel(container, enemy) {
     }
   }).slice(0, 12);
   const flaggedRows = recommendationRows.filter((row) => (
-    row.hasLowOverkillOhko
+    row.qualifiesForMargin
     || row.hasCriticalRecommendation
     || row.hasFastTtk
     || row.penetratesAll
   ));
   const usingFallbackRows = flaggedRows.length === 0;
-  const displayRows = (flaggedRows.length > 0 ? flaggedRows : recommendationRows).slice(0, 24);
+  const {
+    rows: displayRows,
+    supplementedCoreTypes
+  } = buildOverallRecommendationDisplayRows(
+    flaggedRows.length > 0 ? flaggedRows : recommendationRows,
+    RECOMMENDATION_DISPLAY_LIMIT
+  );
 
   if (selectedZone) {
     renderRecommendationSubsection({
@@ -1474,8 +1577,8 @@ export function renderRecommendationPanel(container, enemy) {
     body,
     titleText: 'Overall recommendations',
     summaryText: flaggedRows.length > 0
-      ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).`
-      : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.`,
+      ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}`
+      : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}`,
     summaryTitle: getRecommendationSummaryTitle(!usingFallbackRows),
     rows: displayRows,
     usingFallbackRows

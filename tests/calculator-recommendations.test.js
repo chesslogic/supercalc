@@ -153,7 +153,7 @@ test('buildWeaponRecommendationRows keeps doomed breakpoints distinct from one-s
   assert.equal(rows[0].hasFastTtk, true);
 });
 
-test('buildWeaponRecommendationRows prioritizes low-overkill rows before generic one-shot kills', () => {
+test('buildWeaponRecommendationRows prioritizes tighter Margin rows before generic one-shot kills', () => {
   const enemy = {
     name: 'Priority Dummy',
     health: 500,
@@ -179,10 +179,45 @@ test('buildWeaponRecommendationRows prioritizes low-overkill rows before generic
   });
 
   assert.equal(rows[0].weapon.name, 'Efficient');
-  assert.equal(rows[0].hasLowOverkillOhko, true);
+  assert.equal(rows[0].qualifiesForMargin, true);
+  assert.equal(rows[0].marginPercent, 5);
   assert.equal(rows[1].weapon.name, 'Overkill');
-  assert.equal(rows[1].hasLowOverkillOhko, false);
+  assert.equal(rows[1].qualifiesForMargin, false);
+  assert.equal(rows[1].marginPercent, 60);
   assert.equal(rows[1].hasOneShotKill, true);
+});
+
+test('buildWeaponRecommendationRows prefers the tighter Margin when multiple rows qualify', () => {
+  const enemy = {
+    name: 'Margin Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Loose First', {
+      index: 0,
+      rows: [makeAttackRow('Loose', 110, 2)]
+    }),
+    makeWeapon('Cleaner Second', {
+      index: 1,
+      rows: [makeAttackRow('Cleaner', 102, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'Cleaner Second');
+  assert.equal(rows[0].qualifiesForMargin, true);
+  assert.equal(rows[0].marginPercent, 2);
+  assert.equal(rows[1].weapon.name, 'Loose First');
+  assert.equal(rows[1].qualifiesForMargin, true);
+  assert.equal(rows[1].marginPercent, 10);
 });
 
 test('buildWeaponRecommendationRows drops one-shot range-qualified flags when the floor is too high', () => {
@@ -224,7 +259,7 @@ test('buildWeaponRecommendationRows drops one-shot range-qualified flags when th
   assert.equal(beyondRangeRows[0].rangeStatus, 'failed');
 });
 
-test('buildWeaponRecommendationRows prefers shorter effective range when low-overkill rows otherwise tie', () => {
+test('buildWeaponRecommendationRows prefers shorter effective range when Margin rows otherwise tie', () => {
   resetBallisticFalloffProfiles();
   ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
 
@@ -253,9 +288,11 @@ test('buildWeaponRecommendationRows prefers shorter effective range when low-ove
   });
 
   assert.equal(rows[0].weapon.name, 'Short Reach');
-  assert.equal(rows[0].hasLowOverkillOhko, true);
+  assert.equal(rows[0].qualifiesForMargin, true);
+  assert.equal(rows[0].marginPercent, 5);
   assert.equal(rows[1].weapon.name, 'Long Reach');
-  assert.equal(rows[1].hasLowOverkillOhko, true);
+  assert.equal(rows[1].qualifiesForMargin, true);
+  assert.equal(rows[1].marginPercent, 5);
   assert.ok(rows[0].effectiveDistance?.isAvailable);
   assert.ok(rows[1].effectiveDistance?.isAvailable);
   assert.ok(rows[0].effectiveDistance.meters < rows[1].effectiveDistance.meters);
