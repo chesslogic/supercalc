@@ -1,7 +1,11 @@
-import { buildFocusedZoneComparisonRows } from './compare-utils.js';
+import { buildFocusedZoneComparisonRows, getAttackRowKey } from './compare-utils.js';
 import { isExplosiveAttack } from './attack-types.js';
 import { getZoneDisplayedKillPath } from './zone-damage.js';
-import { compareWeaponOptionBaseOrder, getWeaponRowMultiplicity } from './weapon-dropdown.js';
+import {
+  compareWeaponOptionBaseOrder,
+  getWeaponRowMeaningfulDamage,
+  getWeaponRowMultiplicity
+} from './weapon-dropdown.js';
 import { calculateTtkSeconds } from './summary.js';
 
 export const DEFAULT_RECOMMENDATION_RANGE_METERS = 30;
@@ -34,6 +38,31 @@ const RECOMMENDATION_IMPLICIT_REPEAT_RULES = [
     attackPattern: /bomb/i,
     hitCount: RECOMMENDATION_IMPLICIT_REPEAT_HITS
   }
+];
+
+const RECOMMENDATION_PACKAGE_FAMILY_LABELS = {
+  projectile: 'Proj',
+  explosion: 'Blast',
+  spray: 'Spray',
+  beam: 'Beam',
+  arc: 'Arc',
+  flame: 'Flame',
+  gas: 'Gas',
+  melee: 'Melee'
+};
+
+const RECOMMENDATION_PACKAGE_SUFFIX_PATTERNS = [
+  /(?:[_\s]+)P(?:[_\s]+)IE$/i,
+  /(?:[_\s]+)IE$/i,
+  /(?:[_\s]+)?EImpact$/i,
+  /(?:[_\s]+)Impact$/i,
+  /(?:[_\s]+)SPRAY$/i,
+  /(?:[_\s]+)BEAM$/i,
+  /(?:[_\s]+)ARC$/i,
+  /(?:[_\s]+)P$/i,
+  /(?:[_\s]+)E$/i,
+  /(?:[_\s]+)S$/i,
+  /(?:[_\s]+)B$/i
 ];
 
 function toFiniteNumber(value) {
@@ -98,6 +127,76 @@ function getRecommendationAttackName(attackRow) {
   return String(attackRow?.['Atk Name'] || attackRow?.Name || '').trim();
 }
 
+function getRecommendationAttackTypeText(attackRow) {
+  return String(attackRow?.['Atk Type'] ?? attackRow?.Stage ?? '').trim().toLowerCase();
+}
+
+function stripRecommendationPackageSuffix(attackName) {
+  let strippedName = String(attackName || '').trim()
+    .replace(/\s*\((?:volley|total)\s+x\d+\)\s*$/i, '')
+    .replace(/\s+x\d+\s*$/i, '')
+    .trim();
+
+  for (const pattern of RECOMMENDATION_PACKAGE_SUFFIX_PATTERNS) {
+    const nextName = strippedName.replace(pattern, '').replace(/[_\s]+$/, '').trim();
+    if (nextName && nextName !== strippedName) {
+      strippedName = nextName;
+      break;
+    }
+  }
+
+  return strippedName;
+}
+
+function getRecommendationAttackEventLabel(attackRow) {
+  const attackName = getRecommendationAttackName(attackRow);
+  if (!attackName) {
+    return '';
+  }
+
+  return stripRecommendationPackageSuffix(attackName) || attackName;
+}
+
+function getRecommendationAttackEventKey(attackRow) {
+  const eventLabel = getRecommendationAttackEventLabel(attackRow);
+  return eventLabel
+    ? normalizeText(eventLabel).replace(/[_\s]+/g, ' ')
+    : '';
+}
+
+function getRecommendationAttackFamily(attackRow) {
+  const attackType = getRecommendationAttackTypeText(attackRow);
+  if (isExplosiveAttack(attackRow)) {
+    return 'explosion';
+  }
+
+  if (attackType.includes('spray')) {
+    return 'spray';
+  }
+
+  if (attackType.includes('beam')) {
+    return 'beam';
+  }
+
+  if (attackType.includes('arc')) {
+    return 'arc';
+  }
+
+  if (attackType.includes('flame') || attackType.includes('fire')) {
+    return 'flame';
+  }
+
+  if (attackType.includes('gas')) {
+    return 'gas';
+  }
+
+  if (attackType.includes('melee')) {
+    return 'melee';
+  }
+
+  return 'projectile';
+}
+
 function isBundledRecommendationAttack(attackName) {
   return /\((?:volley|total)\s+x\d+\)/i.test(attackName);
 }
@@ -131,6 +230,18 @@ function isFragmentRecommendationAttack({
 
   return isExplosiveAttack(attackRow)
     || /\b(?:shrapnel|cluster bomb|flak rounds)\b/i.test(attackName);
+}
+
+function isConservativeRecommendationPackageExcludedAttack({
+  attackRow,
+  attackName,
+  multiplicity
+}) {
+  return isFragmentRecommendationAttack({
+    attackRow,
+    attackName,
+    multiplicity
+  }) || /\bfragments?\b/i.test(attackName);
 }
 
 function getImplicitRecommendationRepeatHits({
@@ -186,6 +297,209 @@ export function getRecommendationAttackHitCount({
       attackName
     })
   );
+}
+
+function buildRecommendationAttackDescriptor({
+  weapon,
+  attackRow,
+  rowIndex
+}) {
+  const attackName = getRecommendationAttackName(attackRow);
+  if (!attackName) {
+    return null;
+  }
+
+  const multiplicity = getWeaponRowMultiplicity(attackRow);
+  const family = getRecommendationAttackFamily(attackRow);
+  const isBundled = isBundledRecommendationAttack(attackName);
+  const conservativeExcluded = isConservativeRecommendationPackageExcludedAttack({
+    attackRow,
+    attackName,
+    multiplicity
+  });
+
+  return {
+    attackRow,
+    attackKey: getAttackRowKey(attackRow),
+    attackName,
+    hitCount: getRecommendationAttackHitCount({
+      weapon,
+      attackRow
+    }),
+    family,
+    familyLabel: RECOMMENDATION_PACKAGE_FAMILY_LABELS[family] || family,
+    eventLabel: getRecommendationAttackEventLabel(attackRow),
+    eventKey: getRecommendationAttackEventKey(attackRow),
+    meaningfulDamage: getWeaponRowMeaningfulDamage(attackRow),
+    apValue: toFiniteNumber(attackRow?.AP) ?? Number.NEGATIVE_INFINITY,
+    rowIndex,
+    conservativeExcluded,
+    autoCombineEligible: !isBundled && !conservativeExcluded
+  };
+}
+
+function compareRecommendationPackageComponentPreference(left, right) {
+  let comparison = compareNullableNumber(right?.meaningfulDamage ?? null, left?.meaningfulDamage ?? null, 'asc');
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareNullableNumber(right?.apValue ?? null, left?.apValue ?? null, 'asc');
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareNullableNumber(right?.hitCount ?? null, left?.hitCount ?? null, 'asc');
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
+}
+
+function getRecommendationPackageDedupKey(descriptors = []) {
+  return descriptors
+    .map((descriptor) => String(descriptor?.attackKey || ''))
+    .filter(Boolean)
+    .sort()
+    .join('||');
+}
+
+function buildRecommendationPackageLabel(descriptors = []) {
+  const components = descriptors.filter(Boolean);
+  if (components.length === 0) {
+    return 'Attack';
+  }
+
+  if (components.length === 1) {
+    return components[0].attackName;
+  }
+
+  const eventLabels = [...new Set(components.map((descriptor) => descriptor.eventLabel).filter(Boolean))];
+  if (eventLabels.length === 1) {
+    const familyLabels = [...new Set(components.map((descriptor) => descriptor.familyLabel || descriptor.family).filter(Boolean))];
+    return `${eventLabels[0]} [${familyLabels.join(' + ')}]`;
+  }
+
+  return components.map((descriptor) => descriptor.attackName).join(' + ');
+}
+
+function buildRecommendationAttackPackage(descriptors = [], {
+  excludedAttackNames = []
+} = {}) {
+  const orderedDescriptors = descriptors
+    .filter(Boolean)
+    .slice()
+    .sort((left, right) => (left?.rowIndex ?? 0) - (right?.rowIndex ?? 0));
+  const packageComponents = orderedDescriptors.map((descriptor) => ({
+    attackRow: descriptor.attackRow,
+    attackKey: descriptor.attackKey,
+    attackName: descriptor.attackName,
+    hitCount: descriptor.hitCount,
+    family: descriptor.family
+  }));
+
+  return {
+    attackRow: orderedDescriptors[0]?.attackRow || null,
+    attackRows: orderedDescriptors.map((descriptor) => descriptor.attackRow),
+    attackName: buildRecommendationPackageLabel(orderedDescriptors),
+    hitCount: orderedDescriptors[0]?.hitCount ?? 1,
+    hitCounts: orderedDescriptors.map((descriptor) => descriptor.hitCount),
+    packageComponents,
+    excludedAttackNames: [...new Set((Array.isArray(excludedAttackNames) ? excludedAttackNames : []).filter(Boolean))],
+    isCombinedPackage: orderedDescriptors.length > 1
+  };
+}
+
+function buildRecommendationAttackPackages(weapon, {
+  includeCombinedPackages = false
+} = {}) {
+  const descriptors = (Array.isArray(weapon?.rows) ? weapon.rows : [])
+    .map((attackRow, rowIndex) => buildRecommendationAttackDescriptor({
+      weapon,
+      attackRow,
+      rowIndex
+    }))
+    .filter(Boolean);
+  const packages = descriptors.map((descriptor) => buildRecommendationAttackPackage([descriptor]));
+
+  if (!includeCombinedPackages) {
+    return packages;
+  }
+
+  const seenPackageKeys = new Set(
+    packages.map((attackPackage) => getRecommendationPackageDedupKey(attackPackage.packageComponents))
+  );
+  const groupedDescriptors = descriptors.reduce((groups, descriptor) => {
+    if (!descriptor.eventKey) {
+      return groups;
+    }
+
+    if (!groups.has(descriptor.eventKey)) {
+      groups.set(descriptor.eventKey, []);
+    }
+
+    groups.get(descriptor.eventKey).push(descriptor);
+    return groups;
+  }, new Map());
+
+  groupedDescriptors.forEach((groupDescriptors) => {
+    const eligibleDescriptors = groupDescriptors.filter((descriptor) => descriptor.autoCombineEligible);
+    if (eligibleDescriptors.length < 2) {
+      return;
+    }
+
+    const familyGroups = eligibleDescriptors.reduce((groups, descriptor) => {
+      if (!groups.has(descriptor.family)) {
+        groups.set(descriptor.family, []);
+      }
+
+      groups.get(descriptor.family).push(descriptor);
+      return groups;
+    }, new Map());
+    if (familyGroups.size < 2) {
+      return;
+    }
+
+    const excludedAttackNames = groupDescriptors
+      .filter((descriptor) => descriptor.conservativeExcluded)
+      .map((descriptor) => descriptor.attackName);
+
+    eligibleDescriptors.forEach((seedDescriptor) => {
+      const packageDescriptors = [seedDescriptor];
+
+      familyGroups.forEach((familyDescriptors, family) => {
+        if (family === seedDescriptor.family) {
+          return;
+        }
+
+        const chosenDescriptor = familyDescriptors
+          .slice()
+          .sort(compareRecommendationPackageComponentPreference)[0];
+        if (!chosenDescriptor || packageDescriptors.some((descriptor) => descriptor.attackKey === chosenDescriptor.attackKey)) {
+          return;
+        }
+
+        packageDescriptors.push(chosenDescriptor);
+      });
+
+      if (packageDescriptors.length < 2) {
+        return;
+      }
+
+      const packageKey = getRecommendationPackageDedupKey(packageDescriptors);
+      if (seenPackageKeys.has(packageKey)) {
+        return;
+      }
+
+      seenPackageKeys.add(packageKey);
+      packages.push(buildRecommendationAttackPackage(packageDescriptors, {
+        excludedAttackNames
+      }));
+    });
+  });
+
+  return packages;
 }
 
 export function normalizeRecommendationRangeMeters(value) {
@@ -471,17 +785,40 @@ function getSuppressedDirectTargetNames(enemy) {
 function buildRecommendationCandidates({
   enemy,
   weapon,
+  attackRows = [],
+  hitCounts = [],
   attackRow,
   hitCount,
   engagementRangeMeters = 0,
   highlightRangeFloorMeters,
   selectedZoneIndex = null
 }) {
+  const selectedAttacksA = Array.isArray(attackRows) && attackRows.length > 0
+    ? attackRows.filter(Boolean)
+    : [attackRow].filter(Boolean);
+  if (selectedAttacksA.length === 0) {
+    return {
+      zoneRows: [],
+      candidates: []
+    };
+  }
+
+  const normalizedHitCounts = selectedAttacksA.map((_, index) => {
+    const value = hitCounts[index];
+    if (Number.isFinite(value) && value > 0) {
+      return value;
+    }
+
+    return index === 0 && Number.isFinite(hitCount) && hitCount > 0
+      ? hitCount
+      : 1;
+  });
+
   const zoneRows = buildFocusedZoneComparisonRows({
     enemy,
     weaponA: weapon,
-    selectedAttacksA: [attackRow],
-    hitCountsA: [hitCount],
+    selectedAttacksA,
+    hitCountsA: normalizedHitCounts,
     distanceMetersA: engagementRangeMeters
   });
   const suppressedDirectTargetNames = getSuppressedDirectTargetNames(enemy);
@@ -510,6 +847,13 @@ function buildRecommendationCandidates({
     zoneRows,
     candidates: [...directCandidates, ...sequenceCandidates].sort(compareZoneRecommendationCandidates)
   };
+}
+
+function getRecommendationPackageComponentCount(recommendation) {
+  const componentCount = Array.isArray(recommendation?.packageComponents) && recommendation.packageComponents.length > 0
+    ? recommendation.packageComponents.length
+    : (Array.isArray(recommendation?.attackRows) ? recommendation.attackRows.length : 0);
+  return Math.max(1, componentCount || 0);
 }
 
 function compareZoneRecommendationCandidates(left, right) {
@@ -562,11 +906,10 @@ function compareZoneRecommendationCandidates(left, right) {
   return String(left.zone?.zone_name || '').localeCompare(String(right.zone?.zone_name || ''));
 }
 
-function buildAttackRowRecommendation({
+function buildAttackRecommendation({
   enemy,
   weapon,
-  attackRow,
-  hitCount,
+  attackPackage,
   rangeFloorMeters,
   engagementRangeMeters = 0,
   highlightRangeFloorMeters = rangeFloorMeters,
@@ -575,8 +918,10 @@ function buildAttackRowRecommendation({
   const { zoneRows, candidates } = buildRecommendationCandidates({
     enemy,
     weapon,
-    attackRow,
-    hitCount,
+    attackRows: attackPackage?.attackRows,
+    hitCounts: attackPackage?.hitCounts,
+    attackRow: attackPackage?.attackRow,
+    hitCount: attackPackage?.hitCount,
     engagementRangeMeters,
     highlightRangeFloorMeters,
     selectedZoneIndex
@@ -587,8 +932,14 @@ function buildAttackRowRecommendation({
   }
 
   return {
-    attackRow,
-    hitCount,
+    attackRow: attackPackage?.attackRow || attackPackage?.attackRows?.[0] || null,
+    attackRows: Array.isArray(attackPackage?.attackRows) ? attackPackage.attackRows : [attackPackage?.attackRow].filter(Boolean),
+    attackName: String(attackPackage?.attackName || 'Attack').trim() || 'Attack',
+    hitCount: attackPackage?.hitCount ?? 1,
+    hitCounts: Array.isArray(attackPackage?.hitCounts) ? attackPackage.hitCounts : [attackPackage?.hitCount ?? 1],
+    packageComponents: Array.isArray(attackPackage?.packageComponents) ? attackPackage.packageComponents : [],
+    excludedAttackNames: Array.isArray(attackPackage?.excludedAttackNames) ? attackPackage.excludedAttackNames : [],
+    isCombinedPackage: Boolean(attackPackage?.isCombinedPackage),
     bestCandidate: candidates[0],
     candidates,
     marginRatio: candidates[0]?.marginRatio ?? null,
@@ -636,7 +987,17 @@ function compareAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  return compareBooleanDescending(left.penetratesAll, right.penetratesAll);
+  comparison = compareBooleanDescending(left.penetratesAll, right.penetratesAll);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = getRecommendationPackageComponentCount(left) - getRecommendationPackageComponentCount(right);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
 }
 
 function compareWeaponRecommendationRows(left, right) {
@@ -694,7 +1055,17 @@ function compareTargetAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  return compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
+  comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = getRecommendationPackageComponentCount(left) - getRecommendationPackageComponentCount(right);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
 }
 
 function compareTargetWeaponRecommendationRows(left, right) {
@@ -721,6 +1092,45 @@ function compareTargetWeaponRecommendationRows(left, right) {
   return compareWeaponOptionBaseOrder(left.weapon, right.weapon);
 }
 
+function buildWeaponRecommendationDisplayRow({
+  weapon,
+  bestAttackRecommendation,
+  selectedZoneMatch
+}) {
+  const bestCandidate = bestAttackRecommendation.bestCandidate;
+  return {
+    weapon,
+    attackRow: bestAttackRecommendation.attackRow,
+    attackRows: bestAttackRecommendation.attackRows,
+    attackName: bestAttackRecommendation.attackName,
+    hitCount: bestAttackRecommendation.hitCount,
+    hitCounts: bestAttackRecommendation.hitCounts,
+    packageComponents: bestAttackRecommendation.packageComponents,
+    excludedAttackNames: bestAttackRecommendation.excludedAttackNames,
+    isCombinedPackage: bestAttackRecommendation.isCombinedPackage,
+    bestZone: bestCandidate.zone,
+    bestZoneName: bestCandidate.label || bestCandidate.zone?.zone_name || '',
+    bestOutcomeKind: bestCandidate.outcomeKind,
+    shotsToKill: bestCandidate.shotsToKill,
+    ttkSeconds: bestCandidate.ttkSeconds,
+    effectiveDistance: bestCandidate.effectiveDistance,
+    rangeStatus: bestCandidate.rangeStatus,
+    marginRatio: bestAttackRecommendation.marginRatio,
+    marginPercent: bestAttackRecommendation.marginPercent,
+    qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
+    hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
+    hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
+    hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
+    hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
+    hasFastTtk: bestAttackRecommendation.hasFastTtk,
+    penetratesAll: bestAttackRecommendation.penetratesAll,
+    matchedZoneNames: bestCandidate.matchedZoneNames || [],
+    selectedZoneMatch,
+    isSequenceCandidate: Boolean(bestCandidate.isSequenceCandidate),
+    bestAttackRecommendation
+  };
+}
+
 export function buildWeaponRecommendationRows({
   enemy,
   weapons = [],
@@ -735,15 +1145,11 @@ export function buildWeaponRecommendationRows({
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
   return weapons
     .map((weapon) => {
-      const attackRecommendations = (weapon?.rows || [])
-        .map((attackRow) => buildAttackRowRecommendation({
+      const attackRecommendations = buildRecommendationAttackPackages(weapon)
+        .map((attackPackage) => buildAttackRecommendation({
           enemy,
           weapon,
-          attackRow,
-          hitCount: getRecommendationAttackHitCount({
-            weapon,
-            attackRow
-          }),
+          attackPackage,
           rangeFloorMeters: normalizedRangeFloor,
           engagementRangeMeters: typeof getEngagementRangeMetersForWeapon === 'function'
             ? getEngagementRangeMetersForWeapon(weapon)
@@ -759,32 +1165,12 @@ export function buildWeaponRecommendationRows({
       }
 
       const bestAttackRecommendation = attackRecommendations[0];
-      const bestCandidate = bestAttackRecommendation.bestCandidate;
       return {
-        weapon,
-        attackRow: bestAttackRecommendation.attackRow,
-        attackName: bestAttackRecommendation.attackRow?.['Atk Name'] || bestAttackRecommendation.attackRow?.Name || 'Attack',
-        hitCount: bestAttackRecommendation.hitCount,
-        bestZone: bestCandidate.zone,
-        bestZoneName: bestCandidate.label || bestCandidate.zone?.zone_name || '',
-        bestOutcomeKind: bestCandidate.outcomeKind,
-        shotsToKill: bestCandidate.shotsToKill,
-        ttkSeconds: bestCandidate.ttkSeconds,
-        effectiveDistance: bestCandidate.effectiveDistance,
-        rangeStatus: bestCandidate.rangeStatus,
-        marginRatio: bestAttackRecommendation.marginRatio,
-        marginPercent: bestAttackRecommendation.marginPercent,
-        qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
-        hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
-        hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
-        hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
-        hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
-        hasFastTtk: bestAttackRecommendation.hasFastTtk,
-        penetratesAll: bestAttackRecommendation.penetratesAll,
-        matchedZoneNames: bestCandidate.matchedZoneNames || [],
-        selectedZoneMatch: Boolean(bestAttackRecommendation.hasSelectedZoneMatch),
-        isSequenceCandidate: Boolean(bestCandidate.isSequenceCandidate),
-        bestAttackRecommendation,
+        ...buildWeaponRecommendationDisplayRow({
+          weapon,
+          bestAttackRecommendation,
+          selectedZoneMatch: Boolean(bestAttackRecommendation.hasSelectedZoneMatch)
+        }),
         attackRecommendations
       };
     })
@@ -813,15 +1199,13 @@ function buildTargetRecommendationRows({
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
   return weapons
     .map((weapon) => {
-      const attackRecommendations = (weapon?.rows || [])
-        .map((attackRow) => buildAttackRowRecommendation({
+      const attackRecommendations = buildRecommendationAttackPackages(weapon, {
+        includeCombinedPackages: true
+      })
+        .map((attackPackage) => buildAttackRecommendation({
           enemy,
           weapon,
-          attackRow,
-          hitCount: getRecommendationAttackHitCount({
-            weapon,
-            attackRow
-          }),
+          attackPackage,
           rangeFloorMeters: normalizedRangeFloor,
           engagementRangeMeters: typeof getEngagementRangeMetersForWeapon === 'function'
             ? getEngagementRangeMetersForWeapon(weapon)
@@ -859,32 +1243,12 @@ function buildTargetRecommendationRows({
       }
 
       const bestAttackRecommendation = attackRecommendations[0];
-      const bestCandidate = bestAttackRecommendation.bestCandidate;
       return {
-        weapon,
-        attackRow: bestAttackRecommendation.attackRow,
-        attackName: bestAttackRecommendation.attackRow?.['Atk Name'] || bestAttackRecommendation.attackRow?.Name || 'Attack',
-        hitCount: bestAttackRecommendation.hitCount,
-        bestZone: bestCandidate.zone,
-        bestZoneName: bestCandidate.label || bestCandidate.zone?.zone_name || '',
-        bestOutcomeKind: bestCandidate.outcomeKind,
-        shotsToKill: bestCandidate.shotsToKill,
-        ttkSeconds: bestCandidate.ttkSeconds,
-        effectiveDistance: bestCandidate.effectiveDistance,
-        rangeStatus: bestCandidate.rangeStatus,
-        marginRatio: bestAttackRecommendation.marginRatio,
-        marginPercent: bestAttackRecommendation.marginPercent,
-        qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
-        hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
-        hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
-        hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
-        hasCriticalRecommendation: bestAttackRecommendation.hasCriticalRecommendation,
-        hasFastTtk: bestAttackRecommendation.hasFastTtk,
-        penetratesAll: bestAttackRecommendation.penetratesAll,
-        matchedZoneNames: bestCandidate.matchedZoneNames || [],
-        selectedZoneMatch,
-        isSequenceCandidate: Boolean(bestCandidate.isSequenceCandidate),
-        bestAttackRecommendation,
+        ...buildWeaponRecommendationDisplayRow({
+          weapon,
+          bestAttackRecommendation,
+          selectedZoneMatch
+        }),
         attackRecommendations
       };
     })

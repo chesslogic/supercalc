@@ -862,8 +862,8 @@ const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'supp
 const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
-  { label: 'Attack', title: 'Best-ranked attack row for this weapon.' },
-  { label: 'Target', title: 'Best-ranked target zone for the listed attack, plus the outcome badge.' },
+  { label: 'Attack', title: 'Best-ranked attack row or firing package for this weapon.' },
+  { label: 'Target', title: 'Best-ranked target zone for the listed attack setup, plus the outcome badge.' },
   { label: 'Shots', title: 'Shots or firing cycles needed to reach the listed outcome using the recommendation preview hit-count.' },
   { label: 'TTK', title: 'Modeled time to reach the listed outcome at the weapon\'s RPM.' },
   {
@@ -873,7 +873,7 @@ const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Margin', title: `Numeric one-shot kill or critical margin. Highlighted Margin rows stay at +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage at the current range floor.` },
   { label: 'Crit', title: 'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.' },
   { label: '<0.6s', title: 'Fast-TTK highlight for rows under 0.6 seconds at the current range floor.' },
-  { label: 'Pen All', title: 'Highlights attack rows that can damage every zone on the current enemy.' },
+  { label: 'Pen All', title: 'Highlights attack setups that can damage every zone on the current enemy.' },
   { label: 'Tip', title: 'Short note explaining why this breakpoint stands out or what path it follows.' }
 ];
 const RECOMMENDATION_FLAG_TITLES = {
@@ -886,19 +886,44 @@ const RECOMMENDATION_FLAG_TITLES = {
     inactive: 'Does not currently meet the sub-0.6s TTK highlight.'
   },
   penetratesAll: {
-    active: 'This attack row can damage every zone on the current enemy.',
-    inactive: 'At least one zone on the current enemy takes no damage from this attack row.'
+    active: 'This attack setup can damage every zone on the current enemy.',
+    inactive: 'At least one zone on the current enemy takes no damage from this attack setup.'
   }
 };
 
-function getRecommendationHitAssumptionText(hitCount) {
+function getRecommendationHitAssumptionLines(row) {
+  const packageComponents = Array.isArray(row?.packageComponents)
+    ? row.packageComponents.filter(Boolean)
+    : [];
+  if (packageComponents.length > 1) {
+    const lines = ['Recommendation preview assumes this combined package per firing cycle:'];
+    packageComponents.forEach((component, index) => {
+      const normalizedHitCount = Number.isFinite(component?.hitCount) && component.hitCount > 0
+        ? Math.max(1, component.hitCount)
+        : 1;
+      lines.push(
+        `${index + 1}. ${String(component?.attackName || `Component ${index + 1}`).trim() || `Component ${index + 1}`}: ${normalizedHitCount} ${normalizedHitCount === 1 ? 'hit' : 'hits'}`
+      );
+    });
+
+    if (Array.isArray(row?.excludedAttackNames) && row.excludedAttackNames.length > 0) {
+      lines.push(`Conservative auto-package excludes: ${row.excludedAttackNames.join(', ')}`);
+    }
+
+    lines.push('"Shots" counts firing cycles, not individual impacts.');
+    return lines;
+  }
+
+  const hitCount = packageComponents[0]?.hitCount ?? row?.hitCount;
   const normalizedHitCount = Number.isFinite(hitCount) && hitCount > 0
     ? Math.max(1, hitCount)
     : 1;
 
-  return normalizedHitCount === 1
-    ? 'Recommendation preview assumes 1 hit per firing cycle for this row.'
-    : `Recommendation preview assumes ${normalizedHitCount} hits per firing cycle for this row, so "Shots" counts firing cycles, not individual projectiles.`;
+  return [
+    normalizedHitCount === 1
+      ? 'Recommendation preview assumes 1 hit per firing cycle for this row.'
+      : `Recommendation preview assumes ${normalizedHitCount} hits per firing cycle for this row, so "Shots" counts firing cycles, not individual projectiles.`
+  ];
 }
 
 function getRecommendationSummaryTitle(hasHighlightedRows) {
@@ -1004,7 +1029,8 @@ function getRecommendationTargetTitle(row) {
 
 function getRecommendationAttackTitle(row) {
   const attackName = String(row?.attackName || 'Attack').trim() || 'Attack';
-  return `Attack row: ${attackName}\n${getRecommendationHitAssumptionText(row?.hitCount)}`;
+  const attackLabel = row?.isCombinedPackage ? 'Attack package' : 'Attack row';
+  return `${attackLabel}: ${attackName}\n${getRecommendationHitAssumptionLines(row).join('\n')}`;
 }
 
 function getRecommendationShotsTitle(row) {
@@ -1014,7 +1040,7 @@ function getRecommendationShotsTitle(row) {
       ? 'Shots-to-kill is unavailable for this breakpoint.'
       : `${shotsToKill} ${shotsToKill === 1 ? 'shot' : 'shots'} to reach the listed outcome.`
   ];
-  lines.push(getRecommendationHitAssumptionText(row?.hitCount));
+  lines.push(...getRecommendationHitAssumptionLines(row));
   return lines.join('\n');
 }
 
@@ -1024,7 +1050,7 @@ function getRecommendationTtkTitle(row) {
       ? 'TTK unavailable without RPM.'
       : `${formatTtkSeconds(row.ttkSeconds)} to reach the listed outcome at the weapon\'s RPM.`
   ];
-  lines.push(getRecommendationHitAssumptionText(row?.hitCount));
+  lines.push(...getRecommendationHitAssumptionLines(row));
   return lines.join('\n');
 }
 

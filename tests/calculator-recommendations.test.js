@@ -611,3 +611,116 @@ test('buildRelatedTargetRecommendationRows ranks linked targets without pretendi
   assert.equal(rows[0].shotsToKill, 1);
   assert.equal(rows[0].bestOutcomeKind, 'limb');
 });
+
+test('buildSelectedTargetRecommendationRows can rank a combined projectile and blast package', () => {
+  const enemy = {
+    name: 'Package Dummy',
+    health: 1000,
+    zones: [
+      makeZone('core', { health: 430, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Packager', {
+      rows: [
+        makeAttackRow('15x100mm HIGH EXPLOSIVE_P', 230, 4),
+        makeExplosionAttackRow('15x100mm HIGH EXPLOSIVE_P_IE', 225, 3),
+        makeAttackRow('SHRAPNEL_P x30', 110, 3)
+      ]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].attackName, '15x100mm HIGH EXPLOSIVE [Proj + Blast]');
+  assert.equal(rows[0].isCombinedPackage, true);
+  assert.deepEqual(
+    rows[0].packageComponents.map((component) => component.attackName),
+    ['15x100mm HIGH EXPLOSIVE_P', '15x100mm HIGH EXPLOSIVE_P_IE']
+  );
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].bestOutcomeKind, 'fatal');
+});
+
+test('buildSelectedTargetRecommendationRows excludes shrapnel from conservative auto-packages', () => {
+  const enemy = {
+    name: 'Conservative Dummy',
+    health: 1000,
+    zones: [
+      makeZone('core', { health: 560, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Packager', {
+      rows: [
+        makeAttackRow('15x100mm HIGH EXPLOSIVE_P', 230, 4),
+        makeExplosionAttackRow('15x100mm HIGH EXPLOSIVE_P_IE', 225, 3),
+        makeAttackRow('SHRAPNEL_P x30', 110, 3)
+      ]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].attackName, '15x100mm HIGH EXPLOSIVE [Proj + Blast]');
+  assert.equal(rows[0].shotsToKill, 2);
+  assert.equal(rows[0].hasOneShotKill, false);
+  assert.deepEqual(
+    rows[0].packageComponents.map((component) => component.attackName),
+    ['15x100mm HIGH EXPLOSIVE_P', '15x100mm HIGH EXPLOSIVE_P_IE']
+  );
+});
+
+test('buildSelectedTargetRecommendationRows keeps staged target paths when a combined package is best', () => {
+  const enemy = {
+    name: 'Sequenced Package Dummy',
+    health: 1000,
+    recommendationSequences: [
+      {
+        targetZoneName: 'pilot',
+        label: 'pilot (via head)',
+        suppressDirectTarget: true,
+        steps: [{ zoneName: 'head' }, { zoneName: 'pilot' }]
+      }
+    ],
+    zones: [
+      makeZone('head', { health: 230, av: 1, toMainPercent: 0 }),
+      makeZone('pilot', { health: 300, isFatal: true, av: 1, toMainPercent: 0 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Packager', {
+      rpm: 60,
+      rows: [
+        makeAttackRow('15x100mm HIGH EXPLOSIVE_P', 230, 4),
+        makeExplosionAttackRow('15x100mm HIGH EXPLOSIVE_P_IE', 225, 3)
+      ]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].attackName, '15x100mm HIGH EXPLOSIVE [Proj + Blast]');
+  assert.equal(rows[0].bestZoneName, 'pilot (via head)');
+  assert.equal(rows[0].isSequenceCandidate, true);
+  assert.deepEqual(rows[0].matchedZoneNames, ['head', 'pilot']);
+  assert.equal(rows[0].shotsToKill, 2);
+});

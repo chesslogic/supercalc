@@ -126,6 +126,13 @@ function makeAttackRow(name, damage, ap = 2) {
   };
 }
 
+function makeExplosionAttackRow(name, damage, ap = 3) {
+  return {
+    ...makeAttackRow(name, damage, ap),
+    'Atk Type': 'Explosion'
+  };
+}
+
 function makeWeapon(name, {
   code = '',
   index = 0,
@@ -349,6 +356,45 @@ test('renderRecommendationPanel renders a selected-target subsection for direct 
     assert.equal(sectionTitles[1]?.textContent, 'Overall recommendations');
     assert.match(summaries[0]?.textContent || '', /selected target/i);
     assert.match(cells[2].title, /Best-ranked target: right_arm/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel explains combined firing packages in targeted recommendation titles', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    weaponsState.groups = [
+      makeWeapon('Packager', {
+        rows: [
+          makeAttackRow('15x100mm HIGH EXPLOSIVE_P', 230, 4),
+          makeExplosionAttackRow('15x100mm HIGH EXPLOSIVE_P_IE', 225, 3),
+          makeAttackRow('SHRAPNEL_P x30', 110, 3)
+        ]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Package Dummy',
+      health: 1000,
+      zones: [
+        makeZone('core', { health: 430, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+    const attackCell = cells.find((cell) => cell.textContent === '15x100mm HIGH EXPLOSIVE [Proj + Blast]');
+    assert.ok(attackCell);
+    assert.match(attackCell.title, /Attack package:/i);
+    assert.match(attackCell.title, /1\. 15x100mm HIGH EXPLOSIVE_P: 1 hit/i);
+    assert.match(attackCell.title, /2\. 15x100mm HIGH EXPLOSIVE_P_IE: 1 hit/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
