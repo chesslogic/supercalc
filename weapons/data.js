@@ -1,3 +1,8 @@
+import {
+  getNextSortState,
+  normalizeSortDirection
+} from '../sort-utils.js';
+
 // data.js — loading, parsing, and state
 export const PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeLqZ5-maEmzrM6SUDMRXpHEhV0tQImiBdgMCil9lSA11IiY_nGdamE54W7DAiSXn1XuJljdF4P537/pub?gid=0&single=true&output=csv';
 export const LOCAL_CSV_URL = './weapons/weapondata.csv';
@@ -99,17 +104,18 @@ export function toggleActiveWeaponSub(sub) {
 
 export function setWeaponSortState(sortKey = null, sortDir = 'asc') {
   state.sortKey = sortKey || null;
-  state.sortDir = sortDir === 'desc' ? 'desc' : 'asc';
+  state.sortDir = normalizeSortDirection(sortDir);
   notifyWeaponStateChange();
 }
 
 export function toggleWeaponSort(sortKey) {
-  if (state.sortKey === sortKey) {
-    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-  } else {
-    state.sortKey = sortKey || null;
-    state.sortDir = 'asc';
-  }
+  const nextSort = getNextSortState({
+    currentKey: state.sortKey,
+    currentDir: state.sortDir,
+    nextKey: sortKey
+  });
+  state.sortKey = nextSort.key;
+  state.sortDir = nextSort.dir;
   notifyWeaponStateChange();
 }
 

@@ -13,6 +13,11 @@ import {
 import { calculateEffectiveDistanceInfo } from './effective-distance.js';
 import { filterEnemiesByScope, filterEnemiesByTargetTypes, getEnemyUnitFrontLabel } from './enemy-scope.js';
 import { getCriticalZoneInfo } from './tactical-data.js';
+import {
+  compareByComparators,
+  compareNullableValues,
+  markGroupStarts
+} from '../sort-utils.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
 const SINGLE_OUTCOME_GROUP_ORDER = {
@@ -178,41 +183,6 @@ export function getDiffDisplayMetric(diffMetric, diffDisplayMode = 'absolute') {
 function toFiniteNumber(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
-}
-
-function isNullishSortValue(value) {
-  return value === null || value === undefined || value === '';
-}
-
-function compareNullableValues(a, b, direction = 'asc') {
-  const aMissing = isNullishSortValue(a);
-  const bMissing = isNullishSortValue(b);
-
-  if (aMissing && bMissing) {
-    return 0;
-  }
-
-  if (aMissing) {
-    return 1;
-  }
-
-  if (bMissing) {
-    return -1;
-  }
-
-  let comparison = 0;
-  if (typeof a === 'string' || typeof b === 'string') {
-    comparison = String(a).localeCompare(String(b), undefined, {
-      numeric: true,
-      sensitivity: 'base'
-    });
-  } else if (a > b) {
-    comparison = 1;
-  } else if (a < b) {
-    comparison = -1;
-  }
-
-  return direction === 'desc' ? -comparison : comparison;
 }
 
 function hasDamagePath(zoneSummary) {
@@ -792,16 +762,8 @@ export function sortEnemyZoneRows(rows, {
     ? getOutcomeGroupingSlot(mode, sortKey)
     : null;
   const useOneSidedOutcomeSubgroups = shouldUseOneSidedOutcomeSubgroups(mode, groupMode, sortKey);
-
-  const sortedRows = [...rows].sort((left, right) => {
-    if (pinMain) {
-      const pinnedComparison = getPinnedZoneOrderValue(left) - getPinnedZoneOrderValue(right);
-      if (pinnedComparison !== 0) {
-        return pinnedComparison;
-      }
-    }
-
-    if (groupingSlot) {
+  const groupingComparator = groupingSlot
+    ? (left, right) => {
       const leftGroup = getOutcomeGroupValue(left, groupingSlot, mode);
       const rightGroup = getOutcomeGroupValue(right, groupingSlot, mode);
 
@@ -815,56 +777,54 @@ export function sortEnemyZoneRows(rows, {
         && hasOneSidedDiff(left?.metrics)
         && hasOneSidedDiff(right?.metrics);
 
-      if (comparingOneSidedDiffRows) {
-        const oneSidedOutcomeComparison = compareNullableValues(
-          getOneSidedOutcomeGroupValue(left, sortKey),
-          getOneSidedOutcomeGroupValue(right, sortKey),
-          'asc'
-        );
-        if (oneSidedOutcomeComparison !== 0) {
-          return oneSidedOutcomeComparison;
-        }
-
-        const oneSidedMetricComparison = compareNullableValues(
-          getOneSidedMetricSortValue(left, sortKey),
-          getOneSidedMetricSortValue(right, sortKey),
-          sortDir
-        );
-        if (oneSidedMetricComparison !== 0) {
-          return oneSidedMetricComparison;
-        }
-
-        return left.zoneIndex - right.zoneIndex;
+      if (!comparingOneSidedDiffRows) {
+        return 0;
       }
+
+      const oneSidedOutcomeComparison = compareNullableValues(
+        getOneSidedOutcomeGroupValue(left, sortKey),
+        getOneSidedOutcomeGroupValue(right, sortKey)
+      );
+      if (oneSidedOutcomeComparison !== 0) {
+        return oneSidedOutcomeComparison;
+      }
+
+      const oneSidedMetricComparison = compareNullableValues(
+        getOneSidedMetricSortValue(left, sortKey),
+        getOneSidedMetricSortValue(right, sortKey),
+        {
+          direction: sortDir
+        }
+      );
+      if (oneSidedMetricComparison !== 0) {
+        return oneSidedMetricComparison;
+      }
+
+      return left.zoneIndex - right.zoneIndex;
     }
+    : null;
 
-    const valueComparison = compareNullableValues(
-      getZoneSortValue(left, sortKey, diffDisplayMode),
-      getZoneSortValue(right, sortKey, diffDisplayMode),
-      sortDir
-    );
-    if (valueComparison !== 0) {
-      return valueComparison;
-    }
+  const sortedRows = [...rows].sort((left, right) => compareByComparators(left, right, [
+    ...(pinMain
+      ? [
+        (currentLeft, currentRight) => getPinnedZoneOrderValue(currentLeft) - getPinnedZoneOrderValue(currentRight)
+      ]
+      : []),
+    groupingComparator,
+    (currentLeft, currentRight) => compareNullableValues(
+      getZoneSortValue(currentLeft, sortKey, diffDisplayMode),
+      getZoneSortValue(currentRight, sortKey, diffDisplayMode),
+      {
+        direction: sortDir
+      }
+    ),
+    (currentLeft, currentRight) => currentLeft.zoneIndex - currentRight.zoneIndex
+  ]));
 
-    return left.zoneIndex - right.zoneIndex;
-  });
-
-  return sortedRows.map((row, index) => {
-    if (!groupingSlot || index === 0) {
-      return {
-        ...row,
-        groupStart: false
-      };
-    }
-
-    const previous = sortedRows[index - 1];
-    const previousGroup = getOutcomeGroupKey(previous, groupingSlot, mode, sortKey, groupMode);
-    const currentGroup = getOutcomeGroupKey(row, groupingSlot, mode, sortKey, groupMode);
-
-    return {
-      ...row,
-      groupStart: previousGroup !== currentGroup
-    };
-  });
+  return markGroupStarts(
+    sortedRows,
+    groupingSlot
+      ? (row) => getOutcomeGroupKey(row, groupingSlot, mode, sortKey, groupMode)
+      : null
+  );
 }

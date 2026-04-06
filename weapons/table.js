@@ -7,6 +7,7 @@ import {
   toggleWeaponSort
 } from './data.js';
 import { classifyAtkType, atkColorClass, apColorClass, dfColorClass } from '../colors.js';
+import { compareNullableValues } from '../sort-utils.js';
 
 export function isNumber(v){ return v !== null && v !== '' && !isNaN(Number(v)); }
 
@@ -82,8 +83,11 @@ export function sortAndRenderBody(){
     return groups.sort((a, b) => {
       const va = groupSortValue(a, state.sortKey, numeric);
       const vb = groupSortValue(b, state.sortKey, numeric);
-      if (numeric) return state.sortDir === 'asc' ? (va - vb) : (vb - va);
-      return state.sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      return compareNullableValues(va, vb, {
+        direction: state.sortDir,
+        numeric,
+        emptyStringIsNull: false
+      });
     });
   };
 

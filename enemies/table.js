@@ -8,6 +8,7 @@ import {
   getEnemyZoneConDisplayInfo,
   getEnemyZoneHealthDisplayInfo
 } from '../calculator/enemy-zone-display.js';
+import { compareNullableValues } from '../sort-utils.js';
 
 export function setupEnemyTableSorting() {
   const sortableHeaders = document.querySelectorAll('#enemyTable th.sortable');
@@ -61,21 +62,11 @@ export function renderEnemyTable() {
             : enemyState.sortKey === 'Con'
               ? getEnemyZoneConDisplayInfo(b).sortValue
           : b[enemyState.sortKey];
-        
-        // Handle different data types
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
-        
-        // Numeric sorting
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return enemyState.sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-        }
-        
-        // String sorting
-        const aStr = String(aVal).toLowerCase();
-        const bStr = String(bVal).toLowerCase();
-        return enemyState.sortDir === 'asc' ? 
-          aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+
+        return compareNullableValues(aVal, bVal, {
+          direction: enemyState.sortDir,
+          emptyStringIsNull: false
+        });
       });
     }
     

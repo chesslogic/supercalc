@@ -1,4 +1,9 @@
 // enemies/data.js — enemy data loading and state
+import {
+  getNextSortState,
+  normalizeSortDirection
+} from '../sort-utils.js';
+
 export const enemyState = {
   factions: [],
   units: [],
@@ -59,17 +64,18 @@ export function toggleActiveEnemyFaction(faction) {
 
 export function setEnemySortState(sortKey = null, sortDir = 'asc') {
   enemyState.sortKey = sortKey || null;
-  enemyState.sortDir = sortDir === 'desc' ? 'desc' : 'asc';
+  enemyState.sortDir = normalizeSortDirection(sortDir);
   notifyEnemyStateChange();
 }
 
 export function toggleEnemyTableSort(sortKey) {
-  if (enemyState.sortKey === sortKey) {
-    enemyState.sortDir = enemyState.sortDir === 'asc' ? 'desc' : 'asc';
-  } else {
-    enemyState.sortKey = sortKey || null;
-    enemyState.sortDir = 'asc';
-  }
+  const nextSort = getNextSortState({
+    currentKey: enemyState.sortKey,
+    currentDir: enemyState.sortDir,
+    nextKey: sortKey
+  });
+  enemyState.sortKey = nextSort.key;
+  enemyState.sortDir = nextSort.dir;
   notifyEnemyStateChange();
 }
 

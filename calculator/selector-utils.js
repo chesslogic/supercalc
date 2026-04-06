@@ -3,6 +3,15 @@ import {
   filterEnemiesByScope as filterEnemiesByResolvedScope,
   getEnemyPrimaryTargetTypeDefinition
 } from './enemy-scope.js';
+import {
+  buildSortModeLookup,
+  compareByComparators,
+  compareNullableValues,
+  compareText,
+  getSortModeOptions,
+  normalizeSortDirection,
+  normalizeSortModeId
+} from '../sort-utils.js';
 
 export const DEFAULT_ENEMY_DROPDOWN_SORT_MODE = 'targets';
 export const DEFAULT_ENEMY_DROPDOWN_SORT_DIR = 'asc';
@@ -18,26 +27,26 @@ const ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS = [
   }
 ];
 
-const ENEMY_DROPDOWN_SORT_MODE_LOOKUP = new Map();
-ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS.forEach((definition) => {
-  ENEMY_DROPDOWN_SORT_MODE_LOOKUP.set(definition.id, definition.id);
-});
-ENEMY_DROPDOWN_SORT_MODE_LOOKUP.set('target', 'targets');
-ENEMY_DROPDOWN_SORT_MODE_LOOKUP.set('type', 'targets');
-ENEMY_DROPDOWN_SORT_MODE_LOOKUP.set('types', 'targets');
-ENEMY_DROPDOWN_SORT_MODE_LOOKUP.set('alpha', 'alphabetical');
-ENEMY_DROPDOWN_SORT_MODE_LOOKUP.set('alphabetic', 'alphabetical');
+const ENEMY_DROPDOWN_SORT_MODE_LOOKUP = buildSortModeLookup(
+  ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS,
+  [
+    ['target', 'targets'],
+    ['type', 'targets'],
+    ['types', 'targets'],
+    ['alpha', 'alphabetical'],
+    ['alphabetic', 'alphabetical']
+  ]
+);
 
 const ENEMY_TARGET_TYPE_ORDER = new Map(
   ENEMY_TARGET_TYPE_DEFINITIONS.map((definition, index) => [definition.id, index])
 );
 
-function compareNullableNumbers(left, right) {
-  return Number(left ?? Number.MAX_SAFE_INTEGER) - Number(right ?? Number.MAX_SAFE_INTEGER);
-}
-
-function compareEnemyNames(left, right) {
-  return String(left?.name || '').localeCompare(String(right?.name || ''), undefined, {
+function compareEnemyNames(left, right, {
+  direction = 'asc'
+} = {}) {
+  return compareText(left?.name, right?.name, {
+    direction,
     sensitivity: 'base'
   });
 }
@@ -47,16 +56,19 @@ function getEnemyTargetTypeRank(enemy) {
 }
 
 export function normalizeEnemyDropdownSortMode(sortMode = DEFAULT_ENEMY_DROPDOWN_SORT_MODE) {
-  return ENEMY_DROPDOWN_SORT_MODE_LOOKUP.get(String(sortMode ?? '').trim().toLowerCase())
-    || DEFAULT_ENEMY_DROPDOWN_SORT_MODE;
+  return normalizeSortModeId(sortMode, {
+    defaultMode: DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
+    lookup: ENEMY_DROPDOWN_SORT_MODE_LOOKUP,
+    definitions: ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS
+  });
 }
 
 export function normalizeEnemyDropdownSortDir(sortDir = DEFAULT_ENEMY_DROPDOWN_SORT_DIR) {
-  return String(sortDir ?? '').trim().toLowerCase() === 'desc' ? 'desc' : DEFAULT_ENEMY_DROPDOWN_SORT_DIR;
+  return normalizeSortDirection(sortDir);
 }
 
 export function getEnemyDropdownSortModeOptions() {
-  return ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS.map((definition) => ({ ...definition }));
+  return getSortModeOptions(ENEMY_DROPDOWN_SORT_MODE_DEFINITIONS);
 }
 
 export function getEnemyDropdownQueryState(query, {
@@ -99,40 +111,44 @@ export function sortEnemyDropdownOptions(options = [], {
   });
 
   const originalIndexByEnemy = new Map(visibleOptions.map((enemy, index) => [enemy, index]));
-  const applySortDirection = (comparison) => (
-    normalizedSortDir === 'desc'
-      ? comparison * -1
-      : comparison
-  );
 
-  return [...visibleOptions].sort((left, right) => {
-    let comparison = compareNullableNumbers(
-      frontRankByFaction.get(String(left?.faction || '').trim()),
-      frontRankByFaction.get(String(right?.faction || '').trim())
-    );
-    if (comparison !== 0) {
-      return comparison;
-    }
-
-    if (normalizedSortMode === 'targets') {
-      comparison = applySortDirection(compareNullableNumbers(getEnemyTargetTypeRank(left), getEnemyTargetTypeRank(right)));
-      if (comparison !== 0) {
-        return comparison;
-      }
-    }
-
-    comparison = applySortDirection(compareEnemyNames(left, right));
-    if (comparison !== 0) {
-      return comparison;
-    }
-
-    if (normalizedSortMode !== 'targets') {
-      comparison = applySortDirection(compareNullableNumbers(getEnemyTargetTypeRank(left), getEnemyTargetTypeRank(right)));
-      if (comparison !== 0) {
-        return comparison;
-      }
-    }
-
-    return compareNullableNumbers(originalIndexByEnemy.get(left), originalIndexByEnemy.get(right));
-  });
+  return [...visibleOptions].sort((left, right) => compareByComparators(left, right, [
+    (currentLeft, currentRight) => compareNullableValues(
+      frontRankByFaction.get(String(currentLeft?.faction || '').trim()),
+      frontRankByFaction.get(String(currentRight?.faction || '').trim()),
+      { numeric: true }
+    ),
+    ...(normalizedSortMode === 'targets'
+      ? [
+        (currentLeft, currentRight) => compareNullableValues(
+          getEnemyTargetTypeRank(currentLeft),
+          getEnemyTargetTypeRank(currentRight),
+          {
+            numeric: true,
+            direction: normalizedSortDir
+          }
+        )
+      ]
+      : []),
+    (currentLeft, currentRight) => compareEnemyNames(currentLeft, currentRight, {
+      direction: normalizedSortDir
+    }),
+    ...(normalizedSortMode !== 'targets'
+      ? [
+        (currentLeft, currentRight) => compareNullableValues(
+          getEnemyTargetTypeRank(currentLeft),
+          getEnemyTargetTypeRank(currentRight),
+          {
+            numeric: true,
+            direction: normalizedSortDir
+          }
+        )
+      ]
+      : []),
+    (currentLeft, currentRight) => compareNullableValues(
+      originalIndexByEnemy.get(currentLeft),
+      originalIndexByEnemy.get(currentRight),
+      { numeric: true }
+    )
+  ]));
 }

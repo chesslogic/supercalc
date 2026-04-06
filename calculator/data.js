@@ -21,13 +21,16 @@ import {
   DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   getEnemyDropdownSortModeOptions,
-  normalizeEnemyDropdownSortDir,
   normalizeEnemyDropdownSortMode
 } from './selector-utils.js';
 import {
   DEFAULT_RECOMMENDATION_RANGE_METERS,
   normalizeRecommendationRangeMeters
 } from './recommendations.js';
+import {
+  getNextSortState,
+  normalizeSortDirection
+} from '../sort-utils.js';
 
 const DEFAULT_ENEMY_SORT = {
   key: 'zone_name',
@@ -209,7 +212,7 @@ export function setEnemyDropdownSortMode(sortMode) {
 }
 
 export function setEnemyDropdownSortDir(sortDir) {
-  calculatorState.enemyDropdownSortDir = normalizeEnemyDropdownSortDir(sortDir);
+  calculatorState.enemyDropdownSortDir = normalizeSortDirection(sortDir);
   notifyCalculatorStateChange();
 }
 
@@ -476,14 +479,13 @@ export function getSelectedExplosiveZones() {
 }
 
 export function toggleEnemySort(sortKey) {
-  if (calculatorState.enemySort.key === sortKey) {
-    calculatorState.enemySort.dir = calculatorState.enemySort.dir === 'asc' ? 'desc' : 'asc';
-    notifyCalculatorStateChange();
-    return;
-  }
-
-  calculatorState.enemySort.key = sortKey;
-  calculatorState.enemySort.dir = 'asc';
+  const nextSort = getNextSortState({
+    currentKey: calculatorState.enemySort.key,
+    currentDir: calculatorState.enemySort.dir,
+    nextKey: sortKey
+  });
+  calculatorState.enemySort.key = nextSort.key;
+  calculatorState.enemySort.dir = nextSort.dir;
   notifyCalculatorStateChange();
 }
 
@@ -499,7 +501,7 @@ export function setEnemySortState({
 } = {}) {
   calculatorState.enemySort = {
     key: String(key || DEFAULT_ENEMY_SORT.key),
-    dir: dir === 'desc' ? 'desc' : 'asc',
+    dir: normalizeSortDirection(dir),
     groupMode: groupMode === 'outcome' ? 'outcome' : 'none'
   };
   notifyCalculatorStateChange();
