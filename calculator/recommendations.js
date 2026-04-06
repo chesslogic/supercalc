@@ -856,6 +856,57 @@ function getRecommendationPackageComponentCount(recommendation) {
   return Math.max(1, componentCount || 0);
 }
 
+function getTargetRecommendationDisplaySignature(recommendation) {
+  const bestCandidate = recommendation?.bestCandidate;
+  return JSON.stringify({
+    zoneIndex: Number.isInteger(bestCandidate?.zoneIndex) ? bestCandidate.zoneIndex : null,
+    label: String(bestCandidate?.label || bestCandidate?.zone?.zone_name || ''),
+    matchedZoneNames: Array.isArray(bestCandidate?.matchedZoneNames) ? bestCandidate.matchedZoneNames : [],
+    isSequenceCandidate: Boolean(bestCandidate?.isSequenceCandidate),
+    outcomeKind: bestCandidate?.outcomeKind || 'none',
+    shotsToKill: bestCandidate?.shotsToKill ?? null,
+    ttkSeconds: bestCandidate?.ttkSeconds ?? null,
+    rangeStatus: bestCandidate?.rangeStatus || 'unknown',
+    rangeText: String(bestCandidate?.effectiveDistance?.text || ''),
+    marginPercent: recommendation?.marginPercent ?? null,
+    qualifiesForMargin: Boolean(recommendation?.qualifiesForMargin),
+    hasOneShotKill: Boolean(recommendation?.hasOneShotKill),
+    hasOneShotCritical: Boolean(recommendation?.hasOneShotCritical),
+    hasTwoShotCritical: Boolean(recommendation?.hasTwoShotCritical),
+    hasCriticalRecommendation: Boolean(recommendation?.hasCriticalRecommendation),
+    hasFastTtk: Boolean(recommendation?.hasFastTtk)
+  });
+}
+
+function isEquivalentSingleAttackTargetRecommendation(packageRecommendation, singleRecommendation) {
+  if (!packageRecommendation?.isCombinedPackage || singleRecommendation?.isCombinedPackage) {
+    return false;
+  }
+
+  const componentAttackKeys = new Set(
+    (Array.isArray(packageRecommendation?.packageComponents) ? packageRecommendation.packageComponents : [])
+      .map((component) => String(component?.attackKey || ''))
+      .filter(Boolean)
+  );
+  const singleAttackKey = getAttackRowKey(singleRecommendation?.attackRow);
+  if (!singleAttackKey || !componentAttackKeys.has(singleAttackKey)) {
+    return false;
+  }
+
+  return getTargetRecommendationDisplaySignature(packageRecommendation)
+    === getTargetRecommendationDisplaySignature(singleRecommendation);
+}
+
+function collapseEquivalentTargetAttackRecommendations(attackRecommendations = []) {
+  const sourceRecommendations = Array.isArray(attackRecommendations)
+    ? attackRecommendations.filter(Boolean)
+    : [];
+  return sourceRecommendations.filter((recommendation) => !sourceRecommendations.some((candidate) => (
+    candidate !== recommendation
+    && isEquivalentSingleAttackTargetRecommendation(recommendation, candidate)
+  )));
+}
+
 function compareZoneRecommendationCandidates(left, right) {
   let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
   if (comparison !== 0) {
@@ -1199,7 +1250,7 @@ function buildTargetRecommendationRows({
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
   return weapons
     .map((weapon) => {
-      const attackRecommendations = buildRecommendationAttackPackages(weapon, {
+      const attackRecommendations = collapseEquivalentTargetAttackRecommendations(buildRecommendationAttackPackages(weapon, {
         includeCombinedPackages: true
       })
         .map((attackPackage) => buildAttackRecommendation({
@@ -1235,7 +1286,7 @@ function buildTargetRecommendationRows({
             hasFastTtk: recommendation.candidates.some((candidate) => candidate.hasFastTtk),
             hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
           };
-        })
+        }))
         .sort(compareTargetAttackRowRecommendations);
 
       if (attackRecommendations.length === 0) {

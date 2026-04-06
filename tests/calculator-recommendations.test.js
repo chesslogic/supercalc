@@ -683,6 +683,37 @@ test('buildSelectedTargetRecommendationRows excludes shrapnel from conservative 
   );
 });
 
+test('buildSelectedTargetRecommendationRows prefers the original attack row when a package does not change the selected-part result', () => {
+  const enemy = {
+    name: 'Armor Dummy',
+    health: 1000,
+    zones: [
+      makeZone('core', { health: 500, isFatal: true, av: 5, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Heavy Round', {
+      rows: [
+        makeAttackRow('90mm SABOT_P', 500, 6),
+        makeExplosionAttackRow('90mm SABOT_P_IE', 50, 3)
+      ]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].attackName, '90mm SABOT_P');
+  assert.equal(rows[0].isCombinedPackage, false);
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].bestOutcomeKind, 'fatal');
+});
+
 test('buildSelectedTargetRecommendationRows keeps staged target paths when a combined package is best', () => {
   const enemy = {
     name: 'Sequenced Package Dummy',

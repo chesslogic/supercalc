@@ -402,6 +402,43 @@ test('renderRecommendationPanel explains combined firing packages in targeted re
   }
 });
 
+test('renderRecommendationPanel keeps the original attack-row wording when a package adds nothing to the selected part', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    weaponsState.groups = [
+      makeWeapon('Heavy Round', {
+        rows: [
+          makeAttackRow('90mm SABOT_P', 500, 6),
+          makeExplosionAttackRow('90mm SABOT_P_IE', 50, 3)
+        ]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Armor Dummy',
+      health: 1000,
+      zones: [
+        makeZone('core', { health: 500, isFatal: true, av: 5, toMainPercent: 1 })
+      ]
+    });
+
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+    const attackCell = cells.find((cell) => cell.textContent === '90mm SABOT_P');
+    assert.ok(attackCell);
+    assert.match(attackCell.title, /^Attack row:/i);
+    assert.doesNotMatch(attackCell.title, /Attack package:/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
 test('renderRecommendationPanel adds related routes for linked priority targets behind a selected outer part', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
