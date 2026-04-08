@@ -10,6 +10,10 @@ import {
   getSelectedExplosiveZoneIndices,
   getSelectedZone,
   getWeaponForSlot,
+  setRecommendationWeaponFilterMode,
+  toggleRecommendationWeaponFilterSub,
+  toggleRecommendationWeaponFilterType,
+  clearRecommendationWeaponFilters
 } from './data.js';
 import { buildHallOfFameEntries, buildOverviewRows, getAttackRowKey } from './compare-utils.js';
 import { splitAttacksByApplication } from './attack-types.js';
@@ -27,7 +31,7 @@ import { getZoneRelationContext } from '../enemies/data.js';
 import { renderResultPanel } from './result-panel.js';
 import { formatTtkSeconds } from './summary.js';
 import { getZoneOutcomeDescription, getZoneOutcomeLabel, summarizeEnemyTargetScenario } from './zone-damage.js';
-import { renderEnemyDetails } from './rendering.js';
+import { refreshEnemyCalculationViews, renderEnemyDetails } from './rendering.js';
 import { state as weaponsState } from '../weapons/data.js';
 import {
   buildRelatedTargetRecommendationRows,
@@ -859,6 +863,7 @@ const RECOMMENDATION_MARGIN_THRESHOLD_PERCENT = Math.round(RECOMMENDATION_MARGIN
 const RECOMMENDATION_DISPLAY_LIMIT = 24;
 const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
 const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
+const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
 const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
@@ -941,6 +946,171 @@ function getRecommendationCoreType(row) {
   return RECOMMENDATION_CORE_TYPE_ORDER.includes(normalizedType)
     ? normalizedType
     : null;
+}
+
+function normalizeRecommendationWeaponSub(sub) {
+  return String(sub ?? '').trim().toLowerCase();
+}
+
+function getRecommendationFilterChipLabel(value, kind = 'type') {
+  const normalizedValue = String(value ?? '').trim();
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return kind === 'sub'
+    ? normalizedValue.toUpperCase()
+    : normalizedValue.charAt(0).toUpperCase() + normalizedValue.slice(1);
+}
+
+function getAvailableRecommendationWeaponTypes(weapons = []) {
+  const presentTypes = new Set(
+    (Array.isArray(weapons) ? weapons : [])
+      .map((weapon) => normalizeRecommendationWeaponType(weapon?.type))
+      .filter(Boolean)
+  );
+
+  return RECOMMENDATION_FILTER_TYPE_ORDER.filter((type) => presentTypes.has(type));
+}
+
+function getAvailableRecommendationWeaponSubs(weapons = []) {
+  return [...new Set(
+    (Array.isArray(weapons) ? weapons : [])
+      .map((weapon) => normalizeRecommendationWeaponSub(weapon?.sub))
+      .filter(Boolean)
+  )].sort((left, right) => left.localeCompare(right));
+}
+
+function hasActiveRecommendationWeaponFilters() {
+  return calculatorState.recommendationWeaponFilterTypes.length > 0
+    || calculatorState.recommendationWeaponFilterSubs.length > 0;
+}
+
+function doesWeaponMatchRecommendationFilters(weapon) {
+  const hasTypeFilters = calculatorState.recommendationWeaponFilterTypes.length > 0;
+  const hasSubFilters = calculatorState.recommendationWeaponFilterSubs.length > 0;
+  if (!hasTypeFilters && !hasSubFilters) {
+    return true;
+  }
+
+  const normalizedType = normalizeRecommendationWeaponType(weapon?.type);
+  const normalizedSub = normalizeRecommendationWeaponSub(weapon?.sub);
+  const matchesType = hasTypeFilters && calculatorState.recommendationWeaponFilterTypes.includes(normalizedType);
+  const matchesSub = hasSubFilters && calculatorState.recommendationWeaponFilterSubs.includes(normalizedSub);
+  const matchesAnyFilter = matchesType || matchesSub;
+
+  return calculatorState.recommendationWeaponFilterMode === 'include'
+    ? matchesAnyFilter
+    : !matchesAnyFilter;
+}
+
+function getFilteredRecommendationWeapons(weapons = []) {
+  return (Array.isArray(weapons) ? weapons : []).filter((weapon) => doesWeaponMatchRecommendationFilters(weapon));
+}
+
+function getRecommendationWeaponFilterSummaryText() {
+  if (!hasActiveRecommendationWeaponFilters()) {
+    return '';
+  }
+
+  const labels = [
+    ...calculatorState.recommendationWeaponFilterTypes.map((type) => getRecommendationFilterChipLabel(type, 'type')),
+    ...calculatorState.recommendationWeaponFilterSubs.map((sub) => getRecommendationFilterChipLabel(sub, 'sub'))
+  ];
+  if (labels.length === 0) {
+    return '';
+  }
+
+  return calculatorState.recommendationWeaponFilterMode === 'include'
+    ? ` Weapon filters: showing only ${labels.join(', ')}.`
+    : ` Weapon filters: hiding ${labels.join(', ')}.`;
+}
+
+function createRecommendationFilterChip({
+  label,
+  active = false,
+  onClick
+}) {
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = `chip${active ? ' active' : ''}`;
+  chip.textContent = label;
+  chip.addEventListener('click', () => {
+    onClick?.();
+    refreshEnemyCalculationViews();
+  });
+  return chip;
+}
+
+function createRecommendationFilterChipRow({
+  label,
+  chips = []
+}) {
+  const row = document.createElement('div');
+  row.className = 'chiprow';
+
+  const rowLabel = document.createElement('span');
+  rowLabel.className = 'muted';
+  rowLabel.textContent = label;
+  row.appendChild(rowLabel);
+
+  chips.forEach((chip) => row.appendChild(chip));
+  return row;
+}
+
+function renderRecommendationWeaponFilterControls(weapons = []) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'calc-recommend-filters';
+
+  const modeRow = createRecommendationFilterChipRow({
+    label: 'Weapon filters',
+    chips: [
+      createRecommendationFilterChip({
+        label: 'Exclude',
+        active: calculatorState.recommendationWeaponFilterMode === 'exclude',
+        onClick: () => setRecommendationWeaponFilterMode('exclude')
+      }),
+      createRecommendationFilterChip({
+        label: 'Include',
+        active: calculatorState.recommendationWeaponFilterMode === 'include',
+        onClick: () => setRecommendationWeaponFilterMode('include')
+      }),
+      ...(hasActiveRecommendationWeaponFilters()
+        ? [createRecommendationFilterChip({
+            label: 'Clear',
+            active: false,
+            onClick: () => clearRecommendationWeaponFilters()
+          })]
+        : [])
+    ]
+  });
+  wrapper.appendChild(modeRow);
+
+  const typeChips = getAvailableRecommendationWeaponTypes(weapons).map((type) => createRecommendationFilterChip({
+    label: getRecommendationFilterChipLabel(type, 'type'),
+    active: calculatorState.recommendationWeaponFilterTypes.includes(type),
+    onClick: () => toggleRecommendationWeaponFilterType(type)
+  }));
+  if (typeChips.length > 0) {
+    wrapper.appendChild(createRecommendationFilterChipRow({
+      label: 'Type',
+      chips: typeChips
+    }));
+  }
+
+  const subChips = getAvailableRecommendationWeaponSubs(weapons).map((sub) => createRecommendationFilterChip({
+    label: getRecommendationFilterChipLabel(sub, 'sub'),
+    active: calculatorState.recommendationWeaponFilterSubs.includes(sub),
+    onClick: () => toggleRecommendationWeaponFilterSub(sub)
+  }));
+  if (subChips.length > 0) {
+    wrapper.appendChild(createRecommendationFilterChipRow({
+      label: 'Subtype',
+      chips: subChips
+    }));
+  }
+
+  return wrapper;
 }
 
 function getRecommendationDisplayTargetKey(row) {
@@ -1531,6 +1701,7 @@ function renderRecommendationSubsection({
   titleText,
   summaryText,
   summaryTitle = '',
+  controls = null,
   rows,
   usingFallbackRows = false,
   emptyStateText = 'No recommendation rows are available for this target.'
@@ -1551,6 +1722,10 @@ function renderRecommendationSubsection({
       summary.title = summaryTitle;
     }
     section.appendChild(summary);
+  }
+
+  if (controls) {
+    section.appendChild(controls);
   }
 
   if (rows.length === 0) {
@@ -1640,55 +1815,37 @@ export function renderRecommendationPanel(container, enemy) {
     return;
   }
 
+  const getEngagementRangeMetersForRecommendationWeapon = (weapon) => {
+    const weaponA = getWeaponForSlot('A');
+    const weaponB = getWeaponForSlot('B');
+    if (weaponA && weaponA.name === weapon?.name) {
+      return getEngagementRangeMeters('A');
+    }
+    if (weaponB && weaponB.name === weapon?.name) {
+      return getEngagementRangeMeters('B');
+    }
+    return highlightRangeFloorMeters;
+  };
+  const overallRecommendationWeapons = getFilteredRecommendationWeapons(weaponsState.groups);
   const recommendationRows = buildWeaponRecommendationRows({
     enemy,
-    weapons: weaponsState.groups,
+    weapons: overallRecommendationWeapons,
     rangeFloorMeters: highlightRangeFloorMeters,
-    getEngagementRangeMetersForWeapon: (weapon) => {
-      const weaponA = getWeaponForSlot('A');
-      const weaponB = getWeaponForSlot('B');
-      if (weaponA && weaponA.name === weapon?.name) {
-        return getEngagementRangeMeters('A');
-      }
-      if (weaponB && weaponB.name === weapon?.name) {
-        return getEngagementRangeMeters('B');
-      }
-      return highlightRangeFloorMeters;
-    }
+    getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
   });
   const selectedTargetRows = buildSelectedTargetRecommendationRows({
     enemy,
     weapons: weaponsState.groups,
     rangeFloorMeters: highlightRangeFloorMeters,
     selectedZoneIndex: calculatorState.selectedZoneIndex,
-    getEngagementRangeMetersForWeapon: (weapon) => {
-      const weaponA = getWeaponForSlot('A');
-      const weaponB = getWeaponForSlot('B');
-      if (weaponA && weaponA.name === weapon?.name) {
-        return getEngagementRangeMeters('A');
-      }
-      if (weaponB && weaponB.name === weapon?.name) {
-        return getEngagementRangeMeters('B');
-      }
-      return highlightRangeFloorMeters;
-    }
+    getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
   }).slice(0, 12);
   const relatedTargetRows = buildRelatedTargetRecommendationRows({
     enemy,
     weapons: weaponsState.groups,
     rangeFloorMeters: highlightRangeFloorMeters,
     relatedZoneIndices: relatedTargetZoneIndices,
-    getEngagementRangeMetersForWeapon: (weapon) => {
-      const weaponA = getWeaponForSlot('A');
-      const weaponB = getWeaponForSlot('B');
-      if (weaponA && weaponA.name === weapon?.name) {
-        return getEngagementRangeMeters('A');
-      }
-      if (weaponB && weaponB.name === weapon?.name) {
-        return getEngagementRangeMeters('B');
-      }
-      return highlightRangeFloorMeters;
-    }
+    getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
   }).slice(0, 12);
   const flaggedRows = recommendationRows.filter((row) => (
     row.qualifiesForMargin
@@ -1696,14 +1853,34 @@ export function renderRecommendationPanel(container, enemy) {
     || row.hasFastTtk
     || row.penetratesAll
   ));
-  const usingFallbackRows = flaggedRows.length === 0;
+  const hasFilteredOverallRows = recommendationRows.length > 0;
+  const usingFallbackRows = hasFilteredOverallRows && flaggedRows.length === 0;
   const {
     rows: displayRows,
     supplementedCoreTypes
-  } = buildOverallRecommendationDisplayRows(
-    flaggedRows.length > 0 ? flaggedRows : recommendationRows,
-    RECOMMENDATION_DISPLAY_LIMIT
-  );
+  } = hasFilteredOverallRows
+    ? buildOverallRecommendationDisplayRows(
+        flaggedRows.length > 0 ? flaggedRows : recommendationRows,
+        RECOMMENDATION_DISPLAY_LIMIT
+      )
+    : { rows: [], supplementedCoreTypes: [] };
+  const overallRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText();
+  const overallRecommendationFilterControls = renderRecommendationWeaponFilterControls(weaponsState.groups);
+  const overallRecommendationSummaryText = hasFilteredOverallRows
+    ? (
+        flaggedRows.length > 0
+          ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
+          : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
+      )
+    : hasActiveRecommendationWeaponFilters()
+      ? `No overall recommendation rows match the current weapon filters using the current engagement settings (${recommendationRangeSummary}).${overallRecommendationFilterSummaryText}`
+      : `No overall recommendation rows are available using the current engagement settings (${recommendationRangeSummary}).`;
+  const overallRecommendationSummaryTitle = hasFilteredOverallRows
+    ? getRecommendationSummaryTitle(!usingFallbackRows)
+    : '';
+  const overallRecommendationEmptyStateText = hasActiveRecommendationWeaponFilters()
+    ? 'No recommendation rows match the current weapon filters.'
+    : 'No recommendation rows are available right now.';
 
   if (selectedZone) {
     renderRecommendationSubsection({
@@ -1740,12 +1917,12 @@ export function renderRecommendationPanel(container, enemy) {
   renderRecommendationSubsection({
     body,
     titleText: 'Overall recommendations',
-    summaryText: flaggedRows.length > 0
-      ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}`
-      : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}`,
-    summaryTitle: getRecommendationSummaryTitle(!usingFallbackRows),
+    summaryText: overallRecommendationSummaryText,
+    summaryTitle: overallRecommendationSummaryTitle,
+    controls: overallRecommendationFilterControls,
     rows: displayRows,
-    usingFallbackRows
+    usingFallbackRows,
+    emptyStateText: overallRecommendationEmptyStateText
   });
   panel.appendChild(body);
   container.appendChild(panel);

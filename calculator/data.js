@@ -44,6 +44,7 @@ export const DEFAULT_ENEMY_TARGET_TYPES = [...DEFAULT_ENEMY_TARGET_TYPE_IDS];
 export { DEFAULT_WEAPON_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_DIR };
+export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'exclude';
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -68,6 +69,20 @@ function normalizeHitCount(value) {
   }
 
   return Math.max(1, Math.round(numeric));
+}
+
+function normalizeRecommendationWeaponFilterMode(mode) {
+  return String(mode ?? '').trim().toLowerCase() === 'include'
+    ? 'include'
+    : DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE;
+}
+
+function normalizeRecommendationWeaponFilterValues(values = []) {
+  return [...new Set(
+    (Array.isArray(values) ? values : [])
+      .map((value) => String(value ?? '').trim().toLowerCase())
+      .filter(Boolean)
+  )];
 }
 
 let calculatorStateChangeListener = null;
@@ -99,6 +114,9 @@ export const calculatorState = {
   selectedEnemy: null,
   selectedZoneIndex: null,
   selectedExplosiveZoneIndices: [],
+  recommendationWeaponFilterMode: DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE,
+  recommendationWeaponFilterTypes: [],
+  recommendationWeaponFilterSubs: [],
   selectedAttackKeys: {
     A: [],
     B: []
@@ -432,6 +450,56 @@ export function getSelectedZone() {
 
 export function getSelectedExplosiveZoneIndices() {
   return [...calculatorState.selectedExplosiveZoneIndices];
+}
+
+export function setRecommendationWeaponFilterMode(mode) {
+  calculatorState.recommendationWeaponFilterMode = normalizeRecommendationWeaponFilterMode(mode);
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationWeaponFilterMode;
+}
+
+export function setRecommendationWeaponFilterTypes(types = []) {
+  calculatorState.recommendationWeaponFilterTypes = normalizeRecommendationWeaponFilterValues(types);
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterTypes];
+}
+
+export function toggleRecommendationWeaponFilterType(type) {
+  const normalizedType = normalizeRecommendationWeaponFilterValues([type])[0];
+  if (!normalizedType) {
+    return [...calculatorState.recommendationWeaponFilterTypes];
+  }
+
+  calculatorState.recommendationWeaponFilterTypes = calculatorState.recommendationWeaponFilterTypes.includes(normalizedType)
+    ? calculatorState.recommendationWeaponFilterTypes.filter((value) => value !== normalizedType)
+    : [...calculatorState.recommendationWeaponFilterTypes, normalizedType];
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterTypes];
+}
+
+export function setRecommendationWeaponFilterSubs(subs = []) {
+  calculatorState.recommendationWeaponFilterSubs = normalizeRecommendationWeaponFilterValues(subs);
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterSubs];
+}
+
+export function toggleRecommendationWeaponFilterSub(sub) {
+  const normalizedSub = normalizeRecommendationWeaponFilterValues([sub])[0];
+  if (!normalizedSub) {
+    return [...calculatorState.recommendationWeaponFilterSubs];
+  }
+
+  calculatorState.recommendationWeaponFilterSubs = calculatorState.recommendationWeaponFilterSubs.includes(normalizedSub)
+    ? calculatorState.recommendationWeaponFilterSubs.filter((value) => value !== normalizedSub)
+    : [...calculatorState.recommendationWeaponFilterSubs, normalizedSub];
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterSubs];
+}
+
+export function clearRecommendationWeaponFilters() {
+  calculatorState.recommendationWeaponFilterTypes = [];
+  calculatorState.recommendationWeaponFilterSubs = [];
+  notifyCalculatorStateChange();
 }
 
 export function setSelectedExplosiveZone(zoneIndex, selected) {

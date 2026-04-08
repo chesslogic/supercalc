@@ -1252,6 +1252,12 @@ tbody tr:hover {
   gap:8px;
 }
 
+.calc-recommend-filters{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
 .calc-recommend-section-title{
   font-size:13px;
   font-weight:700;

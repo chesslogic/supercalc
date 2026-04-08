@@ -563,7 +563,7 @@
       ],
       "health": 750,
       "scope_tags": [
-        "chaff"
+        "medium"
       ]
     },
     "Brawler": {
@@ -1180,7 +1180,7 @@
       ],
       "health": 3500,
       "scope_tags": [
-        "tank"
+        "objective"
       ]
     },
     "Fabricator": {
@@ -3052,7 +3052,7 @@
       ],
       "health": 500,
       "scope_tags": [
-        "tank"
+        "medium"
       ]
     },
     "Rocket Devastator": {

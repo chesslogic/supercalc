@@ -230,10 +230,14 @@ test('parser emits scope tags and selector visibility metadata for curated units
       'content/fac_bugs/elite/stalker': buildFixtureUnit('Stalker', 800),
       'content/fac_bugs/tanks/charger': buildFixtureUnit('Charger', 2400),
       'content/fac_bugs/giants/dragonroach': buildFixtureUnit('Dragonroach', 6500),
+      'content/fac_cyborgs/berserker/berserker': buildFixtureUnit('Berserker', 750),
+      'content/fac_cyborgs/dropship/dropship': buildFixtureUnit('Dropship', 3500),
       'content/fac_cyborgs/objectives/ballistic_missile': buildFixtureUnit('Ballistic Missile', 2100),
+      'content/fac_cyborgs/reinforced_scout_strider/reinforced_scout_strider': buildFixtureUnit('Reinforced Scout Strider', 500),
       'content/fac_illuminate/defense/lightning_spire': buildFixtureUnit('Lightning Spire', 500),
       'content/fac_illuminate/units/obtruder': buildFixtureUnit('Obtruder', 400),
       'content/fac_illuminate/giants/leviathan': buildFixtureUnit('Leviathan', 15000),
+      'content/fac_illuminate/warp_ship/warp_ship': buildFixtureUnit('Warp Ship', 3500),
       'content/fac_illuminate/units/xenobite_ardent': buildFixtureUnit('Xenobite Ardent', 800)
     };
 
@@ -250,10 +254,14 @@ test('parser emits scope tags and selector visibility metadata for curated units
     assert.deepEqual(parsed.Terminid.Stalker.scope_tags, ['elite']);
     assert.deepEqual(parsed.Terminid.Charger.scope_tags, ['tank']);
     assert.deepEqual(parsed.Terminid.Dragonroach.scope_tags, ['giant']);
+    assert.deepEqual(parsed.Automaton.Berserker.scope_tags, ['medium']);
+    assert.deepEqual(parsed.Automaton.Dropship.scope_tags, ['objective']);
     assert.deepEqual(parsed.Automaton['Ballistic Missile'].scope_tags, ['objective']);
+    assert.deepEqual(parsed.Automaton['Reinforced Scout Strider'].scope_tags, ['medium']);
     assert.deepEqual(parsed.Illuminate['Lightning Spire'].scope_tags, ['structure']);
     assert.deepEqual(parsed.Illuminate.Obtruder.scope_tags, ['chaff']);
     assert.deepEqual(parsed.Illuminate.Leviathan.scope_tags, ['giant']);
+    assert.deepEqual(parsed.Illuminate['Warp Ship'].scope_tags, ['objective']);
     assert.deepEqual(parsed.Illuminate['Xenobite Ardent'].scope_tags, ['tank']);
     assert.equal(parsed.Illuminate['Xenobite Ardent'].show_in_selector, false);
   } finally {
@@ -774,6 +782,10 @@ test('checked-in enemydata keeps curated enemy zone names', () => {
 test('checked-in enemydata keeps curated enemy scope tags', () => {
   const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
 
+  assert.deepEqual(enemydata.Automaton.Berserker.scope_tags, ['medium']);
+  assert.deepEqual(enemydata.Automaton.Dropship.scope_tags, ['objective']);
+  assert.deepEqual(enemydata.Automaton['Reinforced Scout Strider'].scope_tags, ['medium']);
   assert.deepEqual(enemydata.Illuminate.Obtruder.scope_tags, ['chaff']);
+  assert.deepEqual(enemydata.Illuminate['Warp Ship'].scope_tags, ['objective']);
   assert.equal(enemydata.Illuminate['Xenobite Ardent'].show_in_selector, false);
 });

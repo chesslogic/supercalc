@@ -46,6 +46,9 @@ const {
   setEnemySortState,
   setEnemyTableMode,
   setOverviewScope,
+  setRecommendationWeaponFilterMode,
+  setRecommendationWeaponFilterSubs,
+  setRecommendationWeaponFilterTypes,
   setRecommendationRangeMeters,
   setSelectedAttackKeys,
   setSelectedEnemy,
@@ -204,6 +207,9 @@ function snapshotCalculatorState() {
     selectedEnemy: calculatorState.selectedEnemy,
     selectedZoneIndex: calculatorState.selectedZoneIndex,
     selectedExplosiveZoneIndices: [...calculatorState.selectedExplosiveZoneIndices],
+    recommendationWeaponFilterMode: calculatorState.recommendationWeaponFilterMode,
+    recommendationWeaponFilterTypes: [...calculatorState.recommendationWeaponFilterTypes],
+    recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
     selectedAttackKeys: {
       A: [...calculatorState.selectedAttackKeys.A],
       B: [...calculatorState.selectedAttackKeys.B]
@@ -232,6 +238,9 @@ function restoreCalculatorState(snapshot) {
   calculatorState.selectedEnemy = snapshot.selectedEnemy;
   calculatorState.selectedZoneIndex = snapshot.selectedZoneIndex;
   calculatorState.selectedExplosiveZoneIndices = [...snapshot.selectedExplosiveZoneIndices];
+  calculatorState.recommendationWeaponFilterMode = snapshot.recommendationWeaponFilterMode;
+  calculatorState.recommendationWeaponFilterTypes = [...snapshot.recommendationWeaponFilterTypes];
+  calculatorState.recommendationWeaponFilterSubs = [...snapshot.recommendationWeaponFilterSubs];
   calculatorState.selectedAttackKeys = {
     A: [...snapshot.selectedAttackKeys.A],
     B: [...snapshot.selectedAttackKeys.B]
@@ -312,6 +321,9 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   setSelectedEnemy(enemy);
   setSelectedZoneIndex(1);
   setSelectedExplosiveZoneIndices([0, 1]);
+  setRecommendationWeaponFilterMode('include');
+  setRecommendationWeaponFilterTypes(['primary', 'support']);
+  setRecommendationWeaponFilterSubs(['sg']);
   setEnemySortState({ key: 'health', dir: 'desc', groupMode: 'outcome' });
 
   applyWeaponFilterState({
@@ -339,6 +351,9 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   assert.equal(params.get('cen'), 'Target Dummy');
   assert.equal(params.get('csz'), '1');
   assert.equal(params.has('cez'), false);
+  assert.equal(params.get('crfm'), 'include');
+  assert.deepEqual(JSON.parse(params.get('crft')), ['primary', 'support']);
+  assert.deepEqual(JSON.parse(params.get('crfs')), ['sg']);
   assert.deepEqual(JSON.parse(params.get('caa')), [1]);
   assert.deepEqual(JSON.parse(params.get('cab')), [0]);
   assert.deepEqual(JSON.parse(params.get('cha')), { 1: 3 });
@@ -396,6 +411,9 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   setSelectedEnemy(enemy);
   setSelectedZoneIndex(0);
   setSelectedExplosiveZoneIndices([0]);
+  setRecommendationWeaponFilterMode('include');
+  setRecommendationWeaponFilterTypes(['support']);
+  setRecommendationWeaponFilterSubs(['spc']);
   setEnemySortState({ key: 'AV', dir: 'desc', groupMode: 'outcome' });
   applyWeaponFilterState({
     searchQuery: 'rail',
@@ -427,6 +445,9 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   setSelectedEnemy(null);
   setSelectedZoneIndex(null);
   setSelectedExplosiveZoneIndices([]);
+  setRecommendationWeaponFilterMode('exclude');
+  setRecommendationWeaponFilterTypes([]);
+  setRecommendationWeaponFilterSubs([]);
   setEnemySortState({ key: 'zone_name', dir: 'asc', groupMode: 'none' });
   applyWeaponFilterState({
     searchQuery: '',
@@ -460,6 +481,9 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.equal(calculatorState.selectedEnemy?.name, 'Practice Hulk');
   assert.equal(calculatorState.selectedZoneIndex, 0);
   assert.deepEqual(calculatorState.selectedExplosiveZoneIndices, [0]);
+  assert.equal(calculatorState.recommendationWeaponFilterMode, 'include');
+  assert.deepEqual(calculatorState.recommendationWeaponFilterTypes, ['support']);
+  assert.deepEqual(calculatorState.recommendationWeaponFilterSubs, ['spc']);
   assert.deepEqual(calculatorState.selectedAttackKeys.A, [attackKey]);
   assert.equal(calculatorState.attackHitCounts.A[attackKey], 4);
   assert.deepEqual(calculatorState.enemySort, { key: 'AV', dir: 'desc', groupMode: 'outcome' });

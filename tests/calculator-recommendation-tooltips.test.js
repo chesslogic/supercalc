@@ -745,3 +745,127 @@ test('renderRecommendationPanel backfills core weapon-type coverage in overall r
     weaponsState.groups = previousGroups;
   }
 });
+
+test('renderRecommendationPanel excludes filtered weapon families from overall recommendations', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'exclude';
+    calculatorState.recommendationWeaponFilterTypes = ['support', 'stratagem'];
+    calculatorState.recommendationWeaponFilterSubs = ['rl'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 1,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      }),
+      makeWeapon('Orbital Precision Strike', {
+        index: 2,
+        type: 'Stratagem',
+        sub: 'ORB',
+        rpm: 60,
+        rows: [makeAttackRow('Orbital Strike', 500, 6)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual(weaponNames, ['Liberator']);
+    assert.match(summary?.textContent || '', /weapon filters: hiding support, stratagem, rl/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel keeps targeted recommendations unfiltered when overall recommendations whitelist a subtype', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterSubs = ['ar'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 1,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Scoped Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('torso', { health: 300, av: 2, toMainPercent: 0.5 })
+      ]
+    });
+
+    const summaries = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'));
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const targetedRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const overallRows = collectElements(tables[1], (element) => element.tagName === 'TR').slice(1);
+    const targetedWeaponNames = targetedRows.map((row) => row.children[0]?.textContent || '');
+    const overallWeaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.ok(targetedWeaponNames.includes('Liberator'));
+    assert.ok(targetedWeaponNames.includes('Recoilless Rifle'));
+    assert.deepEqual(overallWeaponNames, ['Liberator']);
+    assert.match(summaries[1]?.textContent || '', /weapon filters: showing only ar/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    weaponsState.groups = previousGroups;
+  }
+});

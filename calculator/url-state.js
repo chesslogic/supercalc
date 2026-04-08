@@ -4,6 +4,7 @@ import {
   DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_OVERVIEW_SCOPE,
+  DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE,
   DEFAULT_WEAPON_SORT_MODE,
   getEngagementRangeMeters,
   getSelectedAttackKeys,
@@ -21,6 +22,9 @@ import {
   setEnemySortState,
   setEnemyTableMode,
   setOverviewScope,
+  setRecommendationWeaponFilterMode,
+  setRecommendationWeaponFilterSubs,
+  setRecommendationWeaponFilterTypes,
   setRecommendationRangeMeters,
   setSelectedAttackKeys,
   setSelectedEnemy,
@@ -57,6 +61,9 @@ const DEFAULT_CALCULATOR_URL_STATE = {
   selectedEnemy: null,
   selectedZoneIndex: null,
   selectedExplosiveZoneIndices: [],
+  recommendationWeaponFilterMode: DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE,
+  recommendationWeaponFilterTypes: [],
+  recommendationWeaponFilterSubs: [],
   selectedAttackKeysA: null,
   selectedAttackKeysB: null,
   attackHitCountsA: null,
@@ -102,6 +109,9 @@ const URL_PARAM_KEYS = {
   selectedEnemy: 'cen',
   selectedZoneIndex: 'csz',
   selectedExplosiveZoneIndices: 'cez',
+  recommendationWeaponFilterMode: 'crfm',
+  recommendationWeaponFilterTypes: 'crft',
+  recommendationWeaponFilterSubs: 'crfs',
   selectedAttackKeysA: 'caa',
   selectedAttackKeysB: 'cab',
   attackHitCountsA: 'cha',
@@ -404,6 +414,9 @@ export function buildUrlStateSnapshot({
         ? calculatorState.selectedZoneIndex
         : null,
       selectedExplosiveZoneIndices: explosiveZoneIndices,
+      recommendationWeaponFilterMode: calculatorState.recommendationWeaponFilterMode,
+      recommendationWeaponFilterTypes: [...calculatorState.recommendationWeaponFilterTypes],
+      recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
       selectedAttackKeysA: encodedAttackKeysA,
       selectedAttackKeysB: encodedAttackKeysB,
       attackHitCountsA: encodedAttackHitCountsA,
@@ -441,6 +454,9 @@ export function encodeUrlState({
   setParam(params, URL_PARAM_KEYS.selectedEnemy, calculator.selectedEnemy);
   setParam(params, URL_PARAM_KEYS.selectedZoneIndex, calculator.selectedZoneIndex);
   setJsonParam(params, URL_PARAM_KEYS.selectedExplosiveZoneIndices, calculator.selectedExplosiveZoneIndices, DEFAULT_CALCULATOR_URL_STATE.selectedExplosiveZoneIndices);
+  setParam(params, URL_PARAM_KEYS.recommendationWeaponFilterMode, calculator.recommendationWeaponFilterMode, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterMode);
+  setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterTypes, calculator.recommendationWeaponFilterTypes, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterTypes);
+  setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs, calculator.recommendationWeaponFilterSubs, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysA, calculator.selectedAttackKeysA);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysB, calculator.selectedAttackKeysB);
   setJsonParam(params, URL_PARAM_KEYS.attackHitCountsA, calculator.attackHitCountsA);
@@ -609,6 +625,21 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
   if (selectedExplosiveZoneIndices.present) {
     setSelectedExplosiveZoneIndices(normalizeIntegerArray(selectedExplosiveZoneIndices.value));
   }
+
+  setRecommendationWeaponFilterMode(
+    params.get(URL_PARAM_KEYS.recommendationWeaponFilterMode)
+      || DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterMode
+  );
+  setRecommendationWeaponFilterTypes(
+    params.has(URL_PARAM_KEYS.recommendationWeaponFilterTypes)
+      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterTypes).value, { lowercase: true })
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterTypes
+  );
+  setRecommendationWeaponFilterSubs(
+    params.has(URL_PARAM_KEYS.recommendationWeaponFilterSubs)
+      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs).value, { lowercase: true })
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs
+  );
 
   setEnemySortState({
     key: params.get(URL_PARAM_KEYS.enemySortKey) || DEFAULT_CALCULATOR_URL_STATE.enemySort.key,
