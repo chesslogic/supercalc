@@ -133,7 +133,7 @@ const URL_PARAM_KEYS = {
 const URL_STATE_PARAM_NAMES = new Set(Object.values(URL_PARAM_KEYS));
 
 function normalizeTabId(tabId) {
-  return ['weapons', 'enemies', 'calculator'].includes(tabId) ? tabId : 'calculator';
+  return ['weapons', 'enemies', 'calculator', 'references'].includes(tabId) ? tabId : 'calculator';
 }
 
 function isDeepEqual(left, right) {

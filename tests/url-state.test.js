@@ -498,6 +498,16 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.equal(enemyState.sortDir, 'desc');
 }));
 
+test('encodeUrlState and hydrateUrlState preserve the references tab', { concurrency: false }, () => withStateFixture(() => {
+  const params = encodeUrlState({ activeTab: 'references' });
+
+  assert.equal(params.get('tab'), 'references');
+
+  const hydrated = hydrateUrlState(params);
+
+  assert.equal(hydrated.activeTab, 'references');
+}));
+
 test('hydrateUrlState still supports legacy full attack-key payloads', { concurrency: false }, () => withStateFixture(() => {
   const breaker = makeWeapon('Breaker', {
     code: 'SG-225',

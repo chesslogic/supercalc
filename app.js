@@ -2,6 +2,7 @@ import {
   loadCSV,
   loadFromText,
   ingestMatrix,
+  PUBLISHED_CSV_URL,
   setWeaponStateChangeListener,
   state as weaponsState
 } from './weapons/data.js';
@@ -49,13 +50,19 @@ let activeTab = 'calculator';
 const sections = {
   weapons: document.getElementById('tab-weapons'),
   enemies: document.getElementById('tab-enemies'),
-  calculator: document.getElementById('tab-calculator')
+  calculator: document.getElementById('tab-calculator'),
+  references: document.getElementById('tab-references')
 };
+
+const referencesWeaponDataLink = document.getElementById('references-weapon-data-link');
+if (referencesWeaponDataLink) {
+  referencesWeaponDataLink.href = PUBLISHED_CSV_URL;
+}
 
 async function activateTab(tab, {
   syncHistory = true
 } = {}) {
-  activeTab = ['weapons', 'enemies', 'calculator'].includes(tab) ? tab : 'calculator';
+  activeTab = ['weapons', 'enemies', 'calculator', 'references'].includes(tab) ? tab : 'calculator';
   document.querySelectorAll('.tab').forEach((button) => {
     button.classList.toggle('active', button.dataset.tab === activeTab);
   });
