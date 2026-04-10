@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState, getEnemyUnitByName, getZoneRelationContext, processEnemyData } from '../enemies/data.js';
@@ -619,6 +620,8 @@ test('enemy dropdown item model exposes faction, subgroup, and target badges', (
   assert.equal(model.frontBadge.text, 'BUG');
   assert.equal(model.frontBadge.label, 'Terminids');
   assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Predator Strain']);
+  assert.equal(model.subgroupBadges[0].iconSrc, 'assets/icons/subfactions/predator-strain.svg');
+  assert.equal(existsSync(new URL('../assets/icons/subfactions/predator-strain.svg', import.meta.url)), true);
   assert.equal(model.armyRoleBadge, null);
   assert.deepEqual(model.targetBadge, {
     id: 'elite',
@@ -643,6 +646,13 @@ test('enemy dropdown item model can expose overlapping Illuminate subgroups and 
     model.subgroupBadges.map((badge) => badge.text),
     ['Mindless Masses', 'Appropriators']
   );
+  assert.deepEqual(
+    model.subgroupBadges.map((badge) => badge.iconSrc),
+    [
+      'assets/icons/subfactions/mindless-masses.svg',
+      'assets/icons/subfactions/appropriators.svg'
+    ]
+  );
   assert.deepEqual(model.armyRoleBadge, {
     id: 'common',
     text: 'C',
@@ -666,6 +676,7 @@ test('enemy dropdown item model can expose an Illuminate exclusive-role badge', 
 
   assert.equal(model.frontBadge.text, 'ILL');
   assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Appropriators']);
+  assert.equal(model.subgroupBadges[0].iconSrc, 'assets/icons/subfactions/appropriators.svg');
   assert.deepEqual(model.armyRoleBadge, {
     id: 'exclusive',
     text: 'E',
@@ -677,6 +688,17 @@ test('enemy dropdown item model can expose an Illuminate exclusive-role badge', 
     label: 'Tank'
   });
   assert.match(model.metaTitle, /Appropriators Exclusive/i);
+});
+
+test('enemy dropdown item model falls back to text when a subgroup icon is unavailable', () => {
+  const model = getEnemyDropdownItemModel({
+    name: 'Spore Burst Hunter',
+    faction: 'Terminid',
+    scopeTags: ['elite']
+  });
+
+  assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Spore Burst Strain']);
+  assert.equal(model.subgroupBadges[0].iconSrc, null);
 });
 
 function makeWeapon(name, {
@@ -1130,6 +1152,48 @@ test('compare-mode AP sorting keeps same-subtype weapons together inside a match
     'Adjudicator',
     'Blitzer',
     'One-Two (UBGL)',
+    'Grenade Launcher'
+  ]);
+});
+
+test('compare-mode AP sorting can group full-auto families across subtype boundaries', () => {
+  const referenceWeapon = makeWeapon('Adjudicator', {
+    type: 'Primary',
+    sub: 'AR',
+    code: 'BR-14',
+    rows: [makeAttackRow(3, 95, 23)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('Machine Gun', { type: 'Support', sub: 'MG', code: 'MG-43', rows: [makeAttackRow(3, 90, 23)] }),
+    makeWeapon('Diligence Counter Sniper', { type: 'Primary', sub: 'DMR', code: 'R-63CS', rows: [makeAttackRow(3, 200, 50)] }),
+    makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', rows: [makeAttackRow(3, 75, 10)] }),
+    makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
+  ], referenceWeapon);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Coyote',
+    'Machine Gun',
+    'Diligence Counter Sniper',
+    'Grenade Launcher'
+  ]);
+});
+
+test('compare-mode AP sorting can group precision families across subtype boundaries', () => {
+  const referenceWeapon = makeWeapon('Reference Marksman', {
+    type: 'Primary',
+    sub: 'DMR',
+    code: 'REF-DMR',
+    rows: [makeAttackRow(3, 150, 40)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('Anti-Materiel-ish', { type: 'Support', sub: 'CAN', code: 'REF-CAN', rows: [makeAttackRow(3, 450, 225)] }),
+    makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', rows: [makeAttackRow(3, 75, 10)] }),
+    makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
+  ], referenceWeapon);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Anti-Materiel-ish',
+    'Coyote',
     'Grenade Launcher'
   ]);
 });

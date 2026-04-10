@@ -194,6 +194,19 @@ test('checked-in SG-97 data reflects the sweeper flechette row', () => {
   assert.equal(projectile.PF, '20');
 });
 
+test('checked-in SG-22 data groups Bushwhacker under SG', () => {
+  const rows = loadCheckedInWeaponRows();
+  const projectile = findWeaponRow(rows, {
+    code: 'SG-22',
+    attackType: 'projectile',
+    attackName: 'BUCKSHOT_P1 x9'
+  });
+
+  assert.ok(projectile);
+  assert.equal(projectile.Name, 'Bushwhacker');
+  assert.equal(projectile.Sub, 'SG');
+});
+
 test('checked-in K-2 data reflects the current throwing knife row', () => {
   const rows = loadCheckedInWeaponRows();
   const projectile = findWeaponRow(rows, {

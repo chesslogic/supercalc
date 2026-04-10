@@ -60,6 +60,15 @@ const ENEMY_TARGET_BADGE_TEXT = {
   structure: 'S',
   objective: 'O'
 };
+const ENEMY_SUBGROUP_ICON_PATHS = {
+  'appropriators': 'assets/icons/subfactions/appropriators.svg',
+  'cyborg-legion': 'assets/icons/subfactions/cyborg-legion.webp',
+  'incineration-corps': 'assets/icons/subfactions/incineration-corps.svg',
+  'jet-brigade': 'assets/icons/subfactions/jet-brigade.svg',
+  'mindless-masses': 'assets/icons/subfactions/mindless-masses.svg',
+  'predator-strain': 'assets/icons/subfactions/predator-strain.svg',
+  'rupture-strain': 'assets/icons/subfactions/rupture-strain.svg'
+};
 
 export function getCalculatorModeButtonTitle(mode) {
   if (mode === 'compare') {
@@ -103,6 +112,11 @@ function getEnemyBadgeText(fallbackLabel, lookup, key) {
   return normalizedLabel.slice(0, 3).toUpperCase();
 }
 
+function getEnemySubgroupIconPath(subgroupId) {
+  const normalizedId = String(subgroupId || '').trim().toLowerCase();
+  return ENEMY_SUBGROUP_ICON_PATHS[normalizedId] || null;
+}
+
 export function getEnemyDropdownItemModel(enemy = null) {
   const front = getEnemyUnitFront(enemy);
   const frontId = front?.id || '';
@@ -119,7 +133,8 @@ export function getEnemyDropdownItemModel(enemy = null) {
   const subgroupBadges = subgroupDefinitions.map((definition) => ({
     id: definition.id,
     text: definition.summaryLabel,
-    label: definition.label || definition.summaryLabel
+    label: definition.label || definition.summaryLabel,
+    iconSrc: getEnemySubgroupIconPath(definition.id)
   }));
   const armyRoleBadge = armyRoleDefinition
     ? {
@@ -217,15 +232,39 @@ export function getEnemyDropdownOptionsForQuery(query = '', {
 function appendEnemyDropdownBadge(container, {
   text,
   title = '',
-  classNames = []
+  classNames = [],
+  iconSrc = '',
+  iconAlt = ''
 } = {}) {
-  if (!container || !text) {
+  if (!container || (!text && !iconSrc)) {
     return null;
   }
 
   const badge = document.createElement('span');
-  badge.className = ['enemy-dropdown-badge', ...classNames].filter(Boolean).join(' ');
-  badge.textContent = text;
+  const normalizedIconSrc = String(iconSrc || '').trim();
+  badge.className = [
+    'enemy-dropdown-badge',
+    ...classNames,
+    normalizedIconSrc ? 'enemy-dropdown-badge-has-icon' : ''
+  ].filter(Boolean).join(' ');
+  if (normalizedIconSrc) {
+    const icon = document.createElement('img');
+    icon.className = 'enemy-dropdown-badge-icon';
+    icon.src = normalizedIconSrc;
+    icon.alt = String(iconAlt || text || title || '').trim();
+    icon.loading = 'lazy';
+    icon.decoding = 'async';
+    icon.addEventListener('error', () => {
+      icon.remove();
+      badge.classList.remove('enemy-dropdown-badge-has-icon');
+      if (text) {
+        badge.textContent = text;
+      }
+    });
+    badge.appendChild(icon);
+  } else {
+    badge.textContent = text;
+  }
   if (title) {
     badge.title = title;
   }
@@ -258,7 +297,9 @@ function buildEnemyDropdownItemElement(enemy) {
     appendEnemyDropdownBadge(meta, {
       text: badgeModel.text,
       title: buildEnemyBadgeTitle(badgeModel.label, 'Subfaction'),
-      classNames: ['enemy-dropdown-badge-subgroup']
+      classNames: ['enemy-dropdown-badge-subgroup'],
+      iconSrc: badgeModel.iconSrc,
+      iconAlt: badgeModel.label
     });
   });
 

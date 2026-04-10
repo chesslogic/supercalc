@@ -106,7 +106,7 @@ Secondary,PDW,M6C,SOCOM Pistol,,projectile,M6C/SOCOM_P,125,28,2,10,15,10,
 Secondary,SPC,GP-31,Grenade Pistol,900,projectile,40mm HEAT GRENADE_P,250,250,3,30,40,10,
 Secondary,SPC,GP-31,Grenade Pistol,900,explosion,40mm HEAT GRENADE_P_IE,400,400,3,30,25,30,
 Secondary,SPC,P-35,Re-Educator,110,projectile,P-35_P,60,10,4,1,1,1,Gas • Gas_Confusion
-Secondary,SPC,SG-22,Bushwhacker,650,projectile,BUCKSHOT_P1 x9,45,12,2,10,35,30,
+Secondary,SG,SG-22,Bushwhacker,650,projectile,BUCKSHOT_P1 x9,45,12,2,10,35,30,
 Secondary,SPC,GP-20,Ultimatum,900,projectile,GP-20_P,1000,1000,6,40,50,20,
 Secondary,SPC,GP-20,Ultimatum,900,explosion,GP-20_P_IE,2000,2000,6,40,70,60,
 Secondary,SPC,LAS-7,Dagger,,beam,LAS-7 DAGGER_B,250,50,2,10,0,0,Fire
