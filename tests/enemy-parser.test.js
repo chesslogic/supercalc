@@ -399,6 +399,78 @@ test('parser prefers the unsuffixed base payload and reports differing same-name
   }
 });
 
+test('parser can prefer the curated Bile Spewer tier 2 payload over the unsuffixed base payload', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
+  const inputPath = join(tempDir, 'input.json');
+  const outputPath = join(tempDir, 'output.json');
+  const reportPath = join(tempDir, 'variants.json');
+
+  const baseZones = [
+    { zone_name: 'Main', AV: 2, 'Dur%': 0.5, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 750 },
+    { zone_name: 'head', AV: 2, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 300 },
+    { zone_name: 'mouth', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 250 },
+    { zone_name: 'butt', AV: 0, 'Dur%': 1, ExTarget: 'Part', IsFatal: true, MainCap: 1, 'ToMain%': 0.6, health: 750 },
+    { zone_name: 'butt_plates', AV: 2, 'Dur%': 0.8, ExTarget: 'Part', IsFatal: true, MainCap: 1, 'ToMain%': 0.2, health: 500 },
+    { zone_name: 'front_leg_left', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 200 },
+    { zone_name: 'front_leg_right', AV: 2, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 200 },
+    { zone_name: 'back_leg_left', AV: 2, 'Dur%': 0.3, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 250 },
+    { zone_name: 'back_leg_right', AV: 2, 'Dur%': 0.3, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 250 }
+  ];
+  const tier2Zones = [
+    { zone_name: 'Main', AV: 3, 'Dur%': 0.5, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 750 },
+    { zone_name: 'head', AV: 3, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 300 },
+    { zone_name: 'mouth', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 250 },
+    { zone_name: 'butt', AV: 0, 'Dur%': 1, ExTarget: 'Part', IsFatal: true, MainCap: 1, 'ToMain%': 0.6, health: 750 },
+    { zone_name: 'butt_plates', AV: 3, 'Dur%': 0.8, ExTarget: 'Part', IsFatal: true, MainCap: 1, 'ToMain%': 0.2, health: 500 },
+    { zone_name: 'front_leg_left', AV: 3, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 200 },
+    { zone_name: 'front_leg_right', AV: 3, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 200 },
+    { zone_name: 'back_leg_left', AV: 2, 'Dur%': 0.3, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 250 },
+    { zone_name: 'back_leg_right', AV: 2, 'Dur%': 0.3, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 250 }
+  ];
+
+  try {
+    const fixture = {
+      'content/fac_bugs/cha_boomer/cha_boomer': buildFixtureUnit('Bile Spewer', baseZones),
+      'content/fac_bugs/cha_boomer/cha_boomer_tier_2': buildFixtureUnit('Bile Spewer', tier2Zones)
+    };
+
+    writeFileSync(inputPath, JSON.stringify(fixture, null, 2));
+
+    const result = spawnSync(
+      PYTHON,
+      [PARSER_PATH, '--input', inputPath, '--output', outputPath, '--variant-report', reportPath],
+      { encoding: 'utf8' }
+    );
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+
+    const parsed = JSON.parse(readFileSync(outputPath, 'utf8'));
+    const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+    const unit = parsed.Terminid['Bile Spewer'];
+    assert.ok(unit);
+
+    const zoneArmorByName = Object.fromEntries(
+      unit.damageable_zones.map((zone) => [zone.zone_name, zone.AV])
+    );
+    assert.equal(zoneArmorByName.Main, 3);
+    assert.equal(zoneArmorByName.head, 3);
+    assert.equal(zoneArmorByName.butt_plates, 3);
+    assert.equal(zoneArmorByName.front_leg_left, 3);
+    assert.equal(zoneArmorByName.front_leg_right, 3);
+    assert.equal(zoneArmorByName.back_leg_left, 2);
+    assert.equal(zoneArmorByName.back_leg_right, 2);
+
+    const variantGroup = report.Terminid['Bile Spewer'];
+    assert.ok(variantGroup);
+    assert.equal(variantGroup.canonical.source_key, 'content/fac_bugs/cha_boomer/cha_boomer_tier_2');
+    assert.equal(variantGroup.canonical.unsuffixed_source_path, false);
+    assert.deepEqual(variantGroup.variants[0].source_keys, [
+      'content/fac_bugs/cha_boomer/cha_boomer'
+    ]);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('parser applies curated Agitator, Radical, Veracitor, and Impaler part-name overrides via signature fallback', () => {
   const agitatorZones = [
     { zone_name: 'Main', AV: 1, 'Dur%': 0.2, ExTarget: 'Part', MainCap: 0, 'ToMain%': 1, health: 750 },
@@ -788,4 +860,20 @@ test('checked-in enemydata keeps curated enemy scope tags', () => {
   assert.deepEqual(enemydata.Illuminate.Obtruder.scope_tags, ['chaff']);
   assert.deepEqual(enemydata.Illuminate['Warp Ship'].scope_tags, ['objective']);
   assert.equal(enemydata.Illuminate['Xenobite Ardent'].show_in_selector, false);
+});
+
+test('checked-in enemydata keeps the Bile Spewer extreme armor profile', () => {
+  const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
+  const bileSpewer = enemydata.Terminid['Bile Spewer'];
+  const zoneArmorByName = Object.fromEntries(
+    bileSpewer.damageable_zones.map((zone) => [zone.zone_name, zone.AV])
+  );
+
+  assert.equal(zoneArmorByName.Main, 3);
+  assert.equal(zoneArmorByName.hitzone_head, 3);
+  assert.equal(zoneArmorByName.hitzone_butt_plates, 3);
+  assert.equal(zoneArmorByName.hitzone_frontleg_left, 3);
+  assert.equal(zoneArmorByName.hitzone_frontleg_right, 3);
+  assert.equal(zoneArmorByName.hitzone_backleg_left, 2);
+  assert.equal(zoneArmorByName.hitzone_backleg_right, 2);
 });

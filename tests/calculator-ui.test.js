@@ -238,13 +238,14 @@ test('enemy target type options only include categories present in the dataset',
   );
 });
 
-test('enemy dropdown sort modes default to target-scale ordering within each faction group', () => {
+test('enemy dropdown sort modes keep bugs first and order targets within each faction group', () => {
   const enemies = [
+    { name: 'Overseer', faction: 'Illuminate', scopeTags: ['medium'] },
+    { name: 'Hulk', faction: 'Automaton', scopeTags: ['tank'] },
+    { name: 'Trooper', faction: 'Automaton', scopeTags: ['chaff'] },
     { name: 'Warrior', faction: 'Terminid', scopeTags: ['medium'] },
     { name: 'Scavenger', faction: 'Terminid', scopeTags: ['chaff'] },
-    { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] },
-    { name: 'Hulk', faction: 'Automaton', scopeTags: ['tank'] },
-    { name: 'Trooper', faction: 'Automaton', scopeTags: ['chaff'] }
+    { name: 'Bile Titan', faction: 'Terminid', scopeTags: ['giant'] }
   ];
 
   assert.equal(normalizeEnemyDropdownSortMode(), 'targets');
@@ -261,19 +262,19 @@ test('enemy dropdown sort modes default to target-scale ordering within each fac
   );
   assert.deepEqual(
     sortEnemyDropdownOptions(enemies, { sortMode: 'targets' }).map((enemy) => enemy.name),
-    ['Scavenger', 'Warrior', 'Bile Titan', 'Trooper', 'Hulk']
+    ['Scavenger', 'Warrior', 'Bile Titan', 'Trooper', 'Hulk', 'Overseer']
   );
   assert.deepEqual(
     sortEnemyDropdownOptions(enemies, { sortMode: 'targets', sortDir: 'desc' }).map((enemy) => enemy.name),
-    ['Bile Titan', 'Warrior', 'Scavenger', 'Hulk', 'Trooper']
+    ['Bile Titan', 'Warrior', 'Scavenger', 'Hulk', 'Trooper', 'Overseer']
   );
   assert.deepEqual(
     sortEnemyDropdownOptions(enemies, { sortMode: 'alphabetical' }).map((enemy) => enemy.name),
-    ['Bile Titan', 'Scavenger', 'Warrior', 'Hulk', 'Trooper']
+    ['Bile Titan', 'Scavenger', 'Warrior', 'Hulk', 'Trooper', 'Overseer']
   );
   assert.deepEqual(
     sortEnemyDropdownOptions(enemies, { sortMode: 'alphabetical', sortDir: 'desc' }).map((enemy) => enemy.name),
-    ['Warrior', 'Scavenger', 'Bile Titan', 'Trooper', 'Hulk']
+    ['Warrior', 'Scavenger', 'Bile Titan', 'Trooper', 'Hulk', 'Overseer']
   );
 });
 
@@ -641,7 +642,7 @@ test('enemy dropdown item model can expose overlapping Illuminate subgroups and 
     scopeTags: ['medium']
   });
 
-  assert.equal(model.frontBadge.text, 'ILL');
+  assert.equal(model.frontBadge.text, 'SQUID');
   assert.deepEqual(
     model.subgroupBadges.map((badge) => badge.text),
     ['Mindless Masses', 'Appropriators']
@@ -674,7 +675,7 @@ test('enemy dropdown item model can expose an Illuminate exclusive-role badge', 
     scopeTags: ['tank']
   });
 
-  assert.equal(model.frontBadge.text, 'ILL');
+  assert.equal(model.frontBadge.text, 'SQUID');
   assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Appropriators']);
   assert.equal(model.subgroupBadges[0].iconSrc, 'assets/icons/subfactions/appropriators.svg');
   assert.deepEqual(model.armyRoleBadge, {

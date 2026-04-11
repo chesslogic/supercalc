@@ -128,6 +128,14 @@ ENEMY_SCOPE_TAG_GROUPS: Dict[str, tuple[str, ...]] = {
 
 ENEMY_SCOPE_TAGS_BY_UNIT_NAME = build_enemy_scope_tags_by_unit_name(ENEMY_SCOPE_TAG_GROUPS)
 
+ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME: Dict[str, tuple[str, ...]] = {
+    # Prefer the higher-difficulty payload for breakpoint work; the base row keeps
+    # the same anatomy but lower AV on Main, Head, Spinal Plates, and Front Legs.
+    'Bile Spewer': (
+        'content/fac_bugs/cha_boomer/cha_boomer_tier_2',
+    ),
+}
+
 ENEMY_UNIT_METADATA_BY_NAME: Dict[str, Dict[str, Any]] = {
     'Xenobite Ardent': {
         'show_in_selector': False,

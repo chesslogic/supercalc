@@ -6896,7 +6896,7 @@
     "Bile Spewer": {
       "damageable_zones": [
         {
-          "AV": 2,
+          "AV": 3,
           "Dur%": 0.5,
           "ExTarget": "Main",
           "MainCap": 1,
@@ -6905,7 +6905,7 @@
           "zone_name": "Main"
         },
         {
-          "AV": 2,
+          "AV": 3,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -6935,7 +6935,7 @@
           "zone_name": "hitzone_butt"
         },
         {
-          "AV": 2,
+          "AV": 3,
           "Dur%": 0.8,
           "ExTarget": "Part",
           "IsFatal": true,
@@ -6945,7 +6945,7 @@
           "zone_name": "hitzone_butt_plates"
         },
         {
-          "AV": 2,
+          "AV": 3,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -6954,7 +6954,7 @@
           "zone_name": "hitzone_frontleg_right"
         },
         {
-          "AV": 2,
+          "AV": 3,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,

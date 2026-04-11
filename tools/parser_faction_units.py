@@ -66,6 +66,7 @@ from typing import Any, Dict
 try:
     from enemy_parser_constants import (
         CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
+        ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME,
         ENEMY_UNIT_METADATA_BY_NAME,
         ENEMY_SCOPE_TAGS_BY_UNIT_NAME,
         INTERNAL_RAW_ZONE_NAME_KEY,
@@ -74,6 +75,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - support package-style imports
     from tools.enemy_parser_constants import (
         CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
+        ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME,
         ENEMY_UNIT_METADATA_BY_NAME,
         ENEMY_SCOPE_TAGS_BY_UNIT_NAME,
         INTERNAL_RAW_ZONE_NAME_KEY,
@@ -82,6 +84,12 @@ except ModuleNotFoundError:  # pragma: no cover - support package-style imports
 
 def get_scope_tags_for_unit(unit_name: str) -> list[str]:
     return list(ENEMY_SCOPE_TAGS_BY_UNIT_NAME.get(str(unit_name or ""), []))
+
+def get_preferred_source_keys_for_unit(unit_name: str) -> set[str]:
+    return {
+        strip_duplicate_suffix(source_key)
+        for source_key in ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME.get(str(unit_name or ""), ())
+    }
 
 def get_unit_metadata_for_unit(unit_name: str) -> Dict[str, Any]:
     return dict(ENEMY_UNIT_METADATA_BY_NAME.get(str(unit_name or ""), {}))
@@ -472,8 +480,14 @@ def _compact_candidate(candidate: Dict[str, Any]) -> Dict[str, Any]:
         "unsuffixed_source_path": has_unsuffixed_source_path(candidate.get("source_key")),
     }
 
-def resolve_unit_candidates(candidates: list[Dict[str, Any]]) -> tuple[Dict[str, Any], Dict[str, Any] | None]:
-    canonical_pool = [candidate for candidate in candidates if has_unsuffixed_source_path(candidate.get("source_key"))]
+def resolve_unit_candidates(unit_name: str, candidates: list[Dict[str, Any]]) -> tuple[Dict[str, Any], Dict[str, Any] | None]:
+    preferred_source_keys = get_preferred_source_keys_for_unit(unit_name)
+    canonical_pool = [
+        candidate for candidate in candidates
+        if strip_duplicate_suffix(candidate.get("source_key")) in preferred_source_keys
+    ]
+    if not canonical_pool:
+        canonical_pool = [candidate for candidate in candidates if has_unsuffixed_source_path(candidate.get("source_key"))]
     if not canonical_pool:
         canonical_pool = candidates
 
@@ -593,7 +607,7 @@ def parse_enemy_units(src: dict) -> tuple[dict, dict]:
     per_faction: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(dict)
     for faction, units in per_faction_candidates.items():
         for unit_name, candidates in units.items():
-            canonical_payload, unit_variant_report = resolve_unit_candidates(candidates)
+            canonical_payload, unit_variant_report = resolve_unit_candidates(unit_name, candidates)
             per_faction[faction][unit_name] = canonical_payload
             if unit_variant_report:
                 variant_report[faction][unit_name] = unit_variant_report

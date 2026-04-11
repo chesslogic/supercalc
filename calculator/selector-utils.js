@@ -1,7 +1,8 @@
 import {
   ENEMY_TARGET_TYPE_DEFINITIONS,
   filterEnemiesByScope as filterEnemiesByResolvedScope,
-  getEnemyPrimaryTargetTypeDefinition
+  getEnemyPrimaryTargetTypeDefinition,
+  getEnemyUnitFront
 } from './enemy-scope.js';
 import {
   buildSortModeLookup,
@@ -41,6 +42,15 @@ const ENEMY_DROPDOWN_SORT_MODE_LOOKUP = buildSortModeLookup(
 const ENEMY_TARGET_TYPE_ORDER = new Map(
   ENEMY_TARGET_TYPE_DEFINITIONS.map((definition, index) => [definition.id, index])
 );
+const ENEMY_FRONT_SORT_ORDER = new Map([
+  ['terminids', 0],
+  ['automatons', 1],
+  ['illuminate', 2]
+]);
+
+function getEnemyFrontSortRank(enemy) {
+  return ENEMY_FRONT_SORT_ORDER.get(getEnemyUnitFront(enemy)?.id) ?? Number.MAX_SAFE_INTEGER;
+}
 
 function compareEnemyNames(left, right, {
   direction = 'asc'
@@ -101,21 +111,12 @@ export function sortEnemyDropdownOptions(options = [], {
   const normalizedSortMode = normalizeEnemyDropdownSortMode(sortMode);
   const normalizedSortDir = normalizeEnemyDropdownSortDir(sortDir);
   const visibleOptions = Array.isArray(options) ? options : [];
-  const frontRankByFaction = new Map();
-
-  visibleOptions.forEach((enemy) => {
-    const faction = String(enemy?.faction || '').trim();
-    if (!frontRankByFaction.has(faction)) {
-      frontRankByFaction.set(faction, frontRankByFaction.size);
-    }
-  });
-
   const originalIndexByEnemy = new Map(visibleOptions.map((enemy, index) => [enemy, index]));
 
   return [...visibleOptions].sort((left, right) => compareByComparators(left, right, [
     (currentLeft, currentRight) => compareNullableValues(
-      frontRankByFaction.get(String(currentLeft?.faction || '').trim()),
-      frontRankByFaction.get(String(currentRight?.faction || '').trim()),
+      getEnemyFrontSortRank(currentLeft),
+      getEnemyFrontSortRank(currentRight),
       { numeric: true }
     ),
     ...(normalizedSortMode === 'targets'

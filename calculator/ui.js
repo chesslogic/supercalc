@@ -49,7 +49,7 @@ const ENGAGEMENT_RANGE_CONTROL_TITLE = 'Engagement distance used for displayed d
 const ENEMY_FRONT_BADGE_TEXT = {
   terminids: 'BUG',
   automatons: 'BOT',
-  illuminate: 'ILL'
+  illuminate: 'SQUID'
 };
 const ENEMY_TARGET_BADGE_TEXT = {
   chaff: 'C',
