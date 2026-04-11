@@ -471,6 +471,95 @@ test('parser can prefer the curated Bile Spewer tier 2 payload over the unsuffix
   }
 });
 
+test('parser can prefer the curated Hunter and Warrior tier 2 payloads over lower-tier base rows', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
+  const inputPath = join(tempDir, 'input.json');
+  const outputPath = join(tempDir, 'output.json');
+  const reportPath = join(tempDir, 'variants.json');
+
+  const hunterBaseZones = [
+    { zone_name: 'Main', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 130 },
+    { zone_name: 'head', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 40 },
+    { zone_name: 'claw_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 45 },
+    { zone_name: 'claw_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 45 },
+    { zone_name: 'front_leg_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 45 },
+    { zone_name: 'front_leg_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 45 },
+    { zone_name: 'rear_leg_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 45 },
+    { zone_name: 'rear_leg_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 45 },
+    { zone_name: 'wing_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.3, health: 20 },
+    { zone_name: 'wing_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.3, health: 20 }
+  ];
+  const hunterTier2Zones = [
+    { zone_name: 'Main', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 160 },
+    { zone_name: 'head', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 40 },
+    { zone_name: 'claw_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 60 },
+    { zone_name: 'claw_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 60 },
+    { zone_name: 'front_leg_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 60 },
+    { zone_name: 'front_leg_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 60 },
+    { zone_name: 'rear_leg_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 60 },
+    { zone_name: 'rear_leg_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 60 },
+    { zone_name: 'wing_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.3, health: 20 },
+    { zone_name: 'wing_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.3, health: 20 }
+  ];
+  const warriorBaseZones = [
+    { zone_name: 'Main', AV: 1, 'Dur%': 0.2, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 250 },
+    { zone_name: 'face', AV: 1, 'Dur%': 0.2, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 110 },
+    { zone_name: 'rear_leg_left', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 75 },
+    { zone_name: 'rear_leg_right', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 75 },
+    { zone_name: 'front_leg_left', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 75 },
+    { zone_name: 'front_leg_right', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 75 },
+    { zone_name: 'claw_left', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 75 },
+    { zone_name: 'claw_right', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 75 }
+  ];
+  const warriorTier2Zones = [
+    { zone_name: 'Main', AV: 1, 'Dur%': 0.2, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1, health: 325 },
+    { zone_name: 'face', AV: 1, 'Dur%': 0.2, ExTarget: 'Main', IsFatal: true, MainCap: 0, 'ToMain%': 1, health: 150 },
+    { zone_name: 'rear_leg_left', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 100 },
+    { zone_name: 'rear_leg_right', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 100 },
+    { zone_name: 'front_leg_left', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 100 },
+    { zone_name: 'front_leg_right', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 100 },
+    { zone_name: 'claw_left', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 100 },
+    { zone_name: 'claw_right', AV: 1, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.4, health: 100 }
+  ];
+
+  try {
+    const fixture = {
+      'content/fac_bugs/cha_hunter/cha_hunter': buildFixtureUnit('Hunter', hunterBaseZones),
+      'content/fac_bugs/cha_hunter/cha_hunter_tier_2': buildFixtureUnit('Hunter', hunterTier2Zones),
+      'content/fac_bugs/cha_warrior/cha_warrior': buildFixtureUnit('Warrior', warriorBaseZones),
+      'content/fac_bugs/cha_warrior/cha_warrior_tier_2': buildFixtureUnit('Warrior', warriorTier2Zones)
+    };
+
+    writeFileSync(inputPath, JSON.stringify(fixture, null, 2));
+
+    const result = spawnSync(
+      PYTHON,
+      [PARSER_PATH, '--input', inputPath, '--output', outputPath, '--variant-report', reportPath],
+      { encoding: 'utf8' }
+    );
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+
+    const parsed = JSON.parse(readFileSync(outputPath, 'utf8'));
+    const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+    const hunter = parsed.Terminid.Hunter;
+    const warrior = parsed.Terminid.Warrior;
+    assert.ok(hunter);
+    assert.ok(warrior);
+
+    assert.equal(hunter.health, 160);
+    assert.equal(hunter.damageable_zones.find((zone) => zone.zone_name === 'front_leg_left')?.health, 60);
+    assert.equal(hunter.damageable_zones.find((zone) => zone.zone_name === 'claw_left')?.health, 60);
+    assert.equal(report.Terminid.Hunter.canonical.source_key, 'content/fac_bugs/cha_hunter/cha_hunter_tier_2');
+
+    assert.equal(warrior.health, 325);
+    assert.equal(warrior.damageable_zones.find((zone) => zone.zone_name === 'face')?.health, 150);
+    assert.equal(warrior.damageable_zones.find((zone) => zone.zone_name === 'front_leg_left')?.health, 100);
+    assert.equal(report.Terminid.Warrior.canonical.source_key, 'content/fac_bugs/cha_warrior/cha_warrior_tier_2');
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('parser applies curated Agitator, Radical, Veracitor, and Impaler part-name overrides via signature fallback', () => {
   const agitatorZones = [
     { zone_name: 'Main', AV: 1, 'Dur%': 0.2, ExTarget: 'Part', MainCap: 0, 'ToMain%': 1, health: 750 },
@@ -876,4 +965,30 @@ test('checked-in enemydata keeps the Bile Spewer extreme armor profile', () => {
   assert.equal(zoneArmorByName.hitzone_frontleg_right, 3);
   assert.equal(zoneArmorByName.hitzone_backleg_left, 2);
   assert.equal(zoneArmorByName.hitzone_backleg_right, 2);
+});
+
+test('checked-in enemydata keeps the higher-difficulty Hunter and Warrior health profiles', () => {
+  const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
+  const hunter = enemydata.Terminid.Hunter;
+  const warrior = enemydata.Terminid.Warrior;
+  const hunterZoneHealthByName = Object.fromEntries(
+    hunter.damageable_zones.map((zone) => [zone.zone_name, zone.health])
+  );
+  const warriorZoneHealthByName = Object.fromEntries(
+    warrior.damageable_zones.map((zone) => [zone.zone_name, zone.health])
+  );
+
+  assert.equal(hunter.health, 160);
+  assert.equal(hunterZoneHealthByName.hitzone_face, 40);
+  assert.equal(hunterZoneHealthByName.hitzone_l_front_leg, 60);
+  assert.equal(hunterZoneHealthByName.hitzone_r_front_leg, 60);
+  assert.equal(hunterZoneHealthByName.hitzone_l_claw, 60);
+  assert.equal(hunterZoneHealthByName.hitzone_r_claw, 60);
+
+  assert.equal(warrior.health, 325);
+  assert.equal(warriorZoneHealthByName.face, 150);
+  assert.equal(warriorZoneHealthByName.hitzone_l_front_leg, 100);
+  assert.equal(warriorZoneHealthByName.hitzone_r_front_leg, 100);
+  assert.equal(warriorZoneHealthByName.l_claw, 100);
+  assert.equal(warriorZoneHealthByName.r_claw, 100);
 });

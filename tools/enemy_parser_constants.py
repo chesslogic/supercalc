@@ -134,6 +134,14 @@ ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME: Dict[str, tuple[str, ...]] = {
     'Bile Spewer': (
         'content/fac_bugs/cha_boomer/cha_boomer_tier_2',
     ),
+    # Prefer the breakpoint-relevant higher-difficulty payloads for the common
+    # Challenging+ bug variants that gain health without changing anatomy.
+    'Hunter': (
+        'content/fac_bugs/cha_hunter/cha_hunter_tier_2',
+    ),
+    'Warrior': (
+        'content/fac_bugs/cha_warrior/cha_warrior_tier_2',
+    ),
 }
 
 ENEMY_UNIT_METADATA_BY_NAME: Dict[str, Dict[str, Any]] = {
