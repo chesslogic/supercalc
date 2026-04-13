@@ -515,7 +515,7 @@ function setupModeToggle() {
   });
 }
 
-function setupEngagementRangeControl(slot) {
+export function setupEngagementRangeControl(slot) {
   const suffix = slot.toLowerCase();
   const rangeInput = document.getElementById(`calculator-range-input-${suffix}`);
   const rangeValue = document.getElementById(`calculator-range-value-${suffix}`);
@@ -546,7 +546,7 @@ function setupEngagementRangeControl(slot) {
     const snappedValue = applySnappedRangeValue(event.target.value);
     setEngagementRangeMeters(slot, snappedValue);
     syncEngagementRangeControl(slot);
-    refreshEnemyCalculationViews();
+    refreshCalculatorViews();
   });
 
   syncEngagementRangeControl(slot);
