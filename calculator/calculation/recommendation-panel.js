@@ -1,7 +1,6 @@
 import {
   calculatorState,
-  getEngagementRangeMeters,
-  getWeaponForSlot
+  getEngagementRangeMeters
 } from '../data.js';
 import {
   getRecommendationHighlightRangeFloorMeters,
@@ -9,11 +8,6 @@ import {
   getRecommendationRangeSummaryText,
   RECOMMENDATION_RANGE_FLOOR_TITLE
 } from '../engagement-range.js';
-import {
-  buildRelatedTargetRecommendationRows,
-  buildSelectedTargetRecommendationRows,
-  buildWeaponRecommendationRows
-} from '../recommendations.js';
 import { state as weaponsState } from '../../weapons/data.js';
 import {
   RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT,
@@ -22,12 +16,13 @@ import {
 } from './recommendation-constants.js';
 import {
   getFilteredRecommendationWeapons,
-  getRecommendationSummaryTitle,
   getRecommendationWeaponFilterSummaryText,
   hasActiveRecommendationWeaponFilters
 } from './recommendation-filter-state.js';
 import { createRelatedTargetChipRow, renderRecommendationWeaponFilterControls } from './recommendation-controls.js';
 import { buildOverallRecommendationDisplaySequence } from './recommendation-display.js';
+import { buildOverallRecommendationSectionState } from './recommendation-overall-summary.js';
+import { buildRecommendationRowSets } from './recommendation-row-sets.js';
 import {
   buildRecommendationRelationContext,
   getRelatedRouteEmptyStateText,
@@ -83,38 +78,18 @@ export function renderRecommendationPanel(container, enemy, {
     return;
   }
 
-  const getEngagementRangeMetersForRecommendationWeapon = (weapon) => {
-    const weaponA = getWeaponForSlot('A');
-    const weaponB = getWeaponForSlot('B');
-    if (weaponA && weaponA.name === weapon?.name) {
-      return getEngagementRangeMeters('A');
-    }
-    if (weaponB && weaponB.name === weapon?.name) {
-      return getEngagementRangeMeters('B');
-    }
-    return highlightRangeFloorMeters;
-  };
-
   const overallRecommendationWeapons = getFilteredRecommendationWeapons(weaponsState.groups);
-  const recommendationRows = buildWeaponRecommendationRows({
-    enemy,
-    weapons: overallRecommendationWeapons,
-    rangeFloorMeters: highlightRangeFloorMeters,
-    getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
-  });
-  const selectedTargetRows = buildSelectedTargetRecommendationRows({
+  const {
+    recommendationRows,
+    selectedTargetRows,
+    relatedTargetRows
+  } = buildRecommendationRowSets({
     enemy,
     weapons: weaponsState.groups,
-    rangeFloorMeters: highlightRangeFloorMeters,
+    overallRecommendationWeapons,
+    highlightRangeFloorMeters,
     selectedZoneIndex: calculatorState.selectedZoneIndex,
-    getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
-  });
-  const relatedTargetRows = buildRelatedTargetRecommendationRows({
-    enemy,
-    weapons: weaponsState.groups,
-    rangeFloorMeters: highlightRangeFloorMeters,
-    relatedZoneIndices: relatedTargetZoneIndices,
-    getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
+    relatedTargetZoneIndices
   });
   const flaggedRows = recommendationRows.filter((row) => (
     row.qualifiesForMargin
@@ -122,12 +97,10 @@ export function renderRecommendationPanel(container, enemy, {
     || row.hasFastTtk
     || row.penetratesAll
   ));
-  const hasFilteredOverallRows = recommendationRows.length > 0;
-  const usingFallbackRows = hasFilteredOverallRows && flaggedRows.length === 0;
   const {
     rows: displayRows,
     supplementedCoreTypes
-  } = hasFilteredOverallRows
+  } = recommendationRows.length > 0
     ? buildOverallRecommendationDisplaySequence(
         flaggedRows.length > 0 ? flaggedRows : recommendationRows,
         RECOMMENDATION_DISPLAY_LIMIT
@@ -138,21 +111,20 @@ export function renderRecommendationPanel(container, enemy, {
   const overallRecommendationFilterControls = renderRecommendationWeaponFilterControls(weaponsState.groups, {
     onRefresh
   });
-  const overallRecommendationSummaryText = hasFilteredOverallRows
-    ? (
-        flaggedRows.length > 0
-          ? `Showing ${initialOverallRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
-          : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
-      )
-    : hasActiveRecommendationWeaponFilters()
-      ? `No overall recommendation rows match the current weapon filters using the current engagement settings (${recommendationRangeSummary}).${overallRecommendationFilterSummaryText}`
-      : `No overall recommendation rows are available using the current engagement settings (${recommendationRangeSummary}).`;
-  const overallRecommendationSummaryTitle = hasFilteredOverallRows
-    ? getRecommendationSummaryTitle(!usingFallbackRows)
-    : '';
-  const overallRecommendationEmptyStateText = hasActiveRecommendationWeaponFilters()
-    ? 'No recommendation rows match the current weapon filters.'
-    : 'No recommendation rows are available right now.';
+  const {
+    usingFallbackRows,
+    summaryText: overallRecommendationSummaryText,
+    summaryTitle: overallRecommendationSummaryTitle,
+    emptyStateText: overallRecommendationEmptyStateText
+  } = buildOverallRecommendationSectionState({
+    recommendationRows,
+    flaggedRows,
+    supplementedCoreTypes,
+    initialOverallRows,
+    recommendationRangeSummary,
+    overallRecommendationFilterSummaryText,
+    hasActiveFilters: hasActiveRecommendationWeaponFilters()
+  });
 
   if (selectedZone) {
     const hasRelatedTargetChips = relatedTargetZoneIndices.length > 0;

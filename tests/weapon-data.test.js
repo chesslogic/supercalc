@@ -70,13 +70,15 @@ test('ingestMatrix strips a UTF-8 BOM from the first header cell', () => {
   assert.equal(state.keys.rpmKey, 'RPM');
 });
 
-test('ingestMatrix keeps grouped weapon code and rpm metadata', () => {
+test('ingestMatrix keeps grouped weapon code, role, and rpm metadata', () => {
   ingestMatrix([
-    ['Type', 'Sub', 'Code', 'Name', 'RPM', 'Atk Type', 'DMG', 'DUR', 'AP'],
-    ['Primary', 'AR', 'AR-23A', 'Liberator Carbine', '920', 'projectile', '90', '22', '2']
+    ['Type', 'Sub', 'Role', 'Code', 'Name', 'RPM', 'Atk Type', 'DMG', 'DUR', 'AP'],
+    ['Primary', 'AR', 'automatic', 'AR-23A', 'Liberator Carbine', '920', 'projectile', '90', '22', '2']
   ]);
 
   assert.equal(state.groups.length, 1);
+  assert.equal(state.keys.roleKey, 'Role');
+  assert.equal(state.groups[0].role, 'automatic');
   assert.equal(state.groups[0].code, 'AR-23A');
   assert.equal(state.groups[0].rpm, 920);
 });
@@ -205,6 +207,32 @@ test('checked-in SG-22 data groups Bushwhacker under SG', () => {
   assert.ok(projectile);
   assert.equal(projectile.Name, 'Bushwhacker');
   assert.equal(projectile.Sub, 'SG');
+});
+
+test('checked-in role values cover the current automatic and explosive outliers', () => {
+  const rows = loadCheckedInWeaponRows();
+  const sickle = findWeaponRow(rows, {
+    code: 'LAS-16',
+    attackType: 'projectile',
+    attackName: 'LASER_P'
+  });
+  const machineGunSentry = findWeaponRow(rows, {
+    code: 'A/MG-43',
+    attackType: 'projectile',
+    attackName: '8x60mm FULL METAL JACKET_P1'
+  });
+  const punisherPlasma = findWeaponRow(rows, {
+    code: 'SG-8P',
+    attackType: 'projectile',
+    attackName: 'LARGE PLASMA BOLT_P3'
+  });
+
+  assert.ok(sickle);
+  assert.ok(machineGunSentry);
+  assert.ok(punisherPlasma);
+  assert.equal(sickle.Role, 'automatic');
+  assert.equal(machineGunSentry.Role, 'automatic');
+  assert.equal(punisherPlasma.Role, 'explosive');
 });
 
 test('checked-in SG-8P data groups Punisher Plasma under EXP', () => {

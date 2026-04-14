@@ -1,12 +1,11 @@
 import { calculatorState } from '../data.js';
 import {
-  RECOMMENDATION_AUTO_OVERRIDE_WEAPON_NAMES,
   RECOMMENDATION_CORE_TYPE_ORDER,
   RECOMMENDATION_FEATURE_GROUPS,
-  RECOMMENDATION_FEATURE_GROUP_LOOKUP,
   RECOMMENDATION_FILTER_TYPE_ORDER,
   RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE
 } from './recommendation-constants.js';
+import { getWeaponRecommendationFeatureGroupId } from '../../weapons/weapon-taxonomy.js';
 
 export function getRecommendationSummaryTitle(hasHighlightedRows) {
   return hasHighlightedRows
@@ -27,20 +26,6 @@ export function getRecommendationCoreType(row) {
 
 export function normalizeRecommendationWeaponSub(sub) {
   return String(sub ?? '').trim().toLowerCase();
-}
-
-function normalizeRecommendationWeaponFeatureKey(value) {
-  return String(value ?? '').trim().toLowerCase();
-}
-
-export function getRecommendationWeaponFeatureGroupId(weapon) {
-  const normalizedName = normalizeRecommendationWeaponFeatureKey(weapon?.name);
-  if (RECOMMENDATION_AUTO_OVERRIDE_WEAPON_NAMES.has(normalizedName)) {
-    return 'auto';
-  }
-
-  const normalizedSub = normalizeRecommendationWeaponSub(weapon?.sub);
-  return RECOMMENDATION_FEATURE_GROUP_LOOKUP.get(normalizedSub) || null;
 }
 
 export function getRecommendationFilterChipLabel(value, kind = 'type') {
@@ -83,7 +68,7 @@ function doesWeaponMatchRecommendationFilters(weapon) {
   const matchesType = hasTypeFilters && calculatorState.recommendationWeaponFilterTypes.includes(normalizedType);
   const matchesSub = hasSubFilters && calculatorState.recommendationWeaponFilterSubs.includes(normalizedSub);
   const matchesGroup = hasGroupFilters && calculatorState.recommendationWeaponFilterGroups.includes(
-    getRecommendationWeaponFeatureGroupId(weapon)
+    getWeaponRecommendationFeatureGroupId(weapon)
   );
   const matchesAnyFilter = matchesType || matchesSub || matchesGroup;
 

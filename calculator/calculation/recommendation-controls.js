@@ -7,11 +7,11 @@ import {
   toggleRecommendationWeaponFilterSub,
   toggleRecommendationWeaponFilterType
 } from '../data.js';
+import { getWeaponRecommendationFeatureGroupId } from '../../weapons/weapon-taxonomy.js';
 import { RECOMMENDATION_FEATURE_GROUPS } from './recommendation-constants.js';
 import {
   getAvailableRecommendationWeaponTypes,
   getRecommendationFilterChipLabel,
-  getRecommendationWeaponFeatureGroupId,
   hasActiveRecommendationWeaponFilters,
   normalizeRecommendationWeaponSub
 } from './recommendation-filter-state.js';
@@ -147,11 +147,11 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
 
   const normalizedWeapons = Array.isArray(weapons) ? weapons : [];
   const availableGroups = RECOMMENDATION_FEATURE_GROUPS.filter((group) =>
-    normalizedWeapons.some((weapon) => getRecommendationWeaponFeatureGroupId(weapon) === group.id)
+    normalizedWeapons.some((weapon) => getWeaponRecommendationFeatureGroupId(weapon) === group.id)
   );
   const ungroupedSubs = [...new Set(
     normalizedWeapons
-      .filter((weapon) => !getRecommendationWeaponFeatureGroupId(weapon))
+      .filter((weapon) => !getWeaponRecommendationFeatureGroupId(weapon))
       .map((weapon) => normalizeRecommendationWeaponSub(weapon?.sub))
       .filter(Boolean)
   )]

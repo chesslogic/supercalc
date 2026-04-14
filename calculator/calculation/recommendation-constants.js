@@ -1,5 +1,6 @@
 import { EFFECTIVE_DISTANCE_TOOLTIP } from '../effective-distance.js';
 import { RECOMMENDATION_MARGIN_RATIO_THRESHOLD } from '../recommendations.js';
+export { RECOMMENDATION_WEAPON_FEATURE_GROUPS as RECOMMENDATION_FEATURE_GROUPS } from '../../weapons/weapon-taxonomy.js';
 
 export const RECOMMENDATION_MARGIN_THRESHOLD_PERCENT = Math.round(RECOMMENDATION_MARGIN_RATIO_THRESHOLD * 100);
 export const RECOMMENDATION_DISPLAY_LIMIT = 24;
@@ -8,23 +9,6 @@ export const RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT = 12;
 export const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
 export const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
 export const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
-export const RECOMMENDATION_FEATURE_GROUPS = [
-  { id: 'auto', label: 'Automatic', subs: ['ar', 'smg', 'mg'] },
-  { id: 'explosive', label: 'Explosive', subs: ['exp', 'gl'] },
-  { id: 'special', label: 'Special', subs: ['cqc', 'bck', 'spc'] },
-  { id: 'ordnance', label: 'Ordnance', subs: ['egl', 'emp', 'orb', 'rl', 'vhl'] }
-];
-export const RECOMMENDATION_FEATURE_GROUP_LOOKUP = RECOMMENDATION_FEATURE_GROUPS.reduce((map, group) => {
-  group.subs.forEach((sub) => map.set(sub, group.id));
-  return map;
-}, new Map());
-export const RECOMMENDATION_AUTO_OVERRIDE_WEAPON_NAMES = new Set([
-  'sickle',
-  'double-edge sickle',
-  'gatling sentry',
-  'machine gun sentry',
-  'hmg emplacement'
-]);
 export const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
 export const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
