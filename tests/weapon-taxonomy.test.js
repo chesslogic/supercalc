@@ -17,10 +17,16 @@ test('explicit role wins over legacy fallback overrides', () => {
   }), 'ordnance');
 });
 
-test('legacy fallback keeps current automatic and explosive outliers stable without a role column', () => {
-  assert.equal(getWeaponRoleId({ name: 'Sickle', code: 'LAS-16', sub: 'NRG' }), 'automatic');
-  assert.equal(getWeaponRoleId({ name: 'Machine Gun Sentry', code: 'A/MG-43', sub: 'EMP' }), 'automatic');
-  assert.equal(getWeaponRoleId({ name: 'Punisher Plasma', code: 'SG-8P', sub: 'NRG' }), 'explosive');
+test('legacy fallback only covers the stable subtype-wide role groups', () => {
+  assert.equal(getWeaponRoleId({ sub: 'GR' }), 'explosive');
+  assert.equal(getWeaponRoleId({ sub: 'PDW' }), 'precision');
+  assert.equal(getWeaponRoleId({ sub: 'NRG' }), null);
+});
+
+test('mixed NRG weapons rely on explicit CSV roles instead of subtype fallbacks', () => {
+  assert.equal(getWeaponRoleId({ sub: 'NRG', role: 'explosive' }), 'explosive');
+  assert.equal(getWeaponRoleId({ sub: 'NRG', role: 'shotgun' }), 'shotgun');
+  assert.equal(getWeaponRoleId({ sub: 'NRG', role: 'energy' }), 'energy');
 });
 
 test('recommendation feature groups only expose the currently grouped player-facing roles', () => {

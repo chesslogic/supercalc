@@ -707,6 +707,7 @@ test('enemy dropdown item model falls back to text when a subgroup icon is unava
 function makeWeapon(name, {
   type = 'Primary',
   sub = 'AR',
+  role = null,
   code = '',
   index = 0,
   rows = []
@@ -715,6 +716,7 @@ function makeWeapon(name, {
     name,
     type,
     sub,
+    role,
     code,
     index,
     rows
@@ -1410,8 +1412,8 @@ test('compare-mode AP sorting can group Sickle variants with Automatic families 
     rows: [makeAttackRow(3, 95, 23)]
   });
   const sorted = sortWeaponOptionsForReference([
-    makeWeapon('Double-Edge Sickle', { type: 'Primary', sub: 'NRG', code: 'LAS-17', rows: [makeAttackRow(3, 70, 7)] }),
-    makeWeapon('Sickle', { type: 'Primary', sub: 'NRG', code: 'LAS-16', rows: [makeAttackRow(3, 60, 6)] }),
+    makeWeapon('Double-Edge Sickle', { type: 'Primary', sub: 'NRG', role: 'automatic', code: 'LAS-17', rows: [makeAttackRow(3, 70, 7)] }),
+    makeWeapon('Sickle', { type: 'Primary', sub: 'NRG', role: 'automatic', code: 'LAS-16', rows: [makeAttackRow(3, 60, 6)] }),
     makeWeapon('Diligence Counter Sniper', { type: 'Primary', sub: 'DMR', code: 'R-63CS', rows: [makeAttackRow(3, 200, 50)] }),
     makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
   ], referenceWeapon);
@@ -1483,7 +1485,7 @@ test('compare-mode AP sorting keeps same launcher families ahead within AP5+ mat
   const sorted = sortWeaponOptionsForReference([
     makeWeapon('Coyote', { type: 'Primary', sub: 'AR', code: 'AR-2', rows: [makeAttackRow(3, 75, 10)] }),
     makeWeapon('Commando', { type: 'Support', sub: 'RL', code: 'MLS-4X', rows: [makeAttackRow(5, 1200, 1200)] }),
-    makeWeapon('HMG Emplacement', { type: 'Stratagem', sub: 'EMP', code: 'E/MG-101', rows: [makeAttackRow(4, 200, 40)] }),
+    makeWeapon('HMG Emplacement', { type: 'Stratagem', sub: 'EMP', role: 'automatic', code: 'E/MG-101', rows: [makeAttackRow(4, 200, 40)] }),
     makeWeapon('Quasar Cannon', { type: 'Support', sub: 'EP', code: 'LAS-99', rows: [makeAttackRow(6, 2000, 2000)] })
   ], referenceWeapon);
 

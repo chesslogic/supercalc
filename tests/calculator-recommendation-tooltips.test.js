@@ -149,6 +149,7 @@ function makeWeapon(name, {
   code = '',
   index = 0,
   rpm = 60,
+  role = null,
   sub = 'AR',
   type = 'Primary',
   rows = []
@@ -158,6 +159,7 @@ function makeWeapon(name, {
     code,
     index,
     rpm,
+    role,
     type,
     sub,
     rows
@@ -990,6 +992,7 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
       makeWeapon('Sickle', {
         index: 1,
         type: 'Primary',
+        role: 'automatic',
         sub: 'NRG',
         rpm: 60,
         rows: [makeAttackRow('Sickle Beam', 60, 2)]
@@ -997,6 +1000,7 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
       makeWeapon('Punisher Plasma', {
         index: 2,
         type: 'Primary',
+        role: 'explosive',
         sub: 'EXP',
         rpm: 60,
         rows: [makeAttackRow('Large Plasma Bolt', 225, 3)]
@@ -1105,6 +1109,7 @@ test('renderRecommendationPanel Automatic feature group includes machine gun sen
       makeWeapon('Sickle', {
         index: 2,
         type: 'Primary',
+        role: 'automatic',
         sub: 'NRG',
         rpm: 60,
         rows: [makeAttackRow('Sickle Beam', 60, 2)]
@@ -1112,6 +1117,7 @@ test('renderRecommendationPanel Automatic feature group includes machine gun sen
       makeWeapon('Machine Gun Sentry', {
         index: 3,
         type: 'Stratagem',
+        role: 'automatic',
         sub: 'EMP',
         rpm: 60,
         rows: [makeAttackRow('Machine Gun Sentry Burst', 120, 2)]

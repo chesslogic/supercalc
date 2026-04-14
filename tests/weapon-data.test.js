@@ -235,6 +235,53 @@ test('checked-in role values cover the current automatic and explosive outliers'
   assert.equal(punisherPlasma.Role, 'explosive');
 });
 
+test('checked-in weapon data now carries an explicit Role for every row', () => {
+  const rows = loadCheckedInWeaponRows();
+  const blankRoleRows = rows.filter((row) => !String(row.Role || '').trim());
+
+  assert.equal(blankRoleRows.length, 0);
+});
+
+test('checked-in role values classify the remaining mixed blank-role subtypes explicitly', () => {
+  const rows = loadCheckedInWeaponRows();
+  const pineapple = findWeaponRow(rows, {
+    code: 'G-7',
+    attackType: 'explosion',
+    attackName: 'G-7 PINEAPPLE_E'
+  });
+  const blitzer = findWeaponRow(rows, {
+    code: 'ARC-12',
+    attackType: 'arc',
+    attackName: 'ARC-12 BLITZER_A'
+  });
+  const scorcher = findWeaponRow(rows, {
+    code: 'PLAS-1',
+    attackType: 'explosion',
+    attackName: 'MEDIUM PLASMA BOLT_P_IE'
+  });
+  const scythe = findWeaponRow(rows, {
+    code: 'LAS-5',
+    attackType: 'beam',
+    attackName: 'LAS-5 SCYTHE_B'
+  });
+  const senator = findWeaponRow(rows, {
+    code: 'P-4',
+    attackType: 'projectile',
+    attackName: '13x40mm FULL METAL JACKET_P'
+  });
+
+  assert.ok(pineapple);
+  assert.ok(blitzer);
+  assert.ok(scorcher);
+  assert.ok(scythe);
+  assert.ok(senator);
+  assert.equal(pineapple.Role, 'explosive');
+  assert.equal(blitzer.Role, 'shotgun');
+  assert.equal(scorcher.Role, 'explosive');
+  assert.equal(scythe.Role, 'energy');
+  assert.equal(senator.Role, 'precision');
+});
+
 test('checked-in SG-8P data groups Punisher Plasma under EXP', () => {
   const rows = loadCheckedInWeaponRows();
   const projectile = findWeaponRow(rows, {

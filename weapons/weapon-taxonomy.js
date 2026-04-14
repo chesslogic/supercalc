@@ -9,9 +9,11 @@ const WEAPON_ROLE_LABELS = new Map([
 ]);
 
 const LEGACY_WEAPON_ROLE_SUB_LOOKUP = new Map([
+  ['gr', 'explosive'],
   ['ar', 'automatic'],
   ['mg', 'automatic'],
   ['smg', 'automatic'],
+  ['pdw', 'precision'],
   ['dmr', 'precision'],
   ['can', 'precision'],
   ['exp', 'explosive'],
@@ -25,24 +27,6 @@ const LEGACY_WEAPON_ROLE_SUB_LOOKUP = new Map([
   ['orb', 'ordnance'],
   ['rl', 'ordnance'],
   ['vhl', 'ordnance']
-]);
-
-const LEGACY_WEAPON_ROLE_NAME_OVERRIDES = new Map([
-  ['sickle', 'automatic'],
-  ['double-edge sickle', 'automatic'],
-  ['punisher plasma', 'explosive'],
-  ['gatling sentry', 'automatic'],
-  ['machine gun sentry', 'automatic'],
-  ['hmg emplacement', 'automatic']
-]);
-
-const LEGACY_WEAPON_ROLE_CODE_OVERRIDES = new Map([
-  ['las-16', 'automatic'],
-  ['las-17', 'automatic'],
-  ['sg-8p', 'explosive'],
-  ['a/g-16', 'automatic'],
-  ['a/mg-43', 'automatic'],
-  ['e/mg-101', 'automatic']
 ]);
 
 export const RECOMMENDATION_WEAPON_FEATURE_GROUPS = [
@@ -90,16 +74,6 @@ export function getWeaponExplicitRoleId(weapon) {
 }
 
 export function getWeaponLegacyRoleId(weapon) {
-  const normalizedCode = normalizeWeaponTaxonomyValue(weapon?.code);
-  if (normalizedCode && LEGACY_WEAPON_ROLE_CODE_OVERRIDES.has(normalizedCode)) {
-    return LEGACY_WEAPON_ROLE_CODE_OVERRIDES.get(normalizedCode) || null;
-  }
-
-  const normalizedName = normalizeWeaponTaxonomyValue(weapon?.name);
-  if (normalizedName && LEGACY_WEAPON_ROLE_NAME_OVERRIDES.has(normalizedName)) {
-    return LEGACY_WEAPON_ROLE_NAME_OVERRIDES.get(normalizedName) || null;
-  }
-
   const normalizedSub = normalizeWeaponTaxonomyValue(weapon?.sub);
   return normalizedSub
     ? (LEGACY_WEAPON_ROLE_SUB_LOOKUP.get(normalizedSub) || null)
