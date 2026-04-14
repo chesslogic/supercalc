@@ -156,6 +156,7 @@ export function getWeaponOptions(slot = 'A') {
       name: group.name,
       type: group.type,
       sub: group.sub,
+      role: group.role,
       code: group.code,
       rpm: group.rpm,
       rows: group.rows,

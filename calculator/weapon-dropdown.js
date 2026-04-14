@@ -6,6 +6,7 @@ import {
   getSortModeOptions,
   normalizeSortModeId
 } from '../sort-utils.js';
+import { getWeaponCompareSortFamilyId } from '../weapons/weapon-taxonomy.js';
 
 export const DROPDOWN_AP_SIGNIFICANCE_SHARE = 0.1;
 export const WEAPON_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
@@ -34,26 +35,6 @@ export const WEAPON_SORT_MODE_DEFINITIONS = [
 const WEAPON_SORT_MODE_LOOKUP = buildSortModeLookup(WEAPON_SORT_MODE_DEFINITIONS, [
   ['match-reference', 'match-reference-subtype']
 ]);
-const WEAPON_SUBTYPE_SORT_FAMILY_DEFINITIONS = [
-  {
-    id: 'full-auto',
-    subtypes: ['ar', 'mg', 'smg']
-  },
-  {
-    id: 'precision-long-gun',
-    subtypes: ['dmr', 'can']
-  }
-];
-const WEAPON_SORT_FAMILY_NAME_OVERRIDES = new Map([
-  ['sickle', 'full-auto'],
-  ['double-edge sickle', 'full-auto']
-]);
-const WEAPON_SUBTYPE_SORT_FAMILY_LOOKUP = WEAPON_SUBTYPE_SORT_FAMILY_DEFINITIONS.reduce((lookup, definition) => {
-  definition.subtypes.forEach((subtype) => {
-    lookup.set(subtype, definition.id);
-  });
-  return lookup;
-}, new Map());
 export const WEAPON_DROPDOWN_MULTIPROJECTILE_PREVIEW_RULES = [
   {
     id: 'all-directional-fragments',
@@ -104,18 +85,6 @@ function normalizeWeaponTaxonomyValue(value) {
 
 function toSortableApValue(value) {
   return value === null ? Number.NEGATIVE_INFINITY : value;
-}
-
-function getWeaponSubtypeSortFamilyId(weapon) {
-  const normalizedName = normalizeWeaponTaxonomyValue(weapon?.name);
-  if (normalizedName && WEAPON_SORT_FAMILY_NAME_OVERRIDES.has(normalizedName)) {
-    return WEAPON_SORT_FAMILY_NAME_OVERRIDES.get(normalizedName) || null;
-  }
-
-  const subtype = normalizeWeaponTaxonomyValue(weapon?.sub);
-  return subtype
-    ? (WEAPON_SUBTYPE_SORT_FAMILY_LOOKUP.get(subtype) || null)
-    : null;
 }
 
 export function getWeaponRowMultiplicity(row) {
@@ -351,8 +320,8 @@ function getWeaponOptionReferenceSimilarityRank(option, referenceWeapon, priorit
   const referenceSub = normalizeWeaponTaxonomyValue(referenceWeapon?.sub);
   const optionSub = normalizeWeaponTaxonomyValue(option?.sub);
   const hasMatchingSubtype = referenceSub && optionSub && optionSub === referenceSub;
-  const referenceSubtypeFamily = getWeaponSubtypeSortFamilyId(referenceWeapon);
-  const optionSubtypeFamily = getWeaponSubtypeSortFamilyId(option);
+  const referenceSubtypeFamily = getWeaponCompareSortFamilyId(referenceWeapon);
+  const optionSubtypeFamily = getWeaponCompareSortFamilyId(option);
   const hasMatchingSubtypeFamily = !hasMatchingSubtype
     && referenceSubtypeFamily
     && optionSubtypeFamily

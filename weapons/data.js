@@ -30,6 +30,7 @@ export const state = {
   keys: {
     typeKey: null,
     subKey: null,
+    roleKey: null,
     nameKey: null,
     codeKey: null,
     atkTypeKey: null,
@@ -255,6 +256,7 @@ export function ingestHeadersAndRows(newHeaders, newRows) {
   const { keys } = state;
   keys.typeKey = state.headers.find(h => lower(h) === 'type') || state.headers.find(h => lower(h).includes('weapon') && lower(h).includes('type')) || null;
   keys.subKey  = state.headers.find(h => ['sub','subtype'].includes(lower(h)) || lower(h).includes('sub ')) || null;
+  keys.roleKey = state.headers.find(h => normalize(h) === 'role' || normalize(h) === 'weaponrole') || null;
   keys.codeKey = state.headers.find(h => lower(h) === 'code') || null;
   keys.nameKey = state.headers.find(h => lower(h) === 'name') || state.headers.find(h => lower(h) === 'atkname') || state.headers[0];
   keys.atkTypeKey = state.headers.find(h => ['atktype','atk type'].includes(lower(h)) || lower(h).includes('attack type')) || (state.headers.includes('Stage') ? 'Stage' : null);
@@ -268,12 +270,13 @@ export function ingestHeadersAndRows(newHeaders, newRows) {
   const map = new Map(); let index = 0;
   for (const row of state.rows) {
     const name = (row[keys.nameKey] ?? '').toString();
-    if (!map.has(name)) { map.set(name, { name, rows: [], index: index++, type: null, sub: null, code: null, rpm: null }); }
+    if (!map.has(name)) { map.set(name, { name, rows: [], index: index++, type: null, sub: null, role: null, code: null, rpm: null }); }
     map.get(name).rows.push(row);
   }
   for (const g of map.values()) {
     if (keys.typeKey) { for (const r of g.rows) { const v = r[keys.typeKey]; if (v != null && String(v).trim() !== '') { g.type = String(v).trim(); break; } } }
     if (keys.subKey)  { for (const r of g.rows) { const v = r[keys.subKey]; if (v != null && String(v).trim() !== '') { g.sub  = String(v).trim(); break; } } }
+    if (keys.roleKey) { for (const r of g.rows) { const v = r[keys.roleKey]; if (v != null && String(v).trim() !== '') { g.role = String(v).trim(); break; } } }
     if (keys.codeKey) { for (const r of g.rows) { const v = r[keys.codeKey]; if (v != null && String(v).trim() !== '') { g.code = String(v).trim(); break; } } }
     if (keys.rpmKey)  { for (const r of g.rows) { const v = parseFloat(r[keys.rpmKey]); if (Number.isFinite(v) && v > 0) { g.rpm = v; break; } } }
   }
