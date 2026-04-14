@@ -70,6 +70,7 @@ PowerShell:
 
     Set-Location C:\GitHub\supercalc
     python .\tools\flatten_entity_component_settings.py --input C:\temp\entity-component-settings.json --output C:\temp\entity-component-settings-flat.json
+    python .\tools\flatten_entity_component_settings.py --input C:\temp\entity-component-settings.json --output C:\temp\entity-component-settings-flat.json --status-audit-output C:\temp\entity-status-audit.json
 
 This script handles both the older direct-component shape and the newer nested
 `components.*` shape, plus these key fallbacks:
@@ -80,6 +81,27 @@ This script handles both the older direct-component shape and the newer nested
 - synthesized `content/fac_<bucket>/__unresolved__/<hash>` fallback from
   `FactionComponentData`
 - `loc_name_upper` fallback when `loc_name` is missing
+
+The optional `--status-audit-output` sidecar is useful when investigating whether
+raw Filediver payloads contain status-related fields (thresholds, max stacks,
+decay, multipliers, fire/stun/gas data, status-effect templates, etc.) that are
+not yet surfaced by the normal flattening step. The sidecar scans raw component
+payloads beyond the normal flattenable-enemy subset, while skipping obvious
+`*Weapon*` components so weapon fire-mode noise does not dominate the report.
+
+A local audit run on 2026-04-14 against the current `C:\GitHub\filediver`
+checkout found two especially relevant signals:
+
+- `StatusEffectReceiverComponentData` appears in the raw dump hundreds of times,
+  but is currently emitted as `"Not implemented yet"` by Filediver's entity
+  parser
+- `ExplosiveComponentData.status_effect_template` is present for a smaller set of
+  payloads, with at least `Thermite` carrying non-empty named status effects in
+  the current dump
+
+This suggests enemy-side status data may already exist in Filediver's raw source,
+but at least part of the required decoder support still lives upstream in
+`filediver\datalibrary\entity_component_settings.go`.
 
 
 Step 3: run the existing parser

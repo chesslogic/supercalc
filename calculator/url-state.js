@@ -119,8 +119,8 @@ const URL_PARAM_KEYS = {
   selectedAttackKeysB: 'cab',
   attackHitCountsA: 'cha',
   attackHitCountsB: 'chb',
-  enemySortKey: 'csk',
-  enemySortDir: 'csd',
+  calculatorEnemySortKey: 'csk',
+  calculatorEnemySortDir: 'csd',
   enemySortGroupMode: 'csg',
   weaponSearchQuery: 'wsq',
   weaponActiveTypes: 'wty',
@@ -129,8 +129,8 @@ const URL_PARAM_KEYS = {
   weaponSortDir: 'wsd',
   enemySearchQuery: 'esq',
   enemyActiveFactions: 'efa',
-  enemySortKey: 'esk',
-  enemySortDir: 'esd'
+  enemyTabSortKey: 'esk',
+  enemyTabSortDir: 'esd'
 };
 
 const URL_STATE_PARAM_NAMES = new Set(Object.values(URL_PARAM_KEYS));
@@ -466,8 +466,18 @@ export function encodeUrlState({
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysB, calculator.selectedAttackKeysB);
   setJsonParam(params, URL_PARAM_KEYS.attackHitCountsA, calculator.attackHitCountsA);
   setJsonParam(params, URL_PARAM_KEYS.attackHitCountsB, calculator.attackHitCountsB);
-  setParam(params, URL_PARAM_KEYS.enemySortKey, calculator.enemySort.key, DEFAULT_CALCULATOR_URL_STATE.enemySort.key);
-  setParam(params, URL_PARAM_KEYS.enemySortDir, calculator.enemySort.dir, DEFAULT_CALCULATOR_URL_STATE.enemySort.dir);
+  setParam(
+    params,
+    URL_PARAM_KEYS.calculatorEnemySortKey,
+    calculator.enemySort.key,
+    DEFAULT_CALCULATOR_URL_STATE.enemySort.key
+  );
+  setParam(
+    params,
+    URL_PARAM_KEYS.calculatorEnemySortDir,
+    calculator.enemySort.dir,
+    DEFAULT_CALCULATOR_URL_STATE.enemySort.dir
+  );
   setParam(params, URL_PARAM_KEYS.enemySortGroupMode, calculator.enemySort.groupMode, DEFAULT_CALCULATOR_URL_STATE.enemySort.groupMode);
 
   setParam(params, URL_PARAM_KEYS.weaponSearchQuery, weapons.searchQuery, DEFAULT_WEAPON_TAB_URL_STATE.searchQuery);
@@ -478,8 +488,8 @@ export function encodeUrlState({
 
   setParam(params, URL_PARAM_KEYS.enemySearchQuery, enemies.searchQuery, DEFAULT_ENEMY_TAB_URL_STATE.searchQuery);
   setJsonParam(params, URL_PARAM_KEYS.enemyActiveFactions, enemies.activeFactions, DEFAULT_ENEMY_TAB_URL_STATE.activeFactions);
-  setParam(params, URL_PARAM_KEYS.enemySortKey, enemies.sortKey);
-  setParam(params, URL_PARAM_KEYS.enemySortDir, enemies.sortDir, DEFAULT_ENEMY_TAB_URL_STATE.sortDir);
+  setParam(params, URL_PARAM_KEYS.enemyTabSortKey, enemies.sortKey);
+  setParam(params, URL_PARAM_KEYS.enemyTabSortDir, enemies.sortDir, DEFAULT_ENEMY_TAB_URL_STATE.sortDir);
 
   return params;
 }
@@ -561,8 +571,8 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
     activeFactions: params.has(URL_PARAM_KEYS.enemyActiveFactions)
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.enemyActiveFactions).value)
       : DEFAULT_ENEMY_TAB_URL_STATE.activeFactions,
-    sortKey: params.get(URL_PARAM_KEYS.enemySortKey) || null,
-    sortDir: params.get(URL_PARAM_KEYS.enemySortDir) || DEFAULT_ENEMY_TAB_URL_STATE.sortDir
+    sortKey: params.get(URL_PARAM_KEYS.enemyTabSortKey) || null,
+    sortDir: params.get(URL_PARAM_KEYS.enemyTabSortDir) || DEFAULT_ENEMY_TAB_URL_STATE.sortDir
   }, { render: false });
 
   setCalculatorMode(params.get(URL_PARAM_KEYS.calculatorMode) || DEFAULT_CALCULATOR_URL_STATE.mode);
@@ -652,8 +662,8 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
   );
 
   setEnemySortState({
-    key: params.get(URL_PARAM_KEYS.enemySortKey) || DEFAULT_CALCULATOR_URL_STATE.enemySort.key,
-    dir: params.get(URL_PARAM_KEYS.enemySortDir) || DEFAULT_CALCULATOR_URL_STATE.enemySort.dir,
+    key: params.get(URL_PARAM_KEYS.calculatorEnemySortKey) || DEFAULT_CALCULATOR_URL_STATE.enemySort.key,
+    dir: params.get(URL_PARAM_KEYS.calculatorEnemySortDir) || DEFAULT_CALCULATOR_URL_STATE.enemySort.dir,
     groupMode: params.get(URL_PARAM_KEYS.enemySortGroupMode) || DEFAULT_CALCULATOR_URL_STATE.enemySort.groupMode
   });
 

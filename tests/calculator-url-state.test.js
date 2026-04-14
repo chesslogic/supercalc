@@ -697,7 +697,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setRecommendationWeaponFilterMode('include');
   setRecommendationWeaponFilterTypes(['support']);
   setRecommendationWeaponFilterSubs(['spc']);
-  setEnemySortState({ key: 'AV', dir: 'desc', groupMode: 'outcome' });
+  setEnemySortState({ key: 'health', dir: 'desc', groupMode: 'outcome' });
   setEngagementRangeMeters('A', 50);
   setEngagementRangeMeters('B', 80);
   applyWeaponFilterState({
@@ -716,6 +716,12 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
 
   const firstParams = encodeUrlState({ activeTab: 'weapons' });
   const firstParamString = firstParams.toString();
+
+  assert.equal(firstParams.get('csk'), 'health');
+  assert.equal(firstParams.get('csd'), 'desc');
+  assert.equal(firstParams.get('csg'), 'outcome');
+  assert.equal(firstParams.get('esk'), 'AV');
+  assert.equal(firstParams.get('esd'), 'desc');
 
   // Reset everything to defaults then hydrate from the first encoding
   setCalculatorMode('compare');
@@ -751,6 +757,14 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   }, { render: false });
 
   hydrateUrlState(firstParams);
+
+  assert.deepEqual(calculatorState.enemySort, {
+    key: 'health',
+    dir: 'desc',
+    groupMode: 'outcome'
+  });
+  assert.equal(enemyState.sortKey, 'AV');
+  assert.equal(enemyState.sortDir, 'desc');
 
   const secondParams = encodeUrlState({ activeTab: 'weapons' });
   const secondParamString = secondParams.toString();
@@ -983,13 +997,10 @@ test('encodeUrlState includes non-default compare view', { concurrency: false },
 // Enemy sort state
 // ===========================================================================
 
-test('hydrateUrlState restores enemy sort state from URL params', { concurrency: false }, () => withStateFixture(() => {
-  // URL_PARAM_KEYS has duplicate enemySortKey/enemySortDir entries;
-  // JS last-wins means the actual param names are 'esk'/'esd' (not 'csk'/'csd'),
-  // while 'csg' (enemySortGroupMode) is unique.
+test('hydrateUrlState restores calculator enemy sort state from dedicated URL params', { concurrency: false }, () => withStateFixture(() => {
   hydrateUrlState(new URLSearchParams({
-    esk: 'health',
-    esd: 'desc',
+    csk: 'health',
+    csd: 'desc',
     csg: 'outcome'
   }));
 
@@ -1000,13 +1011,31 @@ test('hydrateUrlState restores enemy sort state from URL params', { concurrency:
   });
 }));
 
-test('encodeUrlState omits default enemy sort values', { concurrency: false }, () => withStateFixture(() => {
+test('encodeUrlState omits default calculator enemy sort values', { concurrency: false }, () => withStateFixture(() => {
   setEnemySortState({ key: 'zone_name', dir: 'asc', groupMode: 'none' });
   const params = encodeUrlState({ activeTab: 'calculator' });
 
   assert.equal(params.has('csk'), false);
   assert.equal(params.has('csd'), false);
   assert.equal(params.has('csg'), false);
+}));
+
+test('hydrateUrlState restores calculator and enemy-tab sorts independently', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    csk: 'health',
+    csd: 'desc',
+    csg: 'outcome',
+    esk: 'AV',
+    esd: 'asc'
+  }));
+
+  assert.deepEqual(calculatorState.enemySort, {
+    key: 'health',
+    dir: 'desc',
+    groupMode: 'outcome'
+  });
+  assert.equal(enemyState.sortKey, 'AV');
+  assert.equal(enemyState.sortDir, 'asc');
 }));
 
 // ===========================================================================
