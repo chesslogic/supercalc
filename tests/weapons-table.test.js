@@ -365,3 +365,82 @@ test('renderTable sorts mixed durable ratio weapons by projectile rows before ex
 
   assert.deepEqual(weaponNames, ['Pure Plasma', 'Machine Gun', 'Hybrid Plasma']);
 }));
+
+test('renderTable treats zero-damage projectile companions as pure explosive for durable ratio sorting', () => withTableFixture(({ tbody }) => {
+  ingestHeadersAndRows(
+    ['Type', 'Sub', 'Code', 'Name', 'RPM', 'Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'],
+    [
+      {
+        Type: 'Primary',
+        Sub: 'PLS',
+        Code: 'SG-8P',
+        Name: 'Punisher Plasma',
+        RPM: 80,
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Plasma Ball_P',
+        DMG: 0,
+        DUR: 0,
+        AP: 2,
+        DF: 10,
+        ST: 15,
+        PF: 10
+      },
+      {
+        Type: 'Primary',
+        Sub: 'PLS',
+        Code: 'SG-8P',
+        Name: 'Punisher Plasma',
+        RPM: 80,
+        'Atk Type': 'Explosion',
+        'Atk Name': 'Plasma Ball_P_IE',
+        DMG: 100,
+        DUR: 100,
+        AP: 3,
+        DF: 20,
+        ST: 20,
+        PF: 10
+      },
+      {
+        Type: 'Support',
+        Sub: 'MG',
+        Code: 'MG-43',
+        Name: 'Machine Gun',
+        RPM: 760,
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Machine Gun Burst',
+        DMG: 80,
+        DUR: 40,
+        AP: 3,
+        DF: 10,
+        ST: 20,
+        PF: 12
+      },
+      {
+        Type: 'Primary',
+        Sub: 'AR',
+        Code: 'AR-23',
+        Name: 'Liberator',
+        RPM: 640,
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Liberator Burst',
+        DMG: 90,
+        DUR: 22,
+        AP: 2,
+        DF: 10,
+        ST: 15,
+        PF: 10
+      }
+    ]
+  );
+  state.sortKey = DURABLE_RATIO_HEADER;
+  state.sortDir = 'desc';
+
+  renderTable();
+
+  const dataRows = collectElements(tbody, (element) => element.tagName === 'TR');
+  const weaponNames = dataRows
+    .map((row) => row.children[4]?.textContent || '')
+    .filter(Boolean);
+
+  assert.deepEqual(weaponNames, ['Punisher Plasma', 'Machine Gun', 'Liberator']);
+}));

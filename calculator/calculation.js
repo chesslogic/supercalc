@@ -12,6 +12,7 @@ import {
   getWeaponForSlot,
   setRecommendationWeaponFilterMode,
   setSelectedZoneIndex,
+  toggleRecommendationWeaponFilterGroup,
   toggleRecommendationWeaponFilterSub,
   toggleRecommendationWeaponFilterType,
   clearRecommendationWeaponFilters
@@ -867,6 +868,16 @@ const RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT = 12;
 const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
 const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
 const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
+const RECOMMENDATION_FEATURE_GROUPS = [
+  { id: 'auto', label: 'Auto', subs: ['ar', 'smg', 'mg'] },
+  { id: 'explosive', label: 'Explosive', subs: ['exp', 'gl', 'egl'] },
+  { id: 'special', label: 'Special', subs: ['cqc', 'bck', 'spc'] },
+  { id: 'ordnance', label: 'Ordnance', subs: ['rl', 'orb'] }
+];
+const RECOMMENDATION_FEATURE_GROUP_LOOKUP = RECOMMENDATION_FEATURE_GROUPS.reduce((map, group) => {
+  group.subs.forEach((sub) => map.set(sub, group.id));
+  return map;
+}, new Map());
 const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
@@ -986,13 +997,15 @@ function getAvailableRecommendationWeaponSubs(weapons = []) {
 
 function hasActiveRecommendationWeaponFilters() {
   return calculatorState.recommendationWeaponFilterTypes.length > 0
-    || calculatorState.recommendationWeaponFilterSubs.length > 0;
+    || calculatorState.recommendationWeaponFilterSubs.length > 0
+    || calculatorState.recommendationWeaponFilterGroups.length > 0;
 }
 
 function doesWeaponMatchRecommendationFilters(weapon) {
   const hasTypeFilters = calculatorState.recommendationWeaponFilterTypes.length > 0;
   const hasSubFilters = calculatorState.recommendationWeaponFilterSubs.length > 0;
-  if (!hasTypeFilters && !hasSubFilters) {
+  const hasGroupFilters = calculatorState.recommendationWeaponFilterGroups.length > 0;
+  if (!hasTypeFilters && !hasSubFilters && !hasGroupFilters) {
     return true;
   }
 
@@ -1000,7 +1013,11 @@ function doesWeaponMatchRecommendationFilters(weapon) {
   const normalizedSub = normalizeRecommendationWeaponSub(weapon?.sub);
   const matchesType = hasTypeFilters && calculatorState.recommendationWeaponFilterTypes.includes(normalizedType);
   const matchesSub = hasSubFilters && calculatorState.recommendationWeaponFilterSubs.includes(normalizedSub);
-  const matchesAnyFilter = matchesType || matchesSub;
+  const matchesGroup = hasGroupFilters && (() => {
+    const groupId = RECOMMENDATION_FEATURE_GROUP_LOOKUP.get(normalizedSub);
+    return groupId ? calculatorState.recommendationWeaponFilterGroups.includes(groupId) : false;
+  })();
+  const matchesAnyFilter = matchesType || matchesSub || matchesGroup;
 
   return calculatorState.recommendationWeaponFilterMode === 'include'
     ? matchesAnyFilter
@@ -1016,8 +1033,12 @@ function getRecommendationWeaponFilterSummaryText() {
     return '';
   }
 
+  const groupLabels = calculatorState.recommendationWeaponFilterGroups
+    .map((groupId) => RECOMMENDATION_FEATURE_GROUPS.find((g) => g.id === groupId)?.label)
+    .filter(Boolean);
   const labels = [
     ...calculatorState.recommendationWeaponFilterTypes.map((type) => getRecommendationFilterChipLabel(type, 'type')),
+    ...groupLabels,
     ...calculatorState.recommendationWeaponFilterSubs.map((sub) => getRecommendationFilterChipLabel(sub, 'sub'))
   ];
   if (labels.length === 0) {

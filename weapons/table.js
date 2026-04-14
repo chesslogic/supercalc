@@ -129,7 +129,10 @@ function getDurableRatioSortAttackKind(row) {
 
 function getDurableRatioSortRows(group) {
   const rows = Array.isArray(group?.rows) ? group.rows : [];
-  const projectileRows = rows.filter((row) => getDurableRatioSortAttackKind(row) === 'projectile');
+  const projectileRows = rows.filter((row) => (
+    getDurableRatioSortAttackKind(row) === 'projectile'
+    && getDurableDamageRatio(row) !== null
+  ));
   return projectileRows.length > 0 ? projectileRows : rows;
 }
 
