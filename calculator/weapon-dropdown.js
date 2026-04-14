@@ -44,6 +44,10 @@ const WEAPON_SUBTYPE_SORT_FAMILY_DEFINITIONS = [
     subtypes: ['dmr', 'can']
   }
 ];
+const WEAPON_SORT_FAMILY_NAME_OVERRIDES = new Map([
+  ['sickle', 'full-auto'],
+  ['double-edge sickle', 'full-auto']
+]);
 const WEAPON_SUBTYPE_SORT_FAMILY_LOOKUP = WEAPON_SUBTYPE_SORT_FAMILY_DEFINITIONS.reduce((lookup, definition) => {
   definition.subtypes.forEach((subtype) => {
     lookup.set(subtype, definition.id);
@@ -103,6 +107,11 @@ function toSortableApValue(value) {
 }
 
 function getWeaponSubtypeSortFamilyId(weapon) {
+  const normalizedName = normalizeWeaponTaxonomyValue(weapon?.name);
+  if (normalizedName && WEAPON_SORT_FAMILY_NAME_OVERRIDES.has(normalizedName)) {
+    return WEAPON_SORT_FAMILY_NAME_OVERRIDES.get(normalizedName) || null;
+  }
+
   const subtype = normalizeWeaponTaxonomyValue(weapon?.sub);
   return subtype
     ? (WEAPON_SUBTYPE_SORT_FAMILY_LOOKUP.get(subtype) || null)

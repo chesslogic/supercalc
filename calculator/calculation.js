@@ -869,7 +869,7 @@ const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
 const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
 const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
 const RECOMMENDATION_FEATURE_GROUPS = [
-  { id: 'auto', label: 'Auto', subs: ['ar', 'smg', 'mg'] },
+  { id: 'auto', label: 'Automatic', subs: ['ar', 'smg', 'mg'] },
   { id: 'explosive', label: 'Explosive', subs: ['exp', 'gl'] },
   { id: 'special', label: 'Special', subs: ['cqc', 'bck', 'spc'] },
   { id: 'ordnance', label: 'Ordnance', subs: ['egl', 'emp', 'orb', 'rl', 'vhl'] }
@@ -879,6 +879,8 @@ const RECOMMENDATION_FEATURE_GROUP_LOOKUP = RECOMMENDATION_FEATURE_GROUPS.reduce
   return map;
 }, new Map());
 const RECOMMENDATION_AUTO_OVERRIDE_WEAPON_NAMES = new Set([
+  'sickle',
+  'double-edge sickle',
   'gatling sentry',
   'machine gun sentry',
   'hmg emplacement'

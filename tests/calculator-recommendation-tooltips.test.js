@@ -987,43 +987,50 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
         rpm: 60,
         rows: [makeAttackRow('Liberator Burst', 105, 2)]
       }),
-      makeWeapon('Punisher Plasma', {
+      makeWeapon('Sickle', {
         index: 1,
+        type: 'Primary',
+        sub: 'NRG',
+        rpm: 60,
+        rows: [makeAttackRow('Sickle Beam', 60, 2)]
+      }),
+      makeWeapon('Punisher Plasma', {
+        index: 2,
         type: 'Primary',
         sub: 'EXP',
         rpm: 60,
         rows: [makeAttackRow('Large Plasma Bolt', 225, 3)]
       }),
       makeWeapon('Guard Dog', {
-        index: 2,
+        index: 3,
         type: 'Stratagem',
         sub: 'BCK',
         rpm: 60,
         rows: [makeAttackRow('Guard Dog Burst', 80, 2)]
       }),
       makeWeapon('Recoilless Rifle', {
-        index: 3,
+        index: 4,
         type: 'Support',
         sub: 'RL',
         rpm: 60,
         rows: [makeAttackRow('Recoilless Shell', 300, 5)]
       }),
       makeWeapon('Diligence', {
-        index: 4,
+        index: 5,
         type: 'Primary',
         sub: 'DMR',
         rpm: 60,
         rows: [makeAttackRow('Diligence Shot', 125, 3)]
       }),
       makeWeapon('Senator', {
-        index: 5,
+        index: 6,
         type: 'Secondary',
         sub: 'PDW',
         rpm: 60,
         rows: [makeAttackRow('Senator Shot', 175, 3)]
       }),
       makeWeapon('Breaker', {
-        index: 6,
+        index: 7,
         type: 'Primary',
         sub: 'SG',
         rpm: 60,
@@ -1046,9 +1053,10 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
       .map((child) => child.textContent);
     const dividerIndex = rowChildren.findIndex((child) => child.classList.contains('chip-divider'));
 
-    assert.deepEqual(chipTexts, ['Auto', 'Explosive', 'Special', 'Ordnance', 'DMR', 'PDW', 'SG']);
+    assert.deepEqual(chipTexts, ['Automatic', 'Explosive', 'Special', 'Ordnance', 'DMR', 'PDW', 'SG']);
     assert.equal(dividerIndex, 4);
     assert.ok(!chipTexts.includes('AR'));
+    assert.ok(!chipTexts.includes('NRG'));
     assert.ok(!chipTexts.includes('EXP'));
     assert.ok(!chipTexts.includes('BCK'));
     assert.ok(!chipTexts.includes('RL'));
@@ -1063,7 +1071,7 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
   }
 });
 
-test('renderRecommendationPanel Auto feature group includes machine gun sentries', () => {
+test('renderRecommendationPanel Automatic feature group includes machine gun sentries and Sickles', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
@@ -1094,15 +1102,22 @@ test('renderRecommendationPanel Auto feature group includes machine gun sentries
         rpm: 60,
         rows: [makeAttackRow('Stalwart Burst', 80, 2)]
       }),
-      makeWeapon('Machine Gun Sentry', {
+      makeWeapon('Sickle', {
         index: 2,
+        type: 'Primary',
+        sub: 'NRG',
+        rpm: 60,
+        rows: [makeAttackRow('Sickle Beam', 60, 2)]
+      }),
+      makeWeapon('Machine Gun Sentry', {
+        index: 3,
         type: 'Stratagem',
         sub: 'EMP',
         rpm: 60,
         rows: [makeAttackRow('Machine Gun Sentry Burst', 120, 2)]
       }),
       makeWeapon('Orbital Precision Strike', {
-        index: 3,
+        index: 4,
         type: 'Stratagem',
         sub: 'ORB',
         rpm: 60,
@@ -1123,9 +1138,9 @@ test('renderRecommendationPanel Auto feature group includes machine gun sentries
     const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
     const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
 
-    assert.deepEqual([...weaponNames].sort(), ['Liberator', 'Machine Gun Sentry', 'Stalwart'].sort());
+    assert.deepEqual([...weaponNames].sort(), ['Liberator', 'Machine Gun Sentry', 'Sickle', 'Stalwart'].sort());
     assert.equal(weaponNames.includes('Orbital Precision Strike'), false);
-    assert.match(summary?.textContent || '', /weapon filters: showing only auto/i);
+    assert.match(summary?.textContent || '', /weapon filters: showing only automatic/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

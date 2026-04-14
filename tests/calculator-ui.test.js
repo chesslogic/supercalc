@@ -1402,6 +1402,28 @@ test('compare-mode AP sorting can group full-auto families across subtype bounda
   ]);
 });
 
+test('compare-mode AP sorting can group Sickle variants with Automatic families despite NRG subtype', () => {
+  const referenceWeapon = makeWeapon('Adjudicator', {
+    type: 'Primary',
+    sub: 'AR',
+    code: 'BR-14',
+    rows: [makeAttackRow(3, 95, 23)]
+  });
+  const sorted = sortWeaponOptionsForReference([
+    makeWeapon('Double-Edge Sickle', { type: 'Primary', sub: 'NRG', code: 'LAS-17', rows: [makeAttackRow(3, 70, 7)] }),
+    makeWeapon('Sickle', { type: 'Primary', sub: 'NRG', code: 'LAS-16', rows: [makeAttackRow(3, 60, 6)] }),
+    makeWeapon('Diligence Counter Sniper', { type: 'Primary', sub: 'DMR', code: 'R-63CS', rows: [makeAttackRow(3, 200, 50)] }),
+    makeWeapon('Grenade Launcher', { type: 'Support', sub: 'GL', code: 'GL-21', rows: [makeAttackRow(3, 400, 400)] })
+  ], referenceWeapon);
+
+  assert.deepEqual(sorted.map((weapon) => weapon.name), [
+    'Sickle',
+    'Double-Edge Sickle',
+    'Diligence Counter Sniper',
+    'Grenade Launcher'
+  ]);
+});
+
 test('compare-mode AP sorting can group precision families across subtype boundaries', () => {
   const referenceWeapon = makeWeapon('Reference Marksman', {
     type: 'Primary',
