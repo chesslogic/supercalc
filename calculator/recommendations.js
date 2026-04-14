@@ -411,6 +411,10 @@ function buildRecommendationAttackPackage(descriptors = [], {
   };
 }
 
+function isStratagemRecommendationWeapon(weapon) {
+  return normalizeText(weapon?.type) === 'stratagem';
+}
+
 function buildRecommendationAttackPackages(weapon, {
   includeCombinedPackages = false
 } = {}) {
@@ -498,6 +502,35 @@ function buildRecommendationAttackPackages(weapon, {
       }));
     });
   });
+
+  if (isStratagemRecommendationWeapon(weapon)) {
+    const eventFamiliesByAttackKey = new Map();
+    groupedDescriptors.forEach((groupDescriptors) => {
+      const familySet = new Set(groupDescriptors.map((descriptor) => descriptor.family).filter(Boolean));
+      groupDescriptors.forEach((descriptor) => {
+        if (descriptor?.attackKey) {
+          eventFamiliesByAttackKey.set(descriptor.attackKey, familySet);
+        }
+      });
+    });
+
+    return packages.filter((attackPackage) => {
+      if (attackPackage?.isCombinedPackage) {
+        return true;
+      }
+
+      if (!Array.isArray(attackPackage?.packageComponents) || attackPackage.packageComponents.length !== 1) {
+        return true;
+      }
+
+      const onlyComponent = attackPackage.packageComponents[0];
+      if (onlyComponent?.family !== 'projectile') {
+        return true;
+      }
+
+      return !eventFamiliesByAttackKey.get(onlyComponent.attackKey)?.has('explosion');
+    });
+  }
 
   return packages;
 }
@@ -782,6 +815,50 @@ function getSuppressedDirectTargetNames(enemy) {
   );
 }
 
+// Selected-target filter: for multi-source delivery events (stratagems) that already
+// have a combined or explosive-bearing recommendation, suppress the redundant
+// pure-projectile recommendation for the same event. Run after collapse+sort so that
+// the projectile-only package is preserved when it is genuinely the best path (i.e. the
+// collapse already removed any equivalent combined package above it).
+function applyStratagemPrecisionFilter(sortedAttackRecommendations) {
+  const dominantEventKeys = new Set();
+  sortedAttackRecommendations.forEach((recommendation) => {
+    const eventKey = getRecommendationAttackEventKey(recommendation.attackRow);
+    if (!eventKey) {
+      return;
+    }
+
+    const hasExplosiveComponent = recommendation.isCombinedPackage
+      || (Array.isArray(recommendation.attackRows) && recommendation.attackRows.some((row) => isExplosiveAttack(row)));
+    if (hasExplosiveComponent) {
+      dominantEventKeys.add(eventKey);
+    }
+  });
+
+  if (dominantEventKeys.size === 0) {
+    return sortedAttackRecommendations;
+  }
+
+  return sortedAttackRecommendations.filter((recommendation) => {
+    const eventKey = getRecommendationAttackEventKey(recommendation.attackRow);
+    if (!eventKey || !dominantEventKeys.has(eventKey)) {
+      return true;
+    }
+
+    if (recommendation.isCombinedPackage) {
+      return true;
+    }
+
+    const attackRows = Array.isArray(recommendation.attackRows) ? recommendation.attackRows : [];
+    if (attackRows.some((row) => isExplosiveAttack(row))) {
+      return true;
+    }
+
+    // Suppress if every attack row is pure projectile and a combined/explosive path exists.
+    return !attackRows.every((row) => getRecommendationAttackFamily(row) === 'projectile');
+  });
+}
+
 function buildRecommendationCandidates({
   enemy,
   weapon,
@@ -847,6 +924,14 @@ function buildRecommendationCandidates({
     zoneRows,
     candidates: [...directCandidates, ...sequenceCandidates].sort(compareZoneRecommendationCandidates)
   };
+}
+
+function isSelectedTargetBypassCandidate(candidate) {
+  const zoneDamage = toFiniteNumber(candidate?.zoneSummary?.totalDamagePerCycle) ?? 0;
+  const mainDamage = toFiniteNumber(candidate?.zoneSummary?.totalDamageToMainPerCycle) ?? 0;
+  return candidate?.outcomeKind === 'main'
+    && zoneDamage <= 0
+    && mainDamage > 0;
 }
 
 function getRecommendationPackageComponentCount(recommendation) {
@@ -1250,7 +1335,7 @@ function buildTargetRecommendationRows({
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
   return weapons
     .map((weapon) => {
-      const attackRecommendations = collapseEquivalentTargetAttackRecommendations(buildRecommendationAttackPackages(weapon, {
+      const rawAttackRecommendations = collapseEquivalentTargetAttackRecommendations(buildRecommendationAttackPackages(weapon, {
         includeCombinedPackages: true
       })
         .map((attackPackage) => buildAttackRecommendation({
@@ -1268,6 +1353,12 @@ function buildTargetRecommendationRows({
         .map((recommendation) => ({
           ...recommendation,
           candidates: recommendation.candidates.filter((candidate) => targetZoneIndexSet.has(candidate.zoneIndex))
+        }))
+        .map((recommendation) => ({
+          ...recommendation,
+          candidates: selectedZoneMatch
+            ? recommendation.candidates.filter((candidate) => !isSelectedTargetBypassCandidate(candidate))
+            : recommendation.candidates
         }))
         .filter((recommendation) => recommendation.candidates.length > 0)
         .map((recommendation) => {
@@ -1288,6 +1379,10 @@ function buildTargetRecommendationRows({
           };
         }))
         .sort(compareTargetAttackRowRecommendations);
+
+      const attackRecommendations = selectedZoneMatch && isStratagemRecommendationWeapon(weapon)
+        ? applyStratagemPrecisionFilter(rawAttackRecommendations)
+        : rawAttackRecommendations;
 
       if (attackRecommendations.length === 0) {
         return null;

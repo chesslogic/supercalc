@@ -33,6 +33,7 @@ import {
   getZoneRelationHighlightKind,
   getWeaponRangeAdjustedCellDisplay,
   getOverviewColumnsForState,
+  renderWeaponDetails,
   shouldShowEnemyControls,
   shouldShowEnemyScopeControls
 } from '../calculator/rendering.js';
@@ -52,7 +53,8 @@ import {
   getEnemyDropdownItemModel,
   getEnemyDropdownOptionsForQuery,
   getEnemyOverviewOptionHtml,
-  getWeaponInputDisplayValue
+  getWeaponInputDisplayValue,
+  setupEngagementRangeControl
 } from '../calculator/ui.js';
 import {
   ENGAGEMENT_RANGE_STOPS,
@@ -727,6 +729,148 @@ function makeAttackRow(ap, dmg, dur = dmg) {
   };
 }
 
+class TestClassList {
+  constructor(owner) {
+    this.owner = owner;
+    this.tokens = new Set();
+  }
+
+  setFromString(value) {
+    this.tokens = new Set(String(value || '').split(/\s+/).filter(Boolean));
+  }
+
+  syncOwner() {
+    this.owner._className = [...this.tokens].join(' ');
+  }
+
+  add(...tokens) {
+    tokens.flatMap((token) => String(token || '').split(/\s+/)).filter(Boolean).forEach((token) => {
+      this.tokens.add(token);
+    });
+    this.syncOwner();
+  }
+
+  remove(...tokens) {
+    tokens.flatMap((token) => String(token || '').split(/\s+/)).filter(Boolean).forEach((token) => {
+      this.tokens.delete(token);
+    });
+    this.syncOwner();
+  }
+
+  contains(token) {
+    return this.tokens.has(token);
+  }
+}
+
+class TestElement {
+  constructor(tagName, ownerDocument) {
+    this.tagName = String(tagName || 'div').toUpperCase();
+    this.ownerDocument = ownerDocument;
+    this.children = [];
+    this.parentNode = null;
+    this.style = {};
+    this.dataset = {};
+    this.listeners = new Map();
+    this.value = '';
+    this.checked = false;
+    this.disabled = false;
+    this.type = '';
+    this.name = '';
+    this.title = '';
+    this._textContent = '';
+    this._className = '';
+    this.classList = new TestClassList(this);
+  }
+
+  get className() {
+    return this._className;
+  }
+
+  set className(value) {
+    this._className = String(value || '');
+    this.classList.setFromString(this._className);
+  }
+
+  get textContent() {
+    return `${this._textContent}${this.children.map((child) => child.textContent).join('')}`;
+  }
+
+  set textContent(value) {
+    this._textContent = String(value ?? '');
+    this.children = [];
+  }
+
+  get innerHTML() {
+    return '';
+  }
+
+  set innerHTML(_value) {
+    this._textContent = '';
+    this.children = [];
+  }
+
+  get childElementCount() {
+    return this.children.length;
+  }
+
+  appendChild(child) {
+    child.parentNode = this;
+    this.children.push(child);
+    return child;
+  }
+
+  addEventListener(type, listener) {
+    const listeners = this.listeners.get(type) || [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  dispatch(type, event = {}) {
+    const listeners = this.listeners.get(type) || [];
+    listeners.forEach((listener) => listener({
+      target: this,
+      currentTarget: this,
+      ...event
+    }));
+  }
+}
+
+class TestDocument {
+  constructor() {
+    this.elementsById = new Map();
+  }
+
+  createElement(tagName) {
+    return new TestElement(tagName, this);
+  }
+
+  getElementById(id) {
+    return this.elementsById.get(id) || null;
+  }
+
+  registerElement(id, tagName = 'div') {
+    const element = this.createElement(tagName);
+    element.id = id;
+    this.elementsById.set(id, element);
+    return element;
+  }
+
+  addEventListener() {}
+}
+
+function collectElements(root, predicate, matches = []) {
+  if (!root) {
+    return matches;
+  }
+
+  if (predicate(root)) {
+    matches.push(root);
+  }
+
+  root.children.forEach((child) => collectElements(child, predicate, matches));
+  return matches;
+}
+
 test('weapon details DMG cells can show range-adjusted projectile damage with a base-value tooltip', () => {
   resetBallisticFalloffProfiles();
   ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
@@ -872,6 +1016,85 @@ test('weapon details keep zero-range DMG cells unchanged', () => {
     weaponA: weapon,
     rangeA: 0
   }), null);
+});
+
+test('engagement range change rerenders the upper weapon details table', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  const originalDocument = globalThis.document;
+  const originalWindow = globalThis.window;
+  const originalMode = calculatorState.mode;
+  const originalWeaponA = calculatorState.weaponA;
+  const originalSelectedEnemy = calculatorState.selectedEnemy;
+  const originalSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const originalSelectedExplosiveZoneIndices = [...calculatorState.selectedExplosiveZoneIndices];
+  const originalSelectedAttackKeysA = [...calculatorState.selectedAttackKeys.A];
+  const originalAttackHitCountsA = { ...calculatorState.attackHitCounts.A };
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+
+  try {
+    const testDocument = new TestDocument();
+    const weaponDetails = testDocument.registerElement('calculator-weapon-details');
+    const rangeInput = testDocument.registerElement('calculator-range-input-a', 'input');
+    const rangeValue = testDocument.registerElement('calculator-range-value-a', 'span');
+
+    globalThis.document = testDocument;
+    globalThis.window = {
+      _weaponsState: {
+        keys: {
+          atkTypeKey: 'Atk Type'
+        }
+      }
+    };
+
+    calculatorState.mode = 'single';
+    calculatorState.selectedEnemy = null;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.selectedExplosiveZoneIndices = [];
+    calculatorState.engagementRangeMeters.A = 0;
+    setSelectedWeapon('A', makeWeapon('Liberator', {
+      code: 'AR-23',
+      rows: [{
+        ...makeAttackRow(2, 105, 30),
+        'Atk Type': 'Projectile',
+        'Atk Name': '5.5x50mm FULL METAL JACKET_P'
+      }]
+    }));
+
+    setupEngagementRangeControl('A');
+    renderWeaponDetails();
+
+    const initialCells = collectElements(weaponDetails, (element) => element.tagName === 'TD');
+    assert.ok(initialCells.some((cell) => cell.textContent === '105'));
+    assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(0));
+
+    const expectedDamage = formatDamageValue(roundDamagePacket(calculateBallisticDamageAtDistance(105, {
+      caliber: 5.5,
+      mass: 4.5,
+      velocity: 900,
+      drag: 0.3
+    }, 100)));
+
+    rangeInput.value = '100';
+    rangeInput.dispatch('change');
+
+    const updatedCells = collectElements(weaponDetails, (element) => element.tagName === 'TD');
+    assert.ok(updatedCells.some((cell) => cell.textContent === expectedDamage));
+    assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(100));
+  } finally {
+    resetBallisticFalloffProfiles();
+    globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
+    calculatorState.mode = originalMode;
+    calculatorState.weaponA = originalWeaponA;
+    calculatorState.selectedEnemy = originalSelectedEnemy;
+    calculatorState.selectedZoneIndex = originalSelectedZoneIndex;
+    calculatorState.selectedExplosiveZoneIndices = originalSelectedExplosiveZoneIndices;
+    calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
+    calculatorState.attackHitCounts.A = originalAttackHitCountsA;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+  }
 });
 
 test('enemy table mode defaults to analysis and normalizes to supported values', () => {

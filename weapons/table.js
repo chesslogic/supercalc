@@ -9,9 +9,113 @@ import {
 import { classifyAtkType, atkColorClass, apColorClass, dfColorClass } from '../colors.js';
 import { compareNullableValues } from '../sort-utils.js';
 
+export const DURABLE_RATIO_HEADER = 'DUR/DMG';
+const DURABLE_RATIO_FRACTION_MAX_DENOMINATOR = 8;
+const DURABLE_RATIO_FRACTION_EPSILON = 0.0125;
+
 export function isNumber(v){ return v !== null && v !== '' && !isNaN(Number(v)); }
 
+function toFiniteNumber(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function canShowDurableRatioColumn() {
+  return Boolean(state.keys.dmgKey && state.keys.durKey);
+}
+
+function getDisplayHeaders() {
+  const headers = [...state.headers];
+  if (!canShowDurableRatioColumn() || headers.includes(DURABLE_RATIO_HEADER)) {
+    return headers;
+  }
+
+  const durIndex = headers.indexOf(state.keys.durKey);
+  const insertIndex = durIndex >= 0 ? durIndex + 1 : headers.length;
+  headers.splice(insertIndex, 0, DURABLE_RATIO_HEADER);
+  return headers;
+}
+
+function getDurableDamageRatio(row) {
+  if (!canShowDurableRatioColumn()) {
+    return null;
+  }
+
+  const damage = toFiniteNumber(row?.[state.keys.dmgKey]);
+  const durableDamage = toFiniteNumber(row?.[state.keys.durKey]);
+  if (damage === null || durableDamage === null || damage <= 0) {
+    return null;
+  }
+
+  return Math.max(0, Math.min(1, durableDamage / damage));
+}
+
+function formatDurableRatioPercent(ratio) {
+  const percent = Math.max(0, Math.min(100, ratio * 100));
+  return `${percent.toFixed(1).replace(/\.0$/, '')}%`;
+}
+
+function findApproximateDurableRatioFraction(ratio) {
+  if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 1) {
+    return null;
+  }
+
+  let bestMatch = null;
+  for (let denominator = 2; denominator <= DURABLE_RATIO_FRACTION_MAX_DENOMINATOR; denominator += 1) {
+    for (let numerator = 1; numerator < denominator; numerator += 1) {
+      const candidateRatio = numerator / denominator;
+      const difference = Math.abs(candidateRatio - ratio);
+      if (!bestMatch || difference < bestMatch.difference) {
+        bestMatch = {
+          numerator,
+          denominator,
+          difference
+        };
+      }
+    }
+  }
+
+  return bestMatch && bestMatch.difference <= DURABLE_RATIO_FRACTION_EPSILON
+    ? `${bestMatch.numerator}/${bestMatch.denominator}`
+    : null;
+}
+
+function getDurableRatioDisplayModel(row) {
+  const ratio = getDurableDamageRatio(row);
+  if (ratio === null) {
+    return {
+      ratio: null,
+      text: '',
+      title: ''
+    };
+  }
+
+  const damage = toFiniteNumber(row?.[state.keys.dmgKey]);
+  const durableDamage = toFiniteNumber(row?.[state.keys.durKey]);
+  const percentText = formatDurableRatioPercent(ratio);
+  const fractionText = findApproximateDurableRatioFraction(ratio);
+  const text = fractionText ? `${percentText} (${fractionText})` : percentText;
+  const titleLines = [
+    `Durable damage is ${percentText} of standard damage.`,
+    `${durableDamage} / ${damage}`
+  ];
+
+  if (fractionText) {
+    titleLines.push(`Approximate fraction: ${fractionText} durable`);
+  }
+
+  return {
+    ratio,
+    text,
+    title: titleLines.join('\n')
+  };
+}
+
 export function guessNumericColumn(key){
+  if (key === DURABLE_RATIO_HEADER) {
+    return true;
+  }
+
   let cnt = 0, ok = 0;
   for (const g of state.groups) {
     for (const r of g.rows) { cnt++; if (isNumber(r[key])) ok++; if (cnt >= 40) break; }
@@ -22,6 +126,12 @@ export function guessNumericColumn(key){
 
 export function groupSortValue(group, key, numeric){
   if (key === state.keys.nameKey) return (group.name || '').toString();
+  if (key === DURABLE_RATIO_HEADER) {
+    const ratios = group.rows
+      .map((row) => getDurableRatioDisplayModel(row).ratio)
+      .filter((ratio) => ratio !== null);
+    return ratios.length ? Math.max(...ratios) : Number.NEGATIVE_INFINITY;
+  }
   if (numeric) {
     const vals = group.rows.map(r => Number(r[key])).filter(n => !isNaN(n));
     return vals.length ? Math.max(...vals) : Number.NEGATIVE_INFINITY;
@@ -36,6 +146,7 @@ export function renderTable(){
   if (!thead) return;
   thead.innerHTML = '';
   const trh = document.createElement('tr');
+  const displayHeaders = getDisplayHeaders();
   
   // Add pin column header
   const pinTh = document.createElement('th');
@@ -45,7 +156,7 @@ export function renderTable(){
   pinTh.title = 'Pin weapon';
   trh.appendChild(pinTh);
   
-  state.headers.forEach(h => {
+  displayHeaders.forEach(h => {
     const th = document.createElement('th');
     th.textContent = h; 
     th.title = `Sort by ${h}`;
@@ -71,6 +182,7 @@ export function sortAndRenderBody(){
   tbody.innerHTML = '';
   const source = state.filterActive ? state.filteredGroups : state.groups;
   let ordered = [...source];
+  const displayHeaders = getDisplayHeaders();
 
   // Separate pinned and unpinned weapons
   const pinned = ordered.filter(g => state.pinnedWeapons.has(g.name));
@@ -134,8 +246,26 @@ export function sortAndRenderBody(){
       tr.appendChild(pinTd);
       
       const atkClass = classifyAtkType(r, state.keys.atkTypeKey);
-      state.headers.forEach(h => {
+      displayHeaders.forEach(h => {
         const td = document.createElement('td');
+        if (h === DURABLE_RATIO_HEADER) {
+          const durableRatio = getDurableRatioDisplayModel(r);
+          if (atkClass) {
+            const cls = atkColorClass(atkClass);
+            if (cls) td.classList.add(cls);
+          }
+          td.classList.add('calc-derived-cell');
+          td.textContent = durableRatio.text;
+          if (!durableRatio.text) {
+            td.classList.add('muted');
+          }
+          if (durableRatio.title) {
+            td.title = durableRatio.title;
+          }
+          tr.appendChild(td);
+          return;
+        }
+
         let v = r[h];
         if (idx > 0 && (h === state.keys.nameKey || h === state.keys.typeKey || h === state.keys.codeKey)) v = '';
 

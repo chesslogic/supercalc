@@ -11,6 +11,7 @@ import {
   getSelectedZone,
   getWeaponForSlot,
   setRecommendationWeaponFilterMode,
+  setSelectedZoneIndex,
   toggleRecommendationWeaponFilterSub,
   toggleRecommendationWeaponFilterType,
   clearRecommendationWeaponFilters
@@ -861,6 +862,8 @@ function renderOverviewCalculation(container) {
 
 const RECOMMENDATION_MARGIN_THRESHOLD_PERCENT = Math.round(RECOMMENDATION_MARGIN_RATIO_THRESHOLD * 100);
 const RECOMMENDATION_DISPLAY_LIMIT = 24;
+const TARGETED_RECOMMENDATION_DISPLAY_LIMIT = 12;
+const RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT = 12;
 const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
 const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
 const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
@@ -1055,6 +1058,51 @@ function createRecommendationFilterChipRow({
   row.appendChild(rowLabel);
 
   chips.forEach((chip) => row.appendChild(chip));
+  return row;
+}
+
+const RELATED_TARGET_CHIP_MAX = 8;
+
+function createRelatedTargetChipRow({ enemy, allPriorityTargetZoneIndices, selectedZoneIndex }) {
+  const row = document.createElement('div');
+  row.className = 'chiprow calc-related-target-chips';
+
+  const label = document.createElement('span');
+  label.className = 'muted';
+  label.textContent = 'Switch target:';
+  row.appendChild(label);
+
+  const limitedIndices = allPriorityTargetZoneIndices.slice(0, RELATED_TARGET_CHIP_MAX);
+  limitedIndices.forEach((zoneIndex) => {
+    const zone = enemy?.zones?.[zoneIndex];
+    if (!zone) {
+      return;
+    }
+
+    const isActive = zoneIndex === selectedZoneIndex;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `chip${isActive ? ' active' : ''}`;
+    chip.textContent = zone.zone_name;
+    chip.title = isActive ? `Currently targeting: ${zone.zone_name}` : `Switch to ${zone.zone_name}`;
+
+    if (!isActive) {
+      chip.addEventListener('click', () => {
+        setSelectedZoneIndex(zoneIndex);
+        refreshEnemyCalculationViews();
+      });
+    }
+
+    row.appendChild(chip);
+  });
+
+  if (allPriorityTargetZoneIndices.length > RELATED_TARGET_CHIP_MAX) {
+    const overflow = document.createElement('span');
+    overflow.className = 'muted';
+    overflow.textContent = `+${allPriorityTargetZoneIndices.length - RELATED_TARGET_CHIP_MAX} more`;
+    row.appendChild(overflow);
+  }
+
   return row;
 }
 
@@ -1312,6 +1360,23 @@ function buildOverallRecommendationDisplayRows(rows, limit = RECOMMENDATION_DISP
 
   return {
     rows: selectedRows,
+    supplementedCoreTypes
+  };
+}
+
+function buildOverallRecommendationDisplaySequence(rows, limit = RECOMMENDATION_DISPLAY_LIMIT) {
+  const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  const {
+    rows: initialRows,
+    supplementedCoreTypes
+  } = buildOverallRecommendationDisplayRows(sourceRows, limit);
+  const selectedRowSet = new Set(initialRows);
+
+  return {
+    rows: [
+      ...initialRows,
+      ...sourceRows.filter((row) => !selectedRowSet.has(row))
+    ],
     supplementedCoreTypes
   };
 }
@@ -1586,11 +1651,96 @@ function appendRecommendationCell(row, content, className = '', title = '') {
   row.appendChild(cell);
 }
 
+function appendRecommendationTableRow(tbody, row, usingFallbackRows = false) {
+  const tableRow = document.createElement('tr');
+
+  appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
+  appendRecommendationCell(tableRow, row.attackName, 'trunc', getRecommendationAttackTitle(row));
+
+  const target = document.createElement('div');
+  target.className = 'calc-recommend-target';
+  const targetName = document.createElement('span');
+  targetName.textContent = row.bestZoneName || '—';
+  target.appendChild(targetName);
+  const outcomeBadge = createOutcomeBadge(row.bestOutcomeKind);
+  if (outcomeBadge) {
+    target.appendChild(outcomeBadge);
+  }
+  appendRecommendationCell(tableRow, target, '', getRecommendationTargetTitle(row));
+
+  appendRecommendationCell(
+    tableRow,
+    row.shotsToKill === null ? '-' : String(row.shotsToKill),
+    '',
+    getRecommendationShotsTitle(row)
+  );
+  appendRecommendationCell(
+    tableRow,
+    row.ttkSeconds === null ? '-' : formatTtkSeconds(row.ttkSeconds),
+    '',
+    getRecommendationTtkTitle(row)
+  );
+  appendRecommendationCell(
+    tableRow,
+    row.effectiveDistance?.isAvailable
+      ? row.effectiveDistance.text
+      : (row.rangeStatus === 'unknown' ? '?' : '-'),
+    '',
+    getRecommendationRangeTitle(row)
+  );
+  appendRecommendationCell(
+    tableRow,
+    createRecommendationFlag(
+      row.qualifiesForMargin,
+      getRecommendationMarginLabel(row),
+      getRecommendationMarginTitle(row),
+      getRecommendationMarginLabel(row)
+    )
+  );
+  appendRecommendationCell(
+    tableRow,
+    createRecommendationFlag(
+      row.hasCriticalRecommendation,
+      'Yes',
+      getRecommendationFlagTitle('criticalRecommendation', row.hasCriticalRecommendation)
+    )
+  );
+  appendRecommendationCell(
+    tableRow,
+    createRecommendationFlag(
+      row.hasFastTtk,
+      'Yes',
+      getRecommendationFlagTitle('fastTtk', row.hasFastTtk)
+    )
+  );
+  appendRecommendationCell(
+    tableRow,
+    createRecommendationFlag(
+      row.penetratesAll,
+      'Yes',
+      getRecommendationFlagTitle('penetratesAll', row.penetratesAll)
+    )
+  );
+  appendRecommendationCell(
+    tableRow,
+    '—',
+    'muted',
+    getRecommendationTipTitle(row, usingFallbackRows)
+  );
+
+  tbody.appendChild(tableRow);
+}
+
 function renderRecommendationTable({
   body,
   rows,
-  usingFallbackRows = false
+  usingFallbackRows = false,
+  visibleCount = null
 }) {
+  const sourceRows = Array.isArray(rows) ? rows : [];
+  const normalizedVisibleCount = Number.isFinite(visibleCount)
+    ? Math.max(0, Math.trunc(visibleCount))
+    : sourceRows.length;
   const tableWrap = document.createElement('div');
   tableWrap.className = 'calc-recommend-table-wrap';
 
@@ -1611,89 +1761,36 @@ function renderRecommendationTable({
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  rows.forEach((row) => {
-    const tableRow = document.createElement('tr');
-
-    appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
-    appendRecommendationCell(tableRow, row.attackName, 'trunc', getRecommendationAttackTitle(row));
-
-    const target = document.createElement('div');
-    target.className = 'calc-recommend-target';
-    const targetName = document.createElement('span');
-    targetName.textContent = row.bestZoneName || '—';
-    target.appendChild(targetName);
-    const outcomeBadge = createOutcomeBadge(row.bestOutcomeKind);
-    if (outcomeBadge) {
-      target.appendChild(outcomeBadge);
-    }
-    appendRecommendationCell(tableRow, target, '', getRecommendationTargetTitle(row));
-
-    appendRecommendationCell(
-      tableRow,
-      row.shotsToKill === null ? '-' : String(row.shotsToKill),
-      '',
-      getRecommendationShotsTitle(row)
-    );
-    appendRecommendationCell(
-      tableRow,
-      row.ttkSeconds === null ? '-' : formatTtkSeconds(row.ttkSeconds),
-      '',
-      getRecommendationTtkTitle(row)
-    );
-    appendRecommendationCell(
-      tableRow,
-      row.effectiveDistance?.isAvailable
-        ? row.effectiveDistance.text
-        : (row.rangeStatus === 'unknown' ? '?' : '-'),
-      '',
-      getRecommendationRangeTitle(row)
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
-        row.qualifiesForMargin,
-        getRecommendationMarginLabel(row),
-        getRecommendationMarginTitle(row),
-        getRecommendationMarginLabel(row)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
-        row.hasCriticalRecommendation,
-        'Yes',
-        getRecommendationFlagTitle('criticalRecommendation', row.hasCriticalRecommendation)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
-        row.hasFastTtk,
-        'Yes',
-        getRecommendationFlagTitle('fastTtk', row.hasFastTtk)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      createRecommendationFlag(
-        row.penetratesAll,
-        'Yes',
-        getRecommendationFlagTitle('penetratesAll', row.penetratesAll)
-      )
-    );
-    appendRecommendationCell(
-      tableRow,
-      '—',
-      'muted',
-      getRecommendationTipTitle(row, usingFallbackRows)
-    );
-
-    tbody.appendChild(tableRow);
+  sourceRows.slice(0, normalizedVisibleCount).forEach((row) => {
+    appendRecommendationTableRow(tbody, row, usingFallbackRows);
   });
 
   table.appendChild(tbody);
   tableWrap.appendChild(table);
   body.appendChild(tableWrap);
+
+  return {
+    tbody,
+    renderedCount: Math.min(normalizedVisibleCount, sourceRows.length)
+  };
+}
+
+function getRecommendationVisibleCountText(visibleCount, totalCount) {
+  if (!Number.isFinite(totalCount) || totalCount <= 0) {
+    return '';
+  }
+
+  return visibleCount >= totalCount
+    ? `Showing all ${totalCount} recommendations.`
+    : `Showing ${visibleCount} of ${totalCount} recommendations.`;
+}
+
+function getRecommendationShowMoreButtonText(step, remainingCount) {
+  const increment = Math.max(1, Math.min(
+    Number.isFinite(step) ? Math.trunc(step) : 1,
+    Number.isFinite(remainingCount) ? Math.trunc(remainingCount) : 0
+  ));
+  return `+${increment} more`;
 }
 
 function renderRecommendationSubsection({
@@ -1704,7 +1801,8 @@ function renderRecommendationSubsection({
   controls = null,
   rows,
   usingFallbackRows = false,
-  emptyStateText = 'No recommendation rows are available for this target.'
+  emptyStateText = 'No recommendation rows are available for this target.',
+  displayStep = null
 }) {
   const section = document.createElement('section');
   section.className = 'calc-recommend-section';
@@ -1728,17 +1826,72 @@ function renderRecommendationSubsection({
     section.appendChild(controls);
   }
 
-  if (rows.length === 0) {
+  const sourceRows = Array.isArray(rows) ? rows : [];
+  const normalizedDisplayStep = Number.isFinite(displayStep)
+    ? Math.max(1, Math.trunc(displayStep))
+    : 0;
+  const initialVisibleCount = normalizedDisplayStep > 0
+    ? Math.min(sourceRows.length, normalizedDisplayStep)
+    : sourceRows.length;
+
+  if (sourceRows.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.className = 'muted';
     emptyState.textContent = emptyStateText;
     section.appendChild(emptyState);
   } else {
-    renderRecommendationTable({
+    let renderedCount = initialVisibleCount;
+    let tbody = null;
+    let moreButton = null;
+    let paginationStatus = null;
+
+    const updatePaginationControls = () => {
+      if (!paginationStatus || !moreButton) {
+        return;
+      }
+
+      paginationStatus.textContent = getRecommendationVisibleCountText(renderedCount, sourceRows.length);
+      const remainingCount = sourceRows.length - renderedCount;
+      if (remainingCount <= 0) {
+        moreButton.classList.add('hidden');
+        return;
+      }
+
+      moreButton.classList.remove('hidden');
+      moreButton.textContent = getRecommendationShowMoreButtonText(normalizedDisplayStep, remainingCount);
+    };
+
+    if (normalizedDisplayStep > 0 && sourceRows.length > initialVisibleCount) {
+      const pagination = document.createElement('div');
+      pagination.className = 'calc-recommend-pagination';
+
+      paginationStatus = document.createElement('span');
+      paginationStatus.className = 'calc-recommend-pagination-status';
+      pagination.appendChild(paginationStatus);
+
+      moreButton = document.createElement('button');
+      moreButton.type = 'button';
+      moreButton.className = 'button calc-recommend-more-button';
+      moreButton.addEventListener('click', () => {
+        const nextCount = Math.min(sourceRows.length, renderedCount + normalizedDisplayStep);
+        sourceRows.slice(renderedCount, nextCount).forEach((row) => {
+          appendRecommendationTableRow(tbody, row, usingFallbackRows);
+        });
+        renderedCount = nextCount;
+        updatePaginationControls();
+      });
+      pagination.appendChild(moreButton);
+      section.appendChild(pagination);
+    }
+
+    const tableRender = renderRecommendationTable({
       body: section,
-      rows,
-      usingFallbackRows
+      rows: sourceRows,
+      usingFallbackRows,
+      visibleCount: initialVisibleCount
     });
+    tbody = tableRender.tbody;
+    updatePaginationControls();
   }
 
   body.appendChild(section);
@@ -1839,14 +1992,14 @@ export function renderRecommendationPanel(container, enemy) {
     rangeFloorMeters: highlightRangeFloorMeters,
     selectedZoneIndex: calculatorState.selectedZoneIndex,
     getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
-  }).slice(0, 12);
+  });
   const relatedTargetRows = buildRelatedTargetRecommendationRows({
     enemy,
     weapons: weaponsState.groups,
     rangeFloorMeters: highlightRangeFloorMeters,
     relatedZoneIndices: relatedTargetZoneIndices,
     getEngagementRangeMetersForWeapon: getEngagementRangeMetersForRecommendationWeapon
-  }).slice(0, 12);
+  });
   const flaggedRows = recommendationRows.filter((row) => (
     row.qualifiesForMargin
     || row.hasCriticalRecommendation
@@ -1859,17 +2012,18 @@ export function renderRecommendationPanel(container, enemy) {
     rows: displayRows,
     supplementedCoreTypes
   } = hasFilteredOverallRows
-    ? buildOverallRecommendationDisplayRows(
+    ? buildOverallRecommendationDisplaySequence(
         flaggedRows.length > 0 ? flaggedRows : recommendationRows,
         RECOMMENDATION_DISPLAY_LIMIT
       )
     : { rows: [], supplementedCoreTypes: [] };
+  const initialOverallRows = displayRows.slice(0, RECOMMENDATION_DISPLAY_LIMIT);
   const overallRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText();
   const overallRecommendationFilterControls = renderRecommendationWeaponFilterControls(weaponsState.groups);
   const overallRecommendationSummaryText = hasFilteredOverallRows
     ? (
         flaggedRows.length > 0
-          ? `Showing ${displayRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
+          ? `Showing ${initialOverallRows.length} highlighted recommendations using the current engagement settings (${recommendationRangeSummary}).${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
           : `No rows hit the current highlight checks using the current engagement settings (${recommendationRangeSummary}). Showing the best fallback rows instead.${supplementedCoreTypes.length > 0 ? ' Core weapon-type coverage is backfilled where available.' : ''}${overallRecommendationFilterSummaryText}`
       )
     : hasActiveRecommendationWeaponFilters()
@@ -1883,13 +2037,23 @@ export function renderRecommendationPanel(container, enemy) {
     : 'No recommendation rows are available right now.';
 
   if (selectedZone) {
+    const hasRelatedTargetChips = relatedTargetZoneIndices.length > 0;
+    const relatedTargetChips = hasRelatedTargetChips
+      ? createRelatedTargetChipRow({
+          enemy,
+          allPriorityTargetZoneIndices,
+          selectedZoneIndex: calculatorState.selectedZoneIndex
+        })
+      : null;
     renderRecommendationSubsection({
       body,
       titleText: `${selectedZone.zone_name} targeted recommendations`,
       summaryText: selectedTargetRows.length > 0
         ? `Best attack rows for removing or reaching the selected target using the current engagement settings (${recommendationRangeSummary}).`
         : `No dedicated target rows are available for ${selectedZone.zone_name} using the current engagement settings (${recommendationRangeSummary}).`,
-      rows: selectedTargetRows
+      controls: relatedTargetChips,
+      rows: selectedTargetRows,
+      displayStep: TARGETED_RECOMMENDATION_DISPLAY_LIMIT
     });
   }
 
@@ -1907,6 +2071,7 @@ export function renderRecommendationPanel(container, enemy) {
         recommendationRangeSummary
       }),
       rows: relatedTargetRows,
+      displayStep: RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT,
       emptyStateText: getRelatedRouteEmptyStateText({
         selectedZone,
         selectedZoneIsPriorityTarget
@@ -1921,6 +2086,7 @@ export function renderRecommendationPanel(container, enemy) {
     summaryTitle: overallRecommendationSummaryTitle,
     controls: overallRecommendationFilterControls,
     rows: displayRows,
+    displayStep: RECOMMENDATION_DISPLAY_LIMIT,
     usingFallbackRows,
     emptyStateText: overallRecommendationEmptyStateText
   });

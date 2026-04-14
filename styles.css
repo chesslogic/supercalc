@@ -244,6 +244,10 @@ tbody tr:hover {
   border-color: var(--accent);
 }
 
+.calc-related-target-chips {
+  margin-top: 4px;
+}
+
 /* Color utilities */
 .num-orange { color: var(--orange); }
 .num-yellow { color: var(--yellow); }
@@ -1308,6 +1312,18 @@ tbody tr:hover {
   display:flex;
   flex-direction:column;
   gap:8px;
+}
+
+.calc-recommend-pagination{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+.calc-recommend-pagination-status{
+  color:var(--muted);
+  font-size:13px;
 }
 
 .calc-recommend-filters{

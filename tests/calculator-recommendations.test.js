@@ -612,6 +612,99 @@ test('buildRelatedTargetRecommendationRows ranks linked targets without pretendi
   assert.equal(rows[0].bestOutcomeKind, 'limb');
 });
 
+test('buildSelectedTargetRecommendationRows excludes main-only bypass answers for a routed selected part', () => {
+  const enemy = {
+    name: 'Routed Dummy',
+    health: 240,
+    zones: [
+      makeZone('Main', { health: 240, av: 1, toMainPercent: 1 }),
+      {
+        ...makeZone('head', { health: 100, av: 1, toMainPercent: 0.5 }),
+        ExTarget: 'Main'
+      }
+    ]
+  };
+  const weapons = [
+    makeWeapon('Barrage', {
+      rows: [makeExplosionAttackRow('120mm HE_E', 120, 3)]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows.length, 0);
+});
+
+test('buildSelectedTargetRecommendationRows keeps main kills when the selected part still takes damage', () => {
+  const enemy = {
+    name: 'Transfer Dummy',
+    health: 200,
+    zones: [
+      makeZone('Main', { health: 200, av: 1, toMainPercent: 1 }),
+      makeZone('head', { health: 400, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Blast Cannon', {
+      rows: [makeExplosionAttackRow('Blast Cannon_E', 120, 3)]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bestZoneName, 'head');
+  assert.equal(rows[0].bestOutcomeKind, 'main');
+});
+
+test('buildSelectedTargetRecommendationRows keeps the combined stratagem package instead of the pure projectile row', () => {
+  const enemy = {
+    name: 'Stratagem Dummy',
+    health: 500,
+    zones: [
+      makeZone('Main', { health: 500, av: 1, toMainPercent: 1 }),
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Eagle Smoke Strike', {
+      type: 'Stratagem',
+      rows: [
+        makeAttackRow('100KG BOMB_P', 100, 2),
+        makeExplosionAttackRow('100KG BOMB_P_IE', 20, 3)
+      ]
+    })
+  ];
+
+  const targetedRows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+  const overallRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(targetedRows.length, 1);
+  assert.equal(targetedRows[0].attackName, '100KG BOMB [Proj + Blast]');
+  assert.equal(targetedRows[0].isCombinedPackage, true);
+  assert.equal(overallRows.length, 1);
+  assert.equal(overallRows[0].attackName, '100KG BOMB_P');
+});
+
 test('buildSelectedTargetRecommendationRows can rank a combined projectile and blast package', () => {
   const enemy = {
     name: 'Package Dummy',
@@ -754,4 +847,49 @@ test('buildSelectedTargetRecommendationRows keeps staged target paths when a com
   assert.equal(rows[0].isSequenceCandidate, true);
   assert.deepEqual(rows[0].matchedZoneNames, ['head', 'pilot']);
   assert.equal(rows[0].shotsToKill, 2);
+});
+
+test('buildSelectedTargetRecommendationRows does not suppress the pure projectile recommendation for a non-stratagem weapon with same-event explosive rows', () => {
+  // Regression: applyStratagemPrecisionFilter must only run for stratagem-type weapons.
+  // A grenade-style non-stratagem weapon has both a projectile row and an explosive row
+  // sharing the same event prefix. The standalone projectile recommendation must remain
+  // visible alongside the combined package even though a dominant explosive event key exists.
+  const enemy = {
+    name: 'Grenade Dummy',
+    health: 500,
+    zones: [
+      makeZone('body', { health: 180, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('G-7 Pineapple', {
+      type: 'Grenade',
+      rows: [
+        makeAttackRow('G-7 PINEAPPLE_P', 100, 3),
+        makeExplosionAttackRow('G-7 PINEAPPLE_P_IE', 130, 2)
+      ]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+
+  assert.equal(rows.length, 1);
+  const { attackRecommendations } = rows[0];
+
+  // Combined package (100 + 130 = 230 > 180) kills in one shot and must be present.
+  const combinedRec = attackRecommendations.find((r) => r.isCombinedPackage);
+  assert.ok(combinedRec, 'combined package recommendation should be present');
+  assert.equal(combinedRec.bestCandidate?.shotsToKill, 1);
+
+  // Standalone projectile (100 dmg, 2 shots) must NOT be suppressed for non-stratagem weapons.
+  const projectileRec = attackRecommendations.find(
+    (r) => !r.isCombinedPackage && r.attackName === 'G-7 PINEAPPLE_P'
+  );
+  assert.ok(projectileRec, 'standalone projectile recommendation must not be suppressed for non-stratagem weapons');
+  assert.equal(projectileRec.bestCandidate?.shotsToKill, 2);
 });

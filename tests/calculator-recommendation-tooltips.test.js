@@ -103,6 +103,10 @@ class TestDocument {
   createElement(tagName) {
     return new TestElement(tagName);
   }
+
+  getElementById() {
+    return null;
+  }
 }
 
 function collectElements(root, predicate, results = []) {
@@ -486,6 +490,10 @@ test('renderRecommendationPanel adds related routes for linked priority targets 
     const summaries = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'));
     const tables = collectElements(container, (element) => element.tagName === 'TABLE');
     const relatedTargetCells = collectElements(tables[1], (element) => element.tagName === 'TD');
+    const chipRows = collectElements(container, (element) => element.classList.contains('calc-related-target-chips'));
+    const chipButtons = chipRows[0]
+      ? collectElements(chipRows[0], (element) => element.tagName === 'BUTTON')
+      : [];
 
     assert.equal(sectionTitles[0]?.textContent, 'shoulderplate_left targeted recommendations');
     assert.equal(sectionTitles[1]?.textContent, 'shoulderplate_left related routes');
@@ -493,6 +501,76 @@ test('renderRecommendationPanel adds related routes for linked priority targets 
     assert.match(summaries[1]?.textContent || '', /Linked priority targets/i);
     assert.match(summaries[1]?.textContent || '', /left_arm/i);
     assert.match(relatedTargetCells[2].title, /Best-ranked target: left_arm/i);
+    assert.equal(chipRows.length, 1);
+    assert.equal(chipButtons.map((button) => button.textContent).join(','), 'left_arm');
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel related target chips can switch the selected zone', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    weaponsState.groups = [
+      makeWeapon('Cleaner', {
+        rpm: 60,
+        rows: [makeAttackRow('Cleaner', 100, 4)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Heavy Devastator',
+      zoneRelationGroups: [
+        {
+          id: 'left-arm',
+          label: 'Left arm',
+          zoneNames: ['shoulderplate_left', 'left_arm'],
+          mirrorGroupIds: ['right-arm'],
+          priorityTargetZoneNames: ['left_arm']
+        },
+        {
+          id: 'right-arm',
+          label: 'Right arm',
+          zoneNames: ['shoulderplate_right', 'right_arm'],
+          mirrorGroupIds: ['left-arm'],
+          priorityTargetZoneNames: ['right_arm']
+        }
+      ],
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('shoulderplate_left', { health: 150, av: 4, toMainPercent: 0 }),
+        makeZone('left_arm', { health: 100, av: 1, toMainPercent: 0.5 }),
+        makeZone('right_arm', { health: 100, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const chipRows = collectElements(container, (element) => element.classList.contains('calc-related-target-chips'));
+    const chipButtons = chipRows[0]
+      ? collectElements(chipRows[0], (element) => element.tagName === 'BUTTON')
+      : [];
+    const leftArmChip = chipButtons.find((button) => button.textContent === 'left_arm');
+    assert.ok(leftArmChip);
+    assert.equal(typeof leftArmChip.listeners.get('click'), 'function');
+    const previousDocument = globalThis.document;
+    globalThis.document = {
+      getElementById() {
+        return null;
+      }
+    };
+    try {
+      leftArmChip.listeners.get('click')();
+    } finally {
+      globalThis.document = previousDocument;
+    }
+
+    assert.equal(calculatorState.selectedZoneIndex, 2);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -545,6 +623,7 @@ test('renderRecommendationPanel keeps related routes visible when the selected p
     const summaries = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'));
     const mutedMessages = collectElements(container, (element) => element.classList.contains('muted'));
     const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const chipRows = collectElements(container, (element) => element.classList.contains('calc-related-target-chips'));
 
     assert.equal(sectionTitles[0]?.textContent, 'left_arm targeted recommendations');
     assert.equal(sectionTitles[1]?.textContent, 'left_arm related routes');
@@ -553,6 +632,7 @@ test('renderRecommendationPanel keeps related routes visible when the selected p
     assert.match(summaries[1]?.textContent || '', /shoulderplate_left/i);
     assert.match(mutedMessages.find((element) => /already a linked priority target/i.test(element.textContent))?.textContent || '', /exact target rows above/i);
     assert.equal(tables.length, 2);
+    assert.equal(chipRows.length, 0);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -866,6 +946,109 @@ test('renderRecommendationPanel keeps targeted recommendations unfiltered when o
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
     calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel paginates overflowing targeted recommendations with a show-more control', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousDocument = globalThis.document;
+  const previousNode = globalThis.Node;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    weaponsState.groups = Array.from({ length: 13 }, (_, index) => makeWeapon(`Targeted ${index + 1}`, {
+      index,
+      type: 'Primary',
+      rpm: 60,
+      rows: [makeAttackRow(`Targeted ${index + 1}`, 110 + index, 2)]
+    }));
+
+    globalThis.document = new TestDocument();
+    globalThis.Node = TestElement;
+
+    const container = new TestElement('div');
+    renderRecommendationPanel(container, {
+      name: 'Target Overflow Dummy',
+      health: 600,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('torso', { health: 300, av: 2, toMainPercent: 0.5 })
+      ]
+    });
+
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const buttons = collectElements(container, (element) => element.classList.contains('calc-recommend-more-button'));
+    const statuses = collectElements(container, (element) => element.classList.contains('calc-recommend-pagination-status'));
+
+    assert.equal(collectElements(tables[0], (element) => element.tagName === 'TR').slice(1).length, 12);
+    assert.equal(buttons[0]?.textContent, '+1 more');
+    assert.equal(statuses[0]?.textContent, 'Showing 12 of 13 recommendations.');
+
+    buttons[0]?.listeners.get('click')?.();
+
+    assert.equal(collectElements(tables[0], (element) => element.tagName === 'TR').slice(1).length, 13);
+    assert.equal(statuses[0]?.textContent, 'Showing all 13 recommendations.');
+    assert.equal(buttons[0]?.classList.contains('hidden'), true);
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.Node = previousNode;
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel paginates overflowing overall recommendations with a show-more control', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousDocument = globalThis.document;
+  const previousNode = globalThis.Node;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    weaponsState.groups = Array.from({ length: 26 }, (_, index) => makeWeapon(`Overflow ${index + 1}`, {
+      index,
+      type: 'Primary',
+      rpm: 60,
+      rows: [makeAttackRow(`Overflow ${index + 1}`, 105 + index, 2)]
+    }));
+
+    globalThis.document = new TestDocument();
+    globalThis.Node = TestElement;
+
+    const container = new TestElement('div');
+    renderRecommendationPanel(container, {
+      name: 'Overall Overflow Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const buttons = collectElements(container, (element) => element.classList.contains('calc-recommend-more-button'));
+    const statuses = collectElements(container, (element) => element.classList.contains('calc-recommend-pagination-status'));
+
+    assert.equal(collectElements(tables[0], (element) => element.tagName === 'TR').slice(1).length, 24);
+    assert.equal(buttons[0]?.textContent, '+2 more');
+    assert.equal(statuses[0]?.textContent, 'Showing 24 of 26 recommendations.');
+
+    buttons[0]?.listeners.get('click')?.();
+
+    assert.equal(collectElements(tables[0], (element) => element.tagName === 'TR').slice(1).length, 26);
+    assert.equal(statuses[0]?.textContent, 'Showing all 26 recommendations.');
+    assert.equal(buttons[0]?.classList.contains('hidden'), true);
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.Node = previousNode;
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
     weaponsState.groups = previousGroups;
   }
 });
