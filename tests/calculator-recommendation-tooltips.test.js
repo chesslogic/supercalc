@@ -118,6 +118,13 @@ function collectElements(root, predicate, results = []) {
   return results;
 }
 
+function getChipRowByLabel(container, label) {
+  return collectElements(container, (element) => (
+    element.classList.contains('chiprow')
+    && element.children[0]?.textContent === label
+  ))[0] || null;
+}
+
 function makeAttackRow(name, damage, ap = 2) {
   return {
     'Atk Type': 'Projectile',
@@ -833,6 +840,7 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
   const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
   const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
   const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
@@ -840,6 +848,7 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
     calculatorState.recommendationWeaponFilterMode = 'exclude';
     calculatorState.recommendationWeaponFilterTypes = ['support', 'stratagem'];
     calculatorState.recommendationWeaponFilterSubs = ['rl'];
+    calculatorState.recommendationWeaponFilterGroups = [];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -885,6 +894,7 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
     calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
     weaponsState.groups = previousGroups;
   }
 });
@@ -896,6 +906,7 @@ test('renderRecommendationPanel keeps targeted recommendations unfiltered when o
   const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
   const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
   const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
@@ -903,6 +914,7 @@ test('renderRecommendationPanel keeps targeted recommendations unfiltered when o
     calculatorState.recommendationWeaponFilterMode = 'include';
     calculatorState.recommendationWeaponFilterTypes = [];
     calculatorState.recommendationWeaponFilterSubs = ['ar'];
+    calculatorState.recommendationWeaponFilterGroups = [];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -946,6 +958,181 @@ test('renderRecommendationPanel keeps targeted recommendations unfiltered when o
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
     calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel shows feature groups before ungrouped subtype chips', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'exclude';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterSubs = [];
+    calculatorState.recommendationWeaponFilterGroups = [];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Punisher Plasma', {
+        index: 1,
+        type: 'Primary',
+        sub: 'EXP',
+        rpm: 60,
+        rows: [makeAttackRow('Large Plasma Bolt', 225, 3)]
+      }),
+      makeWeapon('Guard Dog', {
+        index: 2,
+        type: 'Stratagem',
+        sub: 'BCK',
+        rpm: 60,
+        rows: [makeAttackRow('Guard Dog Burst', 80, 2)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 3,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      }),
+      makeWeapon('Diligence', {
+        index: 4,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      }),
+      makeWeapon('Senator', {
+        index: 5,
+        type: 'Secondary',
+        sub: 'PDW',
+        rpm: 60,
+        rows: [makeAttackRow('Senator Shot', 175, 3)]
+      }),
+      makeWeapon('Breaker', {
+        index: 6,
+        type: 'Primary',
+        sub: 'SG',
+        rpm: 60,
+        rows: [makeAttackRow('Buckshot', 35, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Feature Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const featureRow = getChipRowByLabel(container, 'Feature');
+    const rowChildren = featureRow?.children?.slice(1) || [];
+    const chipTexts = rowChildren
+      .filter((child) => child.tagName === 'BUTTON')
+      .map((child) => child.textContent);
+    const dividerIndex = rowChildren.findIndex((child) => child.classList.contains('chip-divider'));
+
+    assert.deepEqual(chipTexts, ['Auto', 'Explosive', 'Special', 'Ordnance', 'DMR', 'PDW', 'SG']);
+    assert.equal(dividerIndex, 4);
+    assert.ok(!chipTexts.includes('AR'));
+    assert.ok(!chipTexts.includes('EXP'));
+    assert.ok(!chipTexts.includes('BCK'));
+    assert.ok(!chipTexts.includes('RL'));
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel Auto feature group includes machine gun sentries', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterSubs = [];
+    calculatorState.recommendationWeaponFilterGroups = ['auto'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Stalwart', {
+        index: 1,
+        type: 'Support',
+        sub: 'MG',
+        rpm: 60,
+        rows: [makeAttackRow('Stalwart Burst', 80, 2)]
+      }),
+      makeWeapon('Machine Gun Sentry', {
+        index: 2,
+        type: 'Stratagem',
+        sub: 'EMP',
+        rpm: 60,
+        rows: [makeAttackRow('Machine Gun Sentry Burst', 120, 2)]
+      }),
+      makeWeapon('Orbital Precision Strike', {
+        index: 3,
+        type: 'Stratagem',
+        sub: 'ORB',
+        rpm: 60,
+        rows: [makeAttackRow('Orbital Strike', 500, 6)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Auto Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual([...weaponNames].sort(), ['Liberator', 'Machine Gun Sentry', 'Stalwart'].sort());
+    assert.equal(weaponNames.includes('Orbital Precision Strike'), false);
+    assert.match(summary?.textContent || '', /weapon filters: showing only auto/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
     weaponsState.groups = previousGroups;
   }
 });

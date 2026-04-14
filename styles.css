@@ -244,6 +244,14 @@ tbody tr:hover {
   border-color: var(--accent);
 }
 
+.chip-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .calc-related-target-chips {
   margin-top: 4px;
 }

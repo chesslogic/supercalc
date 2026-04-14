@@ -46,6 +46,7 @@ const {
   setEnemySortState,
   setEnemyTableMode,
   setOverviewScope,
+  setRecommendationWeaponFilterGroups,
   setRecommendationWeaponFilterMode,
   setRecommendationWeaponFilterSubs,
   setRecommendationWeaponFilterTypes,
@@ -210,6 +211,7 @@ function snapshotCalculatorState() {
     recommendationWeaponFilterMode: calculatorState.recommendationWeaponFilterMode,
     recommendationWeaponFilterTypes: [...calculatorState.recommendationWeaponFilterTypes],
     recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
+    recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
     selectedAttackKeys: {
       A: [...calculatorState.selectedAttackKeys.A],
       B: [...calculatorState.selectedAttackKeys.B]
@@ -241,6 +243,7 @@ function restoreCalculatorState(snapshot) {
   calculatorState.recommendationWeaponFilterMode = snapshot.recommendationWeaponFilterMode;
   calculatorState.recommendationWeaponFilterTypes = [...snapshot.recommendationWeaponFilterTypes];
   calculatorState.recommendationWeaponFilterSubs = [...snapshot.recommendationWeaponFilterSubs];
+  calculatorState.recommendationWeaponFilterGroups = [...snapshot.recommendationWeaponFilterGroups];
   calculatorState.selectedAttackKeys = {
     A: [...snapshot.selectedAttackKeys.A],
     B: [...snapshot.selectedAttackKeys.B]
@@ -324,6 +327,7 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   setRecommendationWeaponFilterMode('include');
   setRecommendationWeaponFilterTypes(['primary', 'support']);
   setRecommendationWeaponFilterSubs(['sg']);
+  setRecommendationWeaponFilterGroups(['special']);
   setEnemySortState({ key: 'health', dir: 'desc', groupMode: 'outcome' });
 
   applyWeaponFilterState({
@@ -354,6 +358,7 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   assert.equal(params.get('crfm'), 'include');
   assert.deepEqual(JSON.parse(params.get('crft')), ['primary', 'support']);
   assert.deepEqual(JSON.parse(params.get('crfs')), ['sg']);
+  assert.deepEqual(JSON.parse(params.get('crfg')), ['special']);
   assert.deepEqual(JSON.parse(params.get('caa')), [1]);
   assert.deepEqual(JSON.parse(params.get('cab')), [0]);
   assert.deepEqual(JSON.parse(params.get('cha')), { 1: 3 });
@@ -414,6 +419,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   setRecommendationWeaponFilterMode('include');
   setRecommendationWeaponFilterTypes(['support']);
   setRecommendationWeaponFilterSubs(['spc']);
+  setRecommendationWeaponFilterGroups(['auto']);
   setEnemySortState({ key: 'AV', dir: 'desc', groupMode: 'outcome' });
   applyWeaponFilterState({
     searchQuery: 'rail',
@@ -448,6 +454,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   setRecommendationWeaponFilterMode('exclude');
   setRecommendationWeaponFilterTypes([]);
   setRecommendationWeaponFilterSubs([]);
+  setRecommendationWeaponFilterGroups([]);
   setEnemySortState({ key: 'zone_name', dir: 'asc', groupMode: 'none' });
   applyWeaponFilterState({
     searchQuery: '',
@@ -484,6 +491,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.equal(calculatorState.recommendationWeaponFilterMode, 'include');
   assert.deepEqual(calculatorState.recommendationWeaponFilterTypes, ['support']);
   assert.deepEqual(calculatorState.recommendationWeaponFilterSubs, ['spc']);
+  assert.deepEqual(calculatorState.recommendationWeaponFilterGroups, ['auto']);
   assert.deepEqual(calculatorState.selectedAttackKeys.A, [attackKey]);
   assert.equal(calculatorState.attackHitCounts.A[attackKey], 4);
   assert.deepEqual(calculatorState.enemySort, { key: 'AV', dir: 'desc', groupMode: 'outcome' });

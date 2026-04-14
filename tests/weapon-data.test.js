@@ -207,6 +207,26 @@ test('checked-in SG-22 data groups Bushwhacker under SG', () => {
   assert.equal(projectile.Sub, 'SG');
 });
 
+test('checked-in SG-8P data groups Punisher Plasma under EXP', () => {
+  const rows = loadCheckedInWeaponRows();
+  const projectile = findWeaponRow(rows, {
+    code: 'SG-8P',
+    attackType: 'projectile',
+    attackName: 'LARGE PLASMA BOLT_P3'
+  });
+  const explosion = findWeaponRow(rows, {
+    code: 'SG-8P',
+    attackType: 'explosion',
+    attackName: 'LARGE PLASMA BOLT_P3_IE'
+  });
+
+  assert.ok(projectile);
+  assert.ok(explosion);
+  assert.equal(projectile.Name, 'Punisher Plasma');
+  assert.equal(projectile.Sub, 'EXP');
+  assert.equal(explosion.Sub, 'EXP');
+});
+
 test('checked-in K-2 data reflects the current throwing knife row', () => {
   const rows = loadCheckedInWeaponRows();
   const projectile = findWeaponRow(rows, {

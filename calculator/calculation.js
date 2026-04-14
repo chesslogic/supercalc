@@ -870,14 +870,19 @@ const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'supp
 const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
 const RECOMMENDATION_FEATURE_GROUPS = [
   { id: 'auto', label: 'Auto', subs: ['ar', 'smg', 'mg'] },
-  { id: 'explosive', label: 'Explosive', subs: ['exp', 'gl', 'egl'] },
+  { id: 'explosive', label: 'Explosive', subs: ['exp', 'gl'] },
   { id: 'special', label: 'Special', subs: ['cqc', 'bck', 'spc'] },
-  { id: 'ordnance', label: 'Ordnance', subs: ['rl', 'orb'] }
+  { id: 'ordnance', label: 'Ordnance', subs: ['egl', 'emp', 'orb', 'rl', 'vhl'] }
 ];
 const RECOMMENDATION_FEATURE_GROUP_LOOKUP = RECOMMENDATION_FEATURE_GROUPS.reduce((map, group) => {
   group.subs.forEach((sub) => map.set(sub, group.id));
   return map;
 }, new Map());
+const RECOMMENDATION_AUTO_OVERRIDE_WEAPON_NAMES = new Set([
+  'gatling sentry',
+  'machine gun sentry',
+  'hmg emplacement'
+]);
 const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
 const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
@@ -966,6 +971,20 @@ function normalizeRecommendationWeaponSub(sub) {
   return String(sub ?? '').trim().toLowerCase();
 }
 
+function normalizeRecommendationWeaponFeatureKey(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function getRecommendationWeaponFeatureGroupId(weapon) {
+  const normalizedName = normalizeRecommendationWeaponFeatureKey(weapon?.name);
+  if (RECOMMENDATION_AUTO_OVERRIDE_WEAPON_NAMES.has(normalizedName)) {
+    return 'auto';
+  }
+
+  const normalizedSub = normalizeRecommendationWeaponSub(weapon?.sub);
+  return RECOMMENDATION_FEATURE_GROUP_LOOKUP.get(normalizedSub) || null;
+}
+
 function getRecommendationFilterChipLabel(value, kind = 'type') {
   const normalizedValue = String(value ?? '').trim();
   if (!normalizedValue) {
@@ -1013,10 +1032,9 @@ function doesWeaponMatchRecommendationFilters(weapon) {
   const normalizedSub = normalizeRecommendationWeaponSub(weapon?.sub);
   const matchesType = hasTypeFilters && calculatorState.recommendationWeaponFilterTypes.includes(normalizedType);
   const matchesSub = hasSubFilters && calculatorState.recommendationWeaponFilterSubs.includes(normalizedSub);
-  const matchesGroup = hasGroupFilters && (() => {
-    const groupId = RECOMMENDATION_FEATURE_GROUP_LOOKUP.get(normalizedSub);
-    return groupId ? calculatorState.recommendationWeaponFilterGroups.includes(groupId) : false;
-  })();
+  const matchesGroup = hasGroupFilters && calculatorState.recommendationWeaponFilterGroups.includes(
+    getRecommendationWeaponFeatureGroupId(weapon)
+  );
   const matchesAnyFilter = matchesType || matchesSub || matchesGroup;
 
   return calculatorState.recommendationWeaponFilterMode === 'include'
@@ -1167,16 +1185,49 @@ function renderRecommendationWeaponFilterControls(weapons = []) {
     }));
   }
 
-  const subChips = getAvailableRecommendationWeaponSubs(weapons).map((sub) => createRecommendationFilterChip({
+  const normalizedWeapons = Array.isArray(weapons) ? weapons : [];
+  const availableGroups = RECOMMENDATION_FEATURE_GROUPS.filter((group) =>
+    normalizedWeapons.some((weapon) => getRecommendationWeaponFeatureGroupId(weapon) === group.id)
+  );
+  const ungroupedSubs = [...new Set(
+    normalizedWeapons
+      .filter((weapon) => !getRecommendationWeaponFeatureGroupId(weapon))
+      .map((weapon) => normalizeRecommendationWeaponSub(weapon?.sub))
+      .filter(Boolean)
+  )]
+    .sort((a, b) => a.localeCompare(b));
+
+  const groupChips = availableGroups.map((group) => createRecommendationFilterChip({
+    label: group.label,
+    active: calculatorState.recommendationWeaponFilterGroups.includes(group.id),
+    onClick: () => toggleRecommendationWeaponFilterGroup(group.id)
+  }));
+
+  const ungroupedChips = ungroupedSubs.map((sub) => createRecommendationFilterChip({
     label: getRecommendationFilterChipLabel(sub, 'sub'),
     active: calculatorState.recommendationWeaponFilterSubs.includes(sub),
     onClick: () => toggleRecommendationWeaponFilterSub(sub)
   }));
-  if (subChips.length > 0) {
-    wrapper.appendChild(createRecommendationFilterChipRow({
-      label: 'Subtype',
-      chips: subChips
-    }));
+
+  if (groupChips.length > 0 || ungroupedChips.length > 0) {
+    const subtypeRow = document.createElement('div');
+    subtypeRow.className = 'chiprow';
+
+    const rowLabel = document.createElement('span');
+    rowLabel.className = 'muted';
+    rowLabel.textContent = 'Feature';
+    subtypeRow.appendChild(rowLabel);
+
+    groupChips.forEach((chip) => subtypeRow.appendChild(chip));
+
+    if (groupChips.length > 0 && ungroupedChips.length > 0) {
+      const divider = document.createElement('span');
+      divider.className = 'chip-divider';
+      subtypeRow.appendChild(divider);
+    }
+
+    ungroupedChips.forEach((chip) => subtypeRow.appendChild(chip));
+    wrapper.appendChild(subtypeRow);
   }
 
   return wrapper;
