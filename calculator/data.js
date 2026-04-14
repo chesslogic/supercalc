@@ -117,6 +117,7 @@ export const calculatorState = {
   recommendationWeaponFilterMode: DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE,
   recommendationWeaponFilterTypes: [],
   recommendationWeaponFilterSubs: [],
+  recommendationWeaponFilterGroups: [],
   selectedAttackKeys: {
     A: [],
     B: []
@@ -499,7 +500,27 @@ export function toggleRecommendationWeaponFilterSub(sub) {
 export function clearRecommendationWeaponFilters() {
   calculatorState.recommendationWeaponFilterTypes = [];
   calculatorState.recommendationWeaponFilterSubs = [];
+  calculatorState.recommendationWeaponFilterGroups = [];
   notifyCalculatorStateChange();
+}
+
+export function setRecommendationWeaponFilterGroups(groups = []) {
+  calculatorState.recommendationWeaponFilterGroups = normalizeRecommendationWeaponFilterValues(groups);
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterGroups];
+}
+
+export function toggleRecommendationWeaponFilterGroup(groupId) {
+  const normalizedGroupId = normalizeRecommendationWeaponFilterValues([groupId])[0];
+  if (!normalizedGroupId) {
+    return [...calculatorState.recommendationWeaponFilterGroups];
+  }
+
+  calculatorState.recommendationWeaponFilterGroups = calculatorState.recommendationWeaponFilterGroups.includes(normalizedGroupId)
+    ? calculatorState.recommendationWeaponFilterGroups.filter((value) => value !== normalizedGroupId)
+    : [...calculatorState.recommendationWeaponFilterGroups, normalizedGroupId];
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterGroups];
 }
 
 export function setSelectedExplosiveZone(zoneIndex, selected) {

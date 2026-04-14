@@ -51,8 +51,8 @@ Primary,GL,AR/GL-21,One-Two (UBGL),650,explosion,40mm HEAT GRENADE_P_IE,400,400,
 Primary,NRG,ARC-12,Blitzer,45,arc,ARC-12 BLITZER_A,50,35,3,10,30,25,Stun Small
 Primary,NRG,PLAS-101,Purifier,1000,projectile,LARGE PLASMA BOLT_P,200,100,3,10,20,10,
 Primary,NRG,PLAS-101,Purifier,1000,explosion,LARGE PLASMA BOLT_P_IE,300,300,3,10,35,30,
-Primary,NRG,SG-8P,Punisher Plasma,80,projectile,LARGE PLASMA BOLT_P3,0,0,2,10,20,10,
-Primary,NRG,SG-8P,Punisher Plasma,80,explosion,LARGE PLASMA BOLT_P3_IE,225,225,3,10,35,30,
+Primary,EXP,SG-8P,Punisher Plasma,80,projectile,LARGE PLASMA BOLT_P3,0,0,2,10,20,10,
+Primary,EXP,SG-8P,Punisher Plasma,80,explosion,LARGE PLASMA BOLT_P3_IE,225,225,3,10,35,30,
 Primary,NRG,LAS-5,Scythe,,beam,LAS-5 SCYTHE_B,350,70,2,10,0,0,Fire
 Primary,NRG,LAS-16,Sickle,750,projectile,LASER_P,60,6,2,10,10,10,
 Primary,NRG,LAS-17,Double-Edge Sickle,700,projectile,LASER_P (Stage 1),60,6,2,10,10,10,

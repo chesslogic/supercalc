@@ -111,6 +111,28 @@ function getDurableRatioDisplayModel(row) {
   };
 }
 
+function getDurableRatioSortAttackKind(row) {
+  const rawAttackType = (state.keys.atkTypeKey && row?.[state.keys.atkTypeKey])
+    ? String(row[state.keys.atkTypeKey])
+    : (row?.Stage ? String(row.Stage) : '');
+  const normalizedAttackType = rawAttackType.trim().toLowerCase();
+  if (!normalizedAttackType) {
+    return '';
+  }
+
+  if (normalizedAttackType.includes('projectile')) {
+    return 'projectile';
+  }
+
+  return classifyAtkType(row, state.keys.atkTypeKey) || normalizedAttackType;
+}
+
+function getDurableRatioSortRows(group) {
+  const rows = Array.isArray(group?.rows) ? group.rows : [];
+  const projectileRows = rows.filter((row) => getDurableRatioSortAttackKind(row) === 'projectile');
+  return projectileRows.length > 0 ? projectileRows : rows;
+}
+
 export function guessNumericColumn(key){
   if (key === DURABLE_RATIO_HEADER) {
     return true;
@@ -127,7 +149,7 @@ export function guessNumericColumn(key){
 export function groupSortValue(group, key, numeric){
   if (key === state.keys.nameKey) return (group.name || '').toString();
   if (key === DURABLE_RATIO_HEADER) {
-    const ratios = group.rows
+    const ratios = getDurableRatioSortRows(group)
       .map((row) => getDurableRatioDisplayModel(row).ratio)
       .filter((ratio) => ratio !== null);
     return ratios.length ? Math.max(...ratios) : Number.NEGATIVE_INFINITY;

@@ -286,3 +286,82 @@ test('renderTable sorts by the durable ratio column', () => withTableFixture(({ 
   assert.equal(dataRows[0]?.children[4]?.textContent, 'Machine Gun');
   assert.equal(dataRows[1]?.children[4]?.textContent, 'Liberator');
 }));
+
+test('renderTable sorts mixed durable ratio weapons by projectile rows before explosive companions', () => withTableFixture(({ tbody }) => {
+  ingestHeadersAndRows(
+    ['Type', 'Sub', 'Code', 'Name', 'RPM', 'Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'],
+    [
+      {
+        Type: 'Primary',
+        Sub: 'PLS',
+        Code: 'PL-1',
+        Name: 'Hybrid Plasma',
+        RPM: 120,
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Hybrid Bolt_P',
+        DMG: 100,
+        DUR: 25,
+        AP: 2,
+        DF: 10,
+        ST: 15,
+        PF: 10
+      },
+      {
+        Type: 'Primary',
+        Sub: 'PLS',
+        Code: 'PL-1',
+        Name: 'Hybrid Plasma',
+        RPM: 120,
+        'Atk Type': 'Explosion',
+        'Atk Name': 'Hybrid Bolt_P_IE',
+        DMG: 100,
+        DUR: 100,
+        AP: 3,
+        DF: 20,
+        ST: 20,
+        PF: 10
+      },
+      {
+        Type: 'Support',
+        Sub: 'MG',
+        Code: 'MG-43',
+        Name: 'Machine Gun',
+        RPM: 760,
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Machine Gun Burst',
+        DMG: 80,
+        DUR: 40,
+        AP: 3,
+        DF: 10,
+        ST: 20,
+        PF: 12
+      },
+      {
+        Type: 'Primary',
+        Sub: 'PLS',
+        Code: 'PL-2',
+        Name: 'Pure Plasma',
+        RPM: 80,
+        'Atk Type': 'Explosion',
+        'Atk Name': 'Pure Plasma Burst',
+        DMG: 120,
+        DUR: 120,
+        AP: 3,
+        DF: 20,
+        ST: 20,
+        PF: 12
+      }
+    ]
+  );
+  state.sortKey = DURABLE_RATIO_HEADER;
+  state.sortDir = 'desc';
+
+  renderTable();
+
+  const dataRows = collectElements(tbody, (element) => element.tagName === 'TR');
+  const weaponNames = dataRows
+    .map((row) => row.children[4]?.textContent || '')
+    .filter(Boolean);
+
+  assert.deepEqual(weaponNames, ['Pure Plasma', 'Machine Gun', 'Hybrid Plasma']);
+}));
