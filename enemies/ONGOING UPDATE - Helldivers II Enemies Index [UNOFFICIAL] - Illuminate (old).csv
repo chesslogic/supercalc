@@ -1,0 +1,630 @@
+,"This sheet is a tribute to the currently deprecated ""The Helldivers Index"" sheet made by Exhillious.",,,,,,,,,,,,,
+,Glossary ! READ ME FIRST !,,Index,,,Terminids Stats,,Automatons stats,,,Super Earth stats,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,CORE,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Light Voteless,,,,,An Agile skirmisher unit that attacks in hordes.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,70,,Light,1,Yes,Yes,1
+,,,,,,Unit size,,small,,Medium,20,Yes,Yes,2
+,,,,,,Regeneration,,0,,Heavy,30,Yes,Yes,"3,5"
+,,,,,,Minimum difficulty,,1,,Massive,60,Yes,Yes,7
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,100,100 [-5/s],,0%,0,Fatal,,-,-,-,100%,Outer
+,2320312581,Head,40,0,,0%,1,Fatal,,100%,Yes,Main,-,Outer
+,3045071863,Arm 1,50,1000 [40/s],,0%,0,-,,40%,No,Main,-,Outer
+,3989606979,Arm 2,50,1000 [40/s],,0%,0,-,,40%,No,Main,-,Outer
+,3841112821,Elbow 1,50,0,,0%,0,-,,30%,Yes,Main,-,Outer
+,2239641303,Elbow 2,50,0,,0%,0,-,,30%,Yes,Main,-,Outer
+,539882431,Leg 1,80,0,,0%,0,Downs,,30%,Yes,Main,-,Outer
+,1051892357,Leg 2,80,0,,0%,0,Downs,,30%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Punch,⚔️25 [10],2|0|0|0,,15,10,-,,
+,Fire,1,2,75%,,Leap,⚔️25 [10],2|0|0|0,,15,10,-,,
+,Gas,"0,5",1,100%,,,,,,,,,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,2,3,-,,,,,,,,,,
+,Confusion,"0,5","0,5",-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Medium Voteless,,,,,An Agile skirmisher unit that attacks in hordes.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,70,,Light,1,Yes,Yes,1
+,,,,,,Unit size,,small,,Medium,20,Yes,Yes,2
+,,,,,,Regeneration,,0,,Heavy,30,Yes,Yes,"3,5"
+,,,,,,Minimum difficulty,,1,,Massive,60,Yes,Yes,7
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,130,100 [-5/s],,0%,0,Fatal,,-,-,-,100%,Outer
+,2320312581,Head,50,0,,0%,1,Fatal,,100%,Yes,Main,-,Outer
+,3045071863,Arm 1,65,1000 [40/s],,0%,0,-,,40%,No,Main,-,Outer
+,3989606979,Arm 2,65,1000 [40/s],,0%,0,-,,40%,No,Main,-,Outer
+,3841112821,Elbow 1,50,0,,0%,0,-,,30%,Yes,Main,-,Outer
+,2239641303,Elbow 2,50,0,,0%,0,-,,30%,Yes,Main,-,Outer
+,539882431,Leg 1,80,0,,0%,0,Downs,,30%,Yes,Main,-,Outer
+,1051892357,Leg 2,80,0,,0%,0,Downs,,30%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Punch,⚔️25 [10],2|0|0|0,,15,10,-,,
+,Fire,1,2,75%,,Leap,⚔️25 [10],2|0|0|0,,15,10,-,,
+,Gas,"0,5",1,100%,,,,,,,,,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,2,3,-,,,,,,,,,,
+,Confusion,"0,5","0,5",-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Heavy Voteless,,,,,An Agile skirmisher unit that attacks in hordes.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,70,,Light,1,Yes,Yes,1
+,,,,,,Unit size,,small,,Medium,20,Yes,Yes,2
+,,,,,,Regeneration,,0,,Heavy,30,Yes,Yes,"3,5"
+,,,,,,Minimum difficulty,,1,,Massive,60,Yes,Yes,7
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,160,100 [-5/s],,0%,0,Fatal,,-,-,-,100%,Outer
+,2320312581,Head,60,0,,0%,1,Fatal,,100%,Yes,Main,-,Outer
+,3045071863,Arm 1,80,1000 [40/s],,0%,0,-,,40%,No,Main,-,Outer
+,3989606979,Arm 2,80,1000 [40/s],,0%,0,-,,40%,No,Main,-,Outer
+,3841112821,Elbow 1,65,0,,0%,0,-,,30%,Yes,Main,-,Outer
+,2239641303,Elbow 2,65,0,,0%,0,-,,30%,Yes,Main,-,Outer
+,539882431,Leg 1,80,0,,0%,0,Downs,,30%,Yes,Main,-,Outer
+,1051892357,Leg 2,80,0,,0%,0,Downs,,30%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Punch,⚔️25 [10],2|0|0|0,,15,10,-,,
+,Fire,1,2,75%,,Leap,⚔️25 [10],2|0|0|0,,15,10,-,,
+,Gas,"0,5",1,100%,,,,,,,,,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,2,3,-,,,,,,,,,,
+,Confusion,"0,5","0,5",-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Watcher,,,,,Flying drone equipped with arc weaponry and the ability to call for reinforcements.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,150,,Light,-,-,-,-
+,,,,,,Unit size,,medium,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,1,No,No,"0,5"
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,600,0,,0%,0,Fatal,,-,-,-,100%,Outer
+,2854072496,Body,400,0,,0%,2,Fatal,,100%,Yes,Main,-,Outer
+,185242560,Side fin 1,150,0,,0%,0,-,,100%,Yes,Main,-,Outer
+,175142145,Side fin 2,150,0,,0%,0,-,,100%,Yes,Main,-,Outer
+,336654703,Bottom fin,200,0,,0%,2,-,,100%,Yes,Main,-,Outer
+,1117842095,Top fin,200,0,,0%,2,-,,100%,Yes,Main,-,Outer
+,2948928094,Eye,300,0,,0%,0,-,,100%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Zap,⚡30 [15],3|2|1|0,,10,5,⛔Stun Small,,
+,Fire,7,10,-,,Death,⚔️300,10|0|0|0,,30,30,💥Expl [1/2/1.5m],,
+,Gas,"0,5",1,100%,,,,,,,,,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,2,3,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Overseer,,,,,"Elite unit equipped with an energy shield and a deadly lance capable of launching
+an explosive projectile, usually accompanies hordes of Voteless.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,200,,Light,1,No,No,"0,5"
+,,,,,,Unit size,,medium,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,20,No,No,"0,5"
+,,,,,,Minimum difficulty,,1,,Massive,35,Yes,Yes,"0,8"
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,600,0,,0%,0,Fatal,,-,-,-,100%,Outer
+,2354409673,Head,150,0,,0%,3,Fatal,,100%,Yes,Main,-,Outer
+,1913034217,Exposed torso,600,0,,0%,1,Fatal,,100%,Yes,Main,-,Outer
+,3325356222,Exposed right arm,300,0,,0%,1,Fatal,,50%,Yes,Main,-,Outer
+,883046883,Exposed left arm,300,0,,0%,1,-,,50%,Yes,Main,-,Outer
+,3851963352,Exposed Leg 1,-1,0,,0%,0,Fatal,,70%,Yes,Main,-,Outer
+,2890908493,Exposed Leg 2,-1,0,,0%,0,Fatal,,70%,Yes,Main,-,Outer
+,1718849480,Arm armor 1,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2285536861,Arm armor 2,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,910168392,Arm armor 3,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,1292409874,Arm armor 4,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2521122466,Leg armor 1,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,1213493290,Leg armor 2,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2287997415,Leg armor 3,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2654732204,Leg armor 4,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,542570689,Torso armor,150,0,,0%,2,-,,20%,No,Main,-,Outer
+,2821435435,Crotch armor,200,0,,0%,2,-,,20%,No,Main,-,Outer
+,3688156403,Damaged Arm armor 1,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1133334413,Damaged Arm armor 2,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,3022934184,Damaged Arm armor 3,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,332852286,Damaged Arm armor 4,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,2521122466,Damaged Leg armor 1,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1358580050,Damaged Leg armor 2,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,308335205,Damaged Leg armor 3,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,767160665,Damaged Leg armor 4,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1946263936,Damaged torso armor,200,0,,0%,1,-,,20%,No,Main,-,Outer
+,3097028285,Damaged crotch armor,200,0,,0%,1,-,,20%,No,Main,-,Outer
+,436174468,Hardlight shield,1500,0,,30%,2,-,,-,-,-,100%,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Shoot,⚔️40 [20],3|3|3|3,,5,5,325 rpm,,
+,Fire,4,5,100%,,┖-------------->,⚔️30,3|0|0|0,,0,0,💥Expl [0.5/1/1.5m],,
+,Gas,"0,5",1,100%,,Melee,⚔️75 [60],3|0|0|0,,25,20,-,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,5,7,-,,,,,,,,,,
+,Confusion,3,3,-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Elevated Overseer,,,,,"Elite unit equipped with automatic plasma rifles and jet-packs, usually accompanies hordes of Voteless.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,200,,Light,1,No,No,"0,5"
+,,,,,,Unit size,,small,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,20,No,No,"0,5"
+,,,,,,Minimum difficulty,,3,,Massive,30,Yes,Yes,"0,5"
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,450,0,,0%,0,Fatal,,-,-,-,100%,Outer
+,2354409673,Head,200,0,,0%,2,Fatal,,100%,Yes,Main,-,Outer
+,1913034217,Exposed torso,450,0,,0%,1,Fatal,,100%,Yes,Main,-,Outer
+,3325356222,Exposed right arm,250,0,,0%,1,Fatal,,50%,Yes,Main,-,Outer
+,883046883,Exposed left arm,250,0,,0%,1,-,,50%,Yes,Main,-,Outer
+,3851963352,Exposed Leg 1,-1,0,,0%,0,Fatal,,70%,Yes,Main,-,Outer
+,2890908493,Exposed Leg 2,-1,0,,0%,0,Fatal,,70%,Yes,Main,-,Outer
+,1194609555,Jetpack,300,0,,0%,2,Fatal,,50%,Yes,Main,-,Outer
+,1718849480,Arm armor 1,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2285536861,Arm armor 2,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,910168392,Arm armor 3,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,1292409874,Arm armor 4,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2521122466,Leg armor 1,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,1213493290,Leg armor 2,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2287997415,Leg armor 3,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2654732204,Leg armor 4,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,542570689,Torso armor,150,0,,0%,2,-,,20%,No,Main,-,Outer
+,2821435435,Crotch armor,200,0,,0%,2,-,,20%,No,Main,-,Outer
+,3688156403,Damaged Arm armor 1,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1133334413,Damaged Arm armor 2,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,3022934184,Damaged Arm armor 3,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,332852286,Damaged Arm armor 4,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,2521122466,Damaged Leg armor 1,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1358580050,Damaged Leg armor 2,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,308335205,Damaged Leg armor 3,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,767160665,Damaged Leg armor 4,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1946263936,Damaged torso armor,200,0,,0%,1,-,,20%,No,Main,-,Outer
+,3097028285,Damaged crotch armor,200,0,,0%,1,-,,20%,No,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Rifle,⚔️35 [15],3|3|3|3,,5,5,500 rpm,,
+,Fire,4.5,5.5,100%,,Grenade,⚔️200,4|0|0|0,,30,40,💥Expl [3/5/6m],,
+,Gas,"0,5",1,100%,,Melee,⚔️75 [60],3|0|0|0,,25,20,-,,
+,Thermite,"0,5",1,100%,,Jetpack💣,⚔️150,3|0|0|0,,30,20,💥Expl [0.4/4/12m],,
+,Stun,5,7,-,,,,,,,,,,
+,Confusion,3,3,-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Crescent Overseer,,,,,"Elite unit equipped with a large plasma cannon, capable of direct & mortar fire,
+usually accompanies hordes of Voteless.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,200,,Light,1,No,No,"0,5"
+,,,,,,Unit size,,medium,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,20,No,No,"0,5"
+,,,,,,Minimum difficulty,,3,,Massive,35,Yes,Yes,"0,8"
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,600,0,,0%,0,Fatal,,-,-,-,100%,Outer
+,2354409673,Head,150,0,,0%,3,Fatal,,100%,Yes,Main,-,Outer
+,1913034217,Exposed torso,600,0,,0%,1,Fatal,,100%,Yes,Main,-,Outer
+,3325356222,Exposed right arm,300,0,,0%,1,Fatal,,50%,Yes,Main,-,Outer
+,883046883,Exposed left arm,300,0,,0%,1,-,,50%,Yes,Main,-,Outer
+,3851963352,Exposed Leg 1,-1,0,,0%,0,Fatal,,70%,Yes,Main,-,Outer
+,2890908493,Exposed Leg 2,-1,0,,0%,0,Fatal,,70%,Yes,Main,-,Outer
+,1718849480,Arm armor 1,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2285536861,Arm armor 2,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,910168392,Arm armor 3,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,1292409874,Arm armor 4,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2521122466,Leg armor 1,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,1213493290,Leg armor 2,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2287997415,Leg armor 3,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,2654732204,Leg armor 4,100,0,,0%,2,-,,20%,No,Main,-,Outer
+,542570689,Torso armor,150,0,,0%,2,-,,20%,No,Main,-,Outer
+,2821435435,Crotch armor,200,0,,0%,2,-,,20%,No,Main,-,Outer
+,3688156403,Damaged Arm armor 1,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1133334413,Damaged Arm armor 2,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,3022934184,Damaged Arm armor 3,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,332852286,Damaged Arm armor 4,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,2521122466,Damaged Leg armor 1,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1358580050,Damaged Leg armor 2,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,308335205,Damaged Leg armor 3,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,767160665,Damaged Leg armor 4,100,0,,0%,1,-,,20%,No,Main,-,Outer
+,1946263936,Damaged torso armor,200,0,,0%,1,-,,20%,No,Main,-,Outer
+,3097028285,Damaged crotch armor,200,0,,0%,1,-,,20%,No,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Beamer,⚔️40 [20],3|3|3|3,,5,5,1500 rpm,,
+,Fire,4,5,100%,,┖-------------->,⚔️75,3|0|0|0,,0,0,💥Expl [2/4/4.5m],,
+,Gas,"0,5",1,100%,,Melee,⚔️60 [30],3|0|0|0,,25,15,-,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,5,7,-,,,,,,,,,,
+,Confusion,3,3,-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Fleshmob,,,,,"An amalgamation of Voteless corpses, this large Illuminate unit specializes
+in close quarters combat and charges at Helldivers to attack.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,2500,,Light,20,No,No,"0,5"
+,,,,,,Unit size,,large,,Medium,45,Yes,Yes,2
+,,,,,,Regeneration,,0,,Heavy,60,Yes,Yes,3
+,,,,,,Minimum difficulty,,1,,Massive,90,Yes,Yes,7
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,4067820803,Main,6000,0,,25%,0,Fatal,,-,-,-,100%,Outer
+,2443021598,Flesh chunk 1,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,3766768888,Flesh chunk 2,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,3286375839,Flesh chunk 3,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,297527428,Flesh chunk 4,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,3092065175,Flesh chunk 5,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,2218403665,Flesh chunk 6,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,3719485369,Flesh chunk 7,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,2264174346,Flesh chunk 8,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,1901627043,Leg 1,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,2606499104,Leg 2,400,0,,25%,0,-,,100%,No,Part,75%,Outer
+,556894592,Arm 1,200,0,,25%,0,-,,25%,Yes,Main,-,Outer
+,139309587,Arm 2,200,0,,25%,0,-,,25%,Yes,Main,-,Outer
+,2629424640,Arm 3,200,0,,25%,0,-,,25%,Yes,Main,-,Outer
+,4056193861,Arm 4,200,0,,25%,0,-,,25%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,200%,,Melee,⚔️50 [40],3|0|0|0,,20,30,-,,
+,Fire,4,5,200%,,Charge,⚔️30 [25],3|0|0|0,,60,35,-,,
+,Gas,"0,5",1,100%,,,,,,,,,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,10,15,-,,,,,,,,,,
+,Confusion,"0,5","0,5",-,,,,,,,,,,
+,Acid storm,-,-,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Harvester,,,,,"Massive autonomous tripod with an energy shield and a large laser weapon.
+Can also use arc weaponry in close-quarters.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,Value,,Light,10,No,No,"0,5"
+,,,,,,Unit size,,4000,,Medium,-,-,-,-
+,,,,,,Regeneration,,large,,Heavy,30,No,No,"1,8"
+,,,,,,Minimum difficulty,,3,,Massive,40,Yes,Yes,1
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,4067820803,Main,3000,0,,70%,4,Fatal,,-,-,-,100%,Outer
+,22868216,Body default (??),2000,0,,75%,4,Fatal,,100%,Yes,Part,100%,All
+,861860246,Body front (??),1000,0,,75%,4,-,,100%,No,Main,-,All
+,394445999,Body front internals (??),800,0,,50%,3,Fatal,,100%,Yes,Main,-,All
+,677661495,Shield generator 1,350,0,,0%,3,-,,10%,Yes,Main,-,Outer
+,4279114180,Shield generator 2,350,0,,0%,3,-,,10%,Yes,Main,-,Outer
+,1905727430,Shield generator 3,350,0,,0%,3,-,,10%,Yes,Main,-,Outer
+,1384596117,Carapace side 1,800,0,,75%,4,-,,100%,No,Main,-,All
+,672076757,Carapace side 2,800,0,,75%,4,-,,100%,No,Main,-,All
+,2948928094,Eye,350,0,,0%,2,-,,120%,No,Main,-,Outer
+,283315537,Carapace weakspot 1,500,0,,80%,1,-,,100%,No,Main,-,Outer
+,1603002330,Carapace weakspot 2,500,0,,80%,1,-,,100%,No,Main,-,Outer
+,347052042,Carapace internals 1,800,0,,50%,2,Fatal,,100%,Yes,Part,100%,All
+,4046698675,Carapace internals 2,800,0,,50%,2,Fatal,,100%,Yes,Part,100%,All
+,3981556994,Left hip joint,1000,0,,70%,3,Fatal,,45%,Yes,Main,-,Outer
+,2208387243,Left upper thigh armor,600,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,2478835085,Left lower thigh armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,958665991,Left shin armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,1585591290,Left foot armor,900,0,,0%,4,-,,30%,Yes,Main,-,Outer
+,2663404237,Rear hip joint,1000,0,,70%,3,Fatal,,60%,Yes,Main,-,Outer
+,997557307,Rear upper thigh armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,1887603578,Rear lower thigh armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,3824767458,Rear shin armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,2210050933,Rear foot armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,2976822860,Right hip joint,1000,0,,70%,3,Fatal,,60%,Yes,Main,-,Outer
+,78982775,Right upper thigh armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,1458259815,Right lower thigh armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,4288304418,Right shin armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,1354994391,Right foot armor,900,0,,75%,4,-,,30%,Yes,Main,-,Outer
+,179299124,Left upper thigh internals,1000,0,,25%,3,Fatal,,45%,Yes,Main,-,Outer
+,3853239181,Left lower thigh internals,1000,0,,25%,3,Fatal,,60%,Yes,Main,-,Outer
+,292132622,Rear upper thigh internals,1000,0,,25%,3,Fatal,,60%,Yes,Main,-,Outer
+,2138450487,Rear lower thigh internals,1000,0,,25%,3,Fatal,,60%,Yes,Main,-,Outer
+,1021492310,Right upper thigh internals,1000,0,,25%,3,Fatal,,45%,Yes,Main,-,Outer
+,3672923162,Right lower thigh internals,1000,0,,25%,3,Fatal,,60%,Yes,Main,-,Outer
+,?,Shield**,1500,0,,0%,0,,,-,-,Part,100%,?
+,* The shield is immune to all statuses. ** Recharge delay : 12  |  Broken recharge delay : 12  |  Recharge rate : 2000. ,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Beam 1,⚔️1400 [700],7|7|7|0,,0,0,-,,
+,Fire*,9,13,150%,,Beam 2,⚔️1800 [900],7|7|7|0,,0,0,Only if th eye hitbox is broken.,,
+,Gas,-,-,100%,,Zap,⚡60 x3,5|5|5|0,,10,5,⛔Stun Small,,
+,Thermite*,"0,5",1,100%,,,,,,,,,,
+,Stun*,20,25,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm*,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Stingray,,,,,"Flying Illuminate unit that deploys strafing runs against Helldivers,
+dealing massive damage over a large area.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,large,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,?,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,800,0,,70%,3,Fatal,,-,-,-,100%,Outer
+,2402754532,Back,-1,0,,70%,3,Fatal,,100%,Yes,Main,-,Outer
+,1424712511,Front,-1,0,,70%,3,Fatal,,100%,Yes,Main,-,Outer
+,2909086746,Wing 1,-1,0,,70%,3,Fatal,,100%,Yes,Main,-,Outer
+,4264945427,Wing 1,-1,0,,70%,3,Fatal,,100%,Yes,Main,-,Outer
+,2072379099,Weapon bay 1,-1,0,,50%,3,Fatal,,100%,Yes,Main,-,Outer
+,2940576349,Weapon bay 2,-1,0,,50%,3,Fatal,,100%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Straffing run,⚔️50 [50],3|3|3|3,,5,5,1000 rpm,,
+,Fire,-,-,100%,,┖-------------->,⚔️125,5|0|0|0,,15,10,💥Expl [2/3.5/5m],,
+,Gas,-,-,100%,,Ground impact,⚔️100,3|0|0|0,,50,40,💥Expl [4/8/16m],,
+,Thermite,"0,5",1,100%,,Death,⚔️300,6|0|0|0,,50,40,💥Expl [5/12/18m],,
+,Stun,-,-,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Warp Ship,,,,,Transport aircraft used for deploying reinforcements for the Illuminate.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,massive,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,3500,0,,100%,5,Fatal,,-,-,-,100%,Outer
+,672076757,Side hull 1,1000,0,,100%,5,-,,100%,No,Main,-,Outer
+,1384596117,Side hull 2,1000,0,,100%,5,-,,100%,No,Main,-,Outer
+,975177277,Front fin,1000,0,,100%,5,-,,100%,Yes,Main,-,Outer
+,2299304316,Fuselage,1000,1500 [0/s],,100%,5,Fatal,,100%,No,Main,-,Outer
+,2455777840,Bottom fin 1,1000,0,,100%,5,-,,100%,Yes,Main,-,Outer
+,697877467,Bottom fin 2,1000,0,,100%,5,-,,100%,Yes,Main,-,Outer
+,2272179412,Middle fin 1,1000,0,,100%,5,-,,100%,Yes,Main,-,Outer
+,1619210667,Middle fin 2,1000,0,,100%,5,-,,100%,Yes,Main,-,Outer
+,0x336afdb6f784f639,Shield**,2500,0,,0%,0,,,-,-,Part,100%,?
+,* The shield is immune to all statuses. ** Recharge delay : 1  |  Broken recharge delay : 15  |  Recharge rate : 200.,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,,,,,,,,,
+,Electricity,x,x,100%,,,,,,,,,,
+,Fire*,-,-,100%,,,,,,,,,,
+,Gas*,1,1,100%,,,,,,,,,,
+,Thermite*,"0,5",1,100%,,,,,,,,,,
+,Stun*,8,10,-,,,,,,,,,,
+,Confusion*,1,1,-,,,,,,,,,,
+,Acid storm*,"0,5",1,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Leviathan,,,,,"Tank-armored flying Illuminate unit, armed with large plasma cannons and bomb droppers.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,15000,,Light,-,-,-,-
+,,,,,,Unit size,,massive,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,5,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,15000,0,,0%,4,Fatal,,-,-,-,100%,Outer
+,2397882990,Front vertebra,7000,0,,0%,5,-,,100%,Yes,Part,65%,All
+,4110016256,Front fin 1,5500,0,,0%,5,-,,100%,Yes,Part,65%,All
+,637902706,Front fin 2,5500,0,,0%,5,-,,100%,Yes,Part,65%,All
+,21405287,Front middle vertebra,5500,0,,0%,5,-,,100%,Yes,Part,65%,All
+,1755848919,Front middle fins 1,5000,0,,0%,5,-,,100%,Yes,Part,65%,All
+,3551752160,Front middle fins 2,5000,0,,0%,5,-,,100%,Yes,Part,65%,All
+,1853102582,Rear middle vertebra,5500,0,,0%,5,-,,100%,Yes,Part,65%,All
+,1046296069,Rear middle fins 1,3900,0,,0%,5,-,,100%,Yes,Part,65%,All
+,652751427,Rear middle fins 2,3900,0,,0%,5,-,,100%,Yes,Part,65%,All
+,2635275544,Rear vertebra,5000,0,,0%,5,-,,100%,Yes,Part,65%,All
+,1676921682,Rear fin 1,3000,0,,0%,5,-,,100%,Yes,Part,65%,All
+,1229243602,Rear fin 2,3000,0,,0%,5,-,,100%,Yes,Part,65%,All
+,2789609356,Tail,3900,0,,0%,5,-,,100%,Yes,Part,65%,All
+,3011822080,Warp disc,3000,0,,0%,5,-,,100%,Yes,Main,-,Outer
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Cannon,⚔️350,5|5|5|5,,40,30,20 rpm,,
+,Fire,"0,5",1,100%,,┖-------------->,⚔️150,3|0|0|0,,15,20,💥Expl [1.2/2.7/4m],,
+,Gas,"0,5",1,100%,,Plasma bomb,⚔️250,4|0|0|0,,50,80,💥Expl [3/5/7m],,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,2,3,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,-,-,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Overship,,,,,"Unarmed host ships, these units act as command centers for Illuminate ground forces.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,massive,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,18001,0,,100%,8,Fatal,,-,-,-,100%,All
+,22868216,Port,1500,0,,100%,8,Fatal,,100%,Yes,Main,-,Outer
+,0x505b4a5eb5e1b6f6,Shield*,10000,0,,0%,0,-,,-,-,Part,100%,?
+,* Recharge delay : 20  |  Broken recharge delay : 60  |  Recharge rate : 500,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,,,,,,,,,
+,Electricity,x,x,100%,,,,,,,,,,
+,Fire,-,-,100%,,,,,,,,,,
+,Gas,-,-,100%,,,,,,,,,,
+,Thermite,-,-,-,,,,,,,,,,
+,Stun,-,-,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,-,-,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,STRUCTURES,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Grounded Warp Ship,,,,,A landed warp ship will continuously  spawn illuminate troops.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,massive,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Demo Force,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Main,5000,-,,100%,5,Fatal,,-,-,-,250%,Outer
+,0,Inner,-,20💥,,-,-,-,,-,-,-,-,?
+,0x336afdb6f784f639,shield*,2500,50💥,,0%,0,-,,-,-,Part,100%,?
+,* Recharge delay : 1  |  Broken recharge delay : 15  |  Recharge rate : 200,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,,,,,,,,,
+,Electricity,x,x,100%,,,,,,,,,,
+,Fire,-,-,75%,,,,,,,,,,
+,Gas,-,-,100%,,,,,,,,,,
+,Thermite,-,-,-,,,,,,,,,,
+,Stun,-,-,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,-,-,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Cognitive Disruptor,,,,,"An ancient structure that obscures the names and randomizes the inputs of
+all Stratagems for Helldivers within 200 meters. ",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,massive,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,2,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Demo Force,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,Battery,180,30,,100%,0,Fatal,,-,-,-,-,?
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,,,,,,,,,
+,Electricity,x,x,100%,,,,,,,,,,
+,Fire,-,-,100%,,,,,,,,,,
+,Gas,-,-,100%,,,,,,,,,,
+,Thermite,-,-,-,,,,,,,,,,
+,Stun,-,-,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,-,-,-,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Lightning Spire,,,,, Static tesla type defenses often found at Illuminate Encampments and Illuminate exclusive Objectives.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,medium,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Demo Force,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,-,-,30,,-,-,-,,-,-,-,-,?
+,,,,,,,,,,,,,,
+,,,,,,Ability,Damage,AP,,Stagger,Push,Special,,
+,,,,,,Zap,⚡200,3|3|3|0,,10,10,⛔Stun Small,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Monolith,,,,,"Strange Illuminate monoliths seem to be creating fields of negative energy. We do not understand
+their purpose or their true nature. That is why they must be destroyed.",,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,massive,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Constitution,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,0,-,-,60,,-,-,-,,-,-,-,-,?
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,Gazer,,,,,Medium size defenses often found at Illuminate Encampments and Illuminate exclusive Objectives in Megacities.,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,Default stats,,Value,,ReactEvent,Threshold,Interrupt?,Stagger?,Duration
+,,,,,,Unit mass,,?,,Light,-,-,-,-
+,,,,,,Unit size,,medium,,Medium,-,-,-,-
+,,,,,,Regeneration,,0,,Heavy,-,-,-,-
+,,,,,,Minimum difficulty,,1,,Massive,-,-,-,-
+,,,,,,,,,,,,,,
+,ID,Hitbox,Health,Demo Force,,Durable,Armor,OnDeath,,%toMain,MainCap,ExTarget,ExMult,ExVerif
+,4067820803,Main,900,20,,100%,5,Fatal,,-,-,-,100%,Outer
+,1833008424,Eye,700,20,,0%,1,Fatal,,100%,Yes,Part,100%,All
+,4092010363,?,900,20,,0%,5,Fatal,,100%,Yes,Main,-,Outer
+,26677090,?,900,20,,0%,5,Fatal,,100%,Yes,Part,100%,All
+,,,,,,,,,,,,,,
+,Status,Minimum,Maximum,Damage%,,Ability,Damage,AP,,Stagger,Push,Special,,
+,Electricity,x,x,100%,,Laser,⚔️50 [25],7|7|7|0,,0,0,🔥Fire,,
+,Fire,-,-,200%,,,,,,,,,,
+,Gas,-,-,100%,,,,,,,,,,
+,Thermite,"0,5",1,100%,,,,,,,,,,
+,Stun,-,-,-,,,,,,,,,,
+,Confusion,-,-,-,,,,,,,,,,
+,Acid storm,"0,5",1,-,,,,,,,,,,
