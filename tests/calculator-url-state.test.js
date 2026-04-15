@@ -47,6 +47,7 @@ const {
   setEnemyTableMode,
   setEngagementRangeMeters,
   setOverviewScope,
+  setRecommendationNoMainViaLimbs,
   setRecommendationWeaponFilterGroups,
   setRecommendationWeaponFilterMode,
   setRecommendationWeaponFilterSubs,
@@ -222,6 +223,7 @@ function snapshotCalculatorState() {
     recommendationWeaponFilterTypes: [...calculatorState.recommendationWeaponFilterTypes],
     recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
     recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
+    recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
     selectedAttackKeys: {
       A: [...calculatorState.selectedAttackKeys.A],
       B: [...calculatorState.selectedAttackKeys.B]
@@ -254,6 +256,7 @@ function restoreCalculatorState(snapshot) {
   calculatorState.recommendationWeaponFilterTypes = [...snapshot.recommendationWeaponFilterTypes];
   calculatorState.recommendationWeaponFilterSubs = [...snapshot.recommendationWeaponFilterSubs];
   calculatorState.recommendationWeaponFilterGroups = [...snapshot.recommendationWeaponFilterGroups];
+  calculatorState.recommendationNoMainViaLimbs = snapshot.recommendationNoMainViaLimbs;
   calculatorState.selectedAttackKeys = {
     A: [...snapshot.selectedAttackKeys.A],
     B: [...snapshot.selectedAttackKeys.B]
@@ -801,6 +804,18 @@ test('encodeUrlState encodes non-default recommendation filter mode', { concurre
   assert.equal(params.get('crfm'), 'include');
 }));
 
+test('encodeUrlState and hydrateUrlState round-trip the no-main-via-limbs preference', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationNoMainViaLimbs(false);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.get('crnl'), 'false');
+
+  setRecommendationNoMainViaLimbs(true);
+  hydrateUrlState(params);
+
+  assert.equal(calculatorState.recommendationNoMainViaLimbs, false);
+}));
+
 // ===========================================================================
 // Enemy target types
 // ===========================================================================
@@ -850,7 +865,8 @@ test('buildUrlStateSnapshot calculator section has all expected keys', { concurr
     'weaponA', 'weaponB', 'selectedEnemy', 'selectedZoneIndex',
     'selectedExplosiveZoneIndices', 'recommendationWeaponFilterMode',
     'recommendationWeaponFilterTypes', 'recommendationWeaponFilterSubs',
-    'recommendationWeaponFilterGroups', 'selectedAttackKeysA', 'selectedAttackKeysB',
+    'recommendationWeaponFilterGroups', 'recommendationNoMainViaLimbs',
+    'selectedAttackKeysA', 'selectedAttackKeysB',
     'attackHitCountsA', 'attackHitCountsB', 'enemySort'
   ];
 

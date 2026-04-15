@@ -5,7 +5,8 @@ function renderRecommendationTable({
   body,
   rows,
   usingFallbackRows = false,
-  visibleCount = null
+  visibleCount = null,
+  headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS
 }) {
   const sourceRows = Array.isArray(rows) ? rows : [];
   const normalizedVisibleCount = Number.isFinite(visibleCount)
@@ -19,7 +20,7 @@ function renderRecommendationTable({
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  RECOMMENDATION_HEADER_DEFINITIONS.forEach(({ label, title }) => {
+  headerDefinitions.forEach(({ label, title }) => {
     const th = document.createElement('th');
     th.textContent = label;
     if (title) {
@@ -72,7 +73,8 @@ export function renderRecommendationSubsection({
   rows,
   usingFallbackRows = false,
   emptyStateText = 'No recommendation rows are available for this target.',
-  displayStep = null
+  displayStep = null,
+  headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS
 }) {
   const section = document.createElement('section');
   section.className = 'calc-recommend-section';
@@ -158,7 +160,8 @@ export function renderRecommendationSubsection({
       body: section,
       rows: sourceRows,
       usingFallbackRows,
-      visibleCount: initialVisibleCount
+      visibleCount: initialVisibleCount,
+      headerDefinitions
     });
     tbody = tableRender.tbody;
     updatePaginationControls();

@@ -3,6 +3,7 @@ import {
   clearRecommendationWeaponFilters,
   setRecommendationWeaponFilterMode,
   setSelectedZoneIndex,
+  toggleRecommendationNoMainViaLimbs,
   toggleRecommendationWeaponFilterGroup,
   toggleRecommendationWeaponFilterSub,
   toggleRecommendationWeaponFilterType
@@ -21,6 +22,7 @@ const RELATED_TARGET_CHIP_MAX = 8;
 function createRecommendationFilterChip({
   label,
   active = false,
+  title = '',
   onClick,
   onRefresh = null
 }) {
@@ -28,6 +30,9 @@ function createRecommendationFilterChip({
   chip.type = 'button';
   chip.className = `chip${active ? ' active' : ''}`;
   chip.textContent = label;
+  if (title) {
+    chip.title = title;
+  }
   chip.addEventListener('click', () => {
     onClick?.();
     onRefresh?.();
@@ -131,6 +136,19 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     ]
   });
   wrapper.appendChild(modeRow);
+
+  wrapper.appendChild(createRecommendationFilterChipRow({
+    label: 'Preference',
+    chips: [
+      createRecommendationFilterChip({
+        label: 'No main via limbs',
+        active: calculatorState.recommendationNoMainViaLimbs,
+        title: 'Hide recommendations that only kill Main through a peripheral non-vital part, for example massive ordnance to a non-vital component.',
+        onClick: () => toggleRecommendationNoMainViaLimbs(),
+        onRefresh
+      })
+    ]
+  }));
 
   const typeChips = getAvailableRecommendationWeaponTypes(weapons).map((type) => createRecommendationFilterChip({
     label: getRecommendationFilterChipLabel(type, 'type'),

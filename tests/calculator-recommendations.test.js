@@ -298,6 +298,125 @@ test('buildWeaponRecommendationRows prefers shorter effective range when Margin 
   assert.ok(rows[0].effectiveDistance.meters < rows[1].effectiveDistance.meters);
 });
 
+test('buildWeaponRecommendationRows leaves Margin empty for automatic multi-shot rows', () => {
+  const enemy = {
+    name: 'Automatic Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 200, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Liberator', {
+      index: 0,
+      type: 'Primary',
+      sub: 'AR',
+      rows: [makeAttackRow('Liberator Burst', 30, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].weapon.name, 'Liberator');
+  assert.equal(rows[0].shotsToKill, 7);
+  assert.equal(rows[0].marginPercent, null);
+  assert.equal(rows[0].qualifiesForMargin, false);
+});
+
+test('buildWeaponRecommendationRows can still show Margin for an automatic weapon that one-shots', () => {
+  const enemy = {
+    name: 'Automatic One-Shot Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 180, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Liberator', {
+      index: 0,
+      type: 'Primary',
+      sub: 'AR',
+      rows: [makeAttackRow('Liberator Burst', 200, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].weapon.name, 'Liberator');
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].marginPercent, 11);
+  assert.equal(rows[0].qualifiesForMargin, true);
+});
+
+test('buildWeaponRecommendationRows marks close two- and three-shot kills as near misses', () => {
+  const enemy = {
+    name: 'Near Miss Dummy',
+    health: 240,
+    zones: [
+      makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Heavy Pistol', {
+      index: 0,
+      type: 'Secondary',
+      sub: 'P',
+      rows: [makeAttackRow('Heavy Pistol', 100, 3)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].shotsToKill, 3);
+  assert.equal(rows[0].marginPercent, null);
+  assert.equal(rows[0].nearMissPercent, 60);
+  assert.equal(rows[0].qualifiesForNearMiss, true);
+});
+
+test('buildWeaponRecommendationRows leaves long multi-shot rows out of near misses', () => {
+  const enemy = {
+    name: 'Long Spray Dummy',
+    health: 340,
+    zones: [
+      makeZone('Main', { health: 340, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Automatic Carbine', {
+      index: 0,
+      type: 'Primary',
+      sub: 'AR',
+      rows: [makeAttackRow('Automatic Carbine', 100, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].shotsToKill, 4);
+  assert.equal(rows[0].nearMissPercent, null);
+  assert.equal(rows[0].qualifiesForNearMiss, false);
+});
+
 test('buildWeaponRecommendationRows models realistic landed pellets for shotgun recommendations', () => {
   const enemy = {
     name: 'Shotgun Dummy',
@@ -664,6 +783,116 @@ test('buildSelectedTargetRecommendationRows keeps main kills when the selected p
 
   assert.equal(rows.length, 1);
   assert.equal(rows[0].bestZoneName, 'head');
+  assert.equal(rows[0].bestOutcomeKind, 'main');
+});
+
+test('buildWeaponRecommendationRows hides peripheral main-route recommendations when no-main-via-limbs is enabled', () => {
+  const enemy = {
+    name: 'Peripheral Route Dummy',
+    health: 240,
+    zones: [
+      makeZone('Main', { health: 240, av: 10, toMainPercent: 1 }),
+      makeZone('rear_leg', { health: 800, av: 1, toMainPercent: 0.35 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Heavy Ordnance', {
+      type: 'Stratagem',
+      rows: [makeExplosionAttackRow('Heavy Ordnance_E', 300, 4)]
+    })
+  ];
+
+  const visibleRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    hidePeripheralMainRoutes: false
+  });
+  const hiddenRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    hidePeripheralMainRoutes: true
+  });
+
+  assert.equal(visibleRows.length, 1);
+  assert.equal(visibleRows[0].bestZoneName, 'rear_leg');
+  assert.equal(visibleRows[0].bestOutcomeKind, 'main');
+  assert.equal(hiddenRows.length, 0);
+});
+
+test('buildSelectedTargetRecommendationRows hides peripheral main-route answers when no-main-via-limbs is enabled', () => {
+  const enemy = {
+    name: 'Peripheral Target Dummy',
+    health: 240,
+    zones: [
+      makeZone('Main', { health: 240, av: 1, toMainPercent: 1 }),
+      makeZone('rear_leg', { health: 800, av: 1, toMainPercent: 0.35 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Heavy Ordnance', {
+      type: 'Stratagem',
+      rows: [makeExplosionAttackRow('Heavy Ordnance_E', 300, 4)]
+    })
+  ];
+
+  const visibleRows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1,
+    hidePeripheralMainRoutes: false
+  });
+  const hiddenRows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1,
+    hidePeripheralMainRoutes: true
+  });
+
+  assert.equal(visibleRows.length, 1);
+  assert.equal(visibleRows[0].bestZoneName, 'rear_leg');
+  assert.equal(visibleRows[0].bestOutcomeKind, 'main');
+  assert.equal(hiddenRows.length, 0);
+});
+
+test('buildWeaponRecommendationRows keeps relation-group priority targets when no-main-via-limbs is enabled', () => {
+  const enemy = {
+    name: 'Relation Dummy',
+    health: 240,
+    zoneRelationGroups: [
+      {
+        id: 'left-arm',
+        label: 'Left arm',
+        zoneNames: ['shoulderplate_left', 'left_arm'],
+        mirrorGroupIds: [],
+        priorityTargetZoneNames: ['left_arm']
+      }
+    ],
+    zones: [
+      makeZone('Main', { health: 240, av: 10, toMainPercent: 1 }),
+      makeZone('shoulderplate_left', { health: 800, av: 1, toMainPercent: 0.35 }),
+      makeZone('left_arm', { health: 800, av: 1, toMainPercent: 0.5 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Heavy Ordnance', {
+      type: 'Stratagem',
+      rows: [makeExplosionAttackRow('Heavy Ordnance_E', 480, 4)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    hidePeripheralMainRoutes: true
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bestZoneName, 'left_arm');
   assert.equal(rows[0].bestOutcomeKind, 'main');
 });
 

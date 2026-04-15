@@ -1,6 +1,7 @@
 import { buildFocusedZoneComparisonRows, getAttackRowKey } from './compare-utils.js';
 import { isExplosiveAttack } from './attack-types.js';
 import { getZoneDisplayedKillPath } from './zone-damage.js';
+import { getZoneRelationContext } from '../enemies/data.js';
 import {
   compareWeaponOptionBaseOrder,
   getWeaponRowMeaningfulDamage,
@@ -14,6 +15,8 @@ export const RECOMMENDATION_SHOTGUN_HIT_SHARE = 0.4;
 export const RECOMMENDATION_MAX_SHOTGUN_HITS = 6;
 export const RECOMMENDATION_FRAGMENT_HIT_CAP = 3;
 export const RECOMMENDATION_IMPLICIT_REPEAT_HITS = 2;
+export const RECOMMENDATION_NEAR_MISS_MAX_SHOTS = 3;
+const RECOMMENDATION_PERIPHERAL_MAIN_TOMAIN_THRESHOLD = 0.5;
 
 const RANGE_STATUS_ORDER = {
   qualified: 0,
@@ -117,6 +120,53 @@ function getOutcomePriority(outcomeKind) {
 
 function getRangeMeters(distanceInfo) {
   return distanceInfo?.isAvailable ? toFiniteNumber(distanceInfo.meters) : null;
+}
+
+function isZonePriorityRelationTarget(enemy, zone, zoneIndex = null) {
+  if (!enemy || !zone) {
+    return null;
+  }
+
+  const relationContext = getZoneRelationContext(
+    enemy,
+    Number.isInteger(zoneIndex) ? zoneIndex : zone
+  );
+  if (!relationContext?.priorityTargetZoneNames?.length) {
+    return null;
+  }
+
+  const normalizedZoneName = normalizeText(zone?.zone_name);
+  return relationContext.priorityTargetZoneNames.some((zoneName) => normalizeText(zoneName) === normalizedZoneName);
+}
+
+function isPeripheralMainRouteZone(enemy, zone, zoneIndex = null) {
+  if (!enemy || !zone || zone?.IsFatal) {
+    return false;
+  }
+
+  const normalizedZoneName = normalizeText(zone?.zone_name);
+  if (!normalizedZoneName || normalizedZoneName === 'main') {
+    return false;
+  }
+
+  const isPriorityRelationTarget = isZonePriorityRelationTarget(enemy, zone, zoneIndex);
+  if (isPriorityRelationTarget !== null) {
+    return !isPriorityRelationTarget;
+  }
+
+  const toMainPercent = toFiniteNumber(zone?.['ToMain%']) ?? 0;
+  return toMainPercent > 0 && toMainPercent < RECOMMENDATION_PERIPHERAL_MAIN_TOMAIN_THRESHOLD;
+}
+
+function isPeripheralMainRouteCandidate({
+  enemy,
+  zone,
+  zoneIndex,
+  outcomeKind,
+  zoneSummary
+}) {
+  const displayedKillPath = getZoneDisplayedKillPath(outcomeKind, zoneSummary?.killSummary);
+  return displayedKillPath === 'main' && isPeripheralMainRouteZone(enemy, zone, zoneIndex);
 }
 
 function cloneDistanceInfo(distanceInfo) {
@@ -636,7 +686,48 @@ function getRecommendationMarginInfo({
   };
 }
 
+function getRecommendationNearMissInfo({
+  zoneSummary,
+  outcomeKind,
+  shotsToKill
+}) {
+  if (
+    shotsToKill === null
+    || shotsToKill < 2
+    || shotsToKill > RECOMMENDATION_NEAR_MISS_MAX_SHOTS
+    || !['fatal', 'main', 'critical', 'doomed'].includes(outcomeKind)
+  ) {
+    return null;
+  }
+
+  const targetHealth = getDisplayedTargetHealth(zoneSummary, outcomeKind);
+  const damagePerCycle = getDisplayedDamagePerCycle(zoneSummary, outcomeKind);
+  if (
+    targetHealth === null
+    || damagePerCycle === null
+    || targetHealth <= 0
+    || damagePerCycle <= 0
+  ) {
+    return null;
+  }
+
+  const remainingHealthBeforeFinalShot = targetHealth - (damagePerCycle * (shotsToKill - 1));
+  if (
+    remainingHealthBeforeFinalShot <= 0
+    || remainingHealthBeforeFinalShot >= (damagePerCycle * 0.5)
+  ) {
+    return null;
+  }
+
+  const ratio = (damagePerCycle - remainingHealthBeforeFinalShot) / damagePerCycle;
+  return {
+    ratio,
+    percent: Math.max(0, Math.round(ratio * 100))
+  };
+}
+
 function buildZoneRecommendationCandidate({
+  enemy,
   zone,
   zoneIndex,
   slotMetrics,
@@ -663,6 +754,11 @@ function buildZoneRecommendationCandidate({
     outcomeKind: slotMetrics.outcomeKind,
     shotsToKill: slotMetrics.shotsToKill
   });
+  const nearMissInfo = getRecommendationNearMissInfo({
+    zoneSummary: slotMetrics.zoneSummary,
+    outcomeKind: slotMetrics.outcomeKind,
+    shotsToKill: slotMetrics.shotsToKill
+  });
 
   const candidate = {
     zone,
@@ -680,9 +776,19 @@ function buildZoneRecommendationCandidate({
     targetsSelectedZone: Number.isInteger(selectedZoneIndex) && zoneIndex === selectedZoneIndex,
     selectedZoneMatch: Number.isInteger(selectedZoneIndex) && zoneIndex === selectedZoneIndex,
     isSequenceCandidate: false,
+    isPeripheralMainRoute: isPeripheralMainRouteCandidate({
+      enemy,
+      zone,
+      zoneIndex,
+      outcomeKind: slotMetrics.outcomeKind,
+      zoneSummary: slotMetrics.zoneSummary
+    }),
     marginRatio: marginInfo?.ratio ?? null,
     marginPercent: marginInfo?.percent ?? null,
     qualifiesForMargin: Boolean(rangeQualified && marginInfo?.qualifies),
+    nearMissRatio: nearMissInfo?.ratio ?? null,
+    nearMissPercent: nearMissInfo?.percent ?? null,
+    qualifiesForNearMiss: Boolean(rangeQualified && nearMissInfo),
     isOneShotKill: rangeQualified && lethalOutcome && slotMetrics.shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill <= 2,
@@ -787,6 +893,7 @@ function buildSequenceRecommendationCandidate({
     selectedZoneMatch: Number.isInteger(selectedZoneIndex)
       && stepCandidates.some((candidate) => candidate.zoneIndex === selectedZoneIndex),
     isSequenceCandidate: true,
+    isPeripheralMainRoute: false,
     sequence: normalizedSequence,
     sequenceSteps: stepCandidates,
     shotsToKill,
@@ -797,6 +904,9 @@ function buildSequenceRecommendationCandidate({
     marginRatio: null,
     marginPercent: null,
     qualifiesForMargin: false,
+    nearMissRatio: null,
+    nearMissPercent: null,
+    qualifiesForNearMiss: false,
     isOneShotKill: rangeQualified && lethalOutcome && shotsToKill === 1,
     isOneShotCritical: rangeQualified && criticalOutcome && shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && shotsToKill <= 2,
@@ -901,6 +1011,7 @@ function buildRecommendationCandidates({
   const suppressedDirectTargetNames = getSuppressedDirectTargetNames(enemy);
   const allDirectCandidates = zoneRows
     .map(({ zone, zoneIndex, metrics }) => buildZoneRecommendationCandidate({
+      enemy,
       zone,
       zoneIndex,
       slotMetrics: metrics?.bySlot?.A,
@@ -1049,7 +1160,8 @@ function buildAttackRecommendation({
   rangeFloorMeters,
   engagementRangeMeters = 0,
   highlightRangeFloorMeters = rangeFloorMeters,
-  selectedZoneIndex = null
+  selectedZoneIndex = null,
+  hidePeripheralMainRoutes = false
 }) {
   const { zoneRows, candidates } = buildRecommendationCandidates({
     enemy,
@@ -1063,7 +1175,11 @@ function buildAttackRecommendation({
     selectedZoneIndex
   });
 
-  if (candidates.length === 0) {
+  const filteredCandidates = hidePeripheralMainRoutes
+    ? candidates.filter((candidate) => !candidate.isPeripheralMainRoute)
+    : candidates;
+
+  if (filteredCandidates.length === 0) {
     return null;
   }
 
@@ -1076,19 +1192,22 @@ function buildAttackRecommendation({
     packageComponents: Array.isArray(attackPackage?.packageComponents) ? attackPackage.packageComponents : [],
     excludedAttackNames: Array.isArray(attackPackage?.excludedAttackNames) ? attackPackage.excludedAttackNames : [],
     isCombinedPackage: Boolean(attackPackage?.isCombinedPackage),
-    bestCandidate: candidates[0],
-    candidates,
-    marginRatio: candidates[0]?.marginRatio ?? null,
-    marginPercent: candidates[0]?.marginPercent ?? null,
-    qualifiesForMargin: candidates.some((candidate) => candidate.qualifiesForMargin),
-    hasSelectedZoneMatch: candidates.some((candidate) => candidate.selectedZoneMatch),
+    bestCandidate: filteredCandidates[0],
+    candidates: filteredCandidates,
+    marginRatio: filteredCandidates[0]?.marginRatio ?? null,
+    marginPercent: filteredCandidates[0]?.marginPercent ?? null,
+    qualifiesForMargin: filteredCandidates.some((candidate) => candidate.qualifiesForMargin),
+    nearMissRatio: filteredCandidates[0]?.nearMissRatio ?? null,
+    nearMissPercent: filteredCandidates[0]?.nearMissPercent ?? null,
+    qualifiesForNearMiss: filteredCandidates.some((candidate) => candidate.qualifiesForNearMiss),
+    hasSelectedZoneMatch: filteredCandidates.some((candidate) => candidate.selectedZoneMatch),
     penetratesAll: zoneRows.length > 0 && zoneRows.every((row) => row?.metrics?.bySlot?.A?.damagesZone),
-    hasOneShotKill: candidates.some((candidate) => candidate.isOneShotKill),
-    hasOneShotCritical: candidates.some((candidate) => candidate.isOneShotCritical),
-    hasTwoShotCritical: candidates.some((candidate) => candidate.isTwoShotCritical),
-    hasCriticalRecommendation: candidates.some((candidate) => candidate.hasCriticalRecommendation),
-    hasFastTtk: candidates.some((candidate) => candidate.hasFastTtk),
-    hasQualifiedPath: candidates.some((candidate) => candidate.rangeStatus === 'qualified')
+    hasOneShotKill: filteredCandidates.some((candidate) => candidate.isOneShotKill),
+    hasOneShotCritical: filteredCandidates.some((candidate) => candidate.isOneShotCritical),
+    hasTwoShotCritical: filteredCandidates.some((candidate) => candidate.isTwoShotCritical),
+    hasCriticalRecommendation: filteredCandidates.some((candidate) => candidate.hasCriticalRecommendation),
+    hasFastTtk: filteredCandidates.some((candidate) => candidate.hasFastTtk),
+    hasQualifiedPath: filteredCandidates.some((candidate) => candidate.rangeStatus === 'qualified')
   };
 }
 
@@ -1254,6 +1373,9 @@ function buildWeaponRecommendationDisplayRow({
     marginRatio: bestAttackRecommendation.marginRatio,
     marginPercent: bestAttackRecommendation.marginPercent,
     qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
+    nearMissRatio: bestAttackRecommendation.nearMissRatio,
+    nearMissPercent: bestAttackRecommendation.nearMissPercent,
+    qualifiesForNearMiss: bestAttackRecommendation.qualifiesForNearMiss,
     hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
     hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
     hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,
@@ -1272,7 +1394,8 @@ export function buildWeaponRecommendationRows({
   weapons = [],
   rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
   getEngagementRangeMetersForWeapon = null,
-  selectedZoneIndex = null
+  selectedZoneIndex = null,
+  hidePeripheralMainRoutes = false
 }) {
   if (!enemy?.zones || enemy.zones.length === 0 || !Array.isArray(weapons)) {
     return [];
@@ -1291,7 +1414,8 @@ export function buildWeaponRecommendationRows({
             ? getEngagementRangeMetersForWeapon(weapon)
             : 0,
           highlightRangeFloorMeters: normalizedRangeFloor,
-          selectedZoneIndex
+          selectedZoneIndex,
+          hidePeripheralMainRoutes
         }))
         .filter(Boolean)
         .sort(compareAttackRowRecommendations);
@@ -1321,7 +1445,8 @@ function buildTargetRecommendationRows({
   getEngagementRangeMetersForWeapon = null,
   targetZoneIndices = [],
   selectedZoneIndexForBias = null,
-  selectedZoneMatch = false
+  selectedZoneMatch = false,
+  hidePeripheralMainRoutes = false
 }) {
   const normalizedTargetZoneIndices = [...new Set(
     (Array.isArray(targetZoneIndices) ? targetZoneIndices : [])
@@ -1347,7 +1472,8 @@ function buildTargetRecommendationRows({
             ? getEngagementRangeMetersForWeapon(weapon)
             : 0,
           highlightRangeFloorMeters: normalizedRangeFloor,
-          selectedZoneIndex: selectedZoneIndexForBias
+          selectedZoneIndex: selectedZoneIndexForBias,
+          hidePeripheralMainRoutes
         }))
         .filter(Boolean)
         .map((recommendation) => ({
@@ -1407,7 +1533,8 @@ export function buildSelectedTargetRecommendationRows({
   weapons = [],
   rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
   getEngagementRangeMetersForWeapon = null,
-  selectedZoneIndex = null
+  selectedZoneIndex = null,
+  hidePeripheralMainRoutes = false
 }) {
   return buildTargetRecommendationRows({
     enemy,
@@ -1416,7 +1543,8 @@ export function buildSelectedTargetRecommendationRows({
     getEngagementRangeMetersForWeapon,
     targetZoneIndices: [selectedZoneIndex],
     selectedZoneIndexForBias: selectedZoneIndex,
-    selectedZoneMatch: true
+    selectedZoneMatch: true,
+    hidePeripheralMainRoutes
   });
 }
 
@@ -1425,7 +1553,8 @@ export function buildRelatedTargetRecommendationRows({
   weapons = [],
   rangeFloorMeters = DEFAULT_RECOMMENDATION_RANGE_METERS,
   getEngagementRangeMetersForWeapon = null,
-  relatedZoneIndices = []
+  relatedZoneIndices = [],
+  hidePeripheralMainRoutes = false
 }) {
   return buildTargetRecommendationRows({
     enemy,
@@ -1433,6 +1562,7 @@ export function buildRelatedTargetRecommendationRows({
     rangeFloorMeters,
     getEngagementRangeMetersForWeapon,
     targetZoneIndices: relatedZoneIndices,
-    selectedZoneMatch: false
+    selectedZoneMatch: false,
+    hidePeripheralMainRoutes
   });
 }

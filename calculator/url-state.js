@@ -4,6 +4,7 @@ import {
   DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_OVERVIEW_SCOPE,
+  DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE,
   DEFAULT_WEAPON_SORT_MODE,
   getEngagementRangeMeters,
@@ -22,6 +23,7 @@ import {
   setEnemySortState,
   setEnemyTableMode,
   setOverviewScope,
+  setRecommendationNoMainViaLimbs,
   setRecommendationWeaponFilterMode,
   setRecommendationWeaponFilterSubs,
   setRecommendationWeaponFilterTypes,
@@ -66,6 +68,7 @@ const DEFAULT_CALCULATOR_URL_STATE = {
   recommendationWeaponFilterTypes: [],
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
+  recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   selectedAttackKeysA: null,
   selectedAttackKeysB: null,
   attackHitCountsA: null,
@@ -115,6 +118,7 @@ const URL_PARAM_KEYS = {
   recommendationWeaponFilterTypes: 'crft',
   recommendationWeaponFilterSubs: 'crfs',
   recommendationWeaponFilterGroups: 'crfg',
+  recommendationNoMainViaLimbs: 'crnl',
   selectedAttackKeysA: 'caa',
   selectedAttackKeysB: 'cab',
   attackHitCountsA: 'cha',
@@ -185,6 +189,22 @@ function parseJsonParam(params, key) {
   } catch {
     return { present: true, value: null };
   }
+}
+
+function normalizeBooleanParam(value, defaultValue = false) {
+  if (value === null || value === undefined || value === '') {
+    return defaultValue;
+  }
+
+  const normalizedValue = String(value).trim().toLowerCase();
+  if (['false', '0', 'no', 'off'].includes(normalizedValue)) {
+    return false;
+  }
+  if (['true', '1', 'yes', 'on'].includes(normalizedValue)) {
+    return true;
+  }
+
+  return defaultValue;
 }
 
 function normalizeArrayOfStrings(values = [], { lowercase = false } = {}) {
@@ -421,6 +441,7 @@ export function buildUrlStateSnapshot({
       recommendationWeaponFilterTypes: [...calculatorState.recommendationWeaponFilterTypes],
       recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
       recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
+      recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
       selectedAttackKeysA: encodedAttackKeysA,
       selectedAttackKeysB: encodedAttackKeysB,
       attackHitCountsA: encodedAttackHitCountsA,
@@ -462,6 +483,7 @@ export function encodeUrlState({
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterTypes, calculator.recommendationWeaponFilterTypes, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterTypes);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs, calculator.recommendationWeaponFilterSubs, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups, calculator.recommendationWeaponFilterGroups, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups);
+  setParam(params, URL_PARAM_KEYS.recommendationNoMainViaLimbs, calculator.recommendationNoMainViaLimbs, DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysA, calculator.selectedAttackKeysA);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysB, calculator.selectedAttackKeysB);
   setJsonParam(params, URL_PARAM_KEYS.attackHitCountsA, calculator.attackHitCountsA);
@@ -659,6 +681,12 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
     params.has(URL_PARAM_KEYS.recommendationWeaponFilterGroups)
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups).value, { lowercase: true })
       : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups
+  );
+  setRecommendationNoMainViaLimbs(
+    normalizeBooleanParam(
+      params.get(URL_PARAM_KEYS.recommendationNoMainViaLimbs),
+      DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs
+    )
   );
 
   setEnemySortState({

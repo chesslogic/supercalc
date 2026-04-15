@@ -901,7 +901,7 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
   }
 });
 
-test('renderRecommendationPanel keeps targeted recommendations unfiltered when overall recommendations whitelist a subtype', () => {
+test('renderRecommendationPanel filters targeted recommendations when overall recommendations whitelist a subtype', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
@@ -950,10 +950,91 @@ test('renderRecommendationPanel keeps targeted recommendations unfiltered when o
     const targetedWeaponNames = targetedRows.map((row) => row.children[0]?.textContent || '');
     const overallWeaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
 
-    assert.ok(targetedWeaponNames.includes('Liberator'));
-    assert.ok(targetedWeaponNames.includes('Recoilless Rifle'));
+    assert.deepEqual(targetedWeaponNames, ['Liberator']);
     assert.deepEqual(overallWeaponNames, ['Liberator']);
     assert.match(summaries[1]?.textContent || '', /weapon filters: showing only ar/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel filters related routes when overall recommendations whitelist a subtype', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterSubs = ['ar'];
+    calculatorState.recommendationWeaponFilterGroups = [];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 120, 2)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 1,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Scoped Filter Dummy',
+      health: 600,
+      zoneRelationGroups: [
+        {
+          id: 'left-arm',
+          label: 'Left arm',
+          zoneNames: ['shoulderplate_left', 'left_arm'],
+          mirrorGroupIds: ['right-arm'],
+          priorityTargetZoneNames: ['left_arm']
+        },
+        {
+          id: 'right-arm',
+          label: 'Right arm',
+          zoneNames: ['shoulderplate_right', 'right_arm'],
+          mirrorGroupIds: ['left-arm'],
+          priorityTargetZoneNames: ['right_arm']
+        }
+      ],
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('shoulderplate_left', { health: 120, av: 1, toMainPercent: 0 }),
+        makeZone('left_arm', { health: 100, av: 1, toMainPercent: 0.5 }),
+        makeZone('right_arm', { health: 100, av: 1, toMainPercent: 0.5 })
+      ]
+    });
+
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const targetedRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const relatedRows = collectElements(tables[1], (element) => element.tagName === 'TR').slice(1);
+    const overallRows = collectElements(tables[2], (element) => element.tagName === 'TR').slice(1);
+    const targetedWeaponNames = targetedRows.map((row) => row.children[0]?.textContent || '');
+    const relatedWeaponNames = relatedRows.map((row) => row.children[0]?.textContent || '');
+    const overallWeaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual(targetedWeaponNames, ['Liberator']);
+    assert.deepEqual(relatedWeaponNames, ['Liberator']);
+    assert.deepEqual(overallWeaponNames, ['Liberator']);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -1154,6 +1235,102 @@ test('renderRecommendationPanel Automatic feature group includes machine gun sen
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
     calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
     calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that toggles calculator state', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousNoMainViaLimbs = calculatorState.recommendationNoMainViaLimbs;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationNoMainViaLimbs = true;
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Preference Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const preferenceRow = getChipRowByLabel(container, 'Preference');
+    const preferenceChip = preferenceRow
+      ? collectElements(preferenceRow, (element) => element.tagName === 'BUTTON')
+        .find((button) => button.textContent === 'No main via limbs')
+      : null;
+
+    assert.ok(preferenceChip);
+    assert.ok(preferenceChip.classList.contains('active'));
+    assert.match(preferenceChip.title, /massive ordnance to a non-vital component/i);
+    assert.equal(typeof preferenceChip.listeners.get('click'), 'function');
+
+    preferenceChip.listeners.get('click')();
+
+    assert.equal(calculatorState.recommendationNoMainViaLimbs, false);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel renders a near-miss subsection with a near-miss header', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousNoMainViaLimbs = calculatorState.recommendationNoMainViaLimbs;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationNoMainViaLimbs = true;
+    weaponsState.groups = [
+      makeWeapon('Heavy Pistol', {
+        index: 0,
+        type: 'Secondary',
+        sub: 'P',
+        rpm: 60,
+        rows: [makeAttackRow('Heavy Pistol', 100, 3)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Near Miss Dummy',
+      health: 240,
+      zones: [
+        makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const sectionTitles = collectElements(container, (element) => element.classList.contains('calc-recommend-section-title'));
+    const headerCells = collectElements(container, (element) => element.tagName === 'TH');
+    const nearMissFlags = collectElements(
+      container,
+      (element) => element.classList.contains('calc-recommend-flag') && element.textContent === '60%'
+    );
+
+    assert.ok(sectionTitles.some((element) => element.textContent === 'Near misses'));
+    assert.ok(headerCells.some((element) => element.textContent === 'Near miss'));
+    assert.ok(nearMissFlags.length > 0);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
     weaponsState.groups = previousGroups;
   }
 });

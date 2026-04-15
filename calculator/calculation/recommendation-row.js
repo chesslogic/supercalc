@@ -94,7 +94,7 @@ export function appendRecommendationTableRow(tbody, row, usingFallbackRows = fal
   appendRecommendationCell(
     tableRow,
     createRecommendationFlag(
-      row.qualifiesForMargin,
+      row.qualifiesForMargin || row.showNearMissHighlight,
       getRecommendationMarginLabel(row),
       getRecommendationMarginTitle(row),
       getRecommendationMarginLabel(row)

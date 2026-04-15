@@ -102,19 +102,27 @@ export function getRecommendationRangeTitle(row) {
 }
 
 export function getRecommendationMarginLabel(row) {
-  if (!Number.isFinite(row?.marginPercent)) {
+  if (Number.isFinite(row?.marginPercent)) {
+    return `+${Math.max(0, Math.round(row.marginPercent))}%`;
+  }
+
+  if (!Number.isFinite(row?.nearMissDisplayPercent)) {
     return '—';
   }
 
-  return `+${Math.max(0, Math.round(row.marginPercent))}%`;
+  return `${Math.max(0, Math.round(row.nearMissDisplayPercent))}%`;
 }
 
 export function getRecommendationMarginTitle(row) {
-  const marginLabel = getRecommendationMarginLabel(row);
-  if (marginLabel !== '—') {
+  if (Number.isFinite(row?.marginPercent)) {
+    const marginLabel = getRecommendationMarginLabel(row);
     return row?.qualifiesForMargin
       ? `One-shot margin: ${marginLabel}. Meets the Margin highlight at the current range floor (+${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage).`
       : `One-shot margin: ${marginLabel}. Does not currently meet the Margin highlight (+${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage at the current range floor).`;
+  }
+
+  if (Number.isFinite(row?.nearMissDisplayPercent)) {
+    return `Near miss: ${getRecommendationMarginLabel(row)}. The remaining health before the final shot is under half of one displayed shot, so this row nearly needed one fewer shot.`;
   }
 
   return 'Margin is shown for one-shot kill or critical rows when displayed damage per cycle can be compared against the target health.';

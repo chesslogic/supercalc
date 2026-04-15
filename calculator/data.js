@@ -45,6 +45,7 @@ export { DEFAULT_WEAPON_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_DIR };
 export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'exclude';
+export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -118,6 +119,7 @@ export const calculatorState = {
   recommendationWeaponFilterTypes: [],
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
+  recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   selectedAttackKeys: {
     A: [],
     B: []
@@ -522,6 +524,18 @@ export function toggleRecommendationWeaponFilterGroup(groupId) {
     : [...calculatorState.recommendationWeaponFilterGroups, normalizedGroupId];
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterGroups];
+}
+
+export function setRecommendationNoMainViaLimbs(enabled) {
+  calculatorState.recommendationNoMainViaLimbs = enabled !== false;
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationNoMainViaLimbs;
+}
+
+export function toggleRecommendationNoMainViaLimbs() {
+  calculatorState.recommendationNoMainViaLimbs = !calculatorState.recommendationNoMainViaLimbs;
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationNoMainViaLimbs;
 }
 
 export function setSelectedExplosiveZone(zoneIndex, selected) {

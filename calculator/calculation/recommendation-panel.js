@@ -10,10 +10,13 @@ import {
 } from '../engagement-range.js';
 import { state as weaponsState } from '../../weapons/data.js';
 import {
+  NEAR_MISS_RECOMMENDATION_DISPLAY_LIMIT,
+  RECOMMENDATION_HEADER_DEFINITIONS,
   RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT,
   RECOMMENDATION_DISPLAY_LIMIT,
   TARGETED_RECOMMENDATION_DISPLAY_LIMIT
 } from './recommendation-constants.js';
+import { RECOMMENDATION_NEAR_MISS_MAX_SHOTS } from '../recommendations.js';
 import {
   getFilteredRecommendationWeapons,
   getRecommendationWeaponFilterSummaryText,
@@ -29,6 +32,48 @@ import {
   getRelatedRouteSummaryText
 } from './recommendation-route-context.js';
 import { renderRecommendationSubsection } from './recommendation-table.js';
+
+const NEAR_MISS_HEADER_DEFINITIONS = RECOMMENDATION_HEADER_DEFINITIONS.map((definition) => (
+  definition.label === 'Margin'
+    ? {
+        label: 'Near miss',
+        title: 'Last-shot near miss share. 75% means the final shot would overkill by 75% of one displayed shot, so this row nearly needed one fewer shot.'
+      }
+    : definition
+));
+
+function compareNearMissDisplayRows(left, right) {
+  const leftPercent = Number.isFinite(left?.nearMissPercent) ? left.nearMissPercent : -1;
+  const rightPercent = Number.isFinite(right?.nearMissPercent) ? right.nearMissPercent : -1;
+  if (leftPercent !== rightPercent) {
+    return rightPercent - leftPercent;
+  }
+
+  const leftShots = Number.isFinite(left?.shotsToKill) ? left.shotsToKill : Number.POSITIVE_INFINITY;
+  const rightShots = Number.isFinite(right?.shotsToKill) ? right.shotsToKill : Number.POSITIVE_INFINITY;
+  if (leftShots !== rightShots) {
+    return leftShots - rightShots;
+  }
+
+  const leftTtk = Number.isFinite(left?.ttkSeconds) ? left.ttkSeconds : Number.POSITIVE_INFINITY;
+  const rightTtk = Number.isFinite(right?.ttkSeconds) ? right.ttkSeconds : Number.POSITIVE_INFINITY;
+  if (leftTtk !== rightTtk) {
+    return leftTtk - rightTtk;
+  }
+
+  return String(left?.weapon?.name || '').localeCompare(String(right?.weapon?.name || ''));
+}
+
+function buildNearMissDisplayRows(rows = []) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((row) => row?.qualifiesForNearMiss && Number.isFinite(row?.nearMissPercent))
+    .map((row) => ({
+      ...row,
+      nearMissDisplayPercent: row.nearMissPercent,
+      showNearMissHighlight: true
+    }))
+    .sort(compareNearMissDisplayRows);
+}
 
 export function renderRecommendationPanel(container, enemy, {
   onRefresh = null
@@ -78,18 +123,19 @@ export function renderRecommendationPanel(container, enemy, {
     return;
   }
 
-  const overallRecommendationWeapons = getFilteredRecommendationWeapons(weaponsState.groups);
+  const filteredRecommendationWeapons = getFilteredRecommendationWeapons(weaponsState.groups);
   const {
     recommendationRows,
     selectedTargetRows,
     relatedTargetRows
   } = buildRecommendationRowSets({
     enemy,
-    weapons: weaponsState.groups,
-    overallRecommendationWeapons,
+    weapons: filteredRecommendationWeapons,
+    overallRecommendationWeapons: filteredRecommendationWeapons,
     highlightRangeFloorMeters,
     selectedZoneIndex: calculatorState.selectedZoneIndex,
-    relatedTargetZoneIndices
+    relatedTargetZoneIndices,
+    hidePeripheralMainRoutes: calculatorState.recommendationNoMainViaLimbs
   });
   const flaggedRows = recommendationRows.filter((row) => (
     row.qualifiesForMargin
@@ -125,6 +171,7 @@ export function renderRecommendationPanel(container, enemy, {
     overallRecommendationFilterSummaryText,
     hasActiveFilters: hasActiveRecommendationWeaponFilters()
   });
+  const nearMissRows = buildNearMissDisplayRows(recommendationRows);
 
   if (selectedZone) {
     const hasRelatedTargetChips = relatedTargetZoneIndices.length > 0;
@@ -181,6 +228,16 @@ export function renderRecommendationPanel(container, enemy, {
     usingFallbackRows,
     emptyStateText: overallRecommendationEmptyStateText
   });
+  if (nearMissRows.length > 0) {
+    renderRecommendationSubsection({
+      body,
+      titleText: 'Near misses',
+      summaryText: `Close misses where the final shot would overkill by more than the remaining health before that shot (${recommendationRangeSummary}). Limited to ${RECOMMENDATION_NEAR_MISS_MAX_SHOTS}-shot rows so long automatic strings stay out.`,
+      rows: nearMissRows,
+      displayStep: NEAR_MISS_RECOMMENDATION_DISPLAY_LIMIT,
+      headerDefinitions: NEAR_MISS_HEADER_DEFINITIONS
+    });
+  }
   panel.appendChild(body);
   container.appendChild(panel);
 }
