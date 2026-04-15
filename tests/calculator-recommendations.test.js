@@ -1122,3 +1122,91 @@ test('buildSelectedTargetRecommendationRows does not suppress the pure projectil
   assert.ok(projectileRec, 'standalone projectile recommendation must not be suppressed for non-stratagem weapons');
   assert.equal(projectileRec.bestCandidate?.shotsToKill, 2);
 });
+
+test('buildWeaponRecommendationRows exposes nearMissDisplayPercent for comfortable 2-3 shot lethal kills', () => {
+  // Senator-like weapon: 3 shots, last shot overkills comfortably → should populate nearMissDisplayPercent
+  const enemy = {
+    name: 'Senator Dummy',
+    health: 240,
+    zones: [
+      makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Senator', {
+      index: 0,
+      type: 'Secondary',
+      sub: 'P',
+      rows: [makeAttackRow('Senator', 100, 3)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].shotsToKill, 3);
+  assert.equal(rows[0].marginPercent, null, 'one-shot margin must remain null for multi-shot rows');
+  assert.equal(rows[0].qualifiesForMargin, false, 'one-shot qualify flag must stay false');
+  assert.equal(rows[0].nearMissPercent, 60, 'underlying nearMissPercent should be present');
+  assert.equal(rows[0].nearMissDisplayPercent, 60, 'nearMissDisplayPercent should equal nearMissPercent for multi-shot rows');
+});
+
+test('buildWeaponRecommendationRows keeps nearMissDisplayPercent null for one-shot kills', () => {
+  const enemy = {
+    name: 'One-Shot Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Killshot', {
+      index: 0,
+      rows: [makeAttackRow('Killshot', 110, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[0].marginPercent, 10, 'one-shot margin should still be set');
+  assert.equal(rows[0].nearMissDisplayPercent, null, 'nearMissDisplayPercent must be null when marginPercent is available');
+});
+
+test('buildWeaponRecommendationRows keeps nearMissDisplayPercent null for long multi-shot automatic rows', () => {
+  const enemy = {
+    name: 'Long Spray Target',
+    health: 340,
+    zones: [
+      makeZone('Main', { health: 340, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Automatic Carbine', {
+      index: 0,
+      type: 'Primary',
+      sub: 'AR',
+      rows: [makeAttackRow('Automatic Carbine', 100, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].shotsToKill, 4, 'must be beyond the near-miss 3-shot cap');
+  assert.equal(rows[0].nearMissPercent, null, 'no near miss for long spray');
+  assert.equal(rows[0].nearMissDisplayPercent, null, 'nearMissDisplayPercent must remain null for long sprays');
+});

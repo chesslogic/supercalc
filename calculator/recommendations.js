@@ -1376,6 +1376,10 @@ function buildWeaponRecommendationDisplayRow({
     nearMissRatio: bestAttackRecommendation.nearMissRatio,
     nearMissPercent: bestAttackRecommendation.nearMissPercent,
     qualifiesForNearMiss: bestAttackRecommendation.qualifiesForNearMiss,
+    nearMissDisplayPercent: !Number.isFinite(bestAttackRecommendation.marginPercent)
+      && Number.isFinite(bestAttackRecommendation.nearMissPercent)
+      ? bestAttackRecommendation.nearMissPercent
+      : null,
     hasOneShotKill: bestAttackRecommendation.hasOneShotKill,
     hasOneShotCritical: bestAttackRecommendation.hasOneShotCritical,
     hasTwoShotCritical: bestAttackRecommendation.hasTwoShotCritical,

@@ -122,7 +122,11 @@ export function getRecommendationMarginTitle(row) {
   }
 
   if (Number.isFinite(row?.nearMissDisplayPercent)) {
-    return `Near miss: ${getRecommendationMarginLabel(row)}. The remaining health before the final shot is under half of one displayed shot, so this row nearly needed one fewer shot.`;
+    if (row?.showNearMissHighlight) {
+      return `Near miss: ${getRecommendationMarginLabel(row)}. The remaining health before the final shot is under half of one displayed shot, so this row nearly needed one fewer shot.`;
+    }
+    const shotsLabel = Number.isFinite(row?.shotsToKill) ? `${row.shotsToKill}-shot` : 'multi-shot';
+    return `Last-shot headroom: ${getRecommendationMarginLabel(row)}. The final shot overkills by ${getRecommendationMarginLabel(row)} of one shot's damage on this ${shotsLabel} kill. The Near misses section below highlights rows that nearly needed one fewer shot.`;
   }
 
   return 'Margin is shown for one-shot kill or critical rows when displayed damage per cycle can be compared against the target health.';

@@ -15,6 +15,10 @@ const { calculatorState } = await import('../calculator/data.js');
 const { renderRecommendationPanel } = await import('../calculator/calculation.js');
 const { buildWeaponRecommendationRows } = await import('../calculator/recommendations.js');
 const { state: weaponsState } = await import('../weapons/data.js');
+const {
+  getRecommendationMarginLabel,
+  getRecommendationMarginTitle
+} = await import('../calculator/calculation/recommendation-titles.js');
 
 class TestClassList {
   constructor(element) {
@@ -234,7 +238,7 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
 
     assert.equal(
       headers.find((element) => element.textContent === 'Margin')?.title,
-      'Numeric one-shot kill or critical margin. Highlighted Margin rows stay at +25% or less extra damage at the current range floor.'
+      'One-shot margin (highlighted, +25% or less extra damage) or last-shot headroom for comfortable 2–3 shot kills (unhighlighted). Hover a cell for details.'
     );
     assert.equal(
       headers.find((element) => element.textContent === 'Crit')?.title,
@@ -1434,6 +1438,95 @@ test('renderRecommendationPanel paginates overflowing overall recommendations wi
     globalThis.Node = previousNode;
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('getRecommendationMarginLabel returns +X% for one-shot margin rows', () => {
+  const row = { marginPercent: 10 };
+  assert.equal(getRecommendationMarginLabel(row), '+10%');
+});
+
+test('getRecommendationMarginLabel returns X% (no plus) for multi-shot nearMissDisplayPercent rows', () => {
+  const row = { marginPercent: null, nearMissDisplayPercent: 60 };
+  assert.equal(getRecommendationMarginLabel(row), '60%');
+});
+
+test('getRecommendationMarginLabel returns em-dash when neither marginPercent nor nearMissDisplayPercent is available', () => {
+  const row = { marginPercent: null, nearMissDisplayPercent: null };
+  assert.equal(getRecommendationMarginLabel(row), '—');
+});
+
+test('getRecommendationMarginTitle contains headroom copy (not near-miss section copy) for main-row multi-shot kills', () => {
+  const row = { shotsToKill: 3, marginPercent: null, nearMissDisplayPercent: 60, showNearMissHighlight: false };
+  const title = getRecommendationMarginTitle(row);
+  assert.match(title, /last-shot headroom/i, 'should mention headroom for main-row multi-shot kills');
+  assert.match(title, /3-shot/i, 'should include shot count');
+  assert.match(title, /Near misses/i, 'should mention the Near misses section to distinguish it');
+  assert.doesNotMatch(title, /^Near miss:/i, 'should not use the Near miss section prefix');
+});
+
+test('getRecommendationMarginTitle uses near-miss section copy when showNearMissHighlight is set', () => {
+  const row = { shotsToKill: 3, marginPercent: null, nearMissDisplayPercent: 60, showNearMissHighlight: true };
+  const title = getRecommendationMarginTitle(row);
+  assert.match(title, /^Near miss:/i, 'should use the Near miss: prefix for near-miss section rows');
+  assert.doesNotMatch(title, /last-shot headroom/i, 'should not use headroom copy for near-miss section rows');
+});
+
+test('getRecommendationMarginTitle uses one-shot copy when marginPercent is available', () => {
+  const row = { shotsToKill: 1, marginPercent: 10, nearMissDisplayPercent: null, qualifiesForMargin: true };
+  const title = getRecommendationMarginTitle(row);
+  assert.match(title, /one-shot margin/i, 'should use one-shot margin copy');
+  assert.match(title, /\+10%/, 'should include the margin label');
+  assert.doesNotMatch(title, /last-shot headroom/i, 'should not use headroom copy when one-shot margin is set');
+});
+
+test('buildWeaponRecommendationRows main row shows nearMissDisplayPercent label in rendered Margin cell', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousNoMainViaLimbs = calculatorState.recommendationNoMainViaLimbs;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationNoMainViaLimbs = true;
+    weaponsState.groups = [
+      makeWeapon('Senator', {
+        index: 0,
+        type: 'Secondary',
+        sub: 'P',
+        rpm: 60,
+        rows: [makeAttackRow('Senator', 100, 3)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Headroom Dummy',
+      health: 240,
+      zones: [
+        makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    // The main recommendation row should display 60% in the Margin cell (not '—')
+    const marginFlags = collectElements(
+      container,
+      (element) => element.classList.contains('calc-recommend-flag') && element.textContent === '60%'
+    );
+
+    // The flag should appear in the overall/main section (not just the near-miss section)
+    const sectionTitles = collectElements(container, (element) => element.classList.contains('calc-recommend-section-title'));
+    const mainSectionTitles = sectionTitles.filter(
+      (el) => el.textContent !== 'Near misses'
+    );
+
+    assert.ok(marginFlags.length > 0, 'a 60% Margin flag should appear for the 3-shot Senator-like weapon');
+    assert.ok(mainSectionTitles.length > 0, 'at least one non-near-miss section should exist');
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
     weaponsState.groups = previousGroups;
   }
 });
