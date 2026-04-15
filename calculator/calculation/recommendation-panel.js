@@ -75,6 +75,19 @@ function buildNearMissDisplayRows(rows = []) {
     .sort(compareNearMissDisplayRows);
 }
 
+function filterRowsByShotRange(rows = [], minShots, maxShots) {
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+  return rows.filter((row) => {
+    const shots = row?.shotsToKill;
+    if (!Number.isFinite(shots)) {
+      return true;
+    }
+    return shots >= minShots && shots <= maxShots;
+  });
+}
+
 export function renderRecommendationPanel(container, enemy, {
   onRefresh = null
 } = {}) {
@@ -125,9 +138,9 @@ export function renderRecommendationPanel(container, enemy, {
 
   const filteredRecommendationWeapons = getFilteredRecommendationWeapons(weaponsState.groups);
   const {
-    recommendationRows,
-    selectedTargetRows,
-    relatedTargetRows
+    recommendationRows: rawRecommendationRows,
+    selectedTargetRows: rawSelectedTargetRows,
+    relatedTargetRows: rawRelatedTargetRows
   } = buildRecommendationRowSets({
     enemy,
     weapons: filteredRecommendationWeapons,
@@ -137,6 +150,11 @@ export function renderRecommendationPanel(container, enemy, {
     relatedTargetZoneIndices,
     hidePeripheralMainRoutes: calculatorState.recommendationNoMainViaLimbs
   });
+  const minShots = calculatorState.recommendationMinShots;
+  const maxShots = calculatorState.recommendationMaxShots;
+  const recommendationRows = filterRowsByShotRange(rawRecommendationRows, minShots, maxShots);
+  const selectedTargetRows = filterRowsByShotRange(rawSelectedTargetRows, minShots, maxShots);
+  const relatedTargetRows = filterRowsByShotRange(rawRelatedTargetRows, minShots, maxShots);
   const flaggedRows = recommendationRows.filter((row) => (
     row.qualifiesForMargin
     || row.hasCriticalRecommendation

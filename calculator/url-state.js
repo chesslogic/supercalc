@@ -5,6 +5,8 @@ import {
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
+  DEFAULT_RECOMMENDATION_MIN_SHOTS,
+  DEFAULT_RECOMMENDATION_MAX_SHOTS,
   DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE,
   DEFAULT_WEAPON_SORT_MODE,
   getEngagementRangeMeters,
@@ -24,6 +26,8 @@ import {
   setEnemyTableMode,
   setOverviewScope,
   setRecommendationNoMainViaLimbs,
+  setRecommendationMinShots,
+  setRecommendationMaxShots,
   setRecommendationWeaponFilterMode,
   setRecommendationWeaponFilterSubs,
   setRecommendationWeaponFilterTypes,
@@ -69,6 +73,8 @@ const DEFAULT_CALCULATOR_URL_STATE = {
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
   recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
+  recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
+  recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
   selectedAttackKeysA: null,
   selectedAttackKeysB: null,
   attackHitCountsA: null,
@@ -119,6 +125,8 @@ const URL_PARAM_KEYS = {
   recommendationWeaponFilterSubs: 'crfs',
   recommendationWeaponFilterGroups: 'crfg',
   recommendationNoMainViaLimbs: 'crnl',
+  recommendationMinShots: 'crmin',
+  recommendationMaxShots: 'crmax',
   selectedAttackKeysA: 'caa',
   selectedAttackKeysB: 'cab',
   attackHitCountsA: 'cha',
@@ -442,6 +450,8 @@ export function buildUrlStateSnapshot({
       recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
       recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
       recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
+      recommendationMinShots: calculatorState.recommendationMinShots,
+      recommendationMaxShots: calculatorState.recommendationMaxShots,
       selectedAttackKeysA: encodedAttackKeysA,
       selectedAttackKeysB: encodedAttackKeysB,
       attackHitCountsA: encodedAttackHitCountsA,
@@ -484,6 +494,8 @@ export function encodeUrlState({
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs, calculator.recommendationWeaponFilterSubs, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups, calculator.recommendationWeaponFilterGroups, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups);
   setParam(params, URL_PARAM_KEYS.recommendationNoMainViaLimbs, calculator.recommendationNoMainViaLimbs, DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs);
+  setParam(params, URL_PARAM_KEYS.recommendationMinShots, calculator.recommendationMinShots, DEFAULT_CALCULATOR_URL_STATE.recommendationMinShots);
+  setParam(params, URL_PARAM_KEYS.recommendationMaxShots, calculator.recommendationMaxShots, DEFAULT_CALCULATOR_URL_STATE.recommendationMaxShots);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysA, calculator.selectedAttackKeysA);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysB, calculator.selectedAttackKeysB);
   setJsonParam(params, URL_PARAM_KEYS.attackHitCountsA, calculator.attackHitCountsA);
@@ -687,6 +699,16 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
       params.get(URL_PARAM_KEYS.recommendationNoMainViaLimbs),
       DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs
     )
+  );
+  setRecommendationMinShots(
+    params.has(URL_PARAM_KEYS.recommendationMinShots)
+      ? Number(params.get(URL_PARAM_KEYS.recommendationMinShots))
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationMinShots
+  );
+  setRecommendationMaxShots(
+    params.has(URL_PARAM_KEYS.recommendationMaxShots)
+      ? Number(params.get(URL_PARAM_KEYS.recommendationMaxShots))
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationMaxShots
   );
 
   setEnemySortState({

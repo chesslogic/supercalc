@@ -102,18 +102,26 @@ export function getRecommendationRangeTitle(row) {
 }
 
 export function getRecommendationMarginLabel(row) {
+  if (row?.showNearMissHighlight && Number.isFinite(row?.nearMissDisplayPercent)) {
+    return `${Math.max(0, Math.round(row.nearMissDisplayPercent))}%`;
+  }
+
   if (Number.isFinite(row?.marginPercent)) {
     return `+${Math.max(0, Math.round(row.marginPercent))}%`;
   }
 
-  if (!Number.isFinite(row?.nearMissDisplayPercent)) {
-    return '—';
+  if (Number.isFinite(row?.displayMarginPercent)) {
+    return `+${Math.max(0, Math.round(row.displayMarginPercent))}%`;
   }
 
-  return `${Math.max(0, Math.round(row.nearMissDisplayPercent))}%`;
+  return '—';
 }
 
 export function getRecommendationMarginTitle(row) {
+  if (row?.showNearMissHighlight && Number.isFinite(row?.nearMissDisplayPercent)) {
+    return `Near miss: ${getRecommendationMarginLabel(row)}. The remaining health before the final shot is under half of one displayed shot, so this row nearly needed one fewer shot.`;
+  }
+
   if (Number.isFinite(row?.marginPercent)) {
     const marginLabel = getRecommendationMarginLabel(row);
     return row?.qualifiesForMargin
@@ -121,15 +129,12 @@ export function getRecommendationMarginTitle(row) {
       : `One-shot margin: ${marginLabel}. Does not currently meet the Margin highlight (+${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage at the current range floor).`;
   }
 
-  if (Number.isFinite(row?.nearMissDisplayPercent)) {
-    if (row?.showNearMissHighlight) {
-      return `Near miss: ${getRecommendationMarginLabel(row)}. The remaining health before the final shot is under half of one displayed shot, so this row nearly needed one fewer shot.`;
-    }
+  if (Number.isFinite(row?.displayMarginPercent)) {
     const shotsLabel = Number.isFinite(row?.shotsToKill) ? `${row.shotsToKill}-shot` : 'multi-shot';
-    return `Last-shot headroom: ${getRecommendationMarginLabel(row)}. The final shot overkills by ${getRecommendationMarginLabel(row)} of one shot's damage on this ${shotsLabel} kill. The Near misses section below highlights rows that nearly needed one fewer shot.`;
+    return `${shotsLabel} margin: ${getRecommendationMarginLabel(row)}. Each shot deals ${getRecommendationMarginLabel(row)} more damage than needed to keep this ${shotsLabel} kill. This is display-only headroom and does not change the one-shot Margin highlight.`;
   }
 
-  return 'Margin is shown for one-shot kill or critical rows when displayed damage per cycle can be compared against the target health.';
+  return 'Margin shows one-shot highlight margins or extra per-shot headroom for displayed multi-shot rows when the breakpoint damage can be compared against the target health.';
 }
 
 export function getRecommendationFlagTitle(flagKey, value) {

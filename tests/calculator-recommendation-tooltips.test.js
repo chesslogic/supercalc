@@ -238,7 +238,7 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
 
     assert.equal(
       headers.find((element) => element.textContent === 'Margin')?.title,
-      'One-shot margin (highlighted, +25% or less extra damage) or last-shot headroom for comfortable 2–3 shot kills (unhighlighted). Hover a cell for details.'
+      'One-shot margin is highlighted at +25% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight.'
     );
     assert.equal(
       headers.find((element) => element.textContent === 'Crit')?.title,
@@ -264,9 +264,13 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
 test('renderRecommendationPanel explains fallback rows and unknown range rows when nothing is highlighted', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
 
   try {
     calculatorState.recommendationRangeMeters = 30;
+    calculatorState.recommendationMinShots = 1;
+    calculatorState.recommendationMaxShots = 10;
     weaponsState.groups = [
       makeWeapon('Body Tapper', {
         rpm: 60,
@@ -290,10 +294,12 @@ test('renderRecommendationPanel explains fallback rows and unknown range rows wh
     assert.match(summary.textContent, /fallback rows/i);
     assert.match(summary.title, /falls back to the best-ranked row for each weapon/i);
     assert.match(cells[5].title, /row stays listed, but range-sensitive highlights do not count/i);
-    assert.equal(flags[0].title, 'Margin is shown for one-shot kill or critical rows when displayed damage per cycle can be compared against the target health.');
+    assert.equal(flags[0].title, 'Margin shows one-shot highlight margins or extra per-shot headroom for displayed multi-shot rows when the breakpoint damage can be compared against the target health.');
     assert.match(cells[10].title, /fallback because nothing met the current highlight checks/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
     weaponsState.groups = previousGroups;
   }
 });
@@ -1293,6 +1299,110 @@ test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that
   }
 });
 
+test('renderRecommendationPanel exposes shot-range sliders that update calculator state', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationMinShots = 1;
+    calculatorState.recommendationMaxShots = 3;
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Shot Slider Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const shotsRow = getChipRowByLabel(container, 'Shots');
+    const sliders = shotsRow
+      ? collectElements(shotsRow, (element) => element.tagName === 'INPUT')
+      : [];
+
+    assert.equal(sliders.length, 2);
+    assert.equal(sliders[0].type, 'range');
+    assert.equal(sliders[0].value, '1');
+    assert.equal(sliders[1].type, 'range');
+    assert.equal(sliders[1].value, '3');
+
+    sliders[0].value = '2';
+    sliders[0].listeners.get('input')?.();
+
+    assert.equal(calculatorState.recommendationMinShots, 2);
+    assert.equal(calculatorState.recommendationMaxShots, 3);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel filters overall recommendations by the selected shot range', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationMinShots = 2;
+    calculatorState.recommendationMaxShots = 3;
+    weaponsState.groups = [
+      makeWeapon('One-Shot', {
+        index: 0,
+        rows: [makeAttackRow('One-Shot', 240, 2)]
+      }),
+      makeWeapon('Two-Shot', {
+        index: 1,
+        rows: [makeAttackRow('Two-Shot', 120, 2)]
+      }),
+      makeWeapon('Three-Shot', {
+        index: 2,
+        rows: [makeAttackRow('Three-Shot', 90, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Shot Range Dummy',
+      health: 240,
+      zones: [
+        makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual(weaponNames, ['Two-Shot', 'Three-Shot']);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});
+
 test('renderRecommendationPanel renders a near-miss subsection with a near-miss header', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
@@ -1447,22 +1557,28 @@ test('getRecommendationMarginLabel returns +X% for one-shot margin rows', () => 
   assert.equal(getRecommendationMarginLabel(row), '+10%');
 });
 
-test('getRecommendationMarginLabel returns X% (no plus) for multi-shot nearMissDisplayPercent rows', () => {
-  const row = { marginPercent: null, nearMissDisplayPercent: 60 };
+test('getRecommendationMarginLabel returns +X% for multi-shot displayMarginPercent rows', () => {
+  const row = { marginPercent: null, displayMarginPercent: 25 };
+  assert.equal(getRecommendationMarginLabel(row), '+25%');
+});
+
+test('getRecommendationMarginLabel returns X% (no plus) for near-miss section rows', () => {
+  const row = { nearMissDisplayPercent: 60, showNearMissHighlight: true };
   assert.equal(getRecommendationMarginLabel(row), '60%');
 });
 
-test('getRecommendationMarginLabel returns em-dash when neither marginPercent nor nearMissDisplayPercent is available', () => {
-  const row = { marginPercent: null, nearMissDisplayPercent: null };
+test('getRecommendationMarginLabel returns em-dash when neither marginPercent nor displayMarginPercent is available', () => {
+  const row = { marginPercent: null, displayMarginPercent: null };
   assert.equal(getRecommendationMarginLabel(row), '—');
 });
 
-test('getRecommendationMarginTitle contains headroom copy (not near-miss section copy) for main-row multi-shot kills', () => {
-  const row = { shotsToKill: 3, marginPercent: null, nearMissDisplayPercent: 60, showNearMissHighlight: false };
+test('getRecommendationMarginTitle contains shot-count margin copy for main-row multi-shot kills', () => {
+  const row = { shotsToKill: 3, marginPercent: null, displayMarginPercent: 25, showNearMissHighlight: false };
   const title = getRecommendationMarginTitle(row);
-  assert.match(title, /last-shot headroom/i, 'should mention headroom for main-row multi-shot kills');
+  assert.match(title, /3-shot margin/i, 'should mention shot-count margin for main-row multi-shot kills');
+  assert.match(title, /\+25%/, 'should include the display margin label');
   assert.match(title, /3-shot/i, 'should include shot count');
-  assert.match(title, /Near misses/i, 'should mention the Near misses section to distinguish it');
+  assert.match(title, /one-shot Margin highlight/i, 'should distinguish display headroom from the one-shot highlight');
   assert.doesNotMatch(title, /^Near miss:/i, 'should not use the Near miss section prefix');
 });
 
@@ -1470,7 +1586,7 @@ test('getRecommendationMarginTitle uses near-miss section copy when showNearMiss
   const row = { shotsToKill: 3, marginPercent: null, nearMissDisplayPercent: 60, showNearMissHighlight: true };
   const title = getRecommendationMarginTitle(row);
   assert.match(title, /^Near miss:/i, 'should use the Near miss: prefix for near-miss section rows');
-  assert.doesNotMatch(title, /last-shot headroom/i, 'should not use headroom copy for near-miss section rows');
+  assert.doesNotMatch(title, /3-shot margin/i, 'should not use main-row shot-count margin copy for near-miss section rows');
 });
 
 test('getRecommendationMarginTitle uses one-shot copy when marginPercent is available', () => {
@@ -1478,19 +1594,23 @@ test('getRecommendationMarginTitle uses one-shot copy when marginPercent is avai
   const title = getRecommendationMarginTitle(row);
   assert.match(title, /one-shot margin/i, 'should use one-shot margin copy');
   assert.match(title, /\+10%/, 'should include the margin label');
-  assert.doesNotMatch(title, /last-shot headroom/i, 'should not use headroom copy when one-shot margin is set');
+  assert.doesNotMatch(title, /display-only headroom/i, 'should not use multi-shot headroom copy when one-shot margin is set');
 });
 
-test('buildWeaponRecommendationRows main row shows nearMissDisplayPercent label in rendered Margin cell', () => {
+test('buildWeaponRecommendationRows main row shows displayMarginPercent label in rendered Margin cell', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
   const previousNoMainViaLimbs = calculatorState.recommendationNoMainViaLimbs;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
     calculatorState.recommendationNoMainViaLimbs = true;
+    calculatorState.recommendationMinShots = 1;
+    calculatorState.recommendationMaxShots = 3;
     weaponsState.groups = [
       makeWeapon('Senator', {
         index: 0,
@@ -1509,10 +1629,10 @@ test('buildWeaponRecommendationRows main row shows nearMissDisplayPercent label 
       ]
     });
 
-    // The main recommendation row should display 60% in the Margin cell (not '—')
+    // The main recommendation row should display +25% in the Margin cell (not '—').
     const marginFlags = collectElements(
       container,
-      (element) => element.classList.contains('calc-recommend-flag') && element.textContent === '60%'
+      (element) => element.classList.contains('calc-recommend-flag') && element.textContent === '+25%'
     );
 
     // The flag should appear in the overall/main section (not just the near-miss section)
@@ -1521,12 +1641,14 @@ test('buildWeaponRecommendationRows main row shows nearMissDisplayPercent label 
       (el) => el.textContent !== 'Near misses'
     );
 
-    assert.ok(marginFlags.length > 0, 'a 60% Margin flag should appear for the 3-shot Senator-like weapon');
+    assert.ok(marginFlags.length > 0, 'a +25% Margin flag should appear for the 3-shot Senator-like weapon');
     assert.ok(mainSectionTitles.length > 0, 'at least one non-near-miss section should exist');
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
     calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
     weaponsState.groups = previousGroups;
   }
 });

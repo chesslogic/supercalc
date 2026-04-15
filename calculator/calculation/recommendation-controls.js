@@ -1,6 +1,11 @@
 import {
   calculatorState,
   clearRecommendationWeaponFilters,
+  DEFAULT_RECOMMENDATION_MIN_SHOTS,
+  DEFAULT_RECOMMENDATION_MAX_SHOTS,
+  MAX_RECOMMENDATION_SHOTS,
+  setRecommendationMinShots,
+  setRecommendationMaxShots,
   setRecommendationWeaponFilterMode,
   setSelectedZoneIndex,
   toggleRecommendationNoMainViaLimbs,
@@ -53,6 +58,80 @@ function createRecommendationFilterChipRow({
   row.appendChild(rowLabel);
 
   chips.forEach((chip) => row.appendChild(chip));
+  return row;
+}
+
+function createRecommendationShotSlider({
+  label,
+  value,
+  min = DEFAULT_RECOMMENDATION_MIN_SHOTS,
+  max = MAX_RECOMMENDATION_SHOTS,
+  title = '',
+  onInput,
+  onRefresh = null
+}) {
+  const slider = document.createElement('label');
+  slider.className = 'calc-recommend-shot-slider';
+
+  const sliderLabel = document.createElement('span');
+  sliderLabel.className = 'calc-recommend-shot-slider-label';
+  sliderLabel.textContent = `${label}: ${value}`;
+  slider.appendChild(sliderLabel);
+
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.className = 'calc-recommend-shot-slider-input';
+  input.min = String(min);
+  input.max = String(max);
+  input.step = '1';
+  input.value = String(value);
+  input.title = title;
+  input.addEventListener('input', () => {
+    onInput?.(Number(input.value));
+    onRefresh?.();
+  });
+  slider.appendChild(input);
+
+  return slider;
+}
+
+function createRecommendationShotRangeRow({
+  onRefresh = null
+} = {}) {
+  const row = document.createElement('div');
+  row.className = 'chiprow calc-recommend-shot-range';
+
+  const rowLabel = document.createElement('span');
+  rowLabel.className = 'muted';
+  rowLabel.textContent = 'Shots';
+  row.appendChild(rowLabel);
+
+  row.appendChild(createRecommendationShotSlider({
+    label: 'Min',
+    value: calculatorState.recommendationMinShots,
+    title: 'Filter displayed recommendation rows by minimum shots to kill.',
+    onInput: (nextValue) => {
+      if (nextValue > calculatorState.recommendationMaxShots) {
+        setRecommendationMaxShots(nextValue);
+      }
+      setRecommendationMinShots(nextValue);
+    },
+    onRefresh
+  }));
+
+  row.appendChild(createRecommendationShotSlider({
+    label: 'Max',
+    value: calculatorState.recommendationMaxShots,
+    title: 'Filter displayed recommendation rows by maximum shots to kill.',
+    onInput: (nextValue) => {
+      if (nextValue < calculatorState.recommendationMinShots) {
+        setRecommendationMinShots(nextValue);
+      }
+      setRecommendationMaxShots(nextValue);
+    },
+    onRefresh
+  }));
+
   return row;
 }
 
@@ -149,6 +228,7 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
       })
     ]
   }));
+  wrapper.appendChild(createRecommendationShotRangeRow({ onRefresh }));
 
   const typeChips = getAvailableRecommendationWeaponTypes(weapons).map((type) => createRecommendationFilterChip({
     label: getRecommendationFilterChipLabel(type, 'type'),

@@ -46,6 +46,9 @@ export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_DIR };
 export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'exclude';
 export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
+export const DEFAULT_RECOMMENDATION_MIN_SHOTS = 1;
+export const DEFAULT_RECOMMENDATION_MAX_SHOTS = 3;
+export const MAX_RECOMMENDATION_SHOTS = 10;
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -76,6 +79,14 @@ function normalizeRecommendationWeaponFilterMode(mode) {
   return String(mode ?? '').trim().toLowerCase() === 'include'
     ? 'include'
     : DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE;
+}
+
+function normalizeRecommendationShotsValue(value, min, max, defaultValue) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || !Number.isInteger(numeric)) {
+    return defaultValue;
+  }
+  return Math.min(max, Math.max(min, Math.round(numeric)));
 }
 
 function normalizeRecommendationWeaponFilterValues(values = []) {
@@ -120,6 +131,8 @@ export const calculatorState = {
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
   recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
+  recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
+  recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
   selectedAttackKeys: {
     A: [],
     B: []
@@ -536,6 +549,30 @@ export function toggleRecommendationNoMainViaLimbs() {
   calculatorState.recommendationNoMainViaLimbs = !calculatorState.recommendationNoMainViaLimbs;
   notifyCalculatorStateChange();
   return calculatorState.recommendationNoMainViaLimbs;
+}
+
+export function setRecommendationMinShots(value) {
+  const currentMax = calculatorState.recommendationMaxShots;
+  calculatorState.recommendationMinShots = normalizeRecommendationShotsValue(
+    value,
+    1,
+    currentMax,
+    DEFAULT_RECOMMENDATION_MIN_SHOTS
+  );
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationMinShots;
+}
+
+export function setRecommendationMaxShots(value) {
+  const currentMin = calculatorState.recommendationMinShots;
+  calculatorState.recommendationMaxShots = normalizeRecommendationShotsValue(
+    value,
+    currentMin,
+    MAX_RECOMMENDATION_SHOTS,
+    DEFAULT_RECOMMENDATION_MAX_SHOTS
+  );
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationMaxShots;
 }
 
 export function setSelectedExplosiveZone(zoneIndex, selected) {

@@ -48,6 +48,8 @@ const {
   setEngagementRangeMeters,
   setOverviewScope,
   setRecommendationNoMainViaLimbs,
+  setRecommendationMinShots,
+  setRecommendationMaxShots,
   setRecommendationWeaponFilterGroups,
   setRecommendationWeaponFilterMode,
   setRecommendationWeaponFilterSubs,
@@ -224,6 +226,8 @@ function snapshotCalculatorState() {
     recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
     recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
     recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
+    recommendationMinShots: calculatorState.recommendationMinShots,
+    recommendationMaxShots: calculatorState.recommendationMaxShots,
     selectedAttackKeys: {
       A: [...calculatorState.selectedAttackKeys.A],
       B: [...calculatorState.selectedAttackKeys.B]
@@ -257,6 +261,8 @@ function restoreCalculatorState(snapshot) {
   calculatorState.recommendationWeaponFilterSubs = [...snapshot.recommendationWeaponFilterSubs];
   calculatorState.recommendationWeaponFilterGroups = [...snapshot.recommendationWeaponFilterGroups];
   calculatorState.recommendationNoMainViaLimbs = snapshot.recommendationNoMainViaLimbs;
+  calculatorState.recommendationMinShots = snapshot.recommendationMinShots;
+  calculatorState.recommendationMaxShots = snapshot.recommendationMaxShots;
   calculatorState.selectedAttackKeys = {
     A: [...snapshot.selectedAttackKeys.A],
     B: [...snapshot.selectedAttackKeys.B]
@@ -866,6 +872,7 @@ test('buildUrlStateSnapshot calculator section has all expected keys', { concurr
     'selectedExplosiveZoneIndices', 'recommendationWeaponFilterMode',
     'recommendationWeaponFilterTypes', 'recommendationWeaponFilterSubs',
     'recommendationWeaponFilterGroups', 'recommendationNoMainViaLimbs',
+    'recommendationMinShots', 'recommendationMaxShots',
     'selectedAttackKeysA', 'selectedAttackKeysB',
     'attackHitCountsA', 'attackHitCountsB', 'enemySort'
   ];
@@ -1085,4 +1092,89 @@ test('hydrateUrlState accepts URLSearchParams object', { concurrency: false }, (
 
   assert.equal(result.activeTab, 'references');
   assert.equal(calculatorState.mode, 'single');
+}));
+
+// ===========================================================================
+// Min/max shot range state and URL persistence
+// ===========================================================================
+
+test('calculatorState defaults recommendationMinShots to 1', { concurrency: false }, () => withStateFixture(() => {
+  assert.equal(calculatorState.recommendationMinShots, 1);
+}));
+
+test('calculatorState defaults recommendationMaxShots to 3', { concurrency: false }, () => withStateFixture(() => {
+  assert.equal(calculatorState.recommendationMaxShots, 3);
+}));
+
+test('setRecommendationMaxShots clamps to allowed range', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(2);
+  assert.equal(calculatorState.recommendationMaxShots, 2);
+
+  setRecommendationMaxShots(0);
+  assert.equal(calculatorState.recommendationMaxShots, 1, 'max shots cannot be below min shots (1)');
+
+  setRecommendationMaxShots(999);
+  assert.equal(calculatorState.recommendationMaxShots, 10, 'max shots is capped at 10');
+}));
+
+test('setRecommendationMinShots clamps to allowed range', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(5);
+  setRecommendationMinShots(3);
+  assert.equal(calculatorState.recommendationMinShots, 3);
+
+  setRecommendationMinShots(0);
+  assert.equal(calculatorState.recommendationMinShots, 1, 'min shots cannot be below 1');
+
+  setRecommendationMinShots(99);
+  assert.equal(calculatorState.recommendationMinShots, 5, 'min shots cannot exceed max shots');
+}));
+
+test('encodeUrlState omits default min/max shots', { concurrency: false }, () => withStateFixture(() => {
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.has('crmin'), false, 'default min shots should not be encoded');
+  assert.equal(params.has('crmax'), false, 'default max shots should not be encoded');
+}));
+
+test('encodeUrlState encodes non-default max shots', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(5);
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.get('crmax'), '5');
+}));
+
+test('encodeUrlState encodes non-default min shots', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(5);
+  setRecommendationMinShots(2);
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.get('crmin'), '2');
+}));
+
+test('hydrateUrlState restores min/max shots from URL params', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({ crmin: '2', crmax: '4' }));
+
+  assert.equal(calculatorState.recommendationMinShots, 2);
+  assert.equal(calculatorState.recommendationMaxShots, 4);
+}));
+
+test('hydrateUrlState resets min/max shots to defaults when params absent', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(5);
+  setRecommendationMinShots(2);
+
+  hydrateUrlState(new URLSearchParams({}));
+
+  assert.equal(calculatorState.recommendationMinShots, 1);
+  assert.equal(calculatorState.recommendationMaxShots, 3);
+}));
+
+test('encodeUrlState and hydrateUrlState round-trip min/max shots', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(4);
+  setRecommendationMinShots(2);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+
+  setRecommendationMaxShots(3);
+  setRecommendationMinShots(1);
+  hydrateUrlState(params);
+
+  assert.equal(calculatorState.recommendationMinShots, 2);
+  assert.equal(calculatorState.recommendationMaxShots, 4);
 }));

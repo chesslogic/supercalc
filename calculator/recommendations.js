@@ -111,7 +111,24 @@ function compareRecommendationMargins(left, right) {
     return comparison;
   }
 
-  return compareNullableNumber(left?.marginRatio, right?.marginRatio, 'asc');
+  comparison = compareNullableNumber(left?.marginRatio, right?.marginRatio, 'asc');
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return compareNullableNumber(left?.displayMarginRatio, right?.displayMarginRatio, 'desc');
+}
+
+// Within the same shotsToKill bucket, use the existing one-shot Margin semantics first,
+// then fall back to generalized per-shot headroom for multi-shot rows.
+function compareRecommendationHeadroom(left, right) {
+  const leftShots = left?.shotsToKill ?? null;
+  const rightShots = right?.shotsToKill ?? null;
+  if (leftShots !== rightShots) {
+    return 0;
+  }
+
+  return compareRecommendationMargins(left, right);
 }
 
 function getOutcomePriority(outcomeKind) {
@@ -686,6 +703,42 @@ function getRecommendationMarginInfo({
   };
 }
 
+function getRecommendationDisplayMarginInfo({
+  zoneSummary,
+  outcomeKind,
+  shotsToKill
+}) {
+  if (
+    shotsToKill === null
+    || shotsToKill < 1
+    || !['fatal', 'main', 'critical', 'doomed'].includes(outcomeKind)
+  ) {
+    return null;
+  }
+
+  const targetHealth = getDisplayedTargetHealth(zoneSummary, outcomeKind);
+  const damagePerCycle = getDisplayedDamagePerCycle(zoneSummary, outcomeKind);
+  if (
+    targetHealth === null
+    || damagePerCycle === null
+    || targetHealth <= 0
+    || damagePerCycle <= 0
+  ) {
+    return null;
+  }
+
+  const requiredDamagePerCycle = targetHealth / shotsToKill;
+  if (requiredDamagePerCycle <= 0 || damagePerCycle < requiredDamagePerCycle) {
+    return null;
+  }
+
+  const ratio = (damagePerCycle - requiredDamagePerCycle) / requiredDamagePerCycle;
+  return {
+    ratio,
+    percent: Math.max(0, Math.round(ratio * 100))
+  };
+}
+
 function getRecommendationNearMissInfo({
   zoneSummary,
   outcomeKind,
@@ -754,6 +807,11 @@ function buildZoneRecommendationCandidate({
     outcomeKind: slotMetrics.outcomeKind,
     shotsToKill: slotMetrics.shotsToKill
   });
+  const displayMarginInfo = getRecommendationDisplayMarginInfo({
+    zoneSummary: slotMetrics.zoneSummary,
+    outcomeKind: slotMetrics.outcomeKind,
+    shotsToKill: slotMetrics.shotsToKill
+  });
   const nearMissInfo = getRecommendationNearMissInfo({
     zoneSummary: slotMetrics.zoneSummary,
     outcomeKind: slotMetrics.outcomeKind,
@@ -786,6 +844,8 @@ function buildZoneRecommendationCandidate({
     marginRatio: marginInfo?.ratio ?? null,
     marginPercent: marginInfo?.percent ?? null,
     qualifiesForMargin: Boolean(rangeQualified && marginInfo?.qualifies),
+    displayMarginRatio: displayMarginInfo?.ratio ?? null,
+    displayMarginPercent: displayMarginInfo?.percent ?? null,
     nearMissRatio: nearMissInfo?.ratio ?? null,
     nearMissPercent: nearMissInfo?.percent ?? null,
     qualifiesForNearMiss: Boolean(rangeQualified && nearMissInfo),
@@ -904,6 +964,8 @@ function buildSequenceRecommendationCandidate({
     marginRatio: null,
     marginPercent: null,
     qualifiesForMargin: false,
+    displayMarginRatio: null,
+    displayMarginPercent: null,
     nearMissRatio: null,
     nearMissPercent: null,
     qualifiesForNearMiss: false,
@@ -1197,6 +1259,8 @@ function buildAttackRecommendation({
     marginRatio: filteredCandidates[0]?.marginRatio ?? null,
     marginPercent: filteredCandidates[0]?.marginPercent ?? null,
     qualifiesForMargin: filteredCandidates.some((candidate) => candidate.qualifiesForMargin),
+    displayMarginRatio: filteredCandidates[0]?.displayMarginRatio ?? null,
+    displayMarginPercent: filteredCandidates[0]?.displayMarginPercent ?? null,
     nearMissRatio: filteredCandidates[0]?.nearMissRatio ?? null,
     nearMissPercent: filteredCandidates[0]?.nearMissPercent ?? null,
     qualifiesForNearMiss: filteredCandidates.some((candidate) => candidate.qualifiesForNearMiss),
@@ -1213,6 +1277,15 @@ function buildAttackRecommendation({
 
 function compareAttackRowRecommendations(left, right) {
   let comparison = compareBooleanDescending(left.hasSelectedZoneMatch, right.hasSelectedZoneMatch);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareNullableNumber(
+    left.bestCandidate?.shotsToKill ?? null,
+    right.bestCandidate?.shotsToKill ?? null,
+    'asc'
+  );
   if (comparison !== 0) {
     return comparison;
   }
@@ -1261,7 +1334,12 @@ function compareWeaponRecommendationRows(left, right) {
     return comparison;
   }
 
-  comparison = compareRecommendationMargins(left, right);
+  comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareRecommendationHeadroom(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -1290,7 +1368,16 @@ function compareWeaponRecommendationRows(left, right) {
 }
 
 function compareTargetAttackRowRecommendations(left, right) {
-  let comparison = compareRecommendationMargins(left, right);
+  let comparison = compareNullableNumber(
+    left.bestCandidate?.shotsToKill ?? null,
+    right.bestCandidate?.shotsToKill ?? null,
+    'asc'
+  );
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -1324,7 +1411,12 @@ function compareTargetAttackRowRecommendations(left, right) {
 }
 
 function compareTargetWeaponRecommendationRows(left, right) {
-  let comparison = compareRecommendationMargins(left, right);
+  let comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareRecommendationHeadroom(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -1373,6 +1465,8 @@ function buildWeaponRecommendationDisplayRow({
     marginRatio: bestAttackRecommendation.marginRatio,
     marginPercent: bestAttackRecommendation.marginPercent,
     qualifiesForMargin: bestAttackRecommendation.qualifiesForMargin,
+    displayMarginRatio: bestAttackRecommendation.displayMarginRatio,
+    displayMarginPercent: bestAttackRecommendation.displayMarginPercent,
     nearMissRatio: bestAttackRecommendation.nearMissRatio,
     nearMissPercent: bestAttackRecommendation.nearMissPercent,
     qualifiesForNearMiss: bestAttackRecommendation.qualifiesForNearMiss,

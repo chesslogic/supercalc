@@ -1123,8 +1123,8 @@ test('buildSelectedTargetRecommendationRows does not suppress the pure projectil
   assert.equal(projectileRec.bestCandidate?.shotsToKill, 2);
 });
 
-test('buildWeaponRecommendationRows exposes nearMissDisplayPercent for comfortable 2-3 shot lethal kills', () => {
-  // Senator-like weapon: 3 shots, last shot overkills comfortably → should populate nearMissDisplayPercent
+test('buildWeaponRecommendationRows exposes displayMarginPercent for comfortable 2-3 shot lethal kills', () => {
+  // Senator-like weapon: 3 shots, each shot deals 25% more than the exact 3-shot threshold.
   const enemy = {
     name: 'Senator Dummy',
     health: 240,
@@ -1151,6 +1151,7 @@ test('buildWeaponRecommendationRows exposes nearMissDisplayPercent for comfortab
   assert.equal(rows[0].shotsToKill, 3);
   assert.equal(rows[0].marginPercent, null, 'one-shot margin must remain null for multi-shot rows');
   assert.equal(rows[0].qualifiesForMargin, false, 'one-shot qualify flag must stay false');
+  assert.equal(rows[0].displayMarginPercent, 25, 'display margin should show per-shot headroom for the listed shot count');
   assert.equal(rows[0].nearMissPercent, 60, 'underlying nearMissPercent should be present');
   assert.equal(rows[0].nearMissDisplayPercent, 60, 'nearMissDisplayPercent should equal nearMissPercent for multi-shot rows');
 });
@@ -1179,6 +1180,7 @@ test('buildWeaponRecommendationRows keeps nearMissDisplayPercent null for one-sh
   assert.equal(rows.length, 1);
   assert.equal(rows[0].shotsToKill, 1);
   assert.equal(rows[0].marginPercent, 10, 'one-shot margin should still be set');
+  assert.equal(rows[0].displayMarginPercent, 10, 'display margin should match the one-shot margin');
   assert.equal(rows[0].nearMissDisplayPercent, null, 'nearMissDisplayPercent must be null when marginPercent is available');
 });
 
@@ -1207,6 +1209,114 @@ test('buildWeaponRecommendationRows keeps nearMissDisplayPercent null for long m
 
   assert.equal(rows.length, 1);
   assert.equal(rows[0].shotsToKill, 4, 'must be beyond the near-miss 3-shot cap');
+  assert.equal(rows[0].displayMarginPercent, 18, 'display margin should still be available for longer multi-shot rows');
   assert.equal(rows[0].nearMissPercent, null, 'no near miss for long spray');
   assert.equal(rows[0].nearMissDisplayPercent, null, 'nearMissDisplayPercent must remain null for long sprays');
+});
+
+// ===========================================================================
+// Shot-count sorting: shotsToKill as primary, margin as secondary tie-breaker
+// ===========================================================================
+
+test('buildWeaponRecommendationRows sorts fewer-shot weapons above more-shot weapons', () => {
+  const enemy = {
+    name: 'Sort Order Dummy',
+    health: 500,
+    zones: [
+      makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Three-Shot', {
+      index: 0,
+      rows: [makeAttackRow('Three-Shot', 100, 2)]
+    }),
+    makeWeapon('Two-Shot', {
+      index: 1,
+      rows: [makeAttackRow('Two-Shot', 130, 2)]
+    }),
+    makeWeapon('One-Shot', {
+      index: 2,
+      rows: [makeAttackRow('One-Shot', 250, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'One-Shot');
+  assert.equal(rows[0].shotsToKill, 1);
+  assert.equal(rows[1].weapon.name, 'Two-Shot');
+  assert.equal(rows[1].shotsToKill, 2);
+  assert.equal(rows[2].weapon.name, 'Three-Shot');
+  assert.equal(rows[2].shotsToKill, 3);
+});
+
+test('buildWeaponRecommendationRows uses display margin as secondary tie-breaker within the same shot count', () => {
+  const enemy = {
+    name: 'Tie-Breaker Dummy',
+    health: 200,
+    zones: [
+      makeZone('Main', { health: 200, av: 1, toMainPercent: 1 })
+    ]
+  };
+  // Both need 2 shots. Tight has +60% per-shot headroom; Loose has +5%.
+  const weapons = [
+    makeWeapon('Loose Two-Shot', {
+      index: 0,
+      rows: [makeAttackRow('Loose', 105, 2)]
+    }),
+    makeWeapon('Tight Two-Shot', {
+      index: 1,
+      rows: [makeAttackRow('Tight', 160, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'Tight Two-Shot');
+  assert.equal(rows[0].shotsToKill, 2);
+  assert.equal(rows[0].displayMarginPercent, 60);
+  assert.equal(rows[1].weapon.name, 'Loose Two-Shot');
+  assert.equal(rows[1].shotsToKill, 2);
+  assert.equal(rows[1].displayMarginPercent, 5);
+});
+
+test('buildWeaponRecommendationRows sorts one-shot kills before one-shot kills without margin within same shot count', () => {
+  const enemy = {
+    name: 'One-Shot Mix Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Efficient', {
+      index: 0,
+      rows: [makeAttackRow('Efficient', 110, 2)] // marginPercent=10, qualifiesForMargin
+    }),
+    makeWeapon('Overkill', {
+      index: 1,
+      rows: [makeAttackRow('Overkill', 200, 2)] // marginPercent=50, does not qualify
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  // Both are shotsToKill=1; Efficient qualifies for margin so sorts first
+  assert.equal(rows[0].weapon.name, 'Efficient');
+  assert.equal(rows[0].qualifiesForMargin, true);
+  assert.equal(rows[1].weapon.name, 'Overkill');
+  assert.equal(rows[1].qualifiesForMargin, false);
 });

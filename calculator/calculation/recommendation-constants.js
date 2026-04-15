@@ -21,7 +21,7 @@ export const RECOMMENDATION_HEADER_DEFINITIONS = [
     label: 'Range',
     title: `${EFFECTIVE_DISTANCE_TOOLTIP}\nUnknown-range rows stay listed, but range-sensitive highlights only count when the breakpoint qualifies.`
   },
-  { label: 'Margin', title: `One-shot margin (highlighted, +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage) or last-shot headroom for comfortable 2–3 shot kills (unhighlighted). Hover a cell for details.` },
+  { label: 'Margin', title: `One-shot margin is highlighted at +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight.` },
   { label: 'Crit', title: 'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.' },
   { label: '<0.6s', title: 'Fast-TTK highlight for rows under 0.6 seconds at the current range floor.' },
   { label: 'Pen All', title: 'Highlights attack setups that can damage every zone on the current enemy.' },

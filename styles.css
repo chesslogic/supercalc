@@ -1340,6 +1340,27 @@ tbody tr:hover {
   gap:6px;
 }
 
+.calc-recommend-shot-range{
+  align-items:flex-start;
+}
+
+.calc-recommend-shot-slider{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:136px;
+}
+
+.calc-recommend-shot-slider-label{
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+}
+
+.calc-recommend-shot-slider-input{
+  width:100%;
+}
+
 .calc-recommend-section-title{
   font-size:13px;
   font-weight:700;
