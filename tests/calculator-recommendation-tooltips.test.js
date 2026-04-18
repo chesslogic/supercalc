@@ -129,6 +129,13 @@ function getChipRowByLabel(container, label) {
   ))[0] || null;
 }
 
+function getRecommendationSection(container, titleText) {
+  return collectElements(container, (element) => (
+    element.classList.contains('calc-recommend-section')
+    && element.children[0]?.textContent === titleText
+  ))[0] || null;
+}
+
 function makeAttackRow(name, damage, ap = 2) {
   return {
     'Atk Type': 'Projectile',
@@ -962,7 +969,149 @@ test('renderRecommendationPanel filters targeted recommendations when overall re
 
     assert.deepEqual(targetedWeaponNames, ['Liberator']);
     assert.deepEqual(overallWeaponNames, ['Liberator']);
+    assert.match(summaries[0]?.textContent || '', /weapon filters: showing only ar/i);
     assert.match(summaries[1]?.textContent || '', /weapon filters: showing only ar/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel surfaces the shared filter controls with targeted recommendations when a target is selected', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Diligence', {
+        index: 1,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 150, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Targeted Controls Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('torso', { health: 300, av: 2, toMainPercent: 0.5 })
+      ]
+    });
+
+    const targetedSection = getRecommendationSection(container, 'head targeted recommendations');
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+
+    assert.ok(targetedSection);
+    assert.ok(overallSection);
+    assert.ok(getChipRowByLabel(targetedSection, 'Weapon filters'));
+    assert.ok(getChipRowByLabel(targetedSection, 'Shots'));
+    assert.equal(getChipRowByLabel(overallSection, 'Weapon filters'), null);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel keeps the shared filter controls with overall recommendations when no target is selected', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Overall Controls Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+
+    assert.ok(overallSection);
+    assert.ok(getChipRowByLabel(overallSection, 'Weapon filters'));
+    assert.ok(getChipRowByLabel(overallSection, 'Shots'));
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel explains when targeted rows are removed by active weapon filters', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterSubs = ['rl'];
+    calculatorState.recommendationWeaponFilterGroups = [];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Targeted Empty Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('torso', { health: 300, av: 2, toMainPercent: 0.5 })
+      ]
+    });
+
+    const targetedSection = getRecommendationSection(container, 'head targeted recommendations');
+    const targetedSummary = collectElements(targetedSection, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const targetedMuted = collectElements(targetedSection, (element) => element.classList.contains('muted'));
+
+    assert.ok(getChipRowByLabel(targetedSection, 'Weapon filters'));
+    assert.match(targetedSummary?.textContent || '', /No dedicated target rows match the current weapon filters/i);
+    assert.match(targetedSummary?.textContent || '', /showing only rl/i);
+    assert.ok(targetedMuted.some((element) => /No targeted recommendation rows match the current weapon filters\./i.test(element.textContent || '')));
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
