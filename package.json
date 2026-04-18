@@ -1,0 +1,12 @@
+{
+  "name": "supercalc",
+  "scripts": {
+    "test": "node --test",
+    "test:browser": "node --test tests/browser-smoke.test.js"
+  },
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}

@@ -103,6 +103,42 @@ class TestElement {
   }
 }
 
+class BrowserLikeChildCollection {
+  constructor() {
+    this._items = [];
+  }
+
+  push(child) {
+    const index = this._items.length;
+    this._items.push(child);
+    this[index] = child;
+    return this._items.length;
+  }
+
+  forEach(callback) {
+    return this._items.forEach(callback);
+  }
+
+  item(index) {
+    return this._items[index] || null;
+  }
+
+  get length() {
+    return this._items.length;
+  }
+
+  [Symbol.iterator]() {
+    return this._items[Symbol.iterator]();
+  }
+}
+
+class BrowserLikeTestElement extends TestElement {
+  constructor(tagName) {
+    super(tagName);
+    this.children = new BrowserLikeChildCollection();
+  }
+}
+
 class TestDocument {
   createElement(tagName) {
     return new TestElement(tagName);
@@ -110,6 +146,12 @@ class TestDocument {
 
   getElementById() {
     return null;
+  }
+}
+
+class BrowserLikeTestDocument extends TestDocument {
+  createElement(tagName) {
+    return new BrowserLikeTestElement(tagName);
   }
 }
 
@@ -203,6 +245,23 @@ function renderPanelForTest(enemy) {
 
   globalThis.document = new TestDocument();
   globalThis.Node = TestElement;
+
+  try {
+    renderRecommendationPanel(container, enemy);
+    return container;
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.Node = previousNode;
+  }
+}
+
+function renderPanelForBrowserLikeTest(enemy) {
+  const previousDocument = globalThis.document;
+  const previousNode = globalThis.Node;
+  const container = new BrowserLikeTestElement('div');
+
+  globalThis.document = new BrowserLikeTestDocument();
+  globalThis.Node = BrowserLikeTestElement;
 
   try {
     renderRecommendationPanel(container, enemy);
@@ -1300,6 +1359,59 @@ test('renderRecommendationPanel shows role chips in taxonomy order', () => {
     assert.ok(!chipTexts.includes('EXP'));
     assert.ok(!chipTexts.includes('BCK'));
     assert.ok(!chipTexts.includes('RL'));
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel handles browser-like role-row children collections', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'exclude';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterRoles = [];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        role: 'automatic',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Diligence', {
+        index: 1,
+        type: 'Primary',
+        role: 'precision',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      })
+    ];
+
+    const container = renderPanelForBrowserLikeTest({
+      name: 'Browser Collection Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    assert.ok(getRecommendationSection(container, 'Overall recommendations'));
+    assert.ok(getChipRowByLabel(container, 'Role'));
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

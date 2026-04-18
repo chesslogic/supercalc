@@ -218,7 +218,9 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     onToggleRole: (roleId) => toggleRecommendationWeaponFilterRole(roleId),
     onRefresh
   });
-  const roleChipCount = (roleRow.children || []).filter((child) => child.tagName === 'BUTTON').length;
+  const roleChipCount = Array.from(roleRow.children || [])
+    .filter((child) => child.tagName === 'BUTTON')
+    .length;
   if (roleChipCount > 0) {
     wrapper.appendChild(roleRow);
   }
