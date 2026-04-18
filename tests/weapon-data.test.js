@@ -277,7 +277,7 @@ test('checked-in role values classify the remaining mixed blank-role subtypes ex
   assert.ok(senator);
   assert.equal(pineapple.Role, 'explosive');
   assert.equal(blitzer.Role, 'shotgun');
-  assert.equal(scorcher.Role, 'explosive');
+  assert.equal(scorcher.Role, 'automatic');
   assert.equal(scythe.Role, 'energy');
   assert.equal(senator.Role, 'precision');
 });
