@@ -115,7 +115,10 @@
               <div class="calculator-range-control">
                 <input type="range" id="calculator-range-input-a" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon A engagement range" />
               </div>
-              <span id="calculator-range-value-a" class="status calculator-range-value"></span>
+              <div class="calculator-range-value-shell">
+                <button type="button" id="calculator-range-value-a" class="status calculator-range-value calculator-range-value-button"></button>
+                <input type="number" id="calculator-range-edit-a" class="input calculator-range-edit hidden" min="0" max="500" step="1" inputmode="numeric" aria-label="Weapon A exact engagement range" />
+              </div>
             </div>
             <div id="calculator-weapon-loading" class="loading-indicator hidden">
               <div class="spinner"></div>
@@ -134,7 +137,10 @@
               <div class="calculator-range-control">
                 <input type="range" id="calculator-range-input-b" class="calculator-range-slider" min="0" max="500" step="1" list="calculator-range-ticks" aria-label="Weapon B engagement range" />
               </div>
-              <span id="calculator-range-value-b" class="status calculator-range-value"></span>
+              <div class="calculator-range-value-shell">
+                <button type="button" id="calculator-range-value-b" class="status calculator-range-value calculator-range-value-button"></button>
+                <input type="number" id="calculator-range-edit-b" class="input calculator-range-edit hidden" min="0" max="500" step="1" inputmode="numeric" aria-label="Weapon B exact engagement range" />
+              </div>
             </div>
           </div>
 

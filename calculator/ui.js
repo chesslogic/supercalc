@@ -45,7 +45,9 @@ import { renderCalculation } from './calculation.js';
 
 let enemySelectorSetup = false;
 let shareButtonSetup = false;
-const ENGAGEMENT_RANGE_CONTROL_TITLE = 'Engagement distance used for displayed damage, shots, TTK, and recommendation breakpoint checks for this weapon slot.';
+const engagementRangeEditorOpen = { A: false, B: false };
+const ENGAGEMENT_RANGE_CONTROL_TITLE = 'Engagement distance used for displayed damage, shots, TTK, and recommendation breakpoint checks for this weapon slot. Drag to a common preset stop or click the range value to enter an exact meter.';
+const ENGAGEMENT_RANGE_EDIT_TITLE = 'Enter an exact engagement range from 0 to 500 meters. Press Enter to apply or Escape to cancel.';
 const ENEMY_FRONT_BADGE_TEXT = {
   terminids: 'BUG',
   automatons: 'BOT',
@@ -459,16 +461,27 @@ function syncEngagementRangeControl(slot) {
   const suffix = slot.toLowerCase();
   const rangeInput = document.getElementById(`calculator-range-input-${suffix}`);
   const rangeValue = document.getElementById(`calculator-range-value-${suffix}`);
+  const rangeEdit = document.getElementById(`calculator-range-edit-${suffix}`);
   const currentRange = getEngagementRangeMeters(slot);
   const displayValue = formatEngagementRangeDisplayValue(currentRange);
+  const isEditing = Boolean(engagementRangeEditorOpen[slot]);
 
   if (rangeInput) {
     rangeInput.value = String(currentRange);
     rangeInput.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+    rangeInput.disabled = isEditing;
   }
   if (rangeValue) {
     rangeValue.textContent = displayValue;
     rangeValue.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+    rangeValue.classList.toggle('hidden', isEditing);
+  }
+  if (rangeEdit) {
+    if (!isEditing) {
+      rangeEdit.value = String(currentRange);
+    }
+    rangeEdit.title = ENGAGEMENT_RANGE_EDIT_TITLE;
+    rangeEdit.classList.toggle('hidden', !isEditing);
   }
 }
 
@@ -519,23 +532,66 @@ export function setupEngagementRangeControl(slot) {
   const suffix = slot.toLowerCase();
   const rangeInput = document.getElementById(`calculator-range-input-${suffix}`);
   const rangeValue = document.getElementById(`calculator-range-value-${suffix}`);
+  const rangeEdit = document.getElementById(`calculator-range-edit-${suffix}`);
 
-  if (!rangeInput || !rangeValue) {
+  if (!rangeInput || !rangeValue || !rangeEdit) {
     console.warn(`[calculator] Range control DOM missing for slot ${slot}`);
     return;
   }
 
   rangeInput.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
   rangeValue.title = ENGAGEMENT_RANGE_CONTROL_TITLE;
+  rangeEdit.title = ENGAGEMENT_RANGE_EDIT_TITLE;
   rangeInput.min = String(ENGAGEMENT_RANGE_STOPS[0]);
   rangeInput.max = String(ENGAGEMENT_RANGE_STOPS[ENGAGEMENT_RANGE_STOPS.length - 1]);
   rangeInput.step = '1';
+  rangeEdit.min = String(ENGAGEMENT_RANGE_STOPS[0]);
+  rangeEdit.max = String(ENGAGEMENT_RANGE_STOPS[ENGAGEMENT_RANGE_STOPS.length - 1]);
+  rangeEdit.step = '1';
 
   const applySnappedRangeValue = (value) => {
     const snappedValue = findNearestEngagementRangeStop(value);
     rangeInput.value = String(snappedValue);
     rangeValue.textContent = formatEngagementRangeDisplayValue(snappedValue);
     return snappedValue;
+  };
+
+  const openExactRangeEditor = () => {
+    if (engagementRangeEditorOpen[slot]) {
+      return;
+    }
+
+    rangeEdit.value = String(getEngagementRangeMeters(slot));
+    engagementRangeEditorOpen[slot] = true;
+    syncEngagementRangeControl(slot);
+    rangeEdit.focus?.();
+    rangeEdit.select?.();
+  };
+
+  const cancelExactRangeEditor = () => {
+    if (!engagementRangeEditorOpen[slot]) {
+      return;
+    }
+
+    engagementRangeEditorOpen[slot] = false;
+    syncEngagementRangeControl(slot);
+  };
+
+  const commitExactRangeEditor = () => {
+    if (!engagementRangeEditorOpen[slot]) {
+      return;
+    }
+
+    engagementRangeEditorOpen[slot] = false;
+    const draftValue = String(rangeEdit.value ?? '').trim();
+    if (draftValue === '') {
+      syncEngagementRangeControl(slot);
+      return;
+    }
+
+    setEngagementRangeMeters(slot, draftValue);
+    syncEngagementRangeControl(slot);
+    refreshCalculatorViews();
   };
 
   rangeInput.addEventListener('input', (event) => {
@@ -547,6 +603,27 @@ export function setupEngagementRangeControl(slot) {
     setEngagementRangeMeters(slot, snappedValue);
     syncEngagementRangeControl(slot);
     refreshCalculatorViews();
+  });
+
+  rangeValue.addEventListener('click', () => {
+    openExactRangeEditor();
+  });
+
+  rangeEdit.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault?.();
+      commitExactRangeEditor();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault?.();
+      cancelExactRangeEditor();
+    }
+  });
+
+  rangeEdit.addEventListener('blur', () => {
+    commitExactRangeEditor();
   });
 
   syncEngagementRangeControl(slot);

@@ -762,6 +762,31 @@ class TestClassList {
   contains(token) {
     return this.tokens.has(token);
   }
+
+  toggle(token, force) {
+    const normalizedToken = String(token || '').trim();
+    if (!normalizedToken) {
+      return false;
+    }
+
+    if (force === true) {
+      this.add(normalizedToken);
+      return true;
+    }
+
+    if (force === false) {
+      this.remove(normalizedToken);
+      return false;
+    }
+
+    if (this.contains(normalizedToken)) {
+      this.remove(normalizedToken);
+      return false;
+    }
+
+    this.add(normalizedToken);
+    return true;
+  }
 }
 
 class TestElement {
@@ -1039,7 +1064,8 @@ test('engagement range change rerenders the upper weapon details table', () => {
     const testDocument = new TestDocument();
     const weaponDetails = testDocument.registerElement('calculator-weapon-details');
     const rangeInput = testDocument.registerElement('calculator-range-input-a', 'input');
-    const rangeValue = testDocument.registerElement('calculator-range-value-a', 'span');
+    const rangeValue = testDocument.registerElement('calculator-range-value-a', 'button');
+    const rangeEdit = testDocument.registerElement('calculator-range-edit-a', 'input');
 
     globalThis.document = testDocument;
     globalThis.window = {
@@ -1070,6 +1096,7 @@ test('engagement range change rerenders the upper weapon details table', () => {
     const initialCells = collectElements(weaponDetails, (element) => element.tagName === 'TD');
     assert.ok(initialCells.some((cell) => cell.textContent === '105'));
     assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(0));
+    assert.ok(rangeEdit.classList.contains('hidden'));
 
     const expectedDamage = formatDamageValue(roundDamagePacket(calculateBallisticDamageAtDistance(105, {
       caliber: 5.5,
@@ -1095,6 +1122,128 @@ test('engagement range change rerenders the upper weapon details table', () => {
     calculatorState.selectedExplosiveZoneIndices = originalSelectedExplosiveZoneIndices;
     calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
     calculatorState.attackHitCounts.A = originalAttackHitCountsA;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+  }
+});
+
+test('engagement range value accepts exact inline meter edits', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  const originalDocument = globalThis.document;
+  const originalWindow = globalThis.window;
+  const originalMode = calculatorState.mode;
+  const originalWeaponA = calculatorState.weaponA;
+  const originalSelectedEnemy = calculatorState.selectedEnemy;
+  const originalSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const originalSelectedExplosiveZoneIndices = [...calculatorState.selectedExplosiveZoneIndices];
+  const originalSelectedAttackKeysA = [...calculatorState.selectedAttackKeys.A];
+  const originalAttackHitCountsA = { ...calculatorState.attackHitCounts.A };
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+
+  try {
+    const testDocument = new TestDocument();
+    const weaponDetails = testDocument.registerElement('calculator-weapon-details');
+    const rangeInput = testDocument.registerElement('calculator-range-input-a', 'input');
+    const rangeValue = testDocument.registerElement('calculator-range-value-a', 'button');
+    const rangeEdit = testDocument.registerElement('calculator-range-edit-a', 'input');
+
+    globalThis.document = testDocument;
+    globalThis.window = {
+      _weaponsState: {
+        keys: {
+          atkTypeKey: 'Atk Type'
+        }
+      }
+    };
+
+    calculatorState.mode = 'single';
+    calculatorState.selectedEnemy = null;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.selectedExplosiveZoneIndices = [];
+    calculatorState.engagementRangeMeters.A = 0;
+    setSelectedWeapon('A', makeWeapon('Liberator', {
+      code: 'AR-23',
+      rows: [{
+        ...makeAttackRow(2, 105, 30),
+        'Atk Type': 'Projectile',
+        'Atk Name': '5.5x50mm FULL METAL JACKET_P'
+      }]
+    }));
+
+    setupEngagementRangeControl('A');
+    renderWeaponDetails();
+
+    rangeValue.dispatch('click');
+    assert.equal(rangeInput.disabled, true);
+    assert.ok(rangeValue.classList.contains('hidden'));
+    assert.ok(!rangeEdit.classList.contains('hidden'));
+
+    const expectedDamage = formatDamageValue(roundDamagePacket(calculateBallisticDamageAtDistance(105, {
+      caliber: 5.5,
+      mass: 4.5,
+      velocity: 900,
+      drag: 0.3
+    }, 37)));
+
+    rangeEdit.value = '37';
+    rangeEdit.dispatch('keydown', {
+      key: 'Enter',
+      preventDefault() {}
+    });
+
+    const updatedCells = collectElements(weaponDetails, (element) => element.tagName === 'TD');
+    assert.equal(calculatorState.engagementRangeMeters.A, 37);
+    assert.equal(rangeInput.value, '37');
+    assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(37));
+    assert.ok(updatedCells.some((cell) => cell.textContent === expectedDamage));
+    assert.equal(rangeInput.disabled, false);
+    assert.ok(!rangeValue.classList.contains('hidden'));
+    assert.ok(rangeEdit.classList.contains('hidden'));
+  } finally {
+    resetBallisticFalloffProfiles();
+    globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
+    calculatorState.mode = originalMode;
+    calculatorState.weaponA = originalWeaponA;
+    calculatorState.selectedEnemy = originalSelectedEnemy;
+    calculatorState.selectedZoneIndex = originalSelectedZoneIndex;
+    calculatorState.selectedExplosiveZoneIndices = originalSelectedExplosiveZoneIndices;
+    calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
+    calculatorState.attackHitCounts.A = originalAttackHitCountsA;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+  }
+});
+
+test('engagement range inline edit cancels on Escape', () => {
+  const originalDocument = globalThis.document;
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+
+  try {
+    const testDocument = new TestDocument();
+    const rangeInput = testDocument.registerElement('calculator-range-input-a', 'input');
+    const rangeValue = testDocument.registerElement('calculator-range-value-a', 'button');
+    const rangeEdit = testDocument.registerElement('calculator-range-edit-a', 'input');
+
+    globalThis.document = testDocument;
+    calculatorState.engagementRangeMeters.A = 30;
+
+    setupEngagementRangeControl('A');
+    rangeValue.dispatch('click');
+    rangeEdit.value = '42';
+    rangeEdit.dispatch('keydown', {
+      key: 'Escape',
+      preventDefault() {}
+    });
+
+    assert.equal(calculatorState.engagementRangeMeters.A, 30);
+    assert.equal(rangeInput.value, '30');
+    assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(30));
+    assert.equal(rangeInput.disabled, false);
+    assert.ok(!rangeValue.classList.contains('hidden'));
+    assert.ok(rangeEdit.classList.contains('hidden'));
+  } finally {
+    globalThis.document = originalDocument;
     calculatorState.engagementRangeMeters.A = originalRangeA;
   }
 });
