@@ -9,17 +9,14 @@ import {
   setRecommendationWeaponFilterMode,
   setSelectedZoneIndex,
   toggleRecommendationNoMainViaLimbs,
-  toggleRecommendationWeaponFilterGroup,
-  toggleRecommendationWeaponFilterSub,
+  toggleRecommendationWeaponFilterRole,
   toggleRecommendationWeaponFilterType
 } from '../data.js';
-import { getWeaponRecommendationFeatureGroupId } from '../../weapons/weapon-taxonomy.js';
-import { RECOMMENDATION_FEATURE_GROUPS } from './recommendation-constants.js';
+import { createRoleFilterChipRow } from '../../weapons/role-filter-row.js';
 import {
   getAvailableRecommendationWeaponTypes,
   getRecommendationFilterChipLabel,
-  hasActiveRecommendationWeaponFilters,
-  normalizeRecommendationWeaponSub
+  hasActiveRecommendationWeaponFilters
 } from './recommendation-filter-state.js';
 import { createFilterChip, createFilterChipRow } from '../../filter-utils.js';
 
@@ -215,41 +212,15 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     }));
   }
 
-  const normalizedWeapons = Array.isArray(weapons) ? weapons : [];
-  const availableGroups = RECOMMENDATION_FEATURE_GROUPS.filter((group) =>
-    normalizedWeapons.some((weapon) => getWeaponRecommendationFeatureGroupId(weapon) === group.id)
-  );
-  const ungroupedSubs = [...new Set(
-    normalizedWeapons
-      .filter((weapon) => !getWeaponRecommendationFeatureGroupId(weapon))
-      .map((weapon) => normalizeRecommendationWeaponSub(weapon?.sub))
-      .filter(Boolean)
-  )]
-    .sort((left, right) => left.localeCompare(right));
-
-  const groupChips = availableGroups.map((group) => createRecommendationFilterChip({
-    label: group.label,
-    active: calculatorState.recommendationWeaponFilterGroups.includes(group.id),
-    onClick: () => toggleRecommendationWeaponFilterGroup(group.id),
+  const roleRow = createRoleFilterChipRow({
+    weapons,
+    activeRoles: calculatorState.recommendationWeaponFilterRoles,
+    onToggleRole: (roleId) => toggleRecommendationWeaponFilterRole(roleId),
     onRefresh
-  }));
-
-  const ungroupedChips = ungroupedSubs.map((sub) => createRecommendationFilterChip({
-    label: getRecommendationFilterChipLabel(sub, 'sub'),
-    active: calculatorState.recommendationWeaponFilterSubs.includes(sub),
-    onClick: () => toggleRecommendationWeaponFilterSub(sub),
-    onRefresh
-  }));
-
-  if (groupChips.length > 0 || ungroupedChips.length > 0) {
-    const divider = groupChips.length > 0 && ungroupedChips.length > 0
-      ? Object.assign(document.createElement('span'), { className: 'chip-divider' })
-      : null;
-    const subtypeRow = createFilterChipRow({
-      label: 'Feature',
-      children: [...groupChips, divider, ...ungroupedChips]
-    });
-    wrapper.appendChild(subtypeRow);
+  });
+  const roleChipCount = (roleRow.children || []).filter((child) => child.tagName === 'BUTTON').length;
+  if (roleChipCount > 0) {
+    wrapper.appendChild(roleRow);
   }
 
   return wrapper;

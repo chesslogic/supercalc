@@ -123,6 +123,7 @@ export const calculatorState = {
   recommendationWeaponFilterTypes: [],
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
+  recommendationWeaponFilterRoles: [],
   recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
   recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
@@ -510,6 +511,7 @@ export function clearRecommendationWeaponFilters() {
   calculatorState.recommendationWeaponFilterTypes = [];
   calculatorState.recommendationWeaponFilterSubs = [];
   calculatorState.recommendationWeaponFilterGroups = [];
+  calculatorState.recommendationWeaponFilterRoles = [];
   notifyCalculatorStateChange();
 }
 
@@ -530,6 +532,25 @@ export function toggleRecommendationWeaponFilterGroup(groupId) {
     : [...calculatorState.recommendationWeaponFilterGroups, normalizedGroupId];
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterGroups];
+}
+
+export function setRecommendationWeaponFilterRoles(roles = []) {
+  calculatorState.recommendationWeaponFilterRoles = normalizeFilterValues(roles);
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterRoles];
+}
+
+export function toggleRecommendationWeaponFilterRole(roleId) {
+  const normalizedRoleId = normalizeFilterValues([roleId])[0];
+  if (!normalizedRoleId) {
+    return [...calculatorState.recommendationWeaponFilterRoles];
+  }
+
+  calculatorState.recommendationWeaponFilterRoles = calculatorState.recommendationWeaponFilterRoles.includes(normalizedRoleId)
+    ? calculatorState.recommendationWeaponFilterRoles.filter((value) => value !== normalizedRoleId)
+    : [...calculatorState.recommendationWeaponFilterRoles, normalizedRoleId];
+  notifyCalculatorStateChange();
+  return [...calculatorState.recommendationWeaponFilterRoles];
 }
 
 export function setRecommendationNoMainViaLimbs(enabled) {

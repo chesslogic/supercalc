@@ -5,7 +5,7 @@ import {
   RECOMMENDATION_FILTER_TYPE_ORDER,
   RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE
 } from './recommendation-constants.js';
-import { getWeaponRecommendationFeatureGroupId } from '../../weapons/weapon-taxonomy.js';
+import { getWeaponRecommendationFeatureGroupId, getWeaponRoleId, getWeaponRoleLabel } from '../../weapons/weapon-taxonomy.js';
 
 export function getRecommendationSummaryTitle(hasHighlightedRows) {
   return hasHighlightedRows
@@ -52,14 +52,16 @@ export function getAvailableRecommendationWeaponTypes(weapons = []) {
 export function hasActiveRecommendationWeaponFilters() {
   return calculatorState.recommendationWeaponFilterTypes.length > 0
     || calculatorState.recommendationWeaponFilterSubs.length > 0
-    || calculatorState.recommendationWeaponFilterGroups.length > 0;
+    || calculatorState.recommendationWeaponFilterGroups.length > 0
+    || calculatorState.recommendationWeaponFilterRoles.length > 0;
 }
 
 function doesWeaponMatchRecommendationFilters(weapon) {
   const hasTypeFilters = calculatorState.recommendationWeaponFilterTypes.length > 0;
   const hasSubFilters = calculatorState.recommendationWeaponFilterSubs.length > 0;
   const hasGroupFilters = calculatorState.recommendationWeaponFilterGroups.length > 0;
-  if (!hasTypeFilters && !hasSubFilters && !hasGroupFilters) {
+  const hasRoleFilters = calculatorState.recommendationWeaponFilterRoles.length > 0;
+  if (!hasTypeFilters && !hasSubFilters && !hasGroupFilters && !hasRoleFilters) {
     return true;
   }
 
@@ -70,7 +72,10 @@ function doesWeaponMatchRecommendationFilters(weapon) {
   const matchesGroup = hasGroupFilters && calculatorState.recommendationWeaponFilterGroups.includes(
     getWeaponRecommendationFeatureGroupId(weapon)
   );
-  const matchesAnyFilter = matchesType || matchesSub || matchesGroup;
+  const matchesRole = hasRoleFilters && calculatorState.recommendationWeaponFilterRoles.includes(
+    getWeaponRoleId(weapon)
+  );
+  const matchesAnyFilter = matchesType || matchesSub || matchesGroup || matchesRole;
 
   return calculatorState.recommendationWeaponFilterMode === 'include'
     ? matchesAnyFilter
@@ -89,9 +94,13 @@ export function getRecommendationWeaponFilterSummaryText() {
   const groupLabels = calculatorState.recommendationWeaponFilterGroups
     .map((groupId) => RECOMMENDATION_FEATURE_GROUPS.find((group) => group.id === groupId)?.label)
     .filter(Boolean);
+  const roleLabels = calculatorState.recommendationWeaponFilterRoles
+    .map((roleId) => getWeaponRoleLabel(roleId))
+    .filter(Boolean);
   const labels = [
     ...calculatorState.recommendationWeaponFilterTypes.map((type) => getRecommendationFilterChipLabel(type, 'type')),
     ...groupLabels,
+    ...roleLabels,
     ...calculatorState.recommendationWeaponFilterSubs.map((sub) => getRecommendationFilterChipLabel(sub, 'sub'))
   ];
   if (labels.length === 0) {

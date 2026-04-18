@@ -32,6 +32,7 @@ import {
   setRecommendationWeaponFilterSubs,
   setRecommendationWeaponFilterTypes,
   setRecommendationWeaponFilterGroups,
+  setRecommendationWeaponFilterRoles,
   setRecommendationRangeMeters,
   setSelectedAttackKeys,
   setSelectedEnemy,
@@ -72,7 +73,8 @@ const DEFAULT_CALCULATOR_URL_STATE = {
   recommendationWeaponFilterTypes: [],
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
-  recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
+  recommendationWeaponFilterRoles: [],
+  recommendationNoMainViaLimbs:DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
   recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
   selectedAttackKeysA: null,
@@ -90,6 +92,7 @@ const DEFAULT_WEAPON_TAB_URL_STATE = {
   searchQuery: '',
   activeTypes: [...DEFAULT_ACTIVE_WEAPON_TYPES],
   activeSubs: [],
+  activeRoles: [],
   sortKey: null,
   sortDir: 'asc'
 };
@@ -124,7 +127,8 @@ const URL_PARAM_KEYS = {
   recommendationWeaponFilterTypes: 'crft',
   recommendationWeaponFilterSubs: 'crfs',
   recommendationWeaponFilterGroups: 'crfg',
-  recommendationNoMainViaLimbs: 'crnl',
+  recommendationWeaponFilterRoles: 'crfr',
+  recommendationNoMainViaLimbs:'crnl',
   recommendationMinShots: 'crmin',
   recommendationMaxShots: 'crmax',
   selectedAttackKeysA: 'caa',
@@ -137,6 +141,7 @@ const URL_PARAM_KEYS = {
   weaponSearchQuery: 'wsq',
   weaponActiveTypes: 'wty',
   weaponActiveSubs: 'wsub',
+  weaponActiveRoles: 'wrl',
   weaponSortKey: 'wsk',
   weaponSortDir: 'wsd',
   enemySearchQuery: 'esq',
@@ -449,7 +454,8 @@ export function buildUrlStateSnapshot({
       recommendationWeaponFilterTypes: [...calculatorState.recommendationWeaponFilterTypes],
       recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
       recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
-      recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
+      recommendationWeaponFilterRoles: [...calculatorState.recommendationWeaponFilterRoles],
+      recommendationNoMainViaLimbs:calculatorState.recommendationNoMainViaLimbs,
       recommendationMinShots: calculatorState.recommendationMinShots,
       recommendationMaxShots: calculatorState.recommendationMaxShots,
       selectedAttackKeysA: encodedAttackKeysA,
@@ -493,7 +499,8 @@ export function encodeUrlState({
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterTypes, calculator.recommendationWeaponFilterTypes, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterTypes);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs, calculator.recommendationWeaponFilterSubs, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups, calculator.recommendationWeaponFilterGroups, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups);
-  setParam(params, URL_PARAM_KEYS.recommendationNoMainViaLimbs, calculator.recommendationNoMainViaLimbs, DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs);
+  setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles, calculator.recommendationWeaponFilterRoles, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterRoles);
+  setParam(params, URL_PARAM_KEYS.recommendationNoMainViaLimbs,calculator.recommendationNoMainViaLimbs, DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs);
   setParam(params, URL_PARAM_KEYS.recommendationMinShots, calculator.recommendationMinShots, DEFAULT_CALCULATOR_URL_STATE.recommendationMinShots);
   setParam(params, URL_PARAM_KEYS.recommendationMaxShots, calculator.recommendationMaxShots, DEFAULT_CALCULATOR_URL_STATE.recommendationMaxShots);
   setJsonParam(params, URL_PARAM_KEYS.selectedAttackKeysA, calculator.selectedAttackKeysA);
@@ -517,6 +524,7 @@ export function encodeUrlState({
   setParam(params, URL_PARAM_KEYS.weaponSearchQuery, weapons.searchQuery, DEFAULT_WEAPON_TAB_URL_STATE.searchQuery);
   setJsonParam(params, URL_PARAM_KEYS.weaponActiveTypes, weapons.activeTypes, DEFAULT_WEAPON_TAB_URL_STATE.activeTypes);
   setJsonParam(params, URL_PARAM_KEYS.weaponActiveSubs, weapons.activeSubs, DEFAULT_WEAPON_TAB_URL_STATE.activeSubs);
+  setJsonParam(params, URL_PARAM_KEYS.weaponActiveRoles, weapons.activeRoles, DEFAULT_WEAPON_TAB_URL_STATE.activeRoles);
   setParam(params, URL_PARAM_KEYS.weaponSortKey, weapons.sortKey);
   setParam(params, URL_PARAM_KEYS.weaponSortDir, weapons.sortDir, DEFAULT_WEAPON_TAB_URL_STATE.sortDir);
 
@@ -596,6 +604,9 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
     activeSubs: params.has(URL_PARAM_KEYS.weaponActiveSubs)
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.weaponActiveSubs).value, { lowercase: true })
       : DEFAULT_WEAPON_TAB_URL_STATE.activeSubs,
+    activeRoles: params.has(URL_PARAM_KEYS.weaponActiveRoles)
+      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.weaponActiveRoles).value, { lowercase: true })
+      : DEFAULT_WEAPON_TAB_URL_STATE.activeRoles,
     sortKey: params.get(URL_PARAM_KEYS.weaponSortKey) || null,
     sortDir: params.get(URL_PARAM_KEYS.weaponSortDir) || DEFAULT_WEAPON_TAB_URL_STATE.sortDir
   }, { render: false });
@@ -691,6 +702,11 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
     params.has(URL_PARAM_KEYS.recommendationWeaponFilterGroups)
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups).value, { lowercase: true })
       : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups
+  );
+  setRecommendationWeaponFilterRoles(
+    params.has(URL_PARAM_KEYS.recommendationWeaponFilterRoles)
+      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles).value, { lowercase: true })
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterRoles
   );
   setRecommendationNoMainViaLimbs(
     normalizeBooleanParam(

@@ -1205,22 +1205,20 @@ test('renderRecommendationPanel filters related routes when overall recommendati
   }
 });
 
-test('renderRecommendationPanel shows feature groups before ungrouped subtype chips', () => {
+test('renderRecommendationPanel shows role chips in taxonomy order', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
   const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
   const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
-  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
-  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
     calculatorState.recommendationWeaponFilterMode = 'exclude';
     calculatorState.recommendationWeaponFilterTypes = [];
-    calculatorState.recommendationWeaponFilterSubs = [];
-    calculatorState.recommendationWeaponFilterGroups = [];
+    calculatorState.recommendationWeaponFilterRoles = [];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -1283,22 +1281,20 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
     ];
 
     const container = renderPanelForTest({
-      name: 'Feature Filter Dummy',
+      name: 'Role Filter Dummy',
       health: 500,
       zones: [
         makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
       ]
     });
 
-    const featureRow = getChipRowByLabel(container, 'Feature');
-    const rowChildren = featureRow?.children?.slice(1) || [];
+    const roleRow = getChipRowByLabel(container, 'Role');
+    const rowChildren = roleRow?.children?.slice(1) || [];
     const chipTexts = rowChildren
       .filter((child) => child.tagName === 'BUTTON')
       .map((child) => child.textContent);
-    const dividerIndex = rowChildren.findIndex((child) => child.classList.contains('chip-divider'));
 
-    assert.deepEqual(chipTexts, ['Automatic', 'Explosive', 'Special', 'Ordnance', 'DMR', 'PDW', 'SG']);
-    assert.equal(dividerIndex, 4);
+    assert.deepEqual(chipTexts, ['Automatic', 'Precision', 'Explosive', 'Shotgun', 'Special', 'Ordnance']);
     assert.ok(!chipTexts.includes('AR'));
     assert.ok(!chipTexts.includes('NRG'));
     assert.ok(!chipTexts.includes('EXP'));
@@ -1309,28 +1305,25 @@ test('renderRecommendationPanel shows feature groups before ungrouped subtype ch
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
-    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
-    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
     weaponsState.groups = previousGroups;
   }
 });
 
-test('renderRecommendationPanel Automatic feature group includes machine gun sentries and Sickles', () => {
+test('renderRecommendationPanel Automatic role filter includes machine gun sentries and Sickles', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
   const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
   const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
-  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
-  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
     calculatorState.recommendationWeaponFilterMode = 'include';
     calculatorState.recommendationWeaponFilterTypes = [];
-    calculatorState.recommendationWeaponFilterSubs = [];
-    calculatorState.recommendationWeaponFilterGroups = ['auto'];
+    calculatorState.recommendationWeaponFilterRoles = ['automatic'];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -1392,8 +1385,7 @@ test('renderRecommendationPanel Automatic feature group includes machine gun sen
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
-    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
-    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
     weaponsState.groups = previousGroups;
   }
 });
@@ -1798,6 +1790,193 @@ test('buildWeaponRecommendationRows main row shows displayMarginPercent label in
     calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
     calculatorState.recommendationMinShots = previousMinShots;
     calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel Precision role filter includes DMR and PDW weapons', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterRoles = ['precision'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Diligence', {
+        index: 1,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      }),
+      makeWeapon('Senator', {
+        index: 2,
+        type: 'Secondary',
+        sub: 'PDW',
+        rpm: 60,
+        rows: [makeAttackRow('Senator Shot', 175, 3)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 3,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Precision Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual([...weaponNames].sort(), ['Diligence', 'Senator'].sort());
+    assert.equal(weaponNames.includes('Liberator'), false);
+    assert.equal(weaponNames.includes('Recoilless Rifle'), false);
+    assert.match(summary?.textContent || '', /weapon filters: showing only precision/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel role filter exclude mode hides matching role weapons', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'exclude';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterRoles = ['explosive', 'ordnance'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Punisher Plasma', {
+        index: 1,
+        type: 'Primary',
+        role: 'explosive',
+        sub: 'EXP',
+        rpm: 60,
+        rows: [makeAttackRow('Large Plasma Bolt', 225, 3)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 2,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Exclude Role Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual(weaponNames, ['Liberator']);
+    assert.match(summary?.textContent || '', /weapon filters: hiding explosive, ordnance/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel role chips appear with data-role attributes', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterRoles = ['precision'];
+    weaponsState.groups = [
+      makeWeapon('Diligence', {
+        index: 0,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      }),
+      makeWeapon('Liberator', {
+        index: 1,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Role Chip Attr Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const roleRow = getChipRowByLabel(container, 'Role');
+    const chips = (roleRow?.children || []).filter((child) => child.tagName === 'BUTTON');
+    const roleDataValues = chips.map((chip) => chip.dataset.role);
+
+    assert.ok(roleDataValues.includes('automatic'));
+    assert.ok(roleDataValues.includes('precision'));
+    const precisionChip = chips.find((chip) => chip.dataset.role === 'precision');
+    assert.ok(precisionChip?.classList.contains('active'), 'Precision chip should be active when selected');
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
     weaponsState.groups = previousGroups;
   }
 });

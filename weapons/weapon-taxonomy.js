@@ -8,6 +8,8 @@ const WEAPON_ROLE_LABELS = new Map([
   ['energy', 'Energy']
 ]);
 
+export const WEAPON_ROLE_ORDER = Object.freeze([...WEAPON_ROLE_LABELS.keys()]);
+
 const LEGACY_WEAPON_ROLE_SUB_LOOKUP = new Map([
   ['gr', 'explosive'],
   ['ar', 'automatic'],
