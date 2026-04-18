@@ -324,7 +324,7 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   setSelectedEnemy(enemy);
   setSelectedZoneIndex(1);
   setSelectedExplosiveZoneIndices([0, 1]);
-  setRecommendationWeaponFilterMode('include');
+  setRecommendationWeaponFilterMode('exclude');
   setRecommendationWeaponFilterTypes(['primary', 'support']);
   setRecommendationWeaponFilterSubs(['sg']);
   setRecommendationWeaponFilterGroups(['special']);
@@ -355,7 +355,7 @@ test('encodeUrlState captures calculator selections and tab filters', { concurre
   assert.equal(params.get('cen'), 'Target Dummy');
   assert.equal(params.get('csz'), '1');
   assert.equal(params.has('cez'), false);
-  assert.equal(params.get('crfm'), 'include');
+  assert.equal(params.get('crfm'), 'exclude');
   assert.deepEqual(JSON.parse(params.get('crft')), ['primary', 'support']);
   assert.deepEqual(JSON.parse(params.get('crfs')), ['sg']);
   assert.deepEqual(JSON.parse(params.get('crfg')), ['special']);
@@ -416,7 +416,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   setSelectedEnemy(enemy);
   setSelectedZoneIndex(0);
   setSelectedExplosiveZoneIndices([0]);
-  setRecommendationWeaponFilterMode('include');
+  setRecommendationWeaponFilterMode('exclude');
   setRecommendationWeaponFilterTypes(['support']);
   setRecommendationWeaponFilterSubs(['spc']);
   setRecommendationWeaponFilterGroups(['auto']);
@@ -451,7 +451,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   setSelectedEnemy(null);
   setSelectedZoneIndex(null);
   setSelectedExplosiveZoneIndices([]);
-  setRecommendationWeaponFilterMode('exclude');
+  setRecommendationWeaponFilterMode('include');
   setRecommendationWeaponFilterTypes([]);
   setRecommendationWeaponFilterSubs([]);
   setRecommendationWeaponFilterGroups([]);
@@ -488,7 +488,7 @@ test('hydrateUrlState round-trips calculator and tab filter state', { concurrenc
   assert.equal(calculatorState.selectedEnemy?.name, 'Practice Hulk');
   assert.equal(calculatorState.selectedZoneIndex, 0);
   assert.deepEqual(calculatorState.selectedExplosiveZoneIndices, [0]);
-  assert.equal(calculatorState.recommendationWeaponFilterMode, 'include');
+  assert.equal(calculatorState.recommendationWeaponFilterMode, 'exclude');
   assert.deepEqual(calculatorState.recommendationWeaponFilterTypes, ['support']);
   assert.deepEqual(calculatorState.recommendationWeaponFilterSubs, ['spc']);
   assert.deepEqual(calculatorState.recommendationWeaponFilterGroups, ['auto']);

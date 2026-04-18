@@ -45,7 +45,7 @@ export const DEFAULT_ENEMY_TARGET_TYPES = [...DEFAULT_ENEMY_TARGET_TYPE_IDS];
 export { DEFAULT_WEAPON_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_DIR };
-export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'exclude';
+export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'include';
 export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
 export const DEFAULT_RECOMMENDATION_MIN_SHOTS = 1;
 export const DEFAULT_RECOMMENDATION_MAX_SHOTS = 3;
@@ -77,9 +77,12 @@ function normalizeHitCount(value) {
 }
 
 function normalizeRecommendationWeaponFilterMode(mode) {
-  return String(mode ?? '').trim().toLowerCase() === 'include'
-    ? 'include'
-    : DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE;
+  const normalizedMode = String(mode ?? '').trim().toLowerCase();
+  if (normalizedMode === 'include' || normalizedMode === 'exclude') {
+    return normalizedMode;
+  }
+
+  return DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE;
 }
 
 function normalizeRecommendationShotsValue(value, min, max, defaultValue) {

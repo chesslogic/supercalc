@@ -162,15 +162,15 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     label: 'Weapon filters',
     children: [
       createRecommendationFilterChip({
-        label: 'Exclude',
-        active: calculatorState.recommendationWeaponFilterMode === 'exclude',
-        onClick: () => setRecommendationWeaponFilterMode('exclude'),
-        onRefresh
-      }),
-      createRecommendationFilterChip({
         label: 'Include',
         active: calculatorState.recommendationWeaponFilterMode === 'include',
         onClick: () => setRecommendationWeaponFilterMode('include'),
+        onRefresh
+      }),
+      createRecommendationFilterChip({
+        label: 'Exclude',
+        active: calculatorState.recommendationWeaponFilterMode === 'exclude',
+        onClick: () => setRecommendationWeaponFilterMode('exclude'),
         onRefresh
       }),
       ...(hasActiveRecommendationWeaponFilters()

@@ -925,7 +925,7 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
     calculatorState.selectedZoneIndex = null;
     calculatorState.recommendationWeaponFilterMode = 'exclude';
     calculatorState.recommendationWeaponFilterTypes = ['support', 'stratagem'];
-    calculatorState.recommendationWeaponFilterSubs = ['rl'];
+    calculatorState.recommendationWeaponFilterSubs = [];
     calculatorState.recommendationWeaponFilterGroups = [];
     weaponsState.groups = [
       makeWeapon('Liberator', {
@@ -965,7 +965,7 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
     const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
 
     assert.deepEqual(weaponNames, ['Liberator']);
-    assert.match(summary?.textContent || '', /weapon filters: hiding support, stratagem, rl/i);
+    assert.match(summary?.textContent || '', /weapon filters: hiding matches for type: support or stratagem/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -1028,8 +1028,8 @@ test('renderRecommendationPanel filters targeted recommendations when overall re
 
     assert.deepEqual(targetedWeaponNames, ['Liberator']);
     assert.deepEqual(overallWeaponNames, ['Liberator']);
-    assert.match(summaries[0]?.textContent || '', /weapon filters: showing only ar/i);
-    assert.match(summaries[1]?.textContent || '', /weapon filters: showing only ar/i);
+    assert.match(summaries[0]?.textContent || '', /weapon filters: showing only matches for sub: ar/i);
+    assert.match(summaries[1]?.textContent || '', /weapon filters: showing only matches for sub: ar/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -1169,7 +1169,7 @@ test('renderRecommendationPanel explains when targeted rows are removed by activ
 
     assert.ok(getChipRowByLabel(targetedSection, 'Weapon filters'));
     assert.match(targetedSummary?.textContent || '', /No dedicated target rows match the current weapon filters/i);
-    assert.match(targetedSummary?.textContent || '', /showing only rl/i);
+    assert.match(targetedSummary?.textContent || '', /showing only matches for sub: rl/i);
     assert.ok(targetedMuted.some((element) => /No targeted recommendation rows match the current weapon filters\./i.test(element.textContent || '')));
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
@@ -1491,7 +1491,7 @@ test('renderRecommendationPanel Automatic role filter includes machine gun sentr
 
     assert.deepEqual([...weaponNames].sort(), ['Liberator', 'Machine Gun Sentry', 'Sickle', 'Stalwart'].sort());
     assert.equal(weaponNames.includes('Orbital Precision Strike'), false);
-    assert.match(summary?.textContent || '', /weapon filters: showing only automatic/i);
+    assert.match(summary?.textContent || '', /weapon filters: showing only matches for role: automatic/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -1967,7 +1967,7 @@ test('renderRecommendationPanel Precision role filter includes DMR and PDW weapo
     assert.deepEqual([...weaponNames].sort(), ['Diligence', 'Senator'].sort());
     assert.equal(weaponNames.includes('Liberator'), false);
     assert.equal(weaponNames.includes('Recoilless Rifle'), false);
-    assert.match(summary?.textContent || '', /weapon filters: showing only precision/i);
+    assert.match(summary?.textContent || '', /weapon filters: showing only matches for role: precision/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
@@ -2031,7 +2031,133 @@ test('renderRecommendationPanel role filter exclude mode hides matching role wea
     const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
 
     assert.deepEqual(weaponNames, ['Liberator']);
-    assert.match(summary?.textContent || '', /weapon filters: hiding explosive, ordnance/i);
+    assert.match(summary?.textContent || '', /weapon filters: hiding matches for role: explosive or ordnance/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel combines include filters across categories with AND semantics', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = ['primary'];
+    calculatorState.recommendationWeaponFilterRoles = ['automatic'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Diligence', {
+        index: 1,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      }),
+      makeWeapon('Stalwart', {
+        index: 2,
+        type: 'Support',
+        sub: 'MG',
+        rpm: 60,
+        rows: [makeAttackRow('Stalwart Burst', 80, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Include And Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual(weaponNames, ['Liberator']);
+    assert.match(summary?.textContent || '', /weapon filters: showing only matches for type: primary and role: automatic/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel combines exclude filters across categories with AND semantics', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'exclude';
+    calculatorState.recommendationWeaponFilterTypes = ['primary'];
+    calculatorState.recommendationWeaponFilterRoles = ['automatic'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Diligence', {
+        index: 1,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      }),
+      makeWeapon('Stalwart', {
+        index: 2,
+        type: 'Support',
+        sub: 'MG',
+        rpm: 60,
+        rows: [makeAttackRow('Stalwart Burst', 80, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Exclude And Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual([...weaponNames].sort(), ['Diligence', 'Stalwart'].sort());
+    assert.match(summary?.textContent || '', /weapon filters: hiding matches for type: primary and role: automatic/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

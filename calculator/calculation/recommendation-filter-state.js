@@ -75,11 +75,16 @@ function doesWeaponMatchRecommendationFilters(weapon) {
   const matchesRole = hasRoleFilters && calculatorState.recommendationWeaponFilterRoles.includes(
     getWeaponRoleId(weapon)
   );
-  const matchesAnyFilter = matchesType || matchesSub || matchesGroup || matchesRole;
+  const matchesAllActiveFilters = [
+    !hasTypeFilters || matchesType,
+    !hasSubFilters || matchesSub,
+    !hasGroupFilters || matchesGroup,
+    !hasRoleFilters || matchesRole
+  ].every(Boolean);
 
   return calculatorState.recommendationWeaponFilterMode === 'include'
-    ? matchesAnyFilter
-    : !matchesAnyFilter;
+    ? matchesAllActiveFilters
+    : !matchesAllActiveFilters;
 }
 
 export function getFilteredRecommendationWeapons(weapons = []) {
@@ -91,23 +96,29 @@ export function getRecommendationWeaponFilterSummaryText() {
     return '';
   }
 
+  const typeLabels = calculatorState.recommendationWeaponFilterTypes
+    .map((type) => getRecommendationFilterChipLabel(type, 'type'))
+    .filter(Boolean);
   const groupLabels = calculatorState.recommendationWeaponFilterGroups
     .map((groupId) => RECOMMENDATION_FEATURE_GROUPS.find((group) => group.id === groupId)?.label)
     .filter(Boolean);
   const roleLabels = calculatorState.recommendationWeaponFilterRoles
     .map((roleId) => getWeaponRoleLabel(roleId))
     .filter(Boolean);
-  const labels = [
-    ...calculatorState.recommendationWeaponFilterTypes.map((type) => getRecommendationFilterChipLabel(type, 'type')),
-    ...groupLabels,
-    ...roleLabels,
-    ...calculatorState.recommendationWeaponFilterSubs.map((sub) => getRecommendationFilterChipLabel(sub, 'sub'))
-  ];
-  if (labels.length === 0) {
+  const subLabels = calculatorState.recommendationWeaponFilterSubs
+    .map((sub) => getRecommendationFilterChipLabel(sub, 'sub'))
+    .filter(Boolean);
+  const clauses = [
+    typeLabels.length > 0 ? `Type: ${typeLabels.join(' or ')}` : '',
+    roleLabels.length > 0 ? `Role: ${roleLabels.join(' or ')}` : '',
+    groupLabels.length > 0 ? `Feature: ${groupLabels.join(' or ')}` : '',
+    subLabels.length > 0 ? `Sub: ${subLabels.join(' or ')}` : ''
+  ].filter(Boolean);
+  if (clauses.length === 0) {
     return '';
   }
 
   return calculatorState.recommendationWeaponFilterMode === 'include'
-    ? ` Weapon filters: showing only ${labels.join(', ')}.`
-    : ` Weapon filters: hiding ${labels.join(', ')}.`;
+    ? ` Weapon filters: showing only matches for ${clauses.join(' and ')}.`
+    : ` Weapon filters: hiding matches for ${clauses.join(' and ')}.`;
 }

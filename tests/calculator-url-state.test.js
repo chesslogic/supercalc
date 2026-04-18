@@ -708,7 +708,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setAttackHitCounts('A', { [attackKey]: 3 });
   setSelectedEnemy(enemy);
   setSelectedZoneIndex(1);
-  setRecommendationWeaponFilterMode('include');
+  setRecommendationWeaponFilterMode('exclude');
   setRecommendationWeaponFilterTypes(['support']);
   setRecommendationWeaponFilterSubs(['spc']);
   setRecommendationWeaponFilterRoles(['precision']);
@@ -752,7 +752,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setSelectedEnemy(null);
   setSelectedZoneIndex(null);
   setSelectedExplosiveZoneIndices([]);
-  setRecommendationWeaponFilterMode('exclude');
+  setRecommendationWeaponFilterMode('include');
   setRecommendationWeaponFilterTypes([]);
   setRecommendationWeaponFilterSubs([]);
   setRecommendationWeaponFilterRoles([]);
@@ -808,15 +808,15 @@ test('hydrateUrlState with only mode param leaves other fields at defaults', { c
 // Recommendation weapon filter round-trip
 // ===========================================================================
 
-test('encodeUrlState omits default recommendation filter mode (exclude)', { concurrency: false }, () => withStateFixture(() => {
+test('encodeUrlState omits default recommendation filter mode (include)', { concurrency: false }, () => withStateFixture(() => {
   const params = encodeUrlState({ activeTab: 'calculator' });
   assert.equal(params.has('crfm'), false);
 }));
 
 test('encodeUrlState encodes non-default recommendation filter mode', { concurrency: false }, () => withStateFixture(() => {
-  setRecommendationWeaponFilterMode('include');
+  setRecommendationWeaponFilterMode('exclude');
   const params = encodeUrlState({ activeTab: 'calculator' });
-  assert.equal(params.get('crfm'), 'include');
+  assert.equal(params.get('crfm'), 'exclude');
 }));
 
 test('encodeUrlState and hydrateUrlState round-trip the no-main-via-limbs preference', { concurrency: false }, () => withStateFixture(() => {
