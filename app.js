@@ -8,7 +8,7 @@ import {
 } from './weapons/data.js';
 import { loadBallisticFalloffCsv } from './weapons/falloff.js';
 import { buildTypeFilters, buildSubFilters, renderTable } from './weapons/table.js';
-import { syncWeaponFilterUi } from './weapons/filters.js';
+import { syncWeaponFilterUi, buildRoleFilters } from './weapons/filters.js';
 import { loadEnemyData, setEnemyStateChangeListener } from './enemies/data.js';
 import { renderEnemyTable, setupEnemyTableSorting } from './enemies/table.js';
 import { buildEnemyFactionFilters, syncEnemyFilterUi } from './enemies/filters.js';
@@ -75,6 +75,7 @@ async function activateTab(tab, {
     if (typeFilters && typeFilters.children.length === 0) {
       buildTypeFilters();
       buildSubFilters();
+      buildRoleFilters();
       renderTable();
     } else {
       syncWeaponFilterUi();
@@ -149,6 +150,10 @@ function initUI(){
   const subFilters = document.getElementById('subFilters');
   if (subFilters && subFilters.children.length === 0) {
     buildSubFilters();
+  }
+  const roleFilters = document.getElementById('roleFilters');
+  if (roleFilters && roleFilters.children.length === 0) {
+    buildRoleFilters();
   }
   // Always render (will also render when filters already exist)
   renderTable();

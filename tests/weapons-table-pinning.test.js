@@ -98,9 +98,11 @@ function snapshotState() {
     headers: state.headers, rows: state.rows, groups: state.groups,
     filteredGroups: state.filteredGroups, filterActive: state.filterActive,
     searchQuery: state.searchQuery, activeTypes: [...state.activeTypes],
-    activeSubs: [...state.activeSubs], sortKey: state.sortKey,
+    activeSubs: [...state.activeSubs], activeRoles: [...state.activeRoles],
+    sortKey: state.sortKey,
     sortDir: state.sortDir, typeIndex: state.typeIndex, subIndex: state.subIndex,
-    searchIndex: state.searchIndex, pinnedWeapons: new Set(state.pinnedWeapons),
+    roleIndex: state.roleIndex, searchIndex: state.searchIndex,
+    pinnedWeapons: new Set(state.pinnedWeapons),
     patchVersion: state.patchVersion, keys: { ...state.keys }
   };
 }
@@ -109,9 +111,11 @@ function restoreState(s) {
   state.headers = s.headers; state.rows = s.rows; state.groups = s.groups;
   state.filteredGroups = s.filteredGroups; state.filterActive = s.filterActive;
   state.searchQuery = s.searchQuery; state.activeTypes = [...s.activeTypes];
-  state.activeSubs = [...s.activeSubs]; state.sortKey = s.sortKey;
+  state.activeSubs = [...s.activeSubs]; state.activeRoles = [...s.activeRoles];
+  state.sortKey = s.sortKey;
   state.sortDir = s.sortDir; state.typeIndex = s.typeIndex;
-  state.subIndex = s.subIndex; state.searchIndex = s.searchIndex;
+  state.subIndex = s.subIndex; state.roleIndex = s.roleIndex;
+  state.searchIndex = s.searchIndex;
   state.pinnedWeapons = new Set(s.pinnedWeapons);
   state.patchVersion = s.patchVersion; state.keys = { ...s.keys };
 }
@@ -939,3 +943,185 @@ test('durable ratio tooltip includes percentage, raw values, and fraction', () =
 test('DURABLE_RATIO_HEADER constant is DUR/DMG', () => {
   assert.equal(DURABLE_RATIO_HEADER, 'DUR/DMG');
 });
+
+/* ============================================================
+   21. Role filter behaviour via applyFilters
+   ============================================================ */
+
+const ROLE_HEADERS = ['Type', 'Sub', 'Role', 'Code', 'Name', 'RPM', 'Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
+
+function mkRoleRow(overrides) {
+  return {
+    Type: 'Primary', Sub: 'AR', Role: 'automatic', Code: 'AR-01', Name: 'TestGun',
+    RPM: 600, 'Atk Type': 'Projectile', 'Atk Name': 'Bullet',
+    DMG: 100, DUR: 25, AP: 2, DF: 10, ST: 15, PF: 10,
+    ...overrides
+  };
+}
+
+test('role filter keeps only matching groups', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Liberator', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Diligence', Role: 'precision' }),
+    mkRoleRow({ Name: 'Breaker', Role: 'shotgun' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = ['precision'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.ok(state.filterActive);
+  assert.equal(state.filteredGroups.length, 1);
+  assert.equal(state.filteredGroups[0].name, 'Diligence');
+}));
+
+test('multiple active roles act as OR (union)', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Liberator', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Diligence', Role: 'precision' }),
+    mkRoleRow({ Name: 'Breaker', Role: 'shotgun' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = ['automatic', 'shotgun'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 2);
+  const names = state.filteredGroups.map(g => g.name).sort();
+  assert.deepEqual(names, ['Breaker', 'Liberator']);
+}));
+
+test('role filter intersects with type filter', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Liberator', Type: 'Primary', Role: 'automatic' }),
+    mkRoleRow({ Name: 'MG', Type: 'Support', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Diligence', Type: 'Primary', Role: 'precision' })
+  ]);
+  state.activeTypes = ['primary'];
+  state.activeSubs = [];
+  state.activeRoles = ['automatic'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 1);
+  assert.equal(state.filteredGroups[0].name, 'Liberator');
+}));
+
+test('role filter intersects with sub filter', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Liberator', Sub: 'AR', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Diligence', Sub: 'DMR', Role: 'precision' }),
+    mkRoleRow({ Name: 'Sickle', Sub: 'AR', Role: 'automatic' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = ['ar'];
+  state.activeRoles = ['automatic'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 2);
+  const names = state.filteredGroups.map(g => g.name).sort();
+  assert.deepEqual(names, ['Liberator', 'Sickle']);
+}));
+
+test('role filter intersects with search', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Liberator', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Liberator Penetrator', Role: 'precision' }),
+    mkRoleRow({ Name: 'Diligence', Role: 'precision' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = ['precision'];
+  state.searchQuery = 'liberator';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 1);
+  assert.equal(state.filteredGroups[0].name, 'Liberator Penetrator');
+}));
+
+test('empty activeRoles does not filter by role', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'A', Role: 'automatic' }),
+    mkRoleRow({ Name: 'B', Role: 'precision' })
+  ]);
+  state.activeTypes = ['primary'];
+  state.activeSubs = [];
+  state.activeRoles = [];
+  state.searchQuery = '';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 2);
+}));
+
+test('no active filters including roles sets filterActive false', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'A', Role: 'automatic' }),
+    mkRoleRow({ Name: 'B', Role: 'precision' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = [];
+  state.searchQuery = '';
+  applyFilters();
+  assert.equal(state.filterActive, false);
+}));
+
+test('role filter alone activates filtering', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'A', Role: 'automatic' }),
+    mkRoleRow({ Name: 'B', Role: 'explosive' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = ['explosive'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.ok(state.filterActive);
+  assert.equal(state.filteredGroups.length, 1);
+  assert.equal(state.filteredGroups[0].name, 'B');
+}));
+
+test('pinned weapons always appear despite role filter', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Auto', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Prec', Role: 'precision' })
+  ]);
+  state.pinnedWeapons = new Set(['Auto']);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = ['precision'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.ok(state.filterActive);
+  const names = state.filteredGroups.map(g => g.name).sort();
+  assert.deepEqual(names, ['Auto', 'Prec']);
+}));
+
+test('precision role explicitly supported in role filter', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Diligence', Role: 'precision' }),
+    mkRoleRow({ Name: 'Senator', Role: 'precision' }),
+    mkRoleRow({ Name: 'Liberator', Role: 'automatic' })
+  ]);
+  state.activeTypes = [];
+  state.activeSubs = [];
+  state.activeRoles = ['precision'];
+  state.searchQuery = '';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 2);
+  const names = state.filteredGroups.map(g => g.name).sort();
+  assert.deepEqual(names, ['Diligence', 'Senator']);
+}));
+
+test('role filter combined with type + sub + search intersects all', () => withFixture(() => {
+  ingestHeadersAndRows(ROLE_HEADERS, [
+    mkRoleRow({ Name: 'Liberator', Type: 'Primary', Sub: 'AR', Role: 'automatic' }),
+    mkRoleRow({ Name: 'MG', Type: 'Support', Sub: 'MG', Role: 'automatic' }),
+    mkRoleRow({ Name: 'Diligence', Type: 'Primary', Sub: 'DMR', Role: 'precision' }),
+    mkRoleRow({ Name: 'Sickle', Type: 'Primary', Sub: 'AR', Role: 'automatic' })
+  ]);
+  state.activeTypes = ['primary'];
+  state.activeSubs = ['ar'];
+  state.activeRoles = ['automatic'];
+  state.searchQuery = 'liberator';
+  applyFilters();
+  assert.equal(state.filteredGroups.length, 1);
+  assert.equal(state.filteredGroups[0].name, 'Liberator');
+}));

@@ -157,10 +157,12 @@ function snapshotWeaponState() {
     searchQuery: state.searchQuery,
     activeTypes: [...state.activeTypes],
     activeSubs: [...state.activeSubs],
+    activeRoles: [...state.activeRoles],
     sortKey: state.sortKey,
     sortDir: state.sortDir,
     typeIndex: state.typeIndex,
     subIndex: state.subIndex,
+    roleIndex: state.roleIndex,
     searchIndex: state.searchIndex,
     pinnedWeapons: new Set(state.pinnedWeapons),
     patchVersion: state.patchVersion,
@@ -177,10 +179,12 @@ function restoreWeaponState(snapshot) {
   state.searchQuery = snapshot.searchQuery;
   state.activeTypes = [...snapshot.activeTypes];
   state.activeSubs = [...snapshot.activeSubs];
+  state.activeRoles = [...snapshot.activeRoles];
   state.sortKey = snapshot.sortKey;
   state.sortDir = snapshot.sortDir;
   state.typeIndex = snapshot.typeIndex;
   state.subIndex = snapshot.subIndex;
+  state.roleIndex = snapshot.roleIndex;
   state.searchIndex = snapshot.searchIndex;
   state.pinnedWeapons = new Set(snapshot.pinnedWeapons);
   state.patchVersion = snapshot.patchVersion;

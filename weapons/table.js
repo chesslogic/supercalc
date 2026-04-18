@@ -381,14 +381,16 @@ function evaluateSearchQuery(query, searchText) {
 export function applyFilters(){
   const activeTypes = [...state.activeTypes];
   const activeSubs = [...state.activeSubs];
+  const activeRoles = [...state.activeRoles];
   const typeFilterActive = activeTypes.length > 0;
   const subFilterActive = activeSubs.length > 0;
+  const roleFilterActive = activeRoles.length > 0;
   const hasSearch = state.searchQuery.length > 0;
 
   // Get pinned weapons (always included regardless of filters)
   const pinnedGroups = state.groups.filter(g => state.pinnedWeapons.has(g.name));
 
-  if (!typeFilterActive && !subFilterActive && !hasSearch) {
+  if (!typeFilterActive && !subFilterActive && !roleFilterActive && !hasSearch) {
     state.filterActive = false; 
     state.filteredGroups = [];
     sortAndRenderBody(); 
@@ -426,6 +428,20 @@ export function applyFilters(){
       }
     }
     filteredGroups = filteredGroups.filter(g => subGroups.has(g));
+  }
+
+  // Apply role filter using index
+  if (roleFilterActive) {
+    const roleGroups = new Set();
+    for (const role of activeRoles) {
+      const groups = state.roleIndex.get(role);
+      if (groups) {
+        for (const group of groups) {
+          roleGroups.add(group);
+        }
+      }
+    }
+    filteredGroups = filteredGroups.filter(g => roleGroups.has(g));
   }
   
   // Apply search filter using pre-built search index

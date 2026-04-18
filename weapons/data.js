@@ -3,6 +3,7 @@ import {
   normalizeSortDirection
 } from '../sort-utils.js';
 import { normalizeFilterValues } from '../filter-utils.js';
+import { getWeaponRoleId } from './weapon-taxonomy.js';
 
 // data.js — loading, parsing, and state
 export const PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeLqZ5-maEmzrM6SUDMRXpHEhV0tQImiBdgMCil9lSA11IiY_nGdamE54W7DAiSXn1XuJljdF4P537/pub?gid=0&single=true&output=csv';
@@ -18,11 +19,13 @@ export const state = {
   searchQuery: '',
   activeTypes: [...DEFAULT_ACTIVE_WEAPON_TYPES],
   activeSubs: [],
+  activeRoles: [],
   sortKey: null,
   sortDir: 'asc',
   // Pre-indexed data for faster filtering
   typeIndex: new Map(),
   subIndex: new Map(),
+  roleIndex: new Map(),
   searchIndex: new Map(),
   // Pinned weapons (Set of weapon names)
   pinnedWeapons: new Set(),
@@ -96,6 +99,25 @@ export function toggleActiveWeaponSub(sub) {
   return [...state.activeSubs];
 }
 
+export function setActiveWeaponRoles(roles = []) {
+  state.activeRoles = normalizeFilterValues(roles);
+  notifyWeaponStateChange();
+  return [...state.activeRoles];
+}
+
+export function toggleActiveWeaponRole(role) {
+  const normalizedRole = normalizeFilterValues([role])[0];
+  if (!normalizedRole) {
+    return [...state.activeRoles];
+  }
+
+  state.activeRoles = state.activeRoles.includes(normalizedRole)
+    ? state.activeRoles.filter((value) => value !== normalizedRole)
+    : [...state.activeRoles, normalizedRole];
+  notifyWeaponStateChange();
+  return [...state.activeRoles];
+}
+
 export function setWeaponSortState(sortKey = null, sortDir = 'asc') {
   state.sortKey = sortKey || null;
   state.sortDir = normalizeSortDirection(sortDir);
@@ -117,6 +139,7 @@ export function resetWeaponFilterState() {
   state.searchQuery = '';
   state.activeTypes = [...DEFAULT_ACTIVE_WEAPON_TYPES];
   state.activeSubs = [];
+  state.activeRoles = [];
   state.sortKey = null;
   state.sortDir = 'asc';
   notifyWeaponStateChange();
@@ -212,9 +235,10 @@ function buildIndexes() {
   // Clear existing indexes
   state.typeIndex.clear();
   state.subIndex.clear();
+  state.roleIndex.clear();
   state.searchIndex.clear();
   
-  // Build type and sub indexes
+  // Build type, sub, and role indexes
   for (const group of state.groups) {
     if (group.type) {
       const typeKey = group.type.toLowerCase();
@@ -230,6 +254,14 @@ function buildIndexes() {
         state.subIndex.set(subKey, new Set());
       }
       state.subIndex.get(subKey).add(group);
+    }
+
+    const roleId = getWeaponRoleId(group);
+    if (roleId) {
+      if (!state.roleIndex.has(roleId)) {
+        state.roleIndex.set(roleId, new Set());
+      }
+      state.roleIndex.get(roleId).add(group);
     }
     
     // Build search index for fast text search

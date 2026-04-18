@@ -5,11 +5,13 @@ import {
   setWeaponSearchQuery,
   setWeaponSortState,
   state,
+  toggleActiveWeaponRole,
   toggleActiveWeaponSub,
   toggleActiveWeaponType
 } from './data.js';
 import { applyFilters, renderTable } from './table.js';
 import { normalizeFilterValues } from '../filter-utils.js';
+import { createRoleFilterChipRow } from './role-filter-row.js';
 import { debounce } from '../utils.js';
 
 function syncSearchInput() {
@@ -33,6 +35,13 @@ function syncSubChipState() {
   });
 }
 
+function syncRoleChipState() {
+  const chips = globalThis.document?.querySelectorAll('#roleFilters .chip') || [];
+  chips.forEach((chip) => {
+    chip.classList.toggle('active', state.activeRoles.includes(String(chip.dataset.role || '').toLowerCase()));
+  });
+}
+
 function clearWeaponSortIndicators() {
   const sortableHeaders = globalThis.document?.querySelectorAll('#weaponsTable th') || [];
   sortableHeaders.forEach((header) => {
@@ -44,6 +53,7 @@ export function syncWeaponFilterUi() {
   syncSearchInput();
   syncTypeChipState();
   syncSubChipState();
+  syncRoleChipState();
 }
 
 const searchEl = globalThis.document?.getElementById('search');
@@ -85,6 +95,7 @@ export function applyWeaponFilterState({
   searchQuery = state.searchQuery,
   activeTypes = state.activeTypes,
   activeSubs = state.activeSubs,
+  activeRoles = state.activeRoles,
   sortKey = state.sortKey,
   sortDir = state.sortDir
 } = {}, {
@@ -93,6 +104,7 @@ export function applyWeaponFilterState({
   setWeaponSearchQuery(searchQuery);
   state.activeTypes = normalizeFilterValues(activeTypes);
   state.activeSubs = normalizeFilterValues(activeSubs);
+  state.activeRoles = normalizeFilterValues(activeRoles);
   setWeaponSortState(sortKey, sortDir);
   syncWeaponFilterUi();
   if (render) {
@@ -106,6 +118,7 @@ export function getWeaponFilterStateSnapshot() {
     searchQuery: state.searchQuery,
     activeTypes: [...state.activeTypes],
     activeSubs: [...state.activeSubs],
+    activeRoles: [...state.activeRoles],
     sortKey: state.sortKey,
     sortDir: state.sortDir
   };
@@ -125,4 +138,29 @@ export function bindSubChip(chip) {
     syncSubChipState();
     applyFilters();
   });
+}
+
+export function buildRoleFilters() {
+  const el = globalThis.document?.getElementById('roleFilters');
+  if (!el) return;
+  el.innerHTML = '';
+
+  const chipRow = createRoleFilterChipRow({
+    weapons: state.groups,
+    activeRoles: state.activeRoles,
+    onToggleRole: (roleId) => {
+      toggleActiveWeaponRole(roleId);
+    },
+    onRefresh: () => {
+      syncRoleChipState();
+      applyFilters();
+    },
+    label: 'Role'
+  });
+
+  // Append only the chip children (not the outer chiprow div) since el is the container
+  while (chipRow.children.length > 0) {
+    el.appendChild(chipRow.children[0]);
+  }
+  applyFilters();
 }
