@@ -37,7 +37,7 @@ const NEAR_MISS_HEADER_DEFINITIONS = RECOMMENDATION_HEADER_DEFINITIONS.map((defi
   definition.label === 'Margin'
     ? {
         label: 'Near miss',
-        title: 'Last-shot near miss share. 75% means the final shot would overkill by 75% of one displayed shot, so this row nearly needed one fewer shot.'
+        title: 'Last-shot near miss share. 99% means the final shot would overkill by 99% of one displayed shot, so this row nearly needed one fewer shot.'
       }
     : definition
 ));
