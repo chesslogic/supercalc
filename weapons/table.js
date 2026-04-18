@@ -7,6 +7,7 @@ import {
   toggleWeaponSort
 } from './data.js';
 import { classifyAtkType, atkColorClass, apColorClass, dfColorClass } from '../colors.js';
+import { createFilterChip } from '../filter-utils.js';
 import { compareNullableValues } from '../sort-utils.js';
 
 export const DURABLE_RATIO_HEADER = 'DUR/DMG';
@@ -454,14 +455,15 @@ export function buildTypeFilters(){
   el.innerHTML = '';
   orderedDesired.forEach(t => {
     if (!present.has(t)) return;
-    const chip = document.createElement('button'); chip.type = 'button';
-    chip.className = 'chip' + (state.activeTypes.includes(t) ? ' active' : '');
-    chip.textContent = t.charAt(0).toUpperCase() + t.slice(1);
-    chip.dataset.val = t;
-    chip.addEventListener('click', () => {
-      toggleActiveWeaponType(chip.dataset.val);
-      chip.classList.toggle('active', state.activeTypes.includes(t));
-      applyFilters();
+    const chip = createFilterChip({
+      label: t.charAt(0).toUpperCase() + t.slice(1),
+      active: state.activeTypes.includes(t),
+      dataset: { val: t },
+      onClick: (button) => {
+        toggleActiveWeaponType(button.dataset.val);
+        button.classList.toggle('active', state.activeTypes.includes(t));
+        applyFilters();
+      }
     });
     el.appendChild(chip);
   });
@@ -475,14 +477,15 @@ export function buildSubFilters(){
   const ordered = Array.from(subs).sort((a,b)=>a.localeCompare(b));
   el.innerHTML = '';
   ordered.forEach(s => {
-    const chip = document.createElement('button'); chip.type = 'button';
-    chip.className = 'chip' + (state.activeSubs.includes(s) ? ' active' : '');
-    chip.textContent = s.toUpperCase();
-    chip.dataset.val = s;
-    chip.addEventListener('click', () => {
-      toggleActiveWeaponSub(chip.dataset.val);
-      chip.classList.toggle('active', state.activeSubs.includes(s));
-      applyFilters();
+    const chip = createFilterChip({
+      label: s.toUpperCase(),
+      active: state.activeSubs.includes(s),
+      dataset: { val: s },
+      onClick: (button) => {
+        toggleActiveWeaponSub(button.dataset.val);
+        button.classList.toggle('active', state.activeSubs.includes(s));
+        applyFilters();
+      }
     });
     el.appendChild(chip);
   });

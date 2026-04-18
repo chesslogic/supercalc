@@ -659,9 +659,7 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
   }
 
   const requestedCompareView = params.get(URL_PARAM_KEYS.compareView) || DEFAULT_CALCULATOR_URL_STATE.compareView;
-  const requestedEnemy = requestedCompareView === 'overview'
-    ? null
-    : findEnemyByName(params.get(URL_PARAM_KEYS.selectedEnemy));
+  const requestedEnemy = findEnemyByName(params.get(URL_PARAM_KEYS.selectedEnemy));
   setSelectedEnemy(requestedEnemy);
   setCompareView(requestedCompareView);
 

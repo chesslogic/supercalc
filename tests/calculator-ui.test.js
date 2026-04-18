@@ -141,7 +141,7 @@ test('enemy dropdown treats the selected enemy label as display text rather than
   });
 
   assert.equal(state.effectiveQuery, '');
-  assert.equal(state.showOverviewOption, false);
+  assert.equal(state.showOverviewOption, true);
 });
 
 test('enemy dropdown option pipeline returns renderable enemy objects', () => {

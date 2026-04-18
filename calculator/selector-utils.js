@@ -89,14 +89,16 @@ export function getEnemyDropdownQueryState(query, {
   const normalizedQuery = String(query ?? '').trim().toLowerCase();
   const normalizedSelectedEnemyName = String(selectedEnemyName ?? '').trim().toLowerCase();
   const overviewActive = mode === 'compare' && compareView === 'overview';
-  const queryMatchesSelectedEnemy = normalizedSelectedEnemyName !== '' && normalizedQuery === normalizedSelectedEnemyName;
+  const queryMatchesSelectedEnemy = !overviewActive
+    && normalizedSelectedEnemyName !== ''
+    && normalizedQuery === normalizedSelectedEnemyName;
 
   return {
     normalizedQuery,
     effectiveQuery: (overviewActive && normalizedQuery === 'overview') || queryMatchesSelectedEnemy
       ? ''
       : normalizedQuery,
-    showOverviewOption: mode === 'compare' && 'overview'.includes(normalizedQuery)
+    showOverviewOption: mode === 'compare'
   };
 }
 

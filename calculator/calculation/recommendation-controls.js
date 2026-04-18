@@ -21,44 +21,22 @@ import {
   hasActiveRecommendationWeaponFilters,
   normalizeRecommendationWeaponSub
 } from './recommendation-filter-state.js';
+import { createFilterChip, createFilterChipRow } from '../../filter-utils.js';
 
 const RELATED_TARGET_CHIP_MAX = 8;
 
 function createRecommendationFilterChip({
-  label,
-  active = false,
-  title = '',
   onClick,
-  onRefresh = null
+  onRefresh = null,
+  ...options
 }) {
-  const chip = document.createElement('button');
-  chip.type = 'button';
-  chip.className = `chip${active ? ' active' : ''}`;
-  chip.textContent = label;
-  if (title) {
-    chip.title = title;
-  }
-  chip.addEventListener('click', () => {
-    onClick?.();
-    onRefresh?.();
+  return createFilterChip({
+    ...options,
+    onClick: () => {
+      onClick?.();
+      onRefresh?.();
+    }
   });
-  return chip;
-}
-
-function createRecommendationFilterChipRow({
-  label,
-  chips = []
-}) {
-  const row = document.createElement('div');
-  row.className = 'chiprow';
-
-  const rowLabel = document.createElement('span');
-  rowLabel.className = 'muted';
-  rowLabel.textContent = label;
-  row.appendChild(rowLabel);
-
-  chips.forEach((chip) => row.appendChild(chip));
-  return row;
 }
 
 function createRecommendationShotSlider({
@@ -98,40 +76,36 @@ function createRecommendationShotSlider({
 function createRecommendationShotRangeRow({
   onRefresh = null
 } = {}) {
-  const row = document.createElement('div');
-  row.className = 'chiprow calc-recommend-shot-range';
-
-  const rowLabel = document.createElement('span');
-  rowLabel.className = 'muted';
-  rowLabel.textContent = 'Shots';
-  row.appendChild(rowLabel);
-
-  row.appendChild(createRecommendationShotSlider({
-    label: 'Min',
-    value: calculatorState.recommendationMinShots,
-    title: 'Filter displayed recommendation rows by minimum shots to kill.',
-    onInput: (nextValue) => {
-      if (nextValue > calculatorState.recommendationMaxShots) {
-        setRecommendationMaxShots(nextValue);
-      }
-      setRecommendationMinShots(nextValue);
-    },
-    onRefresh
-  }));
-
-  row.appendChild(createRecommendationShotSlider({
-    label: 'Max',
-    value: calculatorState.recommendationMaxShots,
-    title: 'Filter displayed recommendation rows by maximum shots to kill.',
-    onInput: (nextValue) => {
-      if (nextValue < calculatorState.recommendationMinShots) {
-        setRecommendationMinShots(nextValue);
-      }
-      setRecommendationMaxShots(nextValue);
-    },
-    onRefresh
-  }));
-
+  const row = createFilterChipRow({
+    label: 'Shots',
+    children: [
+      createRecommendationShotSlider({
+        label: 'Min',
+        value: calculatorState.recommendationMinShots,
+        title: 'Filter displayed recommendation rows by minimum shots to kill.',
+        onInput: (nextValue) => {
+          if (nextValue > calculatorState.recommendationMaxShots) {
+            setRecommendationMaxShots(nextValue);
+          }
+          setRecommendationMinShots(nextValue);
+        },
+        onRefresh
+      }),
+      createRecommendationShotSlider({
+        label: 'Max',
+        value: calculatorState.recommendationMaxShots,
+        title: 'Filter displayed recommendation rows by maximum shots to kill.',
+        onInput: (nextValue) => {
+          if (nextValue < calculatorState.recommendationMinShots) {
+            setRecommendationMinShots(nextValue);
+          }
+          setRecommendationMaxShots(nextValue);
+        },
+        onRefresh
+      })
+    ]
+  });
+  row.classList.add('calc-recommend-shot-range');
   return row;
 }
 
@@ -157,19 +131,17 @@ export function createRelatedTargetChipRow({
     }
 
     const isActive = zoneIndex === selectedZoneIndex;
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = `chip${isActive ? ' active' : ''}`;
-    chip.textContent = zone.zone_name;
-    chip.title = isActive ? `Currently targeting: ${zone.zone_name}` : `Switch to ${zone.zone_name}`;
-
-    if (!isActive) {
-      chip.addEventListener('click', () => {
-        setSelectedZoneIndex(zoneIndex);
-        onRefresh?.();
-      });
-    }
-
+    const chip = createFilterChip({
+      label: zone.zone_name,
+      active: isActive,
+      title: isActive ? `Currently targeting: ${zone.zone_name}` : `Switch to ${zone.zone_name}`,
+      onClick: isActive
+        ? null
+        : () => {
+            setSelectedZoneIndex(zoneIndex);
+            onRefresh?.();
+          }
+    });
     row.appendChild(chip);
   });
 
@@ -189,9 +161,9 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
   const wrapper = document.createElement('div');
   wrapper.className = 'calc-recommend-filters';
 
-  const modeRow = createRecommendationFilterChipRow({
+  const modeRow = createFilterChipRow({
     label: 'Weapon filters',
-    chips: [
+    children: [
       createRecommendationFilterChip({
         label: 'Exclude',
         active: calculatorState.recommendationWeaponFilterMode === 'exclude',
@@ -216,9 +188,9 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
   });
   wrapper.appendChild(modeRow);
 
-  wrapper.appendChild(createRecommendationFilterChipRow({
+  wrapper.appendChild(createFilterChipRow({
     label: 'Preference',
-    chips: [
+    children: [
       createRecommendationFilterChip({
         label: 'No main via limbs',
         active: calculatorState.recommendationNoMainViaLimbs,
@@ -237,9 +209,9 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     onRefresh
   }));
   if (typeChips.length > 0) {
-    wrapper.appendChild(createRecommendationFilterChipRow({
+    wrapper.appendChild(createFilterChipRow({
       label: 'Type',
-      chips: typeChips
+      children: typeChips
     }));
   }
 
@@ -270,23 +242,13 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
   }));
 
   if (groupChips.length > 0 || ungroupedChips.length > 0) {
-    const subtypeRow = document.createElement('div');
-    subtypeRow.className = 'chiprow';
-
-    const rowLabel = document.createElement('span');
-    rowLabel.className = 'muted';
-    rowLabel.textContent = 'Feature';
-    subtypeRow.appendChild(rowLabel);
-
-    groupChips.forEach((chip) => subtypeRow.appendChild(chip));
-
-    if (groupChips.length > 0 && ungroupedChips.length > 0) {
-      const divider = document.createElement('span');
-      divider.className = 'chip-divider';
-      subtypeRow.appendChild(divider);
-    }
-
-    ungroupedChips.forEach((chip) => subtypeRow.appendChild(chip));
+    const divider = groupChips.length > 0 && ungroupedChips.length > 0
+      ? Object.assign(document.createElement('span'), { className: 'chip-divider' })
+      : null;
+    const subtypeRow = createFilterChipRow({
+      label: 'Feature',
+      children: [...groupChips, divider, ...ungroupedChips]
+    });
     wrapper.appendChild(subtypeRow);
   }
 

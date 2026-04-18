@@ -441,10 +441,10 @@ test('hydrateUrlState sets weapon to null when name not found', { concurrency: f
 }));
 
 // ===========================================================================
-// Overview mode clears enemy
+// Overview mode preserves remembered focused enemy
 // ===========================================================================
 
-test('hydrateUrlState nullifies enemy when compareView is overview', { concurrency: false }, () => withStateFixture(() => {
+test('hydrateUrlState preserves enemy when compareView is overview', { concurrency: false }, () => withStateFixture(() => {
   const enemy = {
     name: 'Hulk',
     faction: 'Automaton',
@@ -458,7 +458,7 @@ test('hydrateUrlState nullifies enemy when compareView is overview', { concurren
   }));
 
   assert.equal(calculatorState.compareView, 'overview');
-  assert.equal(calculatorState.selectedEnemy, null);
+  assert.equal(calculatorState.selectedEnemy?.name, 'Hulk');
 }));
 
 test('hydrateUrlState preserves enemy when compareView is focused', { concurrency: false }, () => withStateFixture(() => {
@@ -1059,6 +1059,36 @@ test('hydrateUrlState restores calculator and enemy-tab sorts independently', { 
   });
   assert.equal(enemyState.sortKey, 'AV');
   assert.equal(enemyState.sortDir, 'asc');
+}));
+
+test('encode-hydrate-encode keeps remembered focused enemy while overview is active', { concurrency: false }, () => withStateFixture(() => {
+  const enemy = {
+    name: 'Hulk',
+    faction: 'Automaton',
+    zones: [makeZone('head', { health: 100, isFatal: true }), makeZone('body', { health: 500 })]
+  };
+  enemyState.units = [enemy];
+
+  setSelectedEnemy(enemy);
+  setSelectedZoneIndex(1);
+  setCompareView('overview');
+
+  const firstParams = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(firstParams.get('cv'), 'overview');
+  assert.equal(firstParams.get('cen'), 'Hulk');
+  assert.equal(firstParams.get('csz'), '1');
+
+  setSelectedEnemy(null);
+  setCompareView('focused');
+
+  hydrateUrlState(firstParams);
+
+  assert.equal(calculatorState.compareView, 'overview');
+  assert.equal(calculatorState.selectedEnemy?.name, 'Hulk');
+  assert.equal(calculatorState.selectedZoneIndex, 1);
+
+  const secondParams = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(secondParams.toString(), firstParams.toString());
 }));
 
 // ===========================================================================

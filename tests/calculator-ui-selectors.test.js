@@ -131,6 +131,16 @@ test('[pin] enemy query state suppresses effective query when it matches selecte
   assert.equal(result.effectiveQuery, '');
 });
 
+test('[pin] enemy query state keeps overview visible when selected-enemy display text fills the compare input', () => {
+  const result = getEnemyDropdownQueryState('Stalker', {
+    mode: 'compare',
+    compareView: 'focused',
+    selectedEnemyName: 'Stalker'
+  });
+  assert.equal(result.effectiveQuery, '');
+  assert.equal(result.showOverviewOption, true);
+});
+
 test('[pin] enemy query state is case-insensitive for selected enemy name match', () => {
   const result = getEnemyDropdownQueryState('STALKER', {
     mode: 'single',
@@ -150,6 +160,16 @@ test('[pin] enemy query state treats null/undefined query as empty string', () =
     assert.equal(result.effectiveQuery, '');
     assert.equal(result.showOverviewOption, true);
   }
+});
+
+test('[pin] enemy query state keeps remembered focused-enemy text as a live query while overview is active', () => {
+  const result = getEnemyDropdownQueryState('Stalker', {
+    mode: 'compare',
+    compareView: 'overview',
+    selectedEnemyName: 'Stalker'
+  });
+  assert.equal(result.effectiveQuery, 'stalker');
+  assert.equal(result.showOverviewOption, true);
 });
 
 // ========================================================================
@@ -230,6 +250,21 @@ test('[pin] enemy dropdown pipeline in compare mode offers overview and filters 
   });
   assert.equal(result.showOverviewOption, true);
   assert.equal(result.filteredOptions.length, ENEMIES_MIXED.length);
+});
+
+test('[pin] enemy dropdown pipeline keeps overview visible alongside compare-mode text filtering', () => {
+  const result = getEnemyDropdownOptionsForQuery('war', {
+    options: ENEMIES_MIXED,
+    mode: 'compare',
+    compareView: 'focused',
+    selectedEnemyName: '',
+    overviewScope: 'all',
+    targetTypeIds: ['chaff', 'medium', 'elite', 'tank', 'giant'],
+    sortMode: 'targets',
+    sortDir: 'asc'
+  });
+  assert.equal(result.showOverviewOption, true);
+  assert.deepEqual(result.filteredOptions.map((enemy) => enemy.name), ['Warrior']);
 });
 
 test('[pin] enemy dropdown pipeline applies target type filter before returning results', () => {

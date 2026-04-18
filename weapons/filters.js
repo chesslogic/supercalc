@@ -9,6 +9,7 @@ import {
   toggleActiveWeaponType
 } from './data.js';
 import { applyFilters, renderTable } from './table.js';
+import { normalizeFilterValues } from '../filter-utils.js';
 import { debounce } from '../utils.js';
 
 function syncSearchInput() {
@@ -90,8 +91,8 @@ export function applyWeaponFilterState({
   render = true
 } = {}) {
   setWeaponSearchQuery(searchQuery);
-  state.activeTypes = [...new Set((Array.isArray(activeTypes) ? activeTypes : []).map((value) => String(value ?? '').trim().toLowerCase()).filter(Boolean))];
-  state.activeSubs = [...new Set((Array.isArray(activeSubs) ? activeSubs : []).map((value) => String(value ?? '').trim().toLowerCase()).filter(Boolean))];
+  state.activeTypes = normalizeFilterValues(activeTypes);
+  state.activeSubs = normalizeFilterValues(activeSubs);
   setWeaponSortState(sortKey, sortDir);
   syncWeaponFilterUi();
   if (render) {

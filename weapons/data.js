@@ -2,6 +2,7 @@ import {
   getNextSortState,
   normalizeSortDirection
 } from '../sort-utils.js';
+import { normalizeFilterValues } from '../filter-utils.js';
 
 // data.js — loading, parsing, and state
 export const PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeLqZ5-maEmzrM6SUDMRXpHEhV0tQImiBdgMCil9lSA11IiY_nGdamE54W7DAiSXn1XuJljdF4P537/pub?gid=0&single=true&output=csv';
@@ -43,14 +44,6 @@ export const state = {
 };
 
 let weaponStateChangeListener = null;
-
-function normalizeFilterValues(values = []) {
-  return [...new Set(
-    (Array.isArray(values) ? values : [])
-      .map((value) => String(value ?? '').trim().toLowerCase())
-      .filter(Boolean)
-  )];
-}
 
 export function setWeaponStateChangeListener(listener) {
   weaponStateChangeListener = typeof listener === 'function' ? listener : null;

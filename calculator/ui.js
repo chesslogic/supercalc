@@ -826,7 +826,7 @@ function setupEnemySelector() {
       const overviewItem = document.createElement('div');
       overviewItem.className = ENEMY_OVERVIEW_DROPDOWN_CLASS;
       overviewItem.innerHTML = getEnemyOverviewOptionHtml(calculatorState.overviewScope);
-      overviewItem.title = 'Compare both weapons across every enemy currently matching the scope and search filter.';
+      overviewItem.title = 'Compare both weapons across every enemy currently matching the scope and target filters.';
       overviewItem.classList.toggle('is-active', calculatorState.compareView === 'overview');
       overviewItem.addEventListener('click', () => {
         setCompareView('overview');

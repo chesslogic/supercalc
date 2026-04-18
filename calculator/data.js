@@ -31,6 +31,7 @@ import {
   getNextSortState,
   normalizeSortDirection
 } from '../sort-utils.js';
+import { normalizeFilterValues } from '../filter-utils.js';
 
 const DEFAULT_ENEMY_SORT = {
   key: 'zone_name',
@@ -87,14 +88,6 @@ function normalizeRecommendationShotsValue(value, min, max, defaultValue) {
     return defaultValue;
   }
   return Math.min(max, Math.max(min, Math.round(numeric)));
-}
-
-function normalizeRecommendationWeaponFilterValues(values = []) {
-  return [...new Set(
-    (Array.isArray(values) ? values : [])
-      .map((value) => String(value ?? '').trim().toLowerCase())
-      .filter(Boolean)
-  )];
 }
 
 let calculatorStateChangeListener = null;
@@ -476,13 +469,13 @@ export function setRecommendationWeaponFilterMode(mode) {
 }
 
 export function setRecommendationWeaponFilterTypes(types = []) {
-  calculatorState.recommendationWeaponFilterTypes = normalizeRecommendationWeaponFilterValues(types);
+  calculatorState.recommendationWeaponFilterTypes = normalizeFilterValues(types);
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterTypes];
 }
 
 export function toggleRecommendationWeaponFilterType(type) {
-  const normalizedType = normalizeRecommendationWeaponFilterValues([type])[0];
+  const normalizedType = normalizeFilterValues([type])[0];
   if (!normalizedType) {
     return [...calculatorState.recommendationWeaponFilterTypes];
   }
@@ -495,13 +488,13 @@ export function toggleRecommendationWeaponFilterType(type) {
 }
 
 export function setRecommendationWeaponFilterSubs(subs = []) {
-  calculatorState.recommendationWeaponFilterSubs = normalizeRecommendationWeaponFilterValues(subs);
+  calculatorState.recommendationWeaponFilterSubs = normalizeFilterValues(subs);
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterSubs];
 }
 
 export function toggleRecommendationWeaponFilterSub(sub) {
-  const normalizedSub = normalizeRecommendationWeaponFilterValues([sub])[0];
+  const normalizedSub = normalizeFilterValues([sub])[0];
   if (!normalizedSub) {
     return [...calculatorState.recommendationWeaponFilterSubs];
   }
@@ -521,13 +514,13 @@ export function clearRecommendationWeaponFilters() {
 }
 
 export function setRecommendationWeaponFilterGroups(groups = []) {
-  calculatorState.recommendationWeaponFilterGroups = normalizeRecommendationWeaponFilterValues(groups);
+  calculatorState.recommendationWeaponFilterGroups = normalizeFilterValues(groups);
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterGroups];
 }
 
 export function toggleRecommendationWeaponFilterGroup(groupId) {
-  const normalizedGroupId = normalizeRecommendationWeaponFilterValues([groupId])[0];
+  const normalizedGroupId = normalizeFilterValues([groupId])[0];
   if (!normalizedGroupId) {
     return [...calculatorState.recommendationWeaponFilterGroups];
   }

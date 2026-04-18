@@ -1367,6 +1367,12 @@ tbody tr:hover {
   gap:6px;
 }
 
+.calc-recommend-control-stack{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
 .calc-recommend-shot-range{
   align-items:flex-start;
 }

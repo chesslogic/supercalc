@@ -88,6 +88,45 @@ function filterRowsByShotRange(rows = [], minShots, maxShots) {
   });
 }
 
+function createRecommendationControlStack(controls = []) {
+  const visibleControls = (Array.isArray(controls) ? controls : [controls]).filter(Boolean);
+  if (visibleControls.length === 0) {
+    return null;
+  }
+  if (visibleControls.length === 1) {
+    return visibleControls[0];
+  }
+
+  const stack = document.createElement('div');
+  stack.className = 'calc-recommend-control-stack';
+  visibleControls.forEach((control) => stack.appendChild(control));
+  return stack;
+}
+
+function getTargetedRecommendationSummaryText({
+  selectedZone,
+  selectedTargetRows,
+  recommendationRangeSummary,
+  sharedRecommendationFilterSummaryText,
+  hasActiveWeaponFilters
+}) {
+  if (selectedTargetRows.length > 0) {
+    return `Best attack rows for removing or reaching the selected target using the current engagement settings (${recommendationRangeSummary}).${sharedRecommendationFilterSummaryText}`;
+  }
+
+  if (hasActiveWeaponFilters) {
+    return `No dedicated target rows match the current weapon filters for ${selectedZone.zone_name} using the current engagement settings (${recommendationRangeSummary}).${sharedRecommendationFilterSummaryText}`;
+  }
+
+  return `No dedicated target rows are available for ${selectedZone.zone_name} using the current engagement settings (${recommendationRangeSummary}).`;
+}
+
+function getTargetedRecommendationEmptyStateText(hasActiveWeaponFilters) {
+  return hasActiveWeaponFilters
+    ? 'No targeted recommendation rows match the current weapon filters.'
+    : 'No recommendation rows are available for this target.';
+}
+
 export function renderRecommendationPanel(container, enemy, {
   onRefresh = null
 } = {}) {
@@ -171,8 +210,9 @@ export function renderRecommendationPanel(container, enemy, {
       )
     : { rows: [], supplementedCoreTypes: [] };
   const initialOverallRows = displayRows.slice(0, RECOMMENDATION_DISPLAY_LIMIT);
-  const overallRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText();
-  const overallRecommendationFilterControls = renderRecommendationWeaponFilterControls(weaponsState.groups, {
+  const hasActiveWeaponFilters = hasActiveRecommendationWeaponFilters();
+  const sharedRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText();
+  const sharedRecommendationFilterControls = renderRecommendationWeaponFilterControls(weaponsState.groups, {
     onRefresh
   });
   const {
@@ -186,8 +226,8 @@ export function renderRecommendationPanel(container, enemy, {
     supplementedCoreTypes,
     initialOverallRows,
     recommendationRangeSummary,
-    overallRecommendationFilterSummaryText,
-    hasActiveFilters: hasActiveRecommendationWeaponFilters()
+    overallRecommendationFilterSummaryText: sharedRecommendationFilterSummaryText,
+    hasActiveFilters: hasActiveWeaponFilters
   });
   const nearMissRows = buildNearMissDisplayRows(recommendationRows);
 
@@ -201,15 +241,24 @@ export function renderRecommendationPanel(container, enemy, {
           onRefresh
         })
       : null;
+    const targetedRecommendationControls = createRecommendationControlStack([
+      relatedTargetChips,
+      sharedRecommendationFilterControls
+    ]);
     renderRecommendationSubsection({
       body,
       titleText: `${selectedZone.zone_name} targeted recommendations`,
-      summaryText: selectedTargetRows.length > 0
-        ? `Best attack rows for removing or reaching the selected target using the current engagement settings (${recommendationRangeSummary}).`
-        : `No dedicated target rows are available for ${selectedZone.zone_name} using the current engagement settings (${recommendationRangeSummary}).`,
-      controls: relatedTargetChips,
+      summaryText: getTargetedRecommendationSummaryText({
+        selectedZone,
+        selectedTargetRows,
+        recommendationRangeSummary,
+        sharedRecommendationFilterSummaryText,
+        hasActiveWeaponFilters
+      }),
+      controls: targetedRecommendationControls,
       rows: selectedTargetRows,
-      displayStep: TARGETED_RECOMMENDATION_DISPLAY_LIMIT
+      displayStep: TARGETED_RECOMMENDATION_DISPLAY_LIMIT,
+      emptyStateText: getTargetedRecommendationEmptyStateText(hasActiveWeaponFilters)
     });
   }
 
@@ -240,7 +289,7 @@ export function renderRecommendationPanel(container, enemy, {
     titleText: 'Overall recommendations',
     summaryText: overallRecommendationSummaryText,
     summaryTitle: overallRecommendationSummaryTitle,
-    controls: overallRecommendationFilterControls,
+    controls: selectedZone ? null : sharedRecommendationFilterControls,
     rows: displayRows,
     displayStep: RECOMMENDATION_DISPLAY_LIMIT,
     usingFallbackRows,
