@@ -22,7 +22,7 @@ export const WEAPON_SORT_MODE_DEFINITIONS = [
   },
   {
     id: 'match-reference-subtype',
-    label: 'Same AP, then subtype',
+    label: 'Same AP, then subtype (Recommended)',
     compareOnly: true
   },
   {
