@@ -99,6 +99,64 @@ checkout found two especially relevant signals:
   payloads, with at least `Thermite` carrying non-empty named status effects in
   the current dump
 
+The same investigation also checked whether the local `filediver` checkout pulls
+decoded gameplay/component JSON from Shalzuth's `HelldiversData` repository. It
+does not appear to do so: code search only found remote fetches for hash lists,
+not for Shalzuth's `data/entities/*.json` outputs. Treat Shalzuth's decoded
+component JSON as a separate fallback or cross-check source rather than part of
+Filediver's current import pipeline.
+
+A later sanity check against a local `C:\GitHub\HelldiversData` clone showed that
+this fallback source is genuinely relevant to Supercalc: its
+`data\entities\StatusEffectReceiverComponentData.json` file contains decoded
+per-entity `zones[*].susceptibilities[*]` payloads, uses entity ids that can be
+joined back to other entity component files, and overlaps the current Supercalc /
+Filediver data on at least 45 named enemies (for example `Hulk Bruiser`,
+`Charger`, `Bile Titan`, and `Devastator`). It is still not a drop-in
+replacement, though: the checked clone is older than the current live Filediver
+audit (196 status entries versus 304 current Filediver status-receiver entities),
+and it stores status-zone references as hashed `damageable_zone_name` /
+`effect_node_name` values rather than the normalized zone names Supercalc uses.
+
+There is now also a parser for the curated DiversDex CSV export that was dropped
+into `enemies\`:
+
+`python tools\parse_diversdex_enemy_index.py --output enemies\diversdex-enemydata.json`
+
+That parser does not replace the Filediver pipeline, but it does provide a
+structured sidecar JSON for the more trustworthy spreadsheet source:
+
+- expands grouped unit rows into per-unit entries (for example separate
+  `Trooper`, `Commissar`, and `Rocket Raider` outputs)
+- normalizes zone rows into `damageable_zones`
+- normalizes status tables into `status_effects`
+- preserves child sheet blocks such as shields, backpacks, pilots, and mounted
+  weapons under `child_profiles`
+- preserves Illuminate-only descriptions, default stat blocks, and sheet notes
+
+Treat `enemies\diversdex-enemydata.json` as a curated status/anatomy sidecar for
+comparison and future merge work, not as a drop-in replacement for
+`enemies\enemydata.json` yet.
+
+There is also now a dedicated comparer for these two enemydata-like options:
+
+`python tools\diff_enemydata_options.py --report <path>`
+
+By default it compares:
+
+- `enemies\enemydata.json`
+- `enemies\diversdex-enemydata.json`
+
+The report normalizes grouped sheet zones via `source_zone_count`, ignores
+source/provenance-only fields, reports top-level unit additions/removals, and
+diffs overlapping units across:
+
+- gameplay-bearing unit metadata
+- normalized `damageable_zones`
+- `status_effects`
+- `default_stats`
+- nested `child_profiles` / `inline_enemies`
+
 This suggests enemy-side status data may already exist in Filediver's raw source,
 but at least part of the required decoder support still lives upstream in
 `filediver\datalibrary\entity_component_settings.go`.
