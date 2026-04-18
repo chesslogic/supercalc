@@ -120,7 +120,10 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
     }
   });
 
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const selectedEnemyName = 'Heavy Devastator';
+  const smokeUrl = `${url}?cen=${encodeURIComponent(selectedEnemyName)}`;
+
+  await page.goto(smokeUrl, { waitUntil: 'domcontentloaded' });
 
   await page.waitForFunction(() => (
     window._weaponsState?.groups?.length > 0
@@ -129,6 +132,12 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
     && document.getElementById('calculator-weapon-loading')?.classList.contains('hidden')
     && document.getElementById('calculator-enemy-loading')?.classList.contains('hidden')
   ));
+
+  await page.waitForFunction((expectedEnemyName) => (
+    document.getElementById('calculator-enemy-input')?.value === expectedEnemyName
+    && document.querySelectorAll('.calc-recommend-panel').length > 0
+    && document.querySelectorAll('.calc-recommend-filters [data-role]').length > 0
+  ), selectedEnemyName);
 
   await page.click('button[data-tab="weapons"]');
   await page.waitForFunction(() => (
@@ -144,6 +153,8 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
 
   const dynamicState = await page.evaluate(() => ({
     calculatorSortOptions: document.querySelectorAll('#calculator-weapon-sort option').length,
+    calculatorRecommendationPanels: document.querySelectorAll('.calc-recommend-panel').length,
+    calculatorRecommendationRoleChips: document.querySelectorAll('.calc-recommend-filters [data-role]').length,
     weaponTypeChips: document.querySelectorAll('#typeFilters .chip').length,
     weaponRoleChips: document.querySelectorAll('#roleFilters .chip').length,
     enemyFactionChips: document.querySelectorAll('#enemyFactionFilters .chip').length,
@@ -151,6 +162,8 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
   }));
 
   assert.ok(dynamicState.calculatorSortOptions > 0, 'expected calculator sort options to be populated');
+  assert.ok(dynamicState.calculatorRecommendationPanels > 0, 'expected recommendation panel to render for the selected enemy');
+  assert.ok(dynamicState.calculatorRecommendationRoleChips > 0, 'expected recommendation role chips to render for the selected enemy');
   assert.ok(dynamicState.weaponTypeChips > 0, 'expected weapon type chips to be attached');
   assert.ok(dynamicState.weaponRoleChips > 0, 'expected weapon role chips to be attached');
   assert.ok(dynamicState.enemyFactionChips > 0, 'expected enemy faction chips to be attached');
