@@ -161,8 +161,16 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterTypes).value, { lowercase: true })
       : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterTypes
   );
-  setRecommendationWeaponFilterSubs(DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs);
-  setRecommendationWeaponFilterGroups(DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups);
+  setRecommendationWeaponFilterSubs(
+    params.has(URL_PARAM_KEYS.recommendationWeaponFilterSubs)
+      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs).value, { lowercase: true })
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs
+  );
+  setRecommendationWeaponFilterGroups(
+    params.has(URL_PARAM_KEYS.recommendationWeaponFilterGroups)
+      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups).value, { lowercase: true })
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups
+  );
   setRecommendationWeaponFilterRoles(
     params.has(URL_PARAM_KEYS.recommendationWeaponFilterRoles)
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles).value, { lowercase: true })

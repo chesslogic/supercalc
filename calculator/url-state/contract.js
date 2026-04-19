@@ -88,6 +88,8 @@ export const URL_PARAM_KEYS = {
   selectedExplosiveZoneIndices: 'cez',
   recommendationWeaponFilterMode: 'crfm',
   recommendationWeaponFilterTypes: 'crft',
+  recommendationWeaponFilterSubs: 'crfs',
+  recommendationWeaponFilterGroups: 'crfg',
   recommendationWeaponFilterRoles: 'crfr',
   recommendationNoMainViaLimbs: 'crnl',
   recommendationMinShots: 'crmin',

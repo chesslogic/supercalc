@@ -9,11 +9,15 @@ import {
   setRecommendationWeaponFilterMode,
   setSelectedZoneIndex,
   toggleRecommendationNoMainViaLimbs,
+  toggleRecommendationWeaponFilterGroup,
   toggleRecommendationWeaponFilterRole,
+  toggleRecommendationWeaponFilterSub,
   toggleRecommendationWeaponFilterType
 } from '../data.js';
 import { createRoleFilterChipRow } from '../../weapons/role-filter-row.js';
 import {
+  getAvailableRecommendationWeaponFeatureGroups,
+  getAvailableRecommendationWeaponSubs,
   getAvailableRecommendationWeaponTypes,
   getRecommendationFilterChipLabel,
   hasActiveRecommendationWeaponFilters
@@ -209,6 +213,33 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     wrapper.appendChild(createFilterChipRow({
       label: 'Type',
       children: typeChips
+    }));
+  }
+
+  const subChips = getAvailableRecommendationWeaponSubs(weapons).map((sub) => createRecommendationFilterChip({
+    label: getRecommendationFilterChipLabel(sub, 'sub'),
+    active: calculatorState.recommendationWeaponFilterSubs.includes(sub),
+    onClick: () => toggleRecommendationWeaponFilterSub(sub),
+    onRefresh
+  }));
+  if (subChips.length > 0) {
+    wrapper.appendChild(createFilterChipRow({
+      label: 'Sub',
+      children: subChips
+    }));
+  }
+
+  const featureChips = getAvailableRecommendationWeaponFeatureGroups(weapons)
+    .map((group) => createRecommendationFilterChip({
+      label: group.label,
+      active: calculatorState.recommendationWeaponFilterGroups.includes(group.id),
+      onClick: () => toggleRecommendationWeaponFilterGroup(group.id),
+      onRefresh
+    }));
+  if (featureChips.length > 0) {
+    wrapper.appendChild(createFilterChipRow({
+      label: 'Feature',
+      children: featureChips
     }));
   }
 

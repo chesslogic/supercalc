@@ -691,6 +691,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setRecommendationWeaponFilterMode('exclude');
   setRecommendationWeaponFilterTypes(['support']);
   setRecommendationWeaponFilterSubs(['spc']);
+  setRecommendationWeaponFilterGroups(['special']);
   setRecommendationWeaponFilterRoles(['precision']);
   setEnemySortState({ key: 'health', dir: 'desc', groupMode: 'outcome' });
   setEngagementRangeMeters('A', 50);
@@ -735,6 +736,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setRecommendationWeaponFilterMode('include');
   setRecommendationWeaponFilterTypes([]);
   setRecommendationWeaponFilterSubs([]);
+  setRecommendationWeaponFilterGroups([]);
   setRecommendationWeaponFilterRoles([]);
   setEnemySortState({ key: 'zone_name', dir: 'asc', groupMode: 'none' });
   setEngagementRangeMeters('A', 30);
@@ -813,6 +815,38 @@ test('hydrateUrlState restores recommendation type filter from crft', { concurre
   }));
 
   assert.deepEqual(calculatorState.recommendationWeaponFilterTypes, ['support']);
+}));
+
+test('encodeUrlState encodes non-default recommendation sub filter', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationWeaponFilterSubs(['ar', 'rl']);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+
+  assert.deepEqual(JSON.parse(params.get('crfs')), ['ar', 'rl']);
+}));
+
+test('hydrateUrlState restores recommendation sub filter from crfs', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    crfs: JSON.stringify(['spc'])
+  }));
+
+  assert.deepEqual(calculatorState.recommendationWeaponFilterSubs, ['spc']);
+}));
+
+test('encodeUrlState encodes non-default recommendation feature filter', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationWeaponFilterGroups(['auto', 'ordnance']);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+
+  assert.deepEqual(JSON.parse(params.get('crfg')), ['auto', 'ordnance']);
+}));
+
+test('hydrateUrlState restores recommendation feature filter from crfg', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    crfg: JSON.stringify(['special'])
+  }));
+
+  assert.deepEqual(calculatorState.recommendationWeaponFilterGroups, ['special']);
 }));
 
 test('encodeUrlState and hydrateUrlState round-trip the no-main-via-limbs preference', { concurrency: false }, () => withStateFixture(() => {

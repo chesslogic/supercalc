@@ -24,7 +24,8 @@ export function buildRecommendationRowSets({
   highlightRangeFloorMeters,
   selectedZoneIndex,
   relatedTargetZoneIndices,
-  hidePeripheralMainRoutes = false
+  hidePeripheralMainRoutes = false,
+  instrumentation = null
 }) {
   const getRangeForWeapon = (weapon) => getEngagementRangeMetersForRecommendationWeapon(
     weapon,
@@ -37,7 +38,9 @@ export function buildRecommendationRowSets({
       weapons: overallRecommendationWeapons,
       rangeFloorMeters: highlightRangeFloorMeters,
       getEngagementRangeMetersForWeapon: getRangeForWeapon,
-      hidePeripheralMainRoutes
+      hidePeripheralMainRoutes,
+      instrumentation,
+      analysisStage: 'overall'
     }),
     selectedTargetRows: buildSelectedTargetRecommendationRows({
       enemy,
@@ -45,7 +48,9 @@ export function buildRecommendationRowSets({
       rangeFloorMeters: highlightRangeFloorMeters,
       selectedZoneIndex,
       getEngagementRangeMetersForWeapon: getRangeForWeapon,
-      hidePeripheralMainRoutes
+      hidePeripheralMainRoutes,
+      instrumentation,
+      analysisStage: 'selectedTarget'
     }),
     relatedTargetRows: buildRelatedTargetRecommendationRows({
       enemy,
@@ -53,7 +58,9 @@ export function buildRecommendationRowSets({
       rangeFloorMeters: highlightRangeFloorMeters,
       relatedZoneIndices: relatedTargetZoneIndices,
       getEngagementRangeMetersForWeapon: getRangeForWeapon,
-      hidePeripheralMainRoutes
+      hidePeripheralMainRoutes,
+      instrumentation,
+      analysisStage: 'relatedTarget'
     })
   };
 }

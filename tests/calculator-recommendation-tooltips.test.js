@@ -1264,6 +1264,140 @@ test('renderRecommendationPanel filters related routes when overall recommendati
   }
 });
 
+test('renderRecommendationPanel surfaces subtype and feature rows in stable order', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    weaponsState.groups = [
+      makeWeapon('Guard Dog', {
+        index: 0,
+        type: 'Stratagem',
+        sub: 'BCK',
+        rpm: 60,
+        rows: [makeAttackRow('Guard Dog Burst', 80, 2)]
+      }),
+      makeWeapon('Liberator', {
+        index: 1,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Diligence', {
+        index: 2,
+        type: 'Primary',
+        sub: 'DMR',
+        rpm: 60,
+        rows: [makeAttackRow('Diligence Shot', 125, 3)]
+      }),
+      makeWeapon('Punisher Plasma', {
+        index: 3,
+        type: 'Primary',
+        role: 'explosive',
+        sub: 'EXP',
+        rpm: 60,
+        rows: [makeAttackRow('Large Plasma Bolt', 225, 3)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 4,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Surface Parity Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const subRow = getChipRowByLabel(container, 'Sub');
+    const subChips = (subRow?.children || [])
+      .filter((child) => child.tagName === 'BUTTON')
+      .map((child) => child.textContent);
+    const featureRow = getChipRowByLabel(container, 'Feature');
+    const featureChips = (featureRow?.children || [])
+      .filter((child) => child.tagName === 'BUTTON')
+      .map((child) => child.textContent);
+
+    assert.deepEqual(subChips, ['AR', 'BCK', 'DMR', 'EXP', 'RL']);
+    assert.deepEqual(featureChips, ['Automatic', 'Explosive', 'Special', 'Ordnance']);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel subtype and feature chips toggle recommendation filter state', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterSubs = [...calculatorState.recommendationWeaponFilterSubs];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterSubs = [];
+    calculatorState.recommendationWeaponFilterGroups = [];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Guard Dog', {
+        index: 1,
+        type: 'Stratagem',
+        sub: 'BCK',
+        rpm: 60,
+        rows: [makeAttackRow('Guard Dog Burst', 80, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Filter Toggle Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const subChip = getChipRowByLabel(container, 'Sub')
+      ?.children
+      ?.find((child) => child.tagName === 'BUTTON' && child.textContent === 'AR');
+    const featureChip = getChipRowByLabel(container, 'Feature')
+      ?.children
+      ?.find((child) => child.tagName === 'BUTTON' && child.textContent === 'Special');
+
+    assert.equal(typeof subChip?.listeners.get('click'), 'function');
+    assert.equal(typeof featureChip?.listeners.get('click'), 'function');
+
+    subChip.listeners.get('click')();
+    featureChip.listeners.get('click')();
+
+    assert.deepEqual(calculatorState.recommendationWeaponFilterSubs, ['ar']);
+    assert.deepEqual(calculatorState.recommendationWeaponFilterGroups, ['special']);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterSubs = previousFilterSubs;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
+    weaponsState.groups = previousGroups;
+  }
+});
+
 test('renderRecommendationPanel shows role chips in taxonomy order', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
@@ -1365,6 +1499,70 @@ test('renderRecommendationPanel shows role chips in taxonomy order', () => {
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
     calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel filters overall recommendations by feature group', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
+  const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'include';
+    calculatorState.recommendationWeaponFilterTypes = [];
+    calculatorState.recommendationWeaponFilterGroups = ['ordnance'];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Recoilless Rifle', {
+        index: 1,
+        type: 'Support',
+        sub: 'RL',
+        rpm: 60,
+        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+      }),
+      makeWeapon('Orbital Precision Strike', {
+        index: 2,
+        type: 'Stratagem',
+        sub: 'ORB',
+        rpm: 60,
+        rows: [makeAttackRow('Orbital Strike', 500, 6)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Feature Filter Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const summary = collectElements(container, (element) => element.classList.contains('calc-recommend-summary'))[0];
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual([...weaponNames].sort(), ['Orbital Precision Strike', 'Recoilless Rifle'].sort());
+    assert.equal(weaponNames.includes('Liberator'), false);
+    assert.match(summary?.textContent || '', /weapon filters: showing only matches for feature: ordnance/i);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
+    calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
     weaponsState.groups = previousGroups;
   }
 });

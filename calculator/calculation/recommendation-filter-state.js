@@ -49,6 +49,26 @@ export function getAvailableRecommendationWeaponTypes(weapons = []) {
   return RECOMMENDATION_FILTER_TYPE_ORDER.filter((type) => presentTypes.has(type));
 }
 
+export function getAvailableRecommendationWeaponSubs(weapons = []) {
+  const presentSubs = new Set(
+    (Array.isArray(weapons) ? weapons : [])
+      .map((weapon) => normalizeRecommendationWeaponSub(weapon?.sub))
+      .filter(Boolean)
+  );
+
+  return [...presentSubs].sort((left, right) => left.localeCompare(right));
+}
+
+export function getAvailableRecommendationWeaponFeatureGroups(weapons = []) {
+  const presentGroupIds = new Set(
+    (Array.isArray(weapons) ? weapons : [])
+      .map((weapon) => getWeaponRecommendationFeatureGroupId(weapon))
+      .filter(Boolean)
+  );
+
+  return RECOMMENDATION_FEATURE_GROUPS.filter((group) => presentGroupIds.has(group.id));
+}
+
 export function hasActiveRecommendationWeaponFilters() {
   return calculatorState.recommendationWeaponFilterTypes.length > 0
     || calculatorState.recommendationWeaponFilterSubs.length > 0
