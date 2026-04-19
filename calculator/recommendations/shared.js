@@ -1,3 +1,6 @@
+import { toFiniteNumber as _toFiniteNumber, normalizeText as _normalizeText } from '../domain-utils.js';
+import { OUTCOME_PRIORITY, getOutcomePriority as _getOutcomePriority } from '../outcome-kinds.js';
+
 export const DEFAULT_RECOMMENDATION_RANGE_METERS = 30;
 export const RECOMMENDATION_MARGIN_RATIO_THRESHOLD = 0.25;
 export const RECOMMENDATION_SHOTGUN_HIT_SHARE = 0.4;
@@ -13,23 +16,14 @@ export const RANGE_STATUS_ORDER = {
   failed: 2
 };
 
-const OUTCOME_PRIORITY = {
-  fatal: 0,
-  doomed: 1,
-  main: 2,
-  critical: 3,
-  limb: 4,
-  utility: 5,
-  none: 6
-};
+export { OUTCOME_PRIORITY };
 
 export function toFiniteNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
+  return _toFiniteNumber(value);
 }
 
 export function normalizeText(value) {
-  return String(value ?? '').trim().toLowerCase();
+  return _normalizeText(value);
 }
 
 export function compareBooleanDescending(left, right) {
@@ -87,7 +81,7 @@ export function compareRecommendationHeadroom(left, right) {
 }
 
 export function getOutcomePriority(outcomeKind) {
-  return OUTCOME_PRIORITY[outcomeKind] ?? OUTCOME_PRIORITY.none;
+  return _getOutcomePriority(outcomeKind);
 }
 
 export function getRangeMeters(distanceInfo) {

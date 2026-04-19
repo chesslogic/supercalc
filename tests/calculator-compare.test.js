@@ -18,26 +18,7 @@ import {
   ingestBallisticFalloffCsvText,
   resetBallisticFalloffProfiles
 } from '../weapons/falloff.js';
-
-function makeAttackRow(name, damage, ap = 2) {
-  return {
-    'Atk Type': 'Projectile',
-    'Atk Name': name,
-    DMG: damage,
-    DUR: 0,
-    AP: ap,
-    DF: 10,
-    ST: 10,
-    PF: 10
-  };
-}
-
-function makeExplosionAttackRow(name, damage, ap = 2) {
-  return {
-    ...makeAttackRow(name, damage, ap),
-    'Atk Type': 'Explosion'
-  };
-}
+import { makeAttackRow, makeExplosionAttackRow } from './fixtures/weapon-fixtures.js';
 
 function makeDiffMetric(value) {
   if (value && typeof value === 'object' && ('sortValue' in value || 'absoluteSortValue' in value)) {

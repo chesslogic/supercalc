@@ -3,6 +3,7 @@ import { recordRecommendationWork } from '../recommendation-work-distribution.js
 import { calculateTtkSeconds } from '../summary.js';
 import { getZoneDisplayedKillPath } from '../zone-damage.js';
 import { getZoneRelationContext } from '../../enemies/data.js';
+import { FAST_TTK_THRESHOLD_SECONDS } from '../combat-constants.js';
 import {
   cloneDistanceInfo,
   compareBooleanDescending,
@@ -293,7 +294,7 @@ function buildZoneRecommendationCandidate({
     isOneShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && slotMetrics.shotsToKill <= 2,
     hasCriticalRecommendation: criticalRecommendation,
-    hasFastTtk: qualifiesForFastTtk && rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < 0.6
+    hasFastTtk: qualifiesForFastTtk && rangeQualified && slotMetrics.ttkSeconds !== null && slotMetrics.ttkSeconds < FAST_TTK_THRESHOLD_SECONDS
   };
   return candidate;
 }
@@ -413,7 +414,7 @@ function buildSequenceRecommendationCandidate({
     isOneShotCritical: rangeQualified && criticalOutcome && shotsToKill === 1,
     isTwoShotCritical: rangeQualified && criticalOutcome && shotsToKill <= 2,
     hasCriticalRecommendation: criticalRecommendation,
-    hasFastTtk: qualifiesForFastTtk && rangeQualified && ttkSeconds !== null && ttkSeconds < 0.6
+    hasFastTtk: qualifiesForFastTtk && rangeQualified && ttkSeconds !== null && ttkSeconds < FAST_TTK_THRESHOLD_SECONDS
   };
 }
 

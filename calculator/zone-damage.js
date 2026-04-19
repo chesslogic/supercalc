@@ -4,6 +4,12 @@ import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 import { getCriticalZoneInfo } from './tactical-data.js';
 import { calculateBallisticDamageMultiplier, resolveBallisticFalloffProfileForWeapon } from '../weapons/falloff.js';
+import { toFiniteNumber } from './domain-utils.js';
+import { AP_EQUALS_AV_DAMAGE_MULTIPLIER } from './combat-constants.js';
+export {
+  getZoneOutcomeLabel,
+  getZoneOutcomeDescription
+} from './outcome-kinds.js';
 
 function toNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -13,11 +19,6 @@ function toNumber(value, fallback = 0) {
 function toPositiveInteger(value, fallback = 1) {
   const numeric = Number(value);
   return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : fallback;
-}
-
-function toFiniteNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
 }
 
 function normalizeZoneName(zone) {
@@ -178,7 +179,7 @@ export function calculateAttackAgainstZone(attack, zone, hits = 1) {
   if (ap < av) {
     damageMultiplier = 0;
   } else if (ap === av) {
-    damageMultiplier = 0.65;
+    damageMultiplier = AP_EQUALS_AV_DAMAGE_MULTIPLIER;
   } else {
     damageMultiplier = 1.0;
   }
@@ -598,62 +599,6 @@ export function getZoneOutcomeKind({
   }
 
   return criticalZoneInfo ? 'critical' : 'utility';
-}
-
-export function getZoneOutcomeLabel(kind) {
-  if (kind === 'fatal') {
-    return 'Kill';
-  }
-
-  if (kind === 'doomed') {
-    return 'Doomed';
-  }
-
-  if (kind === 'main') {
-    return 'Main';
-  }
-
-  if (kind === 'critical') {
-    return 'Critical';
-  }
-
-  if (kind === 'limb') {
-    return 'Limb';
-  }
-
-  if (kind === 'utility') {
-    return 'Part';
-  }
-
-  return null;
-}
-
-export function getZoneOutcomeDescription(kind) {
-  if (kind === 'fatal') {
-    return 'Killing this part kills the enemy';
-  }
-
-  if (kind === 'doomed') {
-    return 'Destroying this fatal part dooms the enemy by forcing Main Constitution and bleedout.';
-  }
-
-  if (kind === 'main') {
-    return 'This path kills through main health';
-  }
-
-  if (kind === 'critical') {
-    return 'Destroying this critical part removes an important threat or utility before the body kill.';
-  }
-
-  if (kind === 'limb') {
-    return 'This part can be removed before main would die';
-  }
-
-  if (kind === 'utility') {
-    return 'This part can be removed, but destroying it does not kill the enemy';
-  }
-
-  return null;
 }
 
 function getZoneShotsToKill(killSummary) {

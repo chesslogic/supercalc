@@ -4,17 +4,10 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import './env-stubs.js';
+import { TestDocument, collectElements as collect } from './dom-stubs.js';
 
 /* ---------- minimal environment stubs ---------- */
-
-if (!globalThis.localStorage) {
-  globalThis.localStorage = {
-    _store: {},
-    getItem(k) { return this._store[k] ?? null; },
-    setItem(k, v) { this._store[k] = String(v); },
-    removeItem(k) { delete this._store[k]; }
-  };
-}
 
 const { ingestHeadersAndRows, state } = await import('../weapons/data.js');
 const {
@@ -27,71 +20,7 @@ const {
   applyFilters
 } = await import('../weapons/table.js');
 
-/* ---------- DOM helpers (mirrors weapons-table.test.js) ---------- */
-
-class TestClassList {
-  constructor(element) { this.element = element; this.tokens = new Set(); }
-  setFromString(v) { this.tokens = new Set(String(v || '').split(/\s+/).filter(Boolean)); }
-  syncElement() { this.element._className = [...this.tokens].join(' '); }
-  add(...t) { t.flatMap(x => String(x||'').split(/\s+/)).filter(Boolean).forEach(x => this.tokens.add(x)); this.syncElement(); }
-  remove(...t) { t.flatMap(x => String(x||'').split(/\s+/)).filter(Boolean).forEach(x => this.tokens.delete(x)); this.syncElement(); }
-  contains(t) { return this.tokens.has(t); }
-  toggle(t, force) {
-    if (force === undefined) { if (this.tokens.has(t)) { this.tokens.delete(t); } else { this.tokens.add(t); } }
-    else if (force) { this.tokens.add(t); } else { this.tokens.delete(t); }
-    this.syncElement();
-  }
-}
-
-class TestElement {
-  constructor(tagName, ownerDocument) {
-    this.tagName = String(tagName || 'div').toUpperCase();
-    this.ownerDocument = ownerDocument;
-    this.children = [];
-    this.parentNode = null;
-    this.style = {};
-    this.dataset = {};
-    this.listeners = new Map();
-    this.title = '';
-    this._textContent = '';
-    this._className = '';
-    this.classList = new TestClassList(this);
-    this.type = '';
-    this.href = '';
-    this.target = '';
-    this.rel = '';
-    this.id = '';
-  }
-  get className() { return this._className; }
-  set className(v) { this._className = String(v||''); this.classList.setFromString(this._className); }
-  get textContent() { return `${this._textContent}${this.children.map(c => c.textContent).join('')}`; }
-  set textContent(v) { this._textContent = String(v ?? ''); this.children = []; }
-  get innerHTML() { return ''; }
-  set innerHTML(_v) { this._textContent = ''; this.children = []; }
-  appendChild(c) { c.parentNode = this; this.children.push(c); return c; }
-  addEventListener(type, fn) { const l = this.listeners.get(type) || []; l.push(fn); this.listeners.set(type, l); }
-  querySelectorAll() { return []; }
-}
-
-class TestDocument {
-  constructor() { this.elementsById = new Map(); }
-  createElement(tag) { return new TestElement(tag, this); }
-  getElementById(id) { return this.elementsById.get(id) || null; }
-  registerElement(id, tag = 'div') {
-    const el = this.createElement(tag);
-    el.id = id;
-    this.elementsById.set(id, el);
-    return el;
-  }
-  querySelectorAll() { return []; }
-}
-
-function collect(root, pred, out = []) {
-  if (!root) return out;
-  if (pred(root)) out.push(root);
-  root.children.forEach(c => collect(c, pred, out));
-  return out;
-}
+/* ---------- DOM helpers ---------- */
 
 function snapshotState() {
   return {

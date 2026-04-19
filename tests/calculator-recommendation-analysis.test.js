@@ -1,73 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
-if (!globalThis.localStorage) {
-  globalThis.localStorage = {
-    getItem() {
-      return null;
-    },
-    setItem() {},
-    removeItem() {}
-  };
-}
+import './env-stubs.js';
+import {
+  makeAttackRow,
+  makeExplosionAttackRow,
+  makeWeapon,
+  makeZone
+} from './fixtures/weapon-fixtures.js';
 
 const { analyzeRecommendationRowSetWorkDistribution } = await import('../calculator/recommendation-analysis.js');
-
-function makeAttackRow(name, damage, ap = 2) {
-  return {
-    'Atk Type': 'Projectile',
-    'Atk Name': name,
-    DMG: damage,
-    DUR: 0,
-    AP: ap,
-    DF: 10,
-    ST: 10,
-    PF: 10
-  };
-}
-
-function makeExplosionAttackRow(name, damage, ap = 3) {
-  return {
-    ...makeAttackRow(name, damage, ap),
-    'Atk Type': 'Explosion'
-  };
-}
-
-function makeWeapon(name, {
-  index = 0,
-  rpm = 60,
-  type = 'Primary',
-  sub = 'AR',
-  rows = []
-} = {}) {
-  return {
-    name,
-    index,
-    rpm,
-    type,
-    sub,
-    rows
-  };
-}
-
-function makeZone(zoneName, {
-  health = 100,
-  isFatal = false,
-  av = 1,
-  toMainPercent = 0
-} = {}) {
-  return {
-    zone_name: zoneName,
-    health,
-    Con: 0,
-    AV: av,
-    'Dur%': 0,
-    'ToMain%': toMainPercent,
-    ExTarget: 'Part',
-    ExMult: 1,
-    IsFatal: isFatal
-  };
-}
 
 function pickMetrics(summary, keys) {
   return Object.fromEntries(keys.map((key) => [key, summary[key] ?? 0]));

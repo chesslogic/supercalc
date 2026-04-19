@@ -1,15 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
-if (!globalThis.localStorage) {
-  globalThis.localStorage = {
-    getItem() {
-      return null;
-    },
-    setItem() {},
-    removeItem() {}
-  };
-}
+import './env-stubs.js';
+import {
+  makeAttackRow,
+  makeExplosionAttackRow,
+  makeWeapon,
+  makeZone
+} from './fixtures/weapon-fixtures.js';
 
 const weaponsDataModule = await import('../weapons/data.js');
 const enemiesDataModule = await import('../enemies/data.js');
@@ -77,62 +74,6 @@ const { getAttackRowKey } = compareUtilsModule;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function makeAttackRow(name, damage, ap = 2) {
-  return {
-    'Atk Type': 'Projectile',
-    'Atk Name': name,
-    DMG: damage,
-    DUR: 0,
-    AP: ap,
-    DF: 10,
-    ST: 10,
-    PF: 10
-  };
-}
-
-function makeExplosiveAttackRow(name, damage, ap = 3) {
-  return {
-    'Atk Type': 'Explosion',
-    'Atk Name': name,
-    DMG: damage,
-    DUR: 0,
-    AP: ap,
-    DF: 10,
-    ST: 10,
-    PF: 10
-  };
-}
-
-function makeWeapon(name, {
-  code = '',
-  sub = 'AR',
-  type = 'Primary',
-  rpm = 60,
-  rows = [],
-  index = 0
-} = {}) {
-  return { name, code, sub, type, rpm, rows, index };
-}
-
-function makeZone(zoneName, {
-  health = 100,
-  isFatal = false,
-  av = 1,
-  toMainPercent = 0
-} = {}) {
-  return {
-    zone_name: zoneName,
-    health,
-    Con: 0,
-    AV: av,
-    'Dur%': 0,
-    'ToMain%': toMainPercent,
-    ExTarget: 'Part',
-    ExMult: 1,
-    IsFatal: isFatal
-  };
-}
 
 function snapshotWeaponsState() {
   return {
@@ -631,7 +572,7 @@ test('encodeUrlState omits explosive zone indices when no explosive attacks are 
 
 test('encodeUrlState includes explosive zone indices when explosive attacks are selected', { concurrency: false }, () => withStateFixture(() => {
   const weapon = makeWeapon('RocketLauncher', {
-    rows: [makeExplosiveAttackRow('HE Rocket', 500)]
+    rows: [makeExplosionAttackRow('HE Rocket', 500)]
   });
   weaponsState.groups = [weapon];
 

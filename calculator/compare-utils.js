@@ -18,42 +18,14 @@ import {
   compareNullableValues,
   markGroupStarts
 } from '../sort-utils.js';
+import { toFiniteNumber, normalizeText } from './domain-utils.js';
+import {
+  SINGLE_OUTCOME_GROUP_ORDER,
+  COMPARE_OUTCOME_GROUP_ORDER,
+  ONE_SIDED_OUTCOME_GROUP_ORDER
+} from './outcome-kinds.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
-const SINGLE_OUTCOME_GROUP_ORDER = {
-  fatal: 0,
-  doomed: 1,
-  main: 2,
-  critical: 3,
-  limb: 4,
-  utility: 5,
-  none: 6
-};
-
-const COMPARE_OUTCOME_GROUP_ORDER = {
-  main: 0,
-  oneSided: 1,
-  fatal: 2,
-  doomed: 3,
-  critical: 4,
-  limb: 5,
-  utility: 6,
-  none: 7
-};
-
-const ONE_SIDED_OUTCOME_GROUP_ORDER = {
-  main: 0,
-  fatal: 1,
-  doomed: 2,
-  critical: 3,
-  limb: 4,
-  utility: 5,
-  none: 6
-};
-
-function normalizeText(value) {
-  return String(value ?? '').trim().toLowerCase();
-}
 
 function getPinnedZoneOrderValue(row) {
   return normalizeText(row?.zone?.zone_name) === 'main' ? 0 : 1;
@@ -178,11 +150,6 @@ export function getDiffDisplayMetric(diffMetric, diffDisplayMode = 'absolute') {
     value,
     displayValue: null
   };
-}
-
-function toFiniteNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
 }
 
 function hasDamagePath(zoneSummary) {

@@ -1,15 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
-if (!globalThis.localStorage) {
-  globalThis.localStorage = {
-    getItem() {
-      return null;
-    },
-    setItem() {},
-    removeItem() {}
-  };
-}
+import './env-stubs.js';
+import { TestDocument, collectElements } from './dom-stubs.js';
 
 const weaponsDataModule = await import('../weapons/data.js');
 const weaponsTableModule = await import('../weapons/table.js');
@@ -22,130 +14,6 @@ const {
   DURABLE_RATIO_HEADER,
   renderTable
 } = weaponsTableModule;
-
-class TestClassList {
-  constructor(element) {
-    this.element = element;
-    this.tokens = new Set();
-  }
-
-  setFromString(value) {
-    this.tokens = new Set(String(value || '').split(/\s+/).filter(Boolean));
-  }
-
-  syncElement() {
-    this.element._className = [...this.tokens].join(' ');
-  }
-
-  add(...tokens) {
-    tokens
-      .flatMap((token) => String(token || '').split(/\s+/))
-      .filter(Boolean)
-      .forEach((token) => this.tokens.add(token));
-    this.syncElement();
-  }
-
-  remove(...tokens) {
-    tokens
-      .flatMap((token) => String(token || '').split(/\s+/))
-      .filter(Boolean)
-      .forEach((token) => this.tokens.delete(token));
-    this.syncElement();
-  }
-
-  contains(token) {
-    return this.tokens.has(token);
-  }
-}
-
-class TestElement {
-  constructor(tagName, ownerDocument) {
-    this.tagName = String(tagName || 'div').toUpperCase();
-    this.ownerDocument = ownerDocument;
-    this.children = [];
-    this.parentNode = null;
-    this.style = {};
-    this.dataset = {};
-    this.listeners = new Map();
-    this.title = '';
-    this._textContent = '';
-    this._className = '';
-    this.classList = new TestClassList(this);
-  }
-
-  get className() {
-    return this._className;
-  }
-
-  set className(value) {
-    this._className = String(value || '');
-    this.classList.setFromString(this._className);
-  }
-
-  get textContent() {
-    return `${this._textContent}${this.children.map((child) => child.textContent).join('')}`;
-  }
-
-  set textContent(value) {
-    this._textContent = String(value ?? '');
-    this.children = [];
-  }
-
-  get innerHTML() {
-    return '';
-  }
-
-  set innerHTML(_value) {
-    this._textContent = '';
-    this.children = [];
-  }
-
-  appendChild(child) {
-    child.parentNode = this;
-    this.children.push(child);
-    return child;
-  }
-
-  addEventListener(type, listener) {
-    const listeners = this.listeners.get(type) || [];
-    listeners.push(listener);
-    this.listeners.set(type, listeners);
-  }
-}
-
-class TestDocument {
-  constructor() {
-    this.elementsById = new Map();
-  }
-
-  createElement(tagName) {
-    return new TestElement(tagName, this);
-  }
-
-  getElementById(id) {
-    return this.elementsById.get(id) || null;
-  }
-
-  registerElement(id, tagName = 'div') {
-    const element = this.createElement(tagName);
-    element.id = id;
-    this.elementsById.set(id, element);
-    return element;
-  }
-}
-
-function collectElements(root, predicate, matches = []) {
-  if (!root) {
-    return matches;
-  }
-
-  if (predicate(root)) {
-    matches.push(root);
-  }
-
-  root.children.forEach((child) => collectElements(child, predicate, matches));
-  return matches;
-}
 
 function snapshotWeaponState() {
   return {

@@ -1,5 +1,6 @@
 import { EFFECTIVE_DISTANCE_TOOLTIP } from '../effective-distance.js';
 import { RECOMMENDATION_MARGIN_RATIO_THRESHOLD } from '../recommendations.js';
+import { FAST_TTK_THRESHOLD_SECONDS } from '../combat-constants.js';
 export { RECOMMENDATION_WEAPON_FEATURE_GROUPS as RECOMMENDATION_FEATURE_GROUPS } from '../../weapons/weapon-taxonomy.js';
 
 export const RECOMMENDATION_MARGIN_THRESHOLD_PERCENT = Math.round(RECOMMENDATION_MARGIN_RATIO_THRESHOLD * 100);
@@ -10,7 +11,7 @@ export const RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT = 12;
 export const RECOMMENDATION_CORE_TYPE_MINIMUM = 2;
 export const RECOMMENDATION_CORE_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support'];
 export const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
-export const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = 'Highlighted rows are recommendations that light up Margin, Crit, <0.6s, or Pen All.';
+export const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = `Highlighted rows are recommendations that light up Margin, Crit, <${FAST_TTK_THRESHOLD_SECONDS}s, or Pen All.`;
 export const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
   { label: 'Attack', title: 'Best-ranked attack row or firing package for this weapon.' },
@@ -23,7 +24,7 @@ export const RECOMMENDATION_HEADER_DEFINITIONS = [
   },
   { label: 'Margin', title: `One-shot margin is highlighted at +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight.` },
   { label: 'Crit', title: 'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.' },
-  { label: '<0.6s', title: 'Fast-TTK highlight for rows under 0.6 seconds at the current range floor.' },
+  { label: `<${FAST_TTK_THRESHOLD_SECONDS}s`, title: `Fast-TTK highlight for rows under ${FAST_TTK_THRESHOLD_SECONDS} seconds at the current range floor.` },
   { label: 'Pen All', title: 'Highlights attack setups that can damage every zone on the current enemy.' },
   { label: 'Tip', title: 'Short note explaining why this breakpoint stands out or what path it follows.' }
 ];
@@ -33,8 +34,8 @@ export const RECOMMENDATION_FLAG_TITLES = {
     inactive: 'Does not currently meet the critical-disable highlight.'
   },
   fastTtk: {
-    active: 'Meets the sub-0.6s TTK highlight at the current range floor.',
-    inactive: 'Does not currently meet the sub-0.6s TTK highlight.'
+    active: `Meets the sub-${FAST_TTK_THRESHOLD_SECONDS}s TTK highlight at the current range floor.`,
+    inactive: `Does not currently meet the sub-${FAST_TTK_THRESHOLD_SECONDS}s TTK highlight.`
   },
   penetratesAll: {
     active: 'This attack setup can damage every zone on the current enemy.',
