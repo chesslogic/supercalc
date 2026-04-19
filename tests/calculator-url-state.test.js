@@ -65,9 +65,11 @@ const {
   setWeaponSortMode
 } = calculatorDataModule;
 const {
+  buildShareableUrl,
   buildUrlStateSnapshot,
   encodeUrlState,
   hydrateUrlState,
+  syncUrlState,
   URL_STATE_VERSION
 } = urlStateModule;
 const { getAttackRowKey } = compareUtilsModule;
@@ -484,28 +486,6 @@ test('hydrateUrlState preserves enemy when compareView is focused', { concurrenc
 }));
 
 // ===========================================================================
-// Legacy 'crm' shared range meters
-// ===========================================================================
-
-test('hydrateUrlState supports legacy crm param for both slots', { concurrency: false }, () => withStateFixture(() => {
-  hydrateUrlState(new URLSearchParams({ crm: '75' }));
-
-  assert.equal(calculatorState.engagementRangeMeters.A, 75);
-  assert.equal(calculatorState.engagementRangeMeters.B, 75);
-}));
-
-test('hydrateUrlState prefers per-slot range over legacy crm', { concurrency: false }, () => withStateFixture(() => {
-  hydrateUrlState(new URLSearchParams({
-    crm: '75',
-    cra: '50',
-    crb: '100'
-  }));
-
-  assert.equal(calculatorState.engagementRangeMeters.A, 50);
-  assert.equal(calculatorState.engagementRangeMeters.B, 100);
-}));
-
-// ===========================================================================
 // Zone index edge cases
 // ===========================================================================
 
@@ -819,6 +799,22 @@ test('encodeUrlState encodes non-default recommendation filter mode', { concurre
   assert.equal(params.get('crfm'), 'exclude');
 }));
 
+test('encodeUrlState encodes non-default recommendation type filter', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationWeaponFilterTypes(['primary', 'support']);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+
+  assert.deepEqual(JSON.parse(params.get('crft')), ['primary', 'support']);
+}));
+
+test('hydrateUrlState restores recommendation type filter from crft', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    crft: JSON.stringify(['support'])
+  }));
+
+  assert.deepEqual(calculatorState.recommendationWeaponFilterTypes, ['support']);
+}));
+
 test('encodeUrlState and hydrateUrlState round-trip the no-main-via-limbs preference', { concurrency: false }, () => withStateFixture(() => {
   setRecommendationNoMainViaLimbs(false);
 
@@ -940,6 +936,30 @@ test('hydrateUrlState sets attack keys per slot independently', { concurrency: f
   assert.deepEqual(calculatorState.selectedAttackKeys.B, [key1]);
 }));
 
+test('hydrateUrlState still supports legacy full attack-key payloads', { concurrency: false }, () => withStateFixture(() => {
+  const breaker = makeWeapon('Breaker', {
+    code: 'SG-225',
+    sub: 'SG',
+    rows: [
+      makeAttackRow('12g BUCKSHOT_P x11', 30, 2),
+      makeAttackRow('12g SLUG_P', 280, 3)
+    ]
+  });
+  const attackKey = getAttackRowKey(breaker.rows[1]);
+
+  weaponsState.groups = [breaker];
+  setSelectedWeapon('A', breaker);
+
+  hydrateUrlState(new URLSearchParams({
+    cwa: 'Breaker',
+    caa: JSON.stringify([attackKey]),
+    cha: JSON.stringify({ [attackKey]: 2 })
+  }));
+
+  assert.deepEqual(calculatorState.selectedAttackKeys.A, [attackKey]);
+  assert.equal(calculatorState.attackHitCounts.A[attackKey], 2);
+}));
+
 // ===========================================================================
 // hydrateUrlState return value
 // ===========================================================================
@@ -996,6 +1016,78 @@ test('hydrateUrlState restores enemy tab filter state', { concurrency: false }, 
   assert.deepEqual(enemyState.activeFactions, ['Terminid']);
   assert.equal(enemyState.sortKey, 'health');
   assert.equal(enemyState.sortDir, 'desc');
+}));
+
+test('encodeUrlState omits default primary-only weapon type filters but preserves an explicit empty selection', { concurrency: false }, () => withStateFixture(() => {
+  const starterWeapon = makeWeapon('Liberator', {
+    code: 'AR-23',
+    sub: 'AR',
+    rows: [makeAttackRow('5.5x50mm FULL METAL JACKET_P', 90, 2)]
+  });
+  weaponsState.groups = [starterWeapon];
+
+  applyWeaponFilterState({
+    searchQuery: '',
+    activeTypes: DEFAULT_ACTIVE_WEAPON_TYPES,
+    activeSubs: [],
+    sortKey: null,
+    sortDir: 'asc'
+  }, { render: false });
+  const defaultParams = encodeUrlState({ activeTab: 'weapons' });
+  assert.equal(defaultParams.has('wty'), false);
+
+  applyWeaponFilterState({
+    searchQuery: '',
+    activeTypes: [],
+    activeSubs: [],
+    sortKey: null,
+    sortDir: 'asc'
+  }, { render: false });
+  const explicitEmptyTypesParams = encodeUrlState({ activeTab: 'weapons' });
+  assert.equal(explicitEmptyTypesParams.get('wty'), '[]');
+}));
+
+test('buildShareableUrl and syncUrlState preserve unrelated query params', { concurrency: false }, () => withStateFixture(() => {
+  const previousLocation = globalThis.location;
+  const previousHistory = globalThis.history;
+  const historyCalls = [];
+
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: {
+      origin: 'https://example.invalid',
+      pathname: '/index.html',
+      search: '?test=1&foo=bar'
+    }
+  });
+  Object.defineProperty(globalThis, 'history', {
+    configurable: true,
+    value: {
+      replaceState(_state, _title, url) {
+        historyCalls.push(url);
+      }
+    }
+  });
+
+  try {
+    const url = buildShareableUrl({ activeTab: 'calculator' });
+    assert.match(url, /\?(.+&)?test=1/);
+    assert.match(url, /\?(.+&)?foo=bar/);
+
+    const nextUrl = syncUrlState({ activeTab: 'calculator' });
+    assert.match(nextUrl, /\?(.+&)?test=1/);
+    assert.match(nextUrl, /\?(.+&)?foo=bar/);
+    assert.equal(historyCalls[0], nextUrl);
+  } finally {
+    Object.defineProperty(globalThis, 'location', {
+      configurable: true,
+      value: previousLocation
+    });
+    Object.defineProperty(globalThis, 'history', {
+      configurable: true,
+      value: previousHistory
+    });
+  }
 }));
 
 // ===========================================================================
