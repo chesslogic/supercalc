@@ -85,13 +85,20 @@ import {
 } from '../calculator/enemy-zone-display.js';
 import {
   calculateBallisticDamageAtDistance,
+  calculatePracticalMaxProjectileDistance,
   ingestBallisticFalloffCsvText,
   resetBallisticFalloffProfiles
 } from '../weapons/falloff.js';
 
 const UI_TEST_FALLOFF_CSV = `Category,Weapon,Caliber,Mass,Velocity,Drag
 Primary,AR-23 Liberator,5.5,4.5,900,0.3
-Marksman,R-63 Diligence,8,8.5,960,0.2`;
+Marksman,R-63 Diligence,8,8.5,960,0.2
+Primary,PLAS-1 Scorcher,20,25,550,1.5
+Primary,PLAS-101 Purifier (charged),20,25,350,1.5`;
+
+const AMBIGUOUS_UI_TEST_FALLOFF_CSV = `Category,Weapon,Caliber,Mass,Velocity,Drag
+Primary,PLAS-1 Scorcher,20,25,550,1.5
+Primary,PLAS-1 Scorcher,20,25,550,1.5`;
 
 test('enemy dropdown keeps real enemies visible when overview is the current compare selection', () => {
   const state = getEnemyDropdownQueryState('Overview', {
@@ -885,6 +892,16 @@ class TestDocument {
   addEventListener() {}
 }
 
+function registerRangeControlElements(testDocument, slot = 'A') {
+  const suffix = slot.toLowerCase();
+  return {
+    rangeInput: testDocument.registerElement(`calculator-range-input-${suffix}`, 'input'),
+    rangeValue: testDocument.registerElement(`calculator-range-value-${suffix}`, 'button'),
+    rangeEdit: testDocument.registerElement(`calculator-range-edit-${suffix}`, 'input'),
+    rangeWarning: testDocument.registerElement(`calculator-range-warning-${suffix}`, 'span')
+  };
+}
+
 function collectElements(root, predicate, matches = []) {
   if (!root) {
     return matches;
@@ -1244,6 +1261,239 @@ test('engagement range inline edit cancels on Escape', () => {
     assert.ok(rangeEdit.classList.contains('hidden'));
   } finally {
     globalThis.document = originalDocument;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+  }
+});
+
+test('engagement range control shows a practical max warning when exact range edits reach the cutoff', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  const originalDocument = globalThis.document;
+  const originalMode = calculatorState.mode;
+  const originalWeaponA = calculatorState.weaponA;
+  const originalSelectedAttackKeysA = [...calculatorState.selectedAttackKeys.A];
+  const originalAttackHitCountsA = { ...calculatorState.attackHitCounts.A };
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+  const practicalMaxText = `${Math.floor(calculatePracticalMaxProjectileDistance({
+    caliber: 20,
+    mass: 25,
+    velocity: 550,
+    drag: 1.5
+  }))}m`;
+
+  try {
+    const testDocument = new TestDocument();
+    const {
+      rangeInput,
+      rangeValue,
+      rangeEdit,
+      rangeWarning
+    } = registerRangeControlElements(testDocument, 'A');
+
+    globalThis.document = testDocument;
+    calculatorState.mode = 'single';
+    calculatorState.engagementRangeMeters.A = 200;
+    setSelectedWeapon('A', makeWeapon('Scorcher', {
+      code: 'PLAS-1',
+      rows: [{
+        ...makeAttackRow(2, 100, 100),
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Plasma bolt'
+      }]
+    }));
+
+    setupEngagementRangeControl('A');
+
+    assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(200));
+    assert.ok(rangeWarning.classList.contains('hidden'));
+    assert.equal(rangeWarning.textContent, '');
+
+    rangeValue.dispatch('click');
+    rangeEdit.value = '204';
+    rangeEdit.dispatch('keydown', {
+      key: 'Enter',
+      preventDefault() {}
+    });
+
+    assert.equal(calculatorState.engagementRangeMeters.A, 204);
+    assert.equal(rangeInput.value, '204');
+    assert.equal(rangeValue.textContent, formatEngagementRangeDisplayValue(204));
+    assert.equal(rangeWarning.textContent, `Warning: practical max ${practicalMaxText}`);
+    assert.ok(!rangeWarning.classList.contains('hidden'));
+    assert.ok(rangeWarning.title.includes(`Current range 204m is at or beyond this weapon's modeled practical max projectile distance (${practicalMaxText}).`));
+    assert.match(rangeWarning.title, /Projectile damage is treated as effectively gone/i);
+  } finally {
+    resetBallisticFalloffProfiles();
+    globalThis.document = originalDocument;
+    calculatorState.mode = originalMode;
+    calculatorState.weaponA = originalWeaponA;
+    calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
+    calculatorState.attackHitCounts.A = originalAttackHitCountsA;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+  }
+});
+
+test('engagement range warnings handle slot A and slot B independently in compare mode', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(UI_TEST_FALLOFF_CSV);
+
+  const originalDocument = globalThis.document;
+  const originalMode = calculatorState.mode;
+  const originalWeaponA = calculatorState.weaponA;
+  const originalWeaponB = calculatorState.weaponB;
+  const originalSelectedAttackKeysA = [...calculatorState.selectedAttackKeys.A];
+  const originalSelectedAttackKeysB = [...calculatorState.selectedAttackKeys.B];
+  const originalAttackHitCountsA = { ...calculatorState.attackHitCounts.A };
+  const originalAttackHitCountsB = { ...calculatorState.attackHitCounts.B };
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+  const originalRangeB = calculatorState.engagementRangeMeters.B;
+  const practicalMaxAText = `${Math.floor(calculatePracticalMaxProjectileDistance({
+    caliber: 20,
+    mass: 25,
+    velocity: 550,
+    drag: 1.5
+  }))}m`;
+  const practicalMaxBText = `${Math.floor(calculatePracticalMaxProjectileDistance({
+    caliber: 20,
+    mass: 25,
+    velocity: 350,
+    drag: 1.5
+  }))}m`;
+
+  try {
+    const testDocument = new TestDocument();
+    const controlsA = registerRangeControlElements(testDocument, 'A');
+    const controlsB = registerRangeControlElements(testDocument, 'B');
+
+    globalThis.document = testDocument;
+    calculatorState.mode = 'compare';
+    calculatorState.engagementRangeMeters.A = 204;
+    calculatorState.engagementRangeMeters.B = 205;
+    setSelectedWeapon('A', makeWeapon('Scorcher', {
+      code: 'PLAS-1',
+      rows: [{
+        ...makeAttackRow(2, 100, 100),
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Plasma bolt'
+      }]
+    }));
+    setSelectedWeapon('B', makeWeapon('Purifier (charged)', {
+      code: 'PLAS-101',
+      rows: [{
+        ...makeAttackRow(2, 120, 120),
+        'Atk Type': 'Projectile',
+        'Atk Name': 'Charged plasma bolt'
+      }]
+    }));
+
+    setupEngagementRangeControl('A');
+    setupEngagementRangeControl('B');
+
+    assert.equal(controlsA.rangeWarning.textContent, `Warning: practical max ${practicalMaxAText}`);
+    assert.ok(!controlsA.rangeWarning.classList.contains('hidden'));
+    assert.ok(controlsB.rangeWarning.classList.contains('hidden'));
+    assert.equal(controlsB.rangeWarning.textContent, '');
+
+    controlsB.rangeValue.dispatch('click');
+    controlsB.rangeEdit.value = '206';
+    controlsB.rangeEdit.dispatch('keydown', {
+      key: 'Enter',
+      preventDefault() {}
+    });
+
+    assert.equal(calculatorState.engagementRangeMeters.B, 206);
+    assert.equal(controlsB.rangeWarning.textContent, `Warning: practical max ${practicalMaxBText}`);
+    assert.ok(!controlsB.rangeWarning.classList.contains('hidden'));
+    assert.equal(controlsA.rangeWarning.textContent, `Warning: practical max ${practicalMaxAText}`);
+    assert.ok(!controlsA.rangeWarning.classList.contains('hidden'));
+  } finally {
+    resetBallisticFalloffProfiles();
+    globalThis.document = originalDocument;
+    calculatorState.mode = originalMode;
+    calculatorState.weaponA = originalWeaponA;
+    calculatorState.weaponB = originalWeaponB;
+    calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
+    calculatorState.selectedAttackKeys.B = originalSelectedAttackKeysB;
+    calculatorState.attackHitCounts.A = originalAttackHitCountsA;
+    calculatorState.attackHitCounts.B = originalAttackHitCountsB;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+    calculatorState.engagementRangeMeters.B = originalRangeB;
+  }
+});
+
+test('engagement range warning stays hidden for explosive-only, missing-profile, and ambiguous-profile cases', () => {
+  const originalDocument = globalThis.document;
+  const originalMode = calculatorState.mode;
+  const originalWeaponA = calculatorState.weaponA;
+  const originalSelectedAttackKeysA = [...calculatorState.selectedAttackKeys.A];
+  const originalAttackHitCountsA = { ...calculatorState.attackHitCounts.A };
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+
+  try {
+    const assertHiddenWarning = ({
+      csvText,
+      weapon
+    }) => {
+      resetBallisticFalloffProfiles();
+      ingestBallisticFalloffCsvText(csvText);
+
+      const testDocument = new TestDocument();
+      const { rangeWarning } = registerRangeControlElements(testDocument, 'A');
+
+      globalThis.document = testDocument;
+      calculatorState.mode = 'single';
+      calculatorState.engagementRangeMeters.A = 500;
+      setSelectedWeapon('A', weapon);
+      setupEngagementRangeControl('A');
+
+      assert.ok(rangeWarning.classList.contains('hidden'));
+      assert.equal(rangeWarning.textContent, '');
+      assert.equal(rangeWarning.title, '');
+    };
+
+    assertHiddenWarning({
+      csvText: UI_TEST_FALLOFF_CSV,
+      weapon: makeWeapon('Scorcher', {
+        code: 'PLAS-1',
+        rows: [{
+          ...makeAttackRow(2, 100, 100),
+          'Atk Type': 'Explosion',
+          'Atk Name': 'Plasma blast'
+        }]
+      })
+    });
+
+    assertHiddenWarning({
+      csvText: UI_TEST_FALLOFF_CSV,
+      weapon: makeWeapon('Prototype', {
+        code: 'ZZ-1',
+        rows: [{
+          ...makeAttackRow(2, 100, 100),
+          'Atk Type': 'Projectile',
+          'Atk Name': 'Prototype round'
+        }]
+      })
+    });
+
+    assertHiddenWarning({
+      csvText: AMBIGUOUS_UI_TEST_FALLOFF_CSV,
+      weapon: makeWeapon('Scorcher', {
+        code: 'PLAS-1',
+        rows: [{
+          ...makeAttackRow(2, 100, 100),
+          'Atk Type': 'Projectile',
+          'Atk Name': 'Plasma bolt'
+        }]
+      })
+    });
+  } finally {
+    resetBallisticFalloffProfiles();
+    globalThis.document = originalDocument;
+    calculatorState.mode = originalMode;
+    calculatorState.weaponA = originalWeaponA;
+    calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
+    calculatorState.attackHitCounts.A = originalAttackHitCountsA;
     calculatorState.engagementRangeMeters.A = originalRangeA;
   }
 });

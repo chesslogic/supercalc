@@ -1,5 +1,6 @@
 // calculator/rendering.js — render selected weapon and enemy details
 import { calculatorState } from './data.js';
+import { syncAllEngagementRangeWarnings } from './engagement-range-warning.js';
 import { renderCalculation } from './calculation.js';
 import { createPlaceholder } from './rendering/shared.js';
 import { renderWeaponDetails } from './rendering/weapon-details.js';
@@ -25,6 +26,7 @@ export {
 export { renderWeaponDetails } from './rendering/weapon-details.js';
 
 export function refreshEnemyCalculationViews() {
+  syncAllEngagementRangeWarnings();
   renderEnemyDetails();
   renderCalculation();
 }

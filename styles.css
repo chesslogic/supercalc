@@ -410,8 +410,15 @@ tbody tr:hover {
 }
 .calculator-range-value-shell{
   display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  min-width:88px;
+}
+.calculator-range-value-editor{
+  display:flex;
   justify-content:flex-end;
   min-width:88px;
+  width:100%;
 }
 .calculator-range-value-button{
   padding:0;
@@ -434,6 +441,15 @@ tbody tr:hover {
   padding:4px 6px;
   text-align:right;
   font-variant-numeric:tabular-nums;
+}
+.calculator-range-warning{
+  margin-top:2px;
+  color:var(--orange);
+  font-size:11px;
+  font-weight:700;
+  line-height:1.2;
+  text-align:right;
+  max-width:140px;
 }
 .calculator-clear-btn {
   position: absolute;

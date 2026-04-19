@@ -18,6 +18,7 @@ import {
   findNearestEngagementRangeStop,
   formatEngagementRangeMeters
 } from './engagement-range.js';
+import { syncEngagementRangeWarning } from './engagement-range-warning.js';
 import {
   getEnemyArmyRoleDefinitionForUnit,
   filterEnemiesByTargetTypes,
@@ -483,6 +484,8 @@ function syncEngagementRangeControl(slot) {
     rangeEdit.title = ENGAGEMENT_RANGE_EDIT_TITLE;
     rangeEdit.classList.toggle('hidden', !isEditing);
   }
+
+  syncEngagementRangeWarning(slot);
 }
 
 function syncEnemyInputValue() {

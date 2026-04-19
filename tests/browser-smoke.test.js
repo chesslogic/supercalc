@@ -139,6 +139,25 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
     && document.querySelectorAll('.calc-recommend-filters [data-role]').length > 0
   ), selectedEnemyName);
 
+  await page.locator('#calculator-weapon-input').click();
+  await page.locator('#calculator-weapon-input').fill('Scorcher');
+  await page.locator('.weapon-dropdown-item').filter({ hasText: 'PLAS-1 Scorcher' }).first().click();
+  await page.waitForFunction(() => document.getElementById('calculator-weapon-input')?.value.includes('Scorcher'));
+  await page.evaluate(() => {
+    const rangeInput = document.getElementById('calculator-range-input-a');
+    if (!rangeInput) {
+      throw new Error('Missing Weapon A range slider');
+    }
+
+    rangeInput.value = '300';
+    rangeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    rangeInput.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForFunction(() => {
+    const warning = document.getElementById('calculator-range-warning-a');
+    return Boolean(warning && !warning.classList.contains('hidden') && /warning: practical max/i.test(warning.textContent || ''));
+  });
+
   await page.click('button[data-tab="weapons"]');
   await page.waitForFunction(() => (
     document.querySelectorAll('#typeFilters .chip').length > 0
@@ -155,6 +174,7 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
     calculatorSortOptions: document.querySelectorAll('#calculator-weapon-sort option').length,
     calculatorRecommendationPanels: document.querySelectorAll('.calc-recommend-panel').length,
     calculatorRecommendationRoleChips: document.querySelectorAll('.calc-recommend-filters [data-role]').length,
+    calculatorRangeWarnings: document.querySelectorAll('.calculator-range-warning:not(.hidden)').length,
     weaponTypeChips: document.querySelectorAll('#typeFilters .chip').length,
     weaponRoleChips: document.querySelectorAll('#roleFilters .chip').length,
     enemyFactionChips: document.querySelectorAll('#enemyFactionFilters .chip').length,
@@ -164,6 +184,7 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
   assert.ok(dynamicState.calculatorSortOptions > 0, 'expected calculator sort options to be populated');
   assert.ok(dynamicState.calculatorRecommendationPanels > 0, 'expected recommendation panel to render for the selected enemy');
   assert.ok(dynamicState.calculatorRecommendationRoleChips > 0, 'expected recommendation role chips to render for the selected enemy');
+  assert.ok(dynamicState.calculatorRangeWarnings > 0, 'expected practical max-range warning to render after selecting Scorcher at 300m');
   assert.ok(dynamicState.weaponTypeChips > 0, 'expected weapon type chips to be attached');
   assert.ok(dynamicState.weaponRoleChips > 0, 'expected weapon role chips to be attached');
   assert.ok(dynamicState.enemyFactionChips > 0, 'expected enemy faction chips to be attached');
