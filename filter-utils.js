@@ -1,3 +1,40 @@
+/**
+ * Evaluate a search query with OR (|) and AND (&) operators.
+ * Default behavior (space-separated) is AND.
+ * AND has higher precedence than OR (binds tighter).
+ *
+ * Examples:
+ * - "rifle" -> matches if "rifle" is found
+ * - "rifle pistol" -> matches if both "rifle" AND "pistol" are found
+ * - "rifle | pistol" -> matches if "rifle" OR "pistol" is found
+ * - "rifle & pistol" -> matches if both "rifle" AND "pistol" are found
+ * - "rifle | pistol & grenade" -> matches if ("rifle" OR "pistol") AND "grenade"
+ *
+ * Note: searchText is already lowercase from the index, query is converted to lowercase for matching
+ */
+export function evaluateSearchQuery(query, searchText) {
+  if (!query || !searchText) return false;
+
+  const qLower = query.toLowerCase().trim();
+  if (!qLower) return false;
+
+  // Handle AND operators (&) first (higher precedence) — split by &, all parts must match
+  if (qLower.includes('&')) {
+    const andParts = qLower.split('&').map(part => part.trim()).filter(part => part.length > 0);
+    return andParts.every(part => evaluateSearchQuery(part, searchText));
+  }
+
+  // Handle OR operators (|) — split by |, each part is evaluated separately
+  if (qLower.includes('|')) {
+    const orParts = qLower.split('|').map(part => part.trim()).filter(part => part.length > 0);
+    return orParts.some(part => evaluateSearchQuery(part, searchText));
+  }
+
+  // Default: space-separated words are AND (all must match)
+  const words = qLower.split(/\s+/).filter(word => word.length > 0);
+  return words.every(word => searchText.includes(word));
+}
+
 export function normalizeFilterValues(values = []) {
   return [...new Set(
     (Array.isArray(values) ? values : [])

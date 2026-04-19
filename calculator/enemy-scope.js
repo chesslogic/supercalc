@@ -6,17 +6,20 @@ const FRONT_DEFINITIONS = [
   {
     id: 'terminids',
     label: 'Terminids',
-    aliases: ['Terminid', 'Terminids']
+    aliases: ['Terminid', 'Terminids'],
+    badgeText: 'BUG'
   },
   {
     id: 'automatons',
     label: 'Automatons',
-    aliases: ['Automaton', 'Automatons']
+    aliases: ['Automaton', 'Automatons'],
+    badgeText: 'BOT'
   },
   {
     id: 'illuminate',
     label: 'Illuminate',
-    aliases: ['Illuminate']
+    aliases: ['Illuminate'],
+    badgeText: 'SQUID'
   }
 ];
 
@@ -69,49 +72,56 @@ export const ENEMY_TARGET_TYPE_DEFINITIONS = [
     label: 'Chaff',
     summaryLabel: 'Chaff',
     requiredTag: 'chaff',
-    defaultSelected: true
+    defaultSelected: true,
+    badgeText: 'C'
   },
   {
     id: 'medium',
     label: 'Medium',
     summaryLabel: 'Medium',
     requiredTag: 'medium',
-    defaultSelected: true
+    defaultSelected: true,
+    badgeText: 'M'
   },
   {
     id: 'elite',
     label: 'Elite',
     summaryLabel: 'Elite',
     requiredTag: 'elite',
-    defaultSelected: true
+    defaultSelected: true,
+    badgeText: 'E'
   },
   {
     id: 'tank',
     label: 'Tank',
     summaryLabel: 'Tank',
     requiredTag: 'tank',
-    defaultSelected: true
+    defaultSelected: true,
+    badgeText: 'T'
   },
   {
     id: 'giant',
     label: 'Giants',
     summaryLabel: 'Giants',
     requiredTag: 'giant',
-    defaultSelected: true
+    defaultSelected: true,
+    badgeText: 'G'
   },
   {
     id: 'structure',
     label: 'Structures',
     summaryLabel: 'Structures',
     requiredTag: 'structure',
-    defaultSelected: false
+    defaultSelected: false,
+    badgeText: 'S'
   },
   {
     id: 'objective',
     label: 'Objectives',
     summaryLabel: 'Objectives',
     requiredTag: 'objective',
-    defaultSelected: false
+    defaultSelected: false,
+    badgeText: 'O'
   }
 ];
 
@@ -164,7 +174,8 @@ const ENEMY_SCOPE_DEFINITIONS = [
     frontId: 'terminids',
     label: 'Rupture Strain',
     summaryLabel: 'Rupture Strain',
-    includeNames: ['Rupture Charger', 'Rupture Spewer', 'Rupture Warrior']
+    includeNames: ['Rupture Charger', 'Rupture Spewer', 'Rupture Warrior'],
+    iconSrc: 'assets/icons/subfactions/rupture-strain.svg'
   },
   {
     id: 'spore-burst-strain',
@@ -178,7 +189,8 @@ const ENEMY_SCOPE_DEFINITIONS = [
     frontId: 'terminids',
     label: 'Predator Strain',
     summaryLabel: 'Predator Strain',
-    includeNames: ['Predator Hunter', 'Predator Stalker']
+    includeNames: ['Predator Hunter', 'Predator Stalker'],
+    iconSrc: 'assets/icons/subfactions/predator-strain.svg'
   },
   {
     id: 'automatons',
@@ -191,14 +203,16 @@ const ENEMY_SCOPE_DEFINITIONS = [
     frontId: 'automatons',
     label: 'Cyborg Legion',
     summaryLabel: 'Cyborg Legion',
-    includeNames: ['Agitator', 'Radical', 'Vox Engine']
+    includeNames: ['Agitator', 'Radical', 'Vox Engine'],
+    iconSrc: 'assets/icons/subfactions/cyborg-legion.webp'
   },
   {
     id: 'jet-brigade',
     frontId: 'automatons',
     label: 'Jet Brigade',
     summaryLabel: 'Jet Brigade',
-    includePatterns: ['^Jet Brigade ']
+    includePatterns: ['^Jet Brigade '],
+    iconSrc: 'assets/icons/subfactions/jet-brigade.svg'
   },
   {
     id: 'incineration-corps',
@@ -211,7 +225,8 @@ const ENEMY_SCOPE_DEFINITIONS = [
       'Incendiary MG Devastator',
       'Incendiary Rocket Raider',
       'Pyro Trooper'
-    ]
+    ],
+    iconSrc: 'assets/icons/subfactions/incineration-corps.svg'
   },
   {
     id: 'illuminate',
@@ -239,14 +254,16 @@ const ENEMY_SCOPE_DEFINITIONS = [
       'Obtruder',
       'Stingray',
       'Veracitor'
-    ]
+    ],
+    iconSrc: 'assets/icons/subfactions/mindless-masses.svg'
   },
   {
     id: 'appropriators',
     frontId: 'illuminate',
     label: 'Appropriators',
     summaryLabel: 'Appropriators',
-    excludeNames: ['Crescent Overseer', 'Fleshmob', 'Stingray', 'Voteless']
+    excludeNames: ['Crescent Overseer', 'Fleshmob', 'Stingray', 'Voteless'],
+    iconSrc: 'assets/icons/subfactions/appropriators.svg'
   }
 ];
 

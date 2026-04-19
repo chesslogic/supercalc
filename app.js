@@ -7,8 +7,8 @@ import {
   state as weaponsState
 } from './weapons/data.js';
 import { loadBallisticFalloffCsv } from './weapons/falloff.js';
-import { buildTypeFilters, buildSubFilters, renderTable } from './weapons/table.js';
-import { syncWeaponFilterUi, buildRoleFilters } from './weapons/filters.js';
+import { renderTable } from './weapons/table.js';
+import { syncWeaponFilterUi, buildRoleFilters, buildTypeFilters, buildSubFilters } from './weapons/filters.js';
 import { loadEnemyData, setEnemyStateChangeListener } from './enemies/data.js';
 import { renderEnemyTable, setupEnemyTableSorting } from './enemies/table.js';
 import { buildEnemyFactionFilters, syncEnemyFilterUi } from './enemies/filters.js';

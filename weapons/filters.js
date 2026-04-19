@@ -1,4 +1,4 @@
-// weapons/filters.js — search and reset controls
+// weapons/filters.js — search, reset controls, and chip-builder UI
 import {
   resetWeaponFilterState,
   savePinnedWeapons,
@@ -10,7 +10,7 @@ import {
   toggleActiveWeaponType
 } from './data.js';
 import { applyFilters, renderTable } from './table.js';
-import { normalizeFilterValues } from '../filter-utils.js';
+import { createFilterChip, normalizeFilterValues } from '../filter-utils.js';
 import { createRoleFilterChipRow } from './role-filter-row.js';
 import { debounce } from '../utils.js';
 
@@ -162,5 +162,52 @@ export function buildRoleFilters() {
   while (chipRow.children.length > 0) {
     el.appendChild(chipRow.children[0]);
   }
+  applyFilters();
+}
+
+export function buildTypeFilters() {
+  const el = globalThis.document?.getElementById('typeFilters');
+  if (!el) return;
+  const present = new Set();
+  for (const g of state.groups) { const t = (g.type || '').toString().trim(); if (t) present.add(t.toLowerCase()); }
+  const orderedDesired = ['primary', 'secondary', 'grenade', 'support', 'stratagem'];
+  el.innerHTML = '';
+  orderedDesired.forEach(t => {
+    if (!present.has(t)) return;
+    const chip = createFilterChip({
+      label: t.charAt(0).toUpperCase() + t.slice(1),
+      active: state.activeTypes.includes(t),
+      dataset: { val: t },
+      onClick: (button) => {
+        toggleActiveWeaponType(button.dataset.val);
+        syncTypeChipState();
+        applyFilters();
+      }
+    });
+    el.appendChild(chip);
+  });
+  applyFilters();
+}
+
+export function buildSubFilters() {
+  const el = globalThis.document?.getElementById('subFilters');
+  if (!el) return;
+  const subs = new Set();
+  for (const g of state.groups) { const s = (g.sub || '').toString().trim(); if (s) subs.add(s.toLowerCase()); }
+  const ordered = Array.from(subs).sort((a, b) => a.localeCompare(b));
+  el.innerHTML = '';
+  ordered.forEach(s => {
+    const chip = createFilterChip({
+      label: s.toUpperCase(),
+      active: state.activeSubs.includes(s),
+      dataset: { val: s },
+      onClick: (button) => {
+        toggleActiveWeaponSub(button.dataset.val);
+        syncSubChipState();
+        applyFilters();
+      }
+    });
+    el.appendChild(chip);
+  });
   applyFilters();
 }

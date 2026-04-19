@@ -33,6 +33,7 @@ import {
   sortEnemyDropdownOptions
 } from './selector-utils.js';
 import { getWeaponOptionDisplayModel } from './weapon-dropdown.js';
+import { createDropdownController } from './dropdown-controller.js';
 import { copyShareableUrl } from './url-state.js';
 import { state as weaponsState } from '../weapons/data.js';
 import { enemyState } from '../enemies/data.js';
@@ -49,29 +50,6 @@ let shareButtonSetup = false;
 const engagementRangeEditorOpen = { A: false, B: false };
 const ENGAGEMENT_RANGE_CONTROL_TITLE = 'Engagement distance used for displayed damage, shots, TTK, and recommendation breakpoint checks for this weapon slot. Drag to a common preset stop or click the range value to enter an exact meter.';
 const ENGAGEMENT_RANGE_EDIT_TITLE = 'Enter an exact engagement range from 0 to 500 meters. Press Enter to apply or Escape to cancel.';
-const ENEMY_FRONT_BADGE_TEXT = {
-  terminids: 'BUG',
-  automatons: 'BOT',
-  illuminate: 'SQUID'
-};
-const ENEMY_TARGET_BADGE_TEXT = {
-  chaff: 'C',
-  medium: 'M',
-  elite: 'E',
-  tank: 'T',
-  giant: 'G',
-  structure: 'S',
-  objective: 'O'
-};
-const ENEMY_SUBGROUP_ICON_PATHS = {
-  'appropriators': 'assets/icons/subfactions/appropriators.svg',
-  'cyborg-legion': 'assets/icons/subfactions/cyborg-legion.webp',
-  'incineration-corps': 'assets/icons/subfactions/incineration-corps.svg',
-  'jet-brigade': 'assets/icons/subfactions/jet-brigade.svg',
-  'mindless-masses': 'assets/icons/subfactions/mindless-masses.svg',
-  'predator-strain': 'assets/icons/subfactions/predator-strain.svg',
-  'rupture-strain': 'assets/icons/subfactions/rupture-strain.svg'
-};
 
 export function getCalculatorModeButtonTitle(mode) {
   if (mode === 'compare') {
@@ -101,23 +79,12 @@ function buildEnemyBadgeTitle(label, prefix) {
   return prefix ? `${prefix}: ${normalizedLabel}` : normalizedLabel;
 }
 
-function getEnemyBadgeText(fallbackLabel, lookup, key) {
-  const badgeText = lookup[String(key || '').trim().toLowerCase()];
-  if (badgeText) {
-    return badgeText;
+function resolveDefinitionBadgeText(definition, fallbackLabel) {
+  if (definition?.badgeText) {
+    return definition.badgeText;
   }
-
-  const normalizedLabel = String(fallbackLabel || '').trim();
-  if (!normalizedLabel) {
-    return '?';
-  }
-
-  return normalizedLabel.slice(0, 3).toUpperCase();
-}
-
-function getEnemySubgroupIconPath(subgroupId) {
-  const normalizedId = String(subgroupId || '').trim().toLowerCase();
-  return ENEMY_SUBGROUP_ICON_PATHS[normalizedId] || null;
+  const label = String(fallbackLabel || definition?.label || '').trim();
+  return label ? label.slice(0, 3).toUpperCase() : '?';
 }
 
 export function getEnemyDropdownItemModel(enemy = null) {
@@ -130,14 +97,14 @@ export function getEnemyDropdownItemModel(enemy = null) {
 
   const frontBadge = {
     id: frontId,
-    text: getEnemyBadgeText(frontLabel, ENEMY_FRONT_BADGE_TEXT, frontId),
+    text: resolveDefinitionBadgeText(front, frontLabel),
     label: frontLabel
   };
   const subgroupBadges = subgroupDefinitions.map((definition) => ({
     id: definition.id,
     text: definition.summaryLabel,
     label: definition.label || definition.summaryLabel,
-    iconSrc: getEnemySubgroupIconPath(definition.id)
+    iconSrc: definition.iconSrc || null
   }));
   const armyRoleBadge = armyRoleDefinition
     ? {
@@ -149,7 +116,7 @@ export function getEnemyDropdownItemModel(enemy = null) {
   const targetBadge = targetTypeDefinition
     ? {
       id: targetTypeDefinition.id,
-      text: getEnemyBadgeText(targetTypeDefinition.label, ENEMY_TARGET_BADGE_TEXT, targetTypeDefinition.id),
+      text: resolveDefinitionBadgeText(targetTypeDefinition),
       label: targetTypeDefinition.summaryLabel || targetTypeDefinition.label
     }
     : null;
@@ -381,19 +348,11 @@ function setupShareButton() {
   });
 }
 
-function syncCalculatorModeUi() {
-  const calculatorContainer = document.querySelector('#tab-calculator .calculator-container');
+function syncModeButtonsUi() {
   const modeSingleButton = document.getElementById('calculator-mode-single');
   const modeCompareButton = document.getElementById('calculator-mode-compare');
-  const weaponSortSelect = document.getElementById('calculator-weapon-sort');
-  const weaponRowB = document.getElementById('calculator-weapon-row-b');
-  const weaponLabelA = document.getElementById('calculator-weapon-label-a');
-  const rangeGroupB = document.getElementById('calculator-range-group-b');
-  const rangeLabelA = document.getElementById('calculator-range-label-a');
-
   const compareMode = calculatorState.mode === 'compare';
 
-  calculatorContainer?.classList.toggle('calculator-mode-compare', compareMode);
   modeSingleButton?.classList.toggle('is-active', !compareMode);
   modeCompareButton?.classList.toggle('is-active', compareMode);
   if (modeSingleButton) {
@@ -402,28 +361,48 @@ function syncCalculatorModeUi() {
   if (modeCompareButton) {
     modeCompareButton.title = getCalculatorModeButtonTitle('compare');
   }
+}
+
+function syncModeLayoutUi() {
+  const calculatorContainer = document.querySelector('#tab-calculator .calculator-container');
+  const weaponRowB = document.getElementById('calculator-weapon-row-b');
+  const weaponLabelA = document.getElementById('calculator-weapon-label-a');
+  const rangeGroupB = document.getElementById('calculator-range-group-b');
+  const rangeLabelA = document.getElementById('calculator-range-label-a');
+  const compareMode = calculatorState.mode === 'compare';
+
+  calculatorContainer?.classList.toggle('calculator-mode-compare', compareMode);
   weaponRowB?.classList.toggle('hidden', !compareMode);
   rangeGroupB?.classList.toggle('hidden', !compareMode);
-
   if (weaponLabelA) {
     weaponLabelA.textContent = compareMode ? 'Weapon A:' : 'Weapon:';
   }
   if (rangeLabelA) {
     rangeLabelA.textContent = compareMode ? 'Range A:' : 'Range:';
   }
+}
 
-  if (weaponSortSelect) {
-    const availableSortModes = getWeaponSortModeOptionsForState();
-    weaponSortSelect.innerHTML = '';
-    availableSortModes.forEach(({ id, label }) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = label;
-      weaponSortSelect.appendChild(option);
-    });
-    weaponSortSelect.value = calculatorState.weaponSortMode;
+function syncWeaponSortSelectUi() {
+  const weaponSortSelect = document.getElementById('calculator-weapon-sort');
+  if (!weaponSortSelect) {
+    return;
   }
 
+  const availableSortModes = getWeaponSortModeOptionsForState();
+  weaponSortSelect.innerHTML = '';
+  availableSortModes.forEach(({ id, label }) => {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = label;
+    weaponSortSelect.appendChild(option);
+  });
+  weaponSortSelect.value = calculatorState.weaponSortMode;
+}
+
+function syncCalculatorModeUi() {
+  syncModeButtonsUi();
+  syncModeLayoutUi();
+  syncWeaponSortSelectUi();
   syncWeaponInputValue('A');
   syncWeaponInputValue('B');
   syncEngagementRangeControl('A');
@@ -632,6 +611,34 @@ export function setupEngagementRangeControl(slot) {
   syncEngagementRangeControl(slot);
 }
 
+function buildWeaponDropdownItemElement(weapon) {
+  const item = document.createElement('div');
+  item.className = 'dropdown-item weapon-dropdown-item';
+
+  const displayModel = getWeaponOptionDisplayModel(weapon);
+  item.title = displayModel.apTitle;
+
+  const label = document.createElement('span');
+  label.className = 'weapon-dropdown-label';
+  label.textContent = displayModel.labelText;
+  item.appendChild(label);
+
+  const apValue = document.createElement('span');
+  apValue.className = `weapon-dropdown-ap ${displayModel.apClassName}`.trim();
+  apValue.title = displayModel.apTitle;
+  apValue.textContent = displayModel.apText;
+
+  if (displayModel.apMarkerText) {
+    const marker = document.createElement('span');
+    marker.className = 'weapon-dropdown-ap-marker';
+    marker.textContent = displayModel.apMarkerText;
+    apValue.appendChild(marker);
+  }
+
+  item.appendChild(apValue);
+  return item;
+}
+
 function setupWeaponSelector(slot) {
   const suffix = slot.toLowerCase();
   const weaponInput = document.getElementById(`calculator-weapon-input-${suffix}`)
@@ -644,21 +651,6 @@ function setupWeaponSelector(slot) {
     console.warn(`[calculator] Weapon selector DOM missing for slot ${slot}`);
     return;
   }
-
-  const clearButton = document.createElement('button');
-  clearButton.className = 'calculator-clear-btn';
-  clearButton.textContent = '×';
-  clearButton.type = 'button';
-  clearButton.addEventListener('click', (event) => {
-    event.stopPropagation();
-    setSelectedWeapon(slot, null);
-    syncWeaponInputValue(slot);
-    refreshCalculatorViews();
-    populateDropdown('');
-  });
-  weaponSelector.appendChild(clearButton);
-
-  let isOpen = false;
 
   function populateDropdown(query = '') {
     const options = getWeaponOptions(slot);
@@ -677,8 +669,7 @@ function setupWeaponSelector(slot) {
       const sub = (weapon.sub || '').toLowerCase();
       const code = (weapon.code || '').toLowerCase();
       const name = (weapon.name || '').toLowerCase();
-      const searchable = `${type} ${sub} ${code} ${name}`;
-      return searchable.includes(query.toLowerCase());
+      return `${type} ${sub} ${code} ${name}`.includes(query.toLowerCase());
     });
 
     weaponDropdown.innerHTML = '';
@@ -692,85 +683,32 @@ function setupWeaponSelector(slot) {
     }
 
     filteredOptions.forEach((weapon) => {
-      const item = document.createElement('div');
-      item.className = 'dropdown-item weapon-dropdown-item';
-
-      const displayModel = getWeaponOptionDisplayModel(weapon);
-      item.title = displayModel.apTitle;
-
-      const label = document.createElement('span');
-      label.className = 'weapon-dropdown-label';
-      label.textContent = displayModel.labelText;
-      item.appendChild(label);
-
-      const apValue = document.createElement('span');
-      apValue.className = `weapon-dropdown-ap ${displayModel.apClassName}`.trim();
-      apValue.title = displayModel.apTitle;
-      apValue.textContent = displayModel.apText;
-
-      if (displayModel.apMarkerText) {
-        const marker = document.createElement('span');
-        marker.className = 'weapon-dropdown-ap-marker';
-        marker.textContent = displayModel.apMarkerText;
-        apValue.appendChild(marker);
-      }
-
-      item.appendChild(apValue);
+      const item = buildWeaponDropdownItemElement(weapon);
       item.addEventListener('click', () => {
         setSelectedWeapon(slot, weapon);
         syncWeaponInputValue(slot);
-        closeDropdown();
+        controller.closeDropdown();
         refreshCalculatorViews();
       });
       weaponDropdown.appendChild(item);
     });
   }
 
-  function openDropdown() {
-    isOpen = true;
-    weaponDropdown.classList.remove('hidden');
-    populateDropdown(weaponInput.value);
-  }
-
-  function closeDropdown() {
-    isOpen = false;
-    weaponDropdown.classList.add('hidden');
-  }
-
-  weaponInput.addEventListener('focus', () => {
-    if (!isOpen) {
-      openDropdown();
-    }
-  });
-
-  weaponInput.addEventListener('input', (event) => {
-    if (!isOpen) {
-      openDropdown();
-    }
-
-    populateDropdown(event.target.value);
-  });
-
-  document.addEventListener('click', (event) => {
-    if (!weaponInput.contains(event.target) && !weaponDropdown.contains(event.target)) {
-      closeDropdown();
-    }
-  });
-
-  populateDropdown();
-  syncWeaponInputValue(slot);
-
-  const checkDataAvailability = setInterval(() => {
-    if (weaponsState.groups && weaponsState.groups.length > 0) {
+  const controller = createDropdownController({
+    inputEl: weaponInput,
+    dropdownEl: weaponDropdown,
+    selectorEl: weaponSelector,
+    onClear: () => {
+      setSelectedWeapon(slot, null);
       syncWeaponInputValue(slot);
-      if (isOpen) {
-        populateDropdown(weaponInput.value);
-      }
-      clearInterval(checkDataAvailability);
-    }
-  }, 200);
+      refreshCalculatorViews();
+    },
+    populate: populateDropdown,
+    isDataReady: () => Boolean(weaponsState.groups && weaponsState.groups.length > 0),
+    onDataReady: () => syncWeaponInputValue(slot)
+  });
 
-  setTimeout(() => clearInterval(checkDataAvailability), 5000);
+  syncWeaponInputValue(slot);
 }
 
 function setupEnemySelector() {
@@ -782,22 +720,6 @@ function setupEnemySelector() {
     console.warn('[calculator] Enemy selector DOM missing');
     return;
   }
-
-  const clearButton = document.createElement('button');
-  clearButton.className = 'calculator-clear-btn';
-  clearButton.textContent = '×';
-  clearButton.type = 'button';
-  clearButton.addEventListener('click', (event) => {
-    event.stopPropagation();
-    setCompareView('focused');
-    setSelectedEnemy(null);
-    syncEnemyInputValue();
-    refreshEnemyCalculationViews();
-    populateDropdown('');
-  });
-  enemySelector.appendChild(clearButton);
-
-  let isOpen = false;
 
   function populateDropdown(query = '') {
     const {
@@ -834,7 +756,7 @@ function setupEnemySelector() {
       overviewItem.addEventListener('click', () => {
         setCompareView('overview');
         syncEnemyInputValue();
-        closeDropdown();
+        controller.closeDropdown();
         refreshEnemyCalculationViews();
       });
       enemyDropdown.appendChild(overviewItem);
@@ -853,54 +775,24 @@ function setupEnemySelector() {
       item.addEventListener('click', () => {
         setSelectedEnemy(enemy);
         syncEnemyInputValue();
-        closeDropdown();
+        controller.closeDropdown();
         refreshEnemyCalculationViews();
       });
       enemyDropdown.appendChild(item);
     });
   }
 
-  function openDropdown() {
-    isOpen = true;
-    enemyDropdown.classList.remove('hidden');
-    populateDropdown(enemyInput.value);
-  }
-
-  function closeDropdown() {
-    isOpen = false;
-    enemyDropdown.classList.add('hidden');
-  }
-
-  enemyInput.addEventListener('focus', () => {
-    if (!isOpen) {
-      openDropdown();
-    }
+  const controller = createDropdownController({
+    inputEl: enemyInput,
+    dropdownEl: enemyDropdown,
+    selectorEl: enemySelector,
+    onClear: () => {
+      setCompareView('focused');
+      setSelectedEnemy(null);
+      syncEnemyInputValue();
+      refreshEnemyCalculationViews();
+    },
+    populate: populateDropdown,
+    isDataReady: () => Boolean(enemyState.units && enemyState.units.length > 0)
   });
-
-  enemyInput.addEventListener('input', (event) => {
-    if (!isOpen) {
-      openDropdown();
-    }
-
-    populateDropdown(event.target.value);
-  });
-
-  document.addEventListener('click', (event) => {
-    if (!enemyInput.contains(event.target) && !enemyDropdown.contains(event.target)) {
-      closeDropdown();
-    }
-  });
-
-  populateDropdown();
-
-  const checkDataAvailability = setInterval(() => {
-    if (enemyState.units && enemyState.units.length > 0) {
-      if (isOpen) {
-        populateDropdown(enemyInput.value);
-      }
-      clearInterval(checkDataAvailability);
-    }
-  }, 200);
-
-  setTimeout(() => clearInterval(checkDataAvailability), 5000);
 }
