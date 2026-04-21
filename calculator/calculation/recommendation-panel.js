@@ -1,6 +1,8 @@
 import {
   calculatorState,
-  getEngagementRangeMeters
+  getEngagementRangeMeters,
+  STRICT_MARGIN_RECOMMENDATION_SORT_MODE,
+  toggleRecommendationSortMode
 } from '../data.js';
 import {
   getRecommendationHighlightRangeFloorMeters,
@@ -148,6 +150,11 @@ export function renderRecommendationPanel(container, enemy, {
   const rangeB = getEngagementRangeMeters('B');
   const highlightRangeFloorMeters = getRecommendationHighlightRangeFloorMeters(calculatorState.mode, rangeA, rangeB);
   const recommendationRangeSummary = getRecommendationRangeSummaryText(calculatorState.mode, rangeA, rangeB);
+  const recommendationSortMode = calculatorState.recommendationSortMode;
+  const toggleMarginSort = () => {
+    toggleRecommendationSortMode(STRICT_MARGIN_RECOMMENDATION_SORT_MODE);
+    onRefresh?.();
+  };
   const {
     selectedZone,
     selectedZoneIsPriorityTarget,
@@ -185,6 +192,7 @@ export function renderRecommendationPanel(container, enemy, {
     weapons: filteredRecommendationWeapons,
     overallRecommendationWeapons: filteredRecommendationWeapons,
     highlightRangeFloorMeters,
+    sortMode: recommendationSortMode,
     selectedZoneIndex: calculatorState.selectedZoneIndex,
     relatedTargetZoneIndices,
     hidePeripheralMainRoutes: calculatorState.recommendationNoMainViaLimbs
@@ -258,6 +266,8 @@ export function renderRecommendationPanel(container, enemy, {
       controls: targetedRecommendationControls,
       rows: selectedTargetRows,
       displayStep: TARGETED_RECOMMENDATION_DISPLAY_LIMIT,
+      sortMode: recommendationSortMode,
+      onToggleMarginSort: toggleMarginSort,
       emptyStateText: getTargetedRecommendationEmptyStateText(hasActiveWeaponFilters)
     });
   }
@@ -277,6 +287,8 @@ export function renderRecommendationPanel(container, enemy, {
       }),
       rows: relatedTargetRows,
       displayStep: RELATED_ROUTE_RECOMMENDATION_DISPLAY_LIMIT,
+      sortMode: recommendationSortMode,
+      onToggleMarginSort: toggleMarginSort,
       emptyStateText: getRelatedRouteEmptyStateText({
         selectedZone,
         selectedZoneIsPriorityTarget
@@ -292,6 +304,8 @@ export function renderRecommendationPanel(container, enemy, {
     controls: selectedZone ? null : sharedRecommendationFilterControls,
     rows: displayRows,
     displayStep: RECOMMENDATION_DISPLAY_LIMIT,
+    sortMode: recommendationSortMode,
+    onToggleMarginSort: toggleMarginSort,
     usingFallbackRows,
     emptyStateText: overallRecommendationEmptyStateText
   });

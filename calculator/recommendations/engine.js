@@ -18,7 +18,8 @@ import {
 } from './ranking.js';
 import {
   DEFAULT_RECOMMENDATION_RANGE_METERS,
-  normalizeRecommendationRangeMeters
+  normalizeRecommendationRangeMeters,
+  normalizeRecommendationSortMode
 } from './shared.js';
 
 function buildAttackRecommendation({
@@ -30,6 +31,7 @@ function buildAttackRecommendation({
   highlightRangeFloorMeters = rangeFloorMeters,
   selectedZoneIndex = null,
   hidePeripheralMainRoutes = false,
+  sortMode = 'default',
   instrumentation = null,
   analysisStage = null
 }) {
@@ -43,6 +45,7 @@ function buildAttackRecommendation({
     engagementRangeMeters,
     highlightRangeFloorMeters,
     selectedZoneIndex,
+    sortMode,
     instrumentation,
     analysisStage
   });
@@ -148,6 +151,7 @@ export function buildWeaponRecommendationRows({
   getEngagementRangeMetersForWeapon = null,
   selectedZoneIndex = null,
   hidePeripheralMainRoutes = false,
+  sortMode = 'default',
   instrumentation = null,
   analysisStage = 'overall'
 }) {
@@ -164,6 +168,7 @@ export function buildWeaponRecommendationRows({
   }
 
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
   const rows = weapons
     .map((weapon) => {
       const attackRecommendations = buildRecommendationAttackPackages(weapon, {
@@ -181,11 +186,14 @@ export function buildWeaponRecommendationRows({
           highlightRangeFloorMeters: normalizedRangeFloor,
           selectedZoneIndex,
           hidePeripheralMainRoutes,
+          sortMode: normalizedSortMode,
           instrumentation,
           analysisStage
         }))
         .filter(Boolean)
-        .sort(compareAttackRowRecommendations);
+        .sort((left, right) => compareAttackRowRecommendations(left, right, {
+          sortMode: normalizedSortMode
+        }));
 
       if (attackRecommendations.length === 0) {
         return null;
@@ -202,7 +210,9 @@ export function buildWeaponRecommendationRows({
       };
     })
     .filter(Boolean)
-    .sort(compareWeaponRecommendationRows);
+    .sort((left, right) => compareWeaponRecommendationRows(left, right, {
+      sortMode: normalizedSortMode
+    }));
   recordRecommendationWork(instrumentation, {
     stage: analysisStage,
     method: 'buildWeaponRecommendationRows',
@@ -223,6 +233,7 @@ function buildTargetRecommendationRows({
   selectedZoneIndexForBias = null,
   selectedZoneMatch = false,
   hidePeripheralMainRoutes = false,
+  sortMode = 'default',
   instrumentation = null,
   analysisStage = null
 }) {
@@ -246,6 +257,7 @@ function buildTargetRecommendationRows({
 
   const targetZoneIndexSet = new Set(normalizedTargetZoneIndices);
   const normalizedRangeFloor = normalizeRecommendationRangeMeters(rangeFloorMeters);
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
   const rows = normalizedWeapons
     .map((weapon) => {
       const rawAttackRecommendations = collapseEquivalentTargetAttackRecommendations(
@@ -265,6 +277,7 @@ function buildTargetRecommendationRows({
             highlightRangeFloorMeters: normalizedRangeFloor,
             selectedZoneIndex: selectedZoneIndexForBias,
             hidePeripheralMainRoutes,
+            sortMode: normalizedSortMode,
             instrumentation,
             analysisStage
           }))
@@ -281,13 +294,22 @@ function buildTargetRecommendationRows({
           }))
           .filter((recommendation) => recommendation.candidates.length > 0)
           .map((recommendation) => {
-            const bestCandidate = [...recommendation.candidates].sort(compareZoneRecommendationCandidates)[0];
+            const bestCandidate = [...recommendation.candidates].sort((left, right) => compareZoneRecommendationCandidates(
+              left,
+              right,
+              { sortMode: normalizedSortMode }
+            ))[0];
             return {
               ...recommendation,
               bestCandidate,
               marginRatio: bestCandidate?.marginRatio ?? null,
               marginPercent: bestCandidate?.marginPercent ?? null,
               qualifiesForMargin: recommendation.candidates.some((candidate) => candidate.qualifiesForMargin),
+              displayMarginRatio: bestCandidate?.displayMarginRatio ?? null,
+              displayMarginPercent: bestCandidate?.displayMarginPercent ?? null,
+              nearMissRatio: bestCandidate?.nearMissRatio ?? null,
+              nearMissPercent: bestCandidate?.nearMissPercent ?? null,
+              qualifiesForNearMiss: recommendation.candidates.some((candidate) => candidate.qualifiesForNearMiss),
               hasSelectedZoneMatch: selectedZoneMatch,
               hasOneShotKill: recommendation.candidates.some((candidate) => candidate.isOneShotKill),
               hasOneShotCritical: recommendation.candidates.some((candidate) => candidate.isOneShotCritical),
@@ -297,7 +319,9 @@ function buildTargetRecommendationRows({
               hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
             };
           })
-          .sort(compareTargetAttackRowRecommendations),
+          .sort((left, right) => compareTargetAttackRowRecommendations(left, right, {
+            sortMode: normalizedSortMode
+          })),
         {
           instrumentation,
           analysisStage
@@ -326,7 +350,9 @@ function buildTargetRecommendationRows({
       };
     })
     .filter(Boolean)
-    .sort(compareTargetWeaponRecommendationRows);
+    .sort((left, right) => compareTargetWeaponRecommendationRows(left, right, {
+      sortMode: normalizedSortMode
+    }));
   recordRecommendationWork(instrumentation, {
     stage: analysisStage,
     method: 'buildTargetRecommendationRows',
@@ -346,6 +372,7 @@ export function buildSelectedTargetRecommendationRows({
   getEngagementRangeMetersForWeapon = null,
   selectedZoneIndex = null,
   hidePeripheralMainRoutes = false,
+  sortMode = 'default',
   instrumentation = null,
   analysisStage = 'selectedTarget'
 }) {
@@ -358,6 +385,7 @@ export function buildSelectedTargetRecommendationRows({
     selectedZoneIndexForBias: selectedZoneIndex,
     selectedZoneMatch: true,
     hidePeripheralMainRoutes,
+    sortMode,
     instrumentation,
     analysisStage
   });
@@ -370,6 +398,7 @@ export function buildRelatedTargetRecommendationRows({
   getEngagementRangeMetersForWeapon = null,
   relatedZoneIndices = [],
   hidePeripheralMainRoutes = false,
+  sortMode = 'default',
   instrumentation = null,
   analysisStage = 'relatedTarget'
 }) {
@@ -381,6 +410,7 @@ export function buildRelatedTargetRecommendationRows({
     targetZoneIndices: relatedZoneIndices,
     selectedZoneMatch: false,
     hidePeripheralMainRoutes,
+    sortMode,
     instrumentation,
     analysisStage
   });

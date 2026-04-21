@@ -9,9 +9,11 @@ import {
 } from './packages.js';
 import {
   compareBooleanDescending,
+  compareRecommendationFit,
   compareNullableNumber,
   compareRecommendationHeadroom,
-  compareRecommendationMargins
+  compareRecommendationMargins,
+  normalizeRecommendationSortMode
 } from './shared.js';
 
 function getRecommendationPackageComponentCount(recommendation) {
@@ -84,13 +86,16 @@ export function collapseEquivalentTargetAttackRecommendations(attackRecommendati
   return result;
 }
 
-export function compareAttackRowRecommendations(left, right) {
-  let comparison = compareBooleanDescending(left.hasSelectedZoneMatch, right.hasSelectedZoneMatch);
-  if (comparison !== 0) {
-    return comparison;
+function compareAttackRecommendationPriority(left, right, sortMode = 'default') {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  if (normalizedSortMode === 'strict-margin') {
+    const comparison = compareRecommendationFit(left, right);
+    if (comparison !== 0) {
+      return comparison;
+    }
   }
 
-  comparison = compareNullableNumber(
+  const comparison = compareNullableNumber(
     left.bestCandidate?.shotsToKill ?? null,
     right.bestCandidate?.shotsToKill ?? null,
     'asc'
@@ -99,17 +104,47 @@ export function compareAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  comparison = compareRecommendationMargins(left, right);
+  return normalizedSortMode === 'strict-margin'
+    ? 0
+    : compareRecommendationMargins(left, right);
+}
+
+function compareWeaponRecommendationPriority(left, right, sortMode = 'default') {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  if (normalizedSortMode === 'strict-margin') {
+    const comparison = compareRecommendationFit(left, right);
+    if (comparison !== 0) {
+      return comparison;
+    }
+  }
+
+  const comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
+  return normalizedSortMode === 'strict-margin'
+    ? 0
+    : compareRecommendationHeadroom(left, right);
+}
+
+export function compareAttackRowRecommendations(left, right, {
+  sortMode = 'default'
+} = {}) {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  let comparison = compareBooleanDescending(left.hasSelectedZoneMatch, right.hasSelectedZoneMatch);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
+  comparison = compareAttackRecommendationPriority(left, right, normalizedSortMode);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate, {
+    sortMode: normalizedSortMode
+  });
   if (comparison !== 0) {
     return comparison;
   }
@@ -119,36 +154,12 @@ export function compareAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.penetratesAll, right.penetratesAll);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
   comparison = getRecommendationPackageComponentCount(left) - getRecommendationPackageComponentCount(right);
   if (comparison !== 0) {
     return comparison;
   }
 
-  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
-}
-
-export function compareWeaponRecommendationRows(left, right) {
-  let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareRecommendationHeadroom(left, right);
+  comparison = compareBooleanDescending(left.penetratesAll, right.penetratesAll);
   if (comparison !== 0) {
     return comparison;
   }
@@ -163,7 +174,36 @@ export function compareWeaponRecommendationRows(left, right) {
     return comparison;
   }
 
-  comparison = compareAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation);
+  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
+}
+
+export function compareWeaponRecommendationRows(left, right, {
+  sortMode = 'default'
+} = {}) {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareWeaponRecommendationPriority(left, right, normalizedSortMode);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation, {
+    sortMode: normalizedSortMode
+  });
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
   if (comparison !== 0) {
     return comparison;
   }
@@ -176,27 +216,18 @@ export function compareWeaponRecommendationRows(left, right) {
   return compareWeaponOptionBaseOrder(left.weapon, right.weapon);
 }
 
-export function compareTargetAttackRowRecommendations(left, right) {
-  let comparison = compareNullableNumber(
-    left.bestCandidate?.shotsToKill ?? null,
-    right.bestCandidate?.shotsToKill ?? null,
-    'asc'
-  );
+export function compareTargetAttackRowRecommendations(left, right, {
+  sortMode = 'default'
+} = {}) {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  let comparison = compareAttackRecommendationPriority(left, right, normalizedSortMode);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareRecommendationMargins(left, right);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
+  comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate, {
+    sortMode: normalizedSortMode
+  });
   if (comparison !== 0) {
     return comparison;
   }
@@ -206,26 +237,7 @@ export function compareTargetAttackRowRecommendations(left, right) {
     return comparison;
   }
 
-  comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
   comparison = getRecommendationPackageComponentCount(left) - getRecommendationPackageComponentCount(right);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
-}
-
-export function compareTargetWeaponRecommendationRows(left, right) {
-  let comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareRecommendationHeadroom(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -240,7 +252,31 @@ export function compareTargetWeaponRecommendationRows(left, right) {
     return comparison;
   }
 
-  comparison = compareTargetAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation);
+  return String(left?.attackName || '').localeCompare(String(right?.attackName || ''));
+}
+
+export function compareTargetWeaponRecommendationRows(left, right, {
+  sortMode = 'default'
+} = {}) {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  let comparison = compareWeaponRecommendationPriority(left, right, normalizedSortMode);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareTargetAttackRowRecommendations(left.bestAttackRecommendation, right.bestAttackRecommendation, {
+    sortMode: normalizedSortMode
+  });
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
   if (comparison !== 0) {
     return comparison;
   }

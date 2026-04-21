@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import './env-stubs.js';
+import { TestDocument } from './dom-stubs.js';
 
 import {
   calculatorState,
@@ -14,6 +15,7 @@ import {
   getEnemyColumnsForState,
   getOverviewColumnsForState
 } from '../calculator/rendering.js';
+import { buildMetricColumnCell } from '../calculator/rendering/metric-cells.js';
 import {
   applyExplosiveDisplayToCell,
   EXPLOSIVE_DISPLAY_COLUMN_LABEL,
@@ -65,7 +67,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     analysisColumns.map((column) => column.key),
-    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const statsColumns = getEnemyColumnsForState({
@@ -83,7 +85,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     overviewAnalysisColumns.map((column) => column.key),
-    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const scopedOverviewColumns = getOverviewColumnsForState({
@@ -92,8 +94,63 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     scopedOverviewColumns.map((column) => column.key),
-    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'shotsB', 'rangeB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
+});
+
+test('margin metric cells render one-shot and multi-shot headroom titles', () => {
+  const originalDocument = globalThis.document;
+
+  try {
+    globalThis.document = new TestDocument();
+
+    const oneShotCell = buildMetricColumnCell('marginA', {
+      bySlot: {
+        A: {
+          weapon: { name: 'A' },
+          selectedAttackCount: 1,
+          damagesZone: true,
+          shotsToKill: 1,
+          marginPercent: 5,
+          displayMarginPercent: 5
+        }
+      }
+    });
+    assert.equal(oneShotCell.textContent, '+5%');
+    assert.match(oneShotCell.title, /one-shot margin/i);
+
+    const multiShotCell = buildMetricColumnCell('marginA', {
+      bySlot: {
+        A: {
+          weapon: { name: 'A' },
+          selectedAttackCount: 1,
+          damagesZone: true,
+          shotsToKill: 2,
+          marginPercent: null,
+          displayMarginPercent: 33
+        }
+      }
+    });
+    assert.equal(multiShotCell.textContent, '+33%');
+    assert.match(multiShotCell.title, /2-shot margin/i);
+
+    const unavailableCell = buildMetricColumnCell('marginA', {
+      bySlot: {
+        A: {
+          weapon: { name: 'A' },
+          selectedAttackCount: 1,
+          damagesZone: true,
+          shotsToKill: null,
+          marginPercent: null,
+          displayMarginPercent: null
+        }
+      }
+    });
+    assert.equal(unavailableCell.textContent, '-');
+    assert.match(unavailableCell.title, /margin unavailable/i);
+  } finally {
+    globalThis.document = originalDocument;
+  }
 });
 
 // ========================================================================

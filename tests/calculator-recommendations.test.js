@@ -1163,7 +1163,8 @@ test('buildWeaponRecommendationRows keeps nearMissDisplayPercent null for long m
 });
 
 // ===========================================================================
-// Shot-count sorting: shotsToKill as primary, margin as secondary tie-breaker
+// Default sorting keeps shots-to-kill primary, but tighter fit should matter
+// before highlight-style signals, and strict-margin mode can invert shot count.
 // ===========================================================================
 
 test('buildWeaponRecommendationRows sorts fewer-shot weapons above more-shot weapons', () => {
@@ -1203,7 +1204,7 @@ test('buildWeaponRecommendationRows sorts fewer-shot weapons above more-shot wea
   assert.equal(rows[2].shotsToKill, 3);
 });
 
-test('buildWeaponRecommendationRows uses display margin as secondary tie-breaker within the same shot count', () => {
+test('buildWeaponRecommendationRows uses tighter display margin as the same-shot tie-breaker', () => {
   const enemy = {
     name: 'Tie-Breaker Dummy',
     health: 200,
@@ -1211,15 +1212,15 @@ test('buildWeaponRecommendationRows uses display margin as secondary tie-breaker
       makeZone('Main', { health: 200, av: 1, toMainPercent: 1 })
     ]
   };
-  // Both need 2 shots. Tight has +60% per-shot headroom; Loose has +5%.
+  // Both need 2 shots. The tighter +5% fit should beat the roomier +60% fit.
   const weapons = [
-    makeWeapon('Loose Two-Shot', {
-      index: 0,
-      rows: [makeAttackRow('Loose', 105, 2)]
-    }),
     makeWeapon('Tight Two-Shot', {
+      index: 0,
+      rows: [makeAttackRow('Tight', 105, 2)]
+    }),
+    makeWeapon('Comfortable Two-Shot', {
       index: 1,
-      rows: [makeAttackRow('Tight', 160, 2)]
+      rows: [makeAttackRow('Comfortable', 160, 2)]
     })
   ];
 
@@ -1231,10 +1232,10 @@ test('buildWeaponRecommendationRows uses display margin as secondary tie-breaker
 
   assert.equal(rows[0].weapon.name, 'Tight Two-Shot');
   assert.equal(rows[0].shotsToKill, 2);
-  assert.equal(rows[0].displayMarginPercent, 60);
-  assert.equal(rows[1].weapon.name, 'Loose Two-Shot');
+  assert.equal(rows[0].displayMarginPercent, 5);
+  assert.equal(rows[1].weapon.name, 'Comfortable Two-Shot');
   assert.equal(rows[1].shotsToKill, 2);
-  assert.equal(rows[1].displayMarginPercent, 5);
+  assert.equal(rows[1].displayMarginPercent, 60);
 });
 
 test('buildWeaponRecommendationRows sorts one-shot kills before one-shot kills without margin within same shot count', () => {
@@ -1267,4 +1268,114 @@ test('buildWeaponRecommendationRows sorts one-shot kills before one-shot kills w
   assert.equal(rows[0].qualifiesForMargin, true);
   assert.equal(rows[1].weapon.name, 'Overkill');
   assert.equal(rows[1].qualifiesForMargin, false);
+});
+
+test('buildWeaponRecommendationRows keeps tighter multi-shot fit ahead of fast-TTK highlights', () => {
+  const enemy = {
+    name: 'Overall Target Margin Dummy',
+    health: 200,
+    zones: [
+      makeZone('Main', { health: 200, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Comfortable Sprinter', {
+      index: 0,
+      rpm: 600,
+      rows: [makeAttackRow('Comfortable Sprinter', 160, 2)]
+    }),
+    makeWeapon('Tight Tap', {
+      index: 1,
+      rpm: 60,
+      rows: [makeAttackRow('Tight Tap', 105, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'Tight Tap');
+  assert.equal(rows[0].displayMarginPercent, 5);
+  assert.equal(rows[0].hasFastTtk, false);
+  assert.equal(rows[1].weapon.name, 'Comfortable Sprinter');
+  assert.equal(rows[1].displayMarginPercent, 60);
+  assert.equal(rows[1].hasFastTtk, true);
+});
+
+test('buildSelectedTargetRecommendationRows keeps tighter multi-shot fit ahead of fast-TTK highlights', () => {
+  const enemy = {
+    name: 'Target Margin Dummy',
+    health: 200,
+    zones: [
+      makeZone('Main', { health: 200, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Comfortable Sprinter', {
+      index: 0,
+      rpm: 600,
+      rows: [makeAttackRow('Comfortable Sprinter', 160, 2)]
+    }),
+    makeWeapon('Tight Tap', {
+      index: 1,
+      rpm: 60,
+      rows: [makeAttackRow('Tight Tap', 105, 2)]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+
+  assert.equal(rows[0].weapon.name, 'Tight Tap');
+  assert.equal(rows[0].displayMarginPercent, 5);
+  assert.equal(rows[0].hasFastTtk, false);
+  assert.equal(rows[1].weapon.name, 'Comfortable Sprinter');
+  assert.equal(rows[1].displayMarginPercent, 60);
+  assert.equal(rows[1].hasFastTtk, true);
+});
+
+test('buildWeaponRecommendationRows strict-margin mode prioritizes headroom before shot count', () => {
+  const enemy = {
+    name: 'Strict Margin Dummy',
+    health: 300,
+    zones: [
+      makeZone('Main', { health: 300, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Support One-Shot', {
+      index: 0,
+      rows: [makeAttackRow('Support One-Shot', 366, 2)]
+    }),
+    makeWeapon('Primary Three-Shot', {
+      index: 1,
+      rows: [makeAttackRow('Primary Three-Shot', 103, 2)]
+    })
+  ];
+
+  const defaultRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+  const strictRows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    sortMode: 'strict-margin'
+  });
+
+  assert.equal(defaultRows[0].weapon.name, 'Support One-Shot');
+  assert.equal(defaultRows[0].shotsToKill, 1);
+  assert.equal(strictRows[0].weapon.name, 'Primary Three-Shot');
+  assert.equal(strictRows[0].shotsToKill, 3);
+  assert.equal(strictRows[0].displayMarginPercent, 3);
+  assert.equal(strictRows[1].marginPercent, 22);
 });

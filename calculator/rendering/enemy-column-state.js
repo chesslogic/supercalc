@@ -27,11 +27,14 @@ const ENEMY_SINGLE_ANALYSIS_METRIC_COLUMNS = [
   { key: 'range', label: 'Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
   { key: 'ttk', label: 'TTK' }
 ];
+const ENEMY_MARGIN_COLUMN_TITLE = 'Extra displayed damage above the per-shot breakpoint for the current kill path. One-shot rows show direct overkill; multi-shot rows show per-shot headroom for the displayed shot count.';
 const ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS = [
   { key: 'shotsA', label: 'A Shots' },
   { key: 'rangeA', label: 'A Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
+  { key: 'marginA', label: 'A Margin', title: ENEMY_MARGIN_COLUMN_TITLE },
   { key: 'shotsB', label: 'B Shots' },
   { key: 'rangeB', label: 'B Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
+  { key: 'marginB', label: 'B Margin', title: ENEMY_MARGIN_COLUMN_TITLE },
   { key: 'shotsDiff', label: 'Diff Shots' },
   { key: 'ttkA', label: 'A TTK' },
   { key: 'ttkB', label: 'B TTK' },
@@ -44,9 +47,11 @@ export const METRIC_COLUMN_CONFIG = {
   ttk: { kind: 'slot', slot: 'A', valueType: 'ttk' },
   shotsA: { kind: 'slot', slot: 'A', valueType: 'shots' },
   rangeA: { kind: 'slot', slot: 'A', valueType: 'range' },
+  marginA: { kind: 'slot', slot: 'A', valueType: 'margin' },
   ttkA: { kind: 'slot', slot: 'A', valueType: 'ttk' },
   shotsB: { kind: 'slot', slot: 'B', valueType: 'shots' },
   rangeB: { kind: 'slot', slot: 'B', valueType: 'range' },
+  marginB: { kind: 'slot', slot: 'B', valueType: 'margin' },
   ttkB: { kind: 'slot', slot: 'B', valueType: 'ttk' },
   shotsDiff: { kind: 'diff', metricKey: 'diffShots', valueType: 'shots' },
   ttkDiff: { kind: 'diff', metricKey: 'diffTtkSeconds', valueType: 'ttk' }

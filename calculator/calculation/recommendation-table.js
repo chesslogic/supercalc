@@ -1,12 +1,24 @@
+import {
+  DEFAULT_RECOMMENDATION_SORT_MODE,
+  STRICT_MARGIN_RECOMMENDATION_SORT_MODE
+} from '../data.js';
 import { RECOMMENDATION_HEADER_DEFINITIONS } from './recommendation-constants.js';
 import { appendRecommendationTableRow } from './recommendation-row.js';
+
+function getRecommendationMarginSortTitle(sortMode = DEFAULT_RECOMMENDATION_SORT_MODE) {
+  return sortMode === STRICT_MARGIN_RECOMMENDATION_SORT_MODE
+    ? 'Strict Margin sorting is active. Click again to return to the default recommendation ranking.'
+    : 'Click to sort recommendations by the strictest Margin first. Click again to return to the default recommendation ranking.';
+}
 
 function renderRecommendationTable({
   body,
   rows,
   usingFallbackRows = false,
   visibleCount = null,
-  headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS
+  headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS,
+  sortMode = DEFAULT_RECOMMENDATION_SORT_MODE,
+  onToggleMarginSort = null
 }) {
   const sourceRows = Array.isArray(rows) ? rows : [];
   const normalizedVisibleCount = Number.isFinite(visibleCount)
@@ -22,9 +34,33 @@ function renderRecommendationTable({
   const headerRow = document.createElement('tr');
   headerDefinitions.forEach(({ label, title }) => {
     const th = document.createElement('th');
-    th.textContent = label;
     if (title) {
       th.title = title;
+    }
+    const isInteractiveMarginHeader = label === 'Margin' && typeof onToggleMarginSort === 'function';
+    if (!isInteractiveMarginHeader) {
+      th.textContent = label;
+      headerRow.appendChild(th);
+      return;
+    }
+
+    const sortActive = sortMode === STRICT_MARGIN_RECOMMENDATION_SORT_MODE;
+    th.classList.add('calc-recommend-sort-header');
+    if (sortActive) {
+      th.classList.add('is-active');
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `calc-recommend-sort-button${sortActive ? ' is-active' : ''}`;
+    button.textContent = label;
+    button.title = getRecommendationMarginSortTitle(sortMode);
+    if (typeof button.setAttribute === 'function') {
+      button.setAttribute('aria-pressed', sortActive ? 'true' : 'false');
+    }
+    button.addEventListener('click', () => onToggleMarginSort());
+    th.appendChild(button);
+    if (th.textContent !== label) {
+      th.textContent = label;
     }
     headerRow.appendChild(th);
   });
@@ -74,7 +110,9 @@ export function renderRecommendationSubsection({
   usingFallbackRows = false,
   emptyStateText = 'No recommendation rows are available for this target.',
   displayStep = null,
-  headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS
+  headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS,
+  sortMode = DEFAULT_RECOMMENDATION_SORT_MODE,
+  onToggleMarginSort = null
 }) {
   const section = document.createElement('section');
   section.className = 'calc-recommend-section';
@@ -161,7 +199,9 @@ export function renderRecommendationSubsection({
       rows: sourceRows,
       usingFallbackRows,
       visibleCount: initialVisibleCount,
-      headerDefinitions
+      headerDefinitions,
+      sortMode,
+      onToggleMarginSort
     });
     tbody = tableRender.tbody;
     updatePaginationControls();

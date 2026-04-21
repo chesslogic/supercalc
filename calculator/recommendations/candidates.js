@@ -7,12 +7,14 @@ import { FAST_TTK_THRESHOLD_SECONDS } from '../combat-constants.js';
 import {
   cloneDistanceInfo,
   compareBooleanDescending,
+  compareRecommendationFit,
   compareNullableNumber,
   compareRecommendationMargins,
   getOutcomePriority,
   getRangeMeters,
   getRecommendationRangeStatus,
   normalizeText,
+  normalizeRecommendationSortMode,
   RANGE_STATUS_ORDER,
   RECOMMENDATION_MARGIN_RATIO_THRESHOLD,
   RECOMMENDATION_NEAR_MISS_MAX_SHOTS,
@@ -438,6 +440,7 @@ export function buildRecommendationCandidates({
   engagementRangeMeters = 0,
   highlightRangeFloorMeters,
   selectedZoneIndex = null,
+  sortMode = 'default',
   instrumentation = null,
   analysisStage = null
 }) {
@@ -505,7 +508,11 @@ export function buildRecommendationCandidates({
 
   const result = {
     zoneRows,
-    candidates: [...directCandidates, ...sequenceCandidates].sort(compareZoneRecommendationCandidates)
+    candidates: [...directCandidates, ...sequenceCandidates].sort((left, right) => compareZoneRecommendationCandidates(
+      left,
+      right,
+      { sortMode }
+    ))
   };
   recordRecommendationWork(instrumentation, {
     stage: analysisStage,
@@ -528,25 +535,27 @@ export function isSelectedTargetBypassCandidate(candidate) {
     && mainDamage > 0;
 }
 
-export function compareZoneRecommendationCandidates(left, right) {
+export function compareZoneRecommendationCandidates(left, right, {
+  sortMode = 'default'
+} = {}) {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
   let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareRecommendationMargins(left, right);
+  comparison = normalizedSortMode === 'strict-margin'
+    ? compareRecommendationFit(left, right)
+    : compareRecommendationMargins(left, right);
   if (comparison !== 0) {
     return comparison;
   }
 
-  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
-  if (comparison !== 0) {
-    return comparison;
+  if (normalizedSortMode === 'strict-margin') {
+    comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
+    if (comparison !== 0) {
+      return comparison;
+    }
   }
 
   comparison = (RANGE_STATUS_ORDER[left.rangeStatus] ?? RANGE_STATUS_ORDER.failed)
@@ -560,7 +569,14 @@ export function compareZoneRecommendationCandidates(left, right) {
     return comparison;
   }
 
-  comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
+  if (normalizedSortMode !== 'strict-margin') {
+    comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
+    if (comparison !== 0) {
+      return comparison;
+    }
+  }
+
+  comparison = compareNullableNumber(getRangeMeters(left.effectiveDistance), getRangeMeters(right.effectiveDistance), 'asc');
   if (comparison !== 0) {
     return comparison;
   }
@@ -570,7 +586,12 @@ export function compareZoneRecommendationCandidates(left, right) {
     return comparison;
   }
 
-  comparison = compareNullableNumber(getRangeMeters(left.effectiveDistance), getRangeMeters(right.effectiveDistance), 'asc');
+  comparison = compareBooleanDescending(left.hasCriticalRecommendation, right.hasCriticalRecommendation);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(left.hasFastTtk, right.hasFastTtk);
   if (comparison !== 0) {
     return comparison;
   }

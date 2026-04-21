@@ -9,6 +9,7 @@ export const RECOMMENDATION_FRAGMENT_HIT_CAP = 3;
 export const RECOMMENDATION_IMPLICIT_REPEAT_HITS = 2;
 export const RECOMMENDATION_NEAR_MISS_MAX_SHOTS = 3;
 export const RECOMMENDATION_PERIPHERAL_MAIN_TOMAIN_THRESHOLD = 0.5;
+export const DEFAULT_RECOMMENDATION_SORT_MODE = 'default';
 
 export const RANGE_STATUS_ORDER = {
   qualified: 0,
@@ -17,6 +18,12 @@ export const RANGE_STATUS_ORDER = {
 };
 
 export { OUTCOME_PRIORITY };
+
+export function normalizeRecommendationSortMode(sortMode = DEFAULT_RECOMMENDATION_SORT_MODE) {
+  return String(sortMode ?? '').trim().toLowerCase() === 'strict-margin'
+    ? 'strict-margin'
+    : DEFAULT_RECOMMENDATION_SORT_MODE;
+}
 
 export function toFiniteNumber(value) {
   return _toFiniteNumber(value);
@@ -65,11 +72,33 @@ export function compareRecommendationMargins(left, right) {
     return comparison;
   }
 
-  return compareNullableNumber(left?.displayMarginRatio, right?.displayMarginRatio, 'desc');
+  return compareNullableNumber(left?.displayMarginRatio, right?.displayMarginRatio, 'asc');
+}
+
+export function getRecommendationFitRatio(recommendation) {
+  if (recommendation?.marginRatio !== null && recommendation?.marginRatio !== undefined) {
+    return recommendation.marginRatio;
+  }
+
+  return recommendation?.displayMarginRatio ?? null;
+}
+
+export function compareRecommendationFit(left, right) {
+  let comparison = compareNullableNumber(
+    getRecommendationFitRatio(left),
+    getRecommendationFitRatio(right),
+    'asc'
+  );
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  return compareBooleanDescending(left?.qualifiesForMargin, right?.qualifiesForMargin);
 }
 
 // Within the same shotsToKill bucket, use the existing one-shot Margin semantics first,
-// then fall back to generalized per-shot headroom for multi-shot rows.
+// then fall back to generalized per-shot headroom for multi-shot rows, where a tighter
+// breakpoint fit is preferable to excess overkill.
 export function compareRecommendationHeadroom(left, right) {
   const leftShots = left?.shotsToKill ?? null;
   const rightShots = right?.shotsToKill ?? null;

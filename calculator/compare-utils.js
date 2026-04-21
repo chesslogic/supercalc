@@ -1,4 +1,5 @@
 import {
+  getZoneDisplayedKillPath,
   getZoneDisplayedShotsToKill,
   getZoneDisplayedTtkSeconds,
   getZoneOutcomeKind,
@@ -156,6 +157,103 @@ function hasDamagePath(zoneSummary) {
   return (zoneSummary?.totalDamagePerCycle || 0) > 0 || (zoneSummary?.totalDamageToMainPerCycle || 0) > 0;
 }
 
+function getDisplayedTargetHealth(zoneSummary, outcomeKind) {
+  const displayedKillPath = getZoneDisplayedKillPath(outcomeKind, zoneSummary?.killSummary);
+  if (!displayedKillPath) {
+    return null;
+  }
+
+  if (displayedKillPath === 'main') {
+    return toFiniteNumber(zoneSummary?.enemyMainHealth);
+  }
+
+  const zoneHealth = toFiniteNumber(zoneSummary?.zoneHealth);
+  if (zoneHealth === null || zoneHealth < 0) {
+    return null;
+  }
+
+  const zoneCon = toFiniteNumber(zoneSummary?.zoneCon) ?? 0;
+  const usesCombinedHealth = zoneCon > 0
+    && zoneSummary?.killSummary?.zoneShotsToKillWithCon !== null
+    && zoneSummary?.killSummary?.zoneEffectiveShotsToKill === zoneSummary?.killSummary?.zoneShotsToKillWithCon;
+
+  return usesCombinedHealth
+    ? zoneHealth + zoneCon
+    : zoneHealth;
+}
+
+function getDisplayedDamagePerCycle(zoneSummary, outcomeKind) {
+  const displayedKillPath = getZoneDisplayedKillPath(outcomeKind, zoneSummary?.killSummary);
+  if (displayedKillPath === 'main') {
+    return toFiniteNumber(zoneSummary?.totalDamageToMainPerCycle);
+  }
+
+  if (displayedKillPath === 'zone') {
+    return toFiniteNumber(zoneSummary?.totalDamagePerCycle);
+  }
+
+  return null;
+}
+
+function getZoneMarginInfo({
+  zoneSummary,
+  outcomeKind,
+  shotsToKill
+}) {
+  if (shotsToKill !== 1) {
+    return null;
+  }
+
+  const targetHealth = getDisplayedTargetHealth(zoneSummary, outcomeKind);
+  const damagePerCycle = getDisplayedDamagePerCycle(zoneSummary, outcomeKind);
+  if (
+    targetHealth === null
+    || damagePerCycle === null
+    || targetHealth <= 0
+    || damagePerCycle < targetHealth
+  ) {
+    return null;
+  }
+
+  const ratio = (damagePerCycle - targetHealth) / targetHealth;
+  return {
+    ratio,
+    percent: Math.max(0, Math.round(ratio * 100))
+  };
+}
+
+function getZoneDisplayMarginInfo({
+  zoneSummary,
+  outcomeKind,
+  shotsToKill
+}) {
+  if (shotsToKill === null || shotsToKill < 1) {
+    return null;
+  }
+
+  const targetHealth = getDisplayedTargetHealth(zoneSummary, outcomeKind);
+  const damagePerCycle = getDisplayedDamagePerCycle(zoneSummary, outcomeKind);
+  if (
+    targetHealth === null
+    || damagePerCycle === null
+    || targetHealth <= 0
+    || damagePerCycle <= 0
+  ) {
+    return null;
+  }
+
+  const requiredDamagePerCycle = targetHealth / shotsToKill;
+  if (requiredDamagePerCycle <= 0 || damagePerCycle < requiredDamagePerCycle) {
+    return null;
+  }
+
+  const ratio = (damagePerCycle - requiredDamagePerCycle) / requiredDamagePerCycle;
+  return {
+    ratio,
+    percent: Math.max(0, Math.round(ratio * 100))
+  };
+}
+
 function summarizeZoneForSlot({
   zone,
   enemy = null,
@@ -203,6 +301,22 @@ function summarizeZoneForSlot({
     selectedAttackCount: selectedAttacks.length,
     damagesZone
   });
+  const marginInfo = getZoneMarginInfo({
+    zoneSummary,
+    outcomeKind,
+    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary)
+  });
+  const displayMarginInfo = getZoneDisplayMarginInfo({
+    zoneSummary,
+    outcomeKind,
+    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary)
+  });
+  const marginDisplayPercent = Number.isFinite(marginInfo?.percent)
+    ? marginInfo.percent
+    : (displayMarginInfo?.percent ?? null);
+  const marginSortRatio = marginInfo?.ratio ?? displayMarginInfo?.ratio ?? null;
+  const displayedShotsToKill = getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary);
+  const displayedTtkSeconds = getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary);
 
   return {
     weapon,
@@ -211,10 +325,16 @@ function summarizeZoneForSlot({
     criticalInfo,
     outcomeKind,
     damagesZone,
-    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary),
-    ttkSeconds: getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary),
+    shotsToKill: displayedShotsToKill,
+    ttkSeconds: displayedTtkSeconds,
     hasRpm: zoneSummary?.killSummary?.hasRpm ?? false,
-    effectiveDistance
+    effectiveDistance,
+    marginRatio: marginInfo?.ratio ?? null,
+    marginPercent: marginInfo?.percent ?? null,
+    displayMarginRatio: displayMarginInfo?.ratio ?? null,
+    displayMarginPercent: displayMarginInfo?.percent ?? null,
+    marginSortRatio,
+    marginDisplayPercent
   };
 }
 
@@ -640,11 +760,11 @@ export function getOutcomeGroupingSlot(mode, sortKey) {
     return 'A';
   }
 
-  if (sortKey === 'shotsA' || sortKey === 'ttkA') {
+  if (sortKey === 'shotsA' || sortKey === 'ttkA' || sortKey === 'marginA') {
     return 'A';
   }
 
-  if (sortKey === 'shotsB' || sortKey === 'ttkB') {
+  if (sortKey === 'shotsB' || sortKey === 'ttkB' || sortKey === 'marginB') {
     return 'B';
   }
 
@@ -710,6 +830,10 @@ export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
       return row.metrics?.bySlot?.A?.ttkSeconds ?? null;
     case 'ttkB':
       return row.metrics?.bySlot?.B?.ttkSeconds ?? null;
+    case 'marginA':
+      return row.metrics?.bySlot?.A?.marginSortRatio ?? null;
+    case 'marginB':
+      return row.metrics?.bySlot?.B?.marginSortRatio ?? null;
     case 'ttkDiff':
       return getDiffSortValue(row.metrics?.diffTtkSeconds, diffDisplayMode);
     default:

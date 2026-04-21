@@ -57,6 +57,24 @@ export function getMetricTitle(slot, slotMetrics, valueType, metrics = null) {
       : 'Selected attacks do not damage this part';
   }
 
+  if (valueType === 'margin') {
+    const displayPercent = Number.isFinite(slotMetrics?.marginPercent)
+      ? slotMetrics.marginPercent
+      : (Number.isFinite(slotMetrics?.displayMarginPercent)
+          ? slotMetrics.displayMarginPercent
+          : null);
+    if (displayPercent === null || slotMetrics.shotsToKill === null) {
+      return 'Margin unavailable when the displayed kill path has no damage/health breakpoint to compare.';
+    }
+
+    const roundedPercent = Math.max(0, Math.round(displayPercent));
+    if (Number.isFinite(slotMetrics?.marginPercent)) {
+      return `One-shot margin: +${roundedPercent}%. Displayed damage per cycle exceeds the displayed target health for this breakpoint.`;
+    }
+
+    return `${slotMetrics.shotsToKill}-shot margin: +${roundedPercent}%. Displayed damage per cycle exceeds the per-shot breakpoint required for this displayed kill path.`;
+  }
+
   if (valueType === 'ttk' && !slotMetrics.hasRpm) {
     return calculatorState.mode === 'compare'
       ? `Weapon ${slot} TTK is unavailable without RPM`

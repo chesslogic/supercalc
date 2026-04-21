@@ -5,6 +5,10 @@ import { getZoneOutcomeDescription, getZoneOutcomeLabel } from '../zone-damage.j
 import { METRIC_COLUMN_CONFIG } from './enemy-columns.js';
 import { formatPercentDiff, getDiffMetricTitle, getMetricTitle } from './metric-tooltips.js';
 
+function createElement(tagName) {
+  return globalThis.document.createElement(tagName);
+}
+
 function appendOutcomeBadge(cell, outcomeKind) {
   const outcomeLabel = getZoneOutcomeLabel(outcomeKind);
   const outcomeDescription = getZoneOutcomeDescription(outcomeKind);
@@ -12,7 +16,7 @@ function appendOutcomeBadge(cell, outcomeKind) {
     return;
   }
 
-  const badge = document.createElement('span');
+  const badge = createElement('span');
   badge.className = `calc-zone-context calc-zone-context-${outcomeKind}`;
   badge.title = outcomeDescription || outcomeLabel;
   badge.textContent = outcomeLabel;
@@ -20,7 +24,7 @@ function appendOutcomeBadge(cell, outcomeKind) {
 }
 
 function createTtkValueNode(ttkSeconds) {
-  const ttkValue = document.createElement('span');
+  const ttkValue = createElement('span');
   ttkValue.className = 'calc-derived-value';
 
   if (ttkSeconds === null) {
@@ -34,7 +38,7 @@ function createTtkValueNode(ttkSeconds) {
   const tokens = tokenizeFormattedTtk(formattedTtk);
 
   tokens.forEach(({ text, kind }) => {
-    const token = document.createElement('span');
+    const token = createElement('span');
     token.className = `calc-ttk-token calc-ttk-token-${kind}`;
     token.textContent = text;
     ttkValue.appendChild(token);
@@ -44,7 +48,7 @@ function createTtkValueNode(ttkSeconds) {
 }
 
 function createRangeValueNode(distanceInfo) {
-  const rangeValue = document.createElement('span');
+  const rangeValue = createElement('span');
   rangeValue.className = 'calc-derived-value';
 
   if (!distanceInfo?.isAvailable) {
@@ -57,8 +61,27 @@ function createRangeValueNode(distanceInfo) {
   return rangeValue;
 }
 
+function createMarginValueNode(slotMetrics) {
+  const marginValue = createElement('span');
+  marginValue.className = 'calc-derived-value';
+
+  const displayPercent = Number.isFinite(slotMetrics?.marginPercent)
+    ? slotMetrics.marginPercent
+    : (Number.isFinite(slotMetrics?.displayMarginPercent)
+        ? slotMetrics.displayMarginPercent
+        : null);
+  if (displayPercent === null) {
+    marginValue.textContent = '-';
+    marginValue.classList.add('muted');
+    return marginValue;
+  }
+
+  marginValue.textContent = `+${Math.max(0, Math.round(displayPercent))}%`;
+  return marginValue;
+}
+
 function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute') {
-  const diffValue = document.createElement('span');
+  const diffValue = createElement('span');
   diffValue.className = 'calc-derived-value calc-diff-value';
   const displayMetric = getDiffDisplayMetric(diffMetric, diffDisplayMode);
 
@@ -92,7 +115,7 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
   if (valueType === 'ttk') {
     const prefix = value > 0 ? '+' : value < 0 ? '-' : '';
     if (prefix) {
-      const sign = document.createElement('span');
+      const sign = createElement('span');
       sign.className = 'calc-diff-sign';
       sign.textContent = prefix;
       diffValue.appendChild(sign);
@@ -100,7 +123,7 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
 
     const tokens = tokenizeFormattedTtk(formatTtkSeconds(Math.abs(value)));
     tokens.forEach(({ text, kind }) => {
-      const token = document.createElement('span');
+      const token = createElement('span');
       token.className = `calc-ttk-token calc-ttk-token-${kind}`;
       token.textContent = text;
       diffValue.appendChild(token);
@@ -114,7 +137,7 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
 }
 
 function buildSingleMetricCell(slot, slotMetrics, type, metrics = null) {
-  const td = document.createElement('td');
+  const td = createElement('td');
   td.classList.add('calc-derived-cell');
 
   if (type === 'shots') {
@@ -139,7 +162,16 @@ function buildSingleMetricCell(slot, slotMetrics, type, metrics = null) {
     return td;
   }
 
-  const ttkContent = document.createElement('div');
+  if (type === 'margin') {
+    td.appendChild(createMarginValueNode(slotMetrics));
+    if (!Number.isFinite(slotMetrics?.marginPercent) && !Number.isFinite(slotMetrics?.displayMarginPercent)) {
+      td.classList.add('muted');
+    }
+    td.title = getMetricTitle(slot, slotMetrics, 'margin', metrics) || '';
+    return td;
+  }
+
+  const ttkContent = createElement('div');
   ttkContent.className = 'calc-derived-inline';
   ttkContent.appendChild(createTtkValueNode(slotMetrics.ttkSeconds));
   appendOutcomeBadge(ttkContent, slotMetrics.outcomeKind);
@@ -149,7 +181,7 @@ function buildSingleMetricCell(slot, slotMetrics, type, metrics = null) {
 }
 
 function buildDiffMetricCell(value, valueType, diffDisplayMode = 'absolute', metrics = null) {
-  const td = document.createElement('td');
+  const td = createElement('td');
   td.classList.add('calc-derived-cell', 'calc-diff-cell');
   td.appendChild(createDiffValueNode(value, valueType, diffDisplayMode));
   td.title = getDiffMetricTitle(value, valueType, diffDisplayMode, metrics);

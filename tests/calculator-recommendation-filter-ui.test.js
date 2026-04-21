@@ -24,7 +24,7 @@ const { calculatorState } = await import('../calculator/data.js');
 const { renderRecommendationPanel } = await import('../calculator/calculation.js');
 const { state: weaponsState } = await import('../weapons/data.js');
 
-function renderPanelForTest(enemy) {
+function renderPanelForTest(enemy, options = {}) {
   const previousDocument = globalThis.document;
   const previousNode = globalThis.Node;
   const container = new TestElement('div');
@@ -33,7 +33,7 @@ function renderPanelForTest(enemy) {
   globalThis.Node = TestElement;
 
   try {
-    renderRecommendationPanel(container, enemy);
+    renderRecommendationPanel(container, enemy, options);
     return container;
   } finally {
     globalThis.document = previousDocument;
@@ -41,7 +41,7 @@ function renderPanelForTest(enemy) {
   }
 }
 
-function renderPanelForBrowserLikeTest(enemy) {
+function renderPanelForBrowserLikeTest(enemy, options = {}) {
   const previousDocument = globalThis.document;
   const previousNode = globalThis.Node;
   const container = new BrowserLikeTestElement('div');
@@ -50,7 +50,7 @@ function renderPanelForBrowserLikeTest(enemy) {
   globalThis.Node = BrowserLikeTestElement;
 
   try {
-    renderRecommendationPanel(container, enemy);
+    renderRecommendationPanel(container, enemy, options);
     return container;
   } finally {
     globalThis.document = previousDocument;
@@ -483,6 +483,153 @@ test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
     calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel Margin header toggles strict-margin sorting and refreshes targeted rows', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousSortMode = calculatorState.recommendationSortMode;
+
+  const enemy = {
+    name: 'Margin Header Dummy',
+    health: 300,
+    zones: [
+      makeZone('Main', { health: 300, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const getRenderedWeaponNames = (section) => {
+    const table = collectElements(section, (element) => element.tagName === 'TABLE')[0];
+    const rows = table
+      ? collectElements(table, (element) => element.tagName === 'TR').slice(1)
+      : [];
+    return rows.map((row) => collectElements(row, (element) => element.tagName === 'TD')[0]?.textContent);
+  };
+
+  try {
+    let refreshCount = 0;
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    calculatorState.recommendationSortMode = 'default';
+    weaponsState.groups = [
+      makeWeapon('Support One-Shot', {
+        index: 0,
+        rows: [makeAttackRow('Support One-Shot', 366, 2)]
+      }),
+      makeWeapon('Primary Three-Shot', {
+        index: 1,
+        rows: [makeAttackRow('Primary Three-Shot', 103, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest(enemy, {
+      onRefresh: () => {
+        refreshCount += 1;
+      }
+    });
+    const targetedSection = getRecommendationSection(container, 'Main targeted recommendations');
+    const marginButton = collectElements(targetedSection, (element) => (
+      element.tagName === 'BUTTON' && element.classList.contains('calc-recommend-sort-button')
+    ))[0];
+
+    assert.ok(marginButton);
+    assert.deepEqual(getRenderedWeaponNames(targetedSection), ['Support One-Shot', 'Primary Three-Shot']);
+    assert.ok(!marginButton.classList.contains('is-active'));
+    assert.match(marginButton.title, /sort recommendations by the strictest Margin first/i);
+
+    marginButton.listeners.get('click')();
+
+    assert.equal(calculatorState.recommendationSortMode, 'strict-margin');
+    assert.equal(refreshCount, 1);
+
+    const strictContainer = renderPanelForTest(enemy, {
+      onRefresh: () => {
+        refreshCount += 1;
+      }
+    });
+    const strictTargetedSection = getRecommendationSection(strictContainer, 'Main targeted recommendations');
+    const strictMarginButton = collectElements(strictTargetedSection, (element) => (
+      element.tagName === 'BUTTON' && element.classList.contains('calc-recommend-sort-button')
+    ))[0];
+
+    assert.deepEqual(getRenderedWeaponNames(strictTargetedSection), ['Primary Three-Shot', 'Support One-Shot']);
+    assert.ok(strictMarginButton.classList.contains('is-active'));
+    assert.match(strictMarginButton.title, /strict Margin sorting is active/i);
+
+    strictMarginButton.listeners.get('click')();
+
+    assert.equal(calculatorState.recommendationSortMode, 'default');
+    assert.equal(refreshCount, 2);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationSortMode = previousSortMode;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel keeps overall strict-margin ordering ascending for multi-shot fit', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousSortMode = calculatorState.recommendationSortMode;
+
+  const enemy = {
+    name: 'Overall Strict Margin Dummy',
+    health: 500,
+    zones: [
+      makeZone('Main', { health: 300, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const getRenderedWeaponNames = (section) => {
+    const table = collectElements(section, (element) => element.tagName === 'TABLE')[0];
+    const rows = table
+      ? collectElements(table, (element) => element.tagName === 'TR').slice(1)
+      : [];
+    return rows.map((row) => collectElements(row, (element) => element.tagName === 'TD')[0]?.textContent);
+  };
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationSortMode = 'strict-margin';
+    weaponsState.groups = [
+      makeWeapon('Two 5%', {
+        index: 0,
+        type: 'Primary',
+        rows: [makeAttackRow('Two 5%', 158, 2)]
+      }),
+      makeWeapon('Two 60%', {
+        index: 1,
+        type: 'Primary',
+        rows: [makeAttackRow('Two 60%', 240, 2)]
+      }),
+      makeWeapon('Three 3%', {
+        index: 2,
+        type: 'Primary',
+        rows: [makeAttackRow('Three 3%', 103, 2)]
+      }),
+      makeWeapon('Three 40%', {
+        index: 3,
+        type: 'Primary',
+        rows: [makeAttackRow('Three 40%', 140, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest(enemy);
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+
+    assert.ok(overallSection);
+    assert.deepEqual(
+      getRenderedWeaponNames(overallSection).slice(0, 4),
+      ['Three 3%', 'Two 5%', 'Three 40%', 'Two 60%']
+    );
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationSortMode = previousSortMode;
     weaponsState.groups = previousGroups;
   }
 });

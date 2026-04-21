@@ -9,6 +9,7 @@ import {
 } from './fixtures/weapon-fixtures.js';
 
 const { analyzeRecommendationRowSetWorkDistribution } = await import('../calculator/recommendation-analysis.js');
+const { buildRecommendationRowSets } = await import('../calculator/calculation/recommendation-row-sets.js');
 
 function pickMetrics(summary, keys) {
   return Object.fromEntries(keys.map((key) => [key, summary[key] ?? 0]));
@@ -319,4 +320,47 @@ test('analyzeRecommendationRowSetWorkDistribution counts staged-path candidates 
       'relatedTarget: packages 0, attack recs 0/0, zone compares 0, zone rows 0, direct 0, rows 0'
     ].join('\n')
   );
+});
+
+test('buildRecommendationRowSets forwards strict-margin sort mode to overall, selected, and related rows', () => {
+  const enemy = {
+    name: 'Row Set Sort Dummy',
+    health: 300,
+    zones: [
+      makeZone('core', { health: 300, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Support One-Shot', {
+      index: 0,
+      rows: [makeAttackRow('Support One-Shot', 366, 2)]
+    }),
+    makeWeapon('Primary Three-Shot', {
+      index: 1,
+      rows: [makeAttackRow('Primary Three-Shot', 103, 2)]
+    })
+  ];
+
+  const defaultRowSets = buildRecommendationRowSets({
+    enemy,
+    weapons,
+    overallRecommendationWeapons: weapons,
+    highlightRangeFloorMeters: 0,
+    selectedZoneIndex: 0,
+    relatedTargetZoneIndices: [0]
+  });
+  const strictRowSets = buildRecommendationRowSets({
+    enemy,
+    weapons,
+    overallRecommendationWeapons: weapons,
+    highlightRangeFloorMeters: 0,
+    selectedZoneIndex: 0,
+    relatedTargetZoneIndices: [0],
+    sortMode: 'strict-margin'
+  });
+
+  assert.equal(defaultRowSets.recommendationRows[0].weapon.name, 'Support One-Shot');
+  assert.equal(strictRowSets.recommendationRows[0].weapon.name, 'Primary Three-Shot');
+  assert.equal(strictRowSets.selectedTargetRows[0].weapon.name, 'Primary Three-Shot');
+  assert.equal(strictRowSets.relatedTargetRows[0].weapon.name, 'Primary Three-Shot');
 });

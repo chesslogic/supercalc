@@ -45,9 +45,11 @@ function makeSortRow(zoneIndex, zoneName, {
   outcomeKindA = null,
   ttkA = null,
   shotsA = null,
+  marginA = null,
   outcomeKindB = null,
   ttkB = null,
   shotsB = null,
+  marginB = null,
   diffTtk = null,
   diffShots = null
 } = {}) {
@@ -63,12 +65,14 @@ function makeSortRow(zoneIndex, zoneName, {
         A: {
           outcomeKind: outcomeKindA,
           ttkSeconds: ttkA,
-          shotsToKill: shotsA
+          shotsToKill: shotsA,
+          marginSortRatio: marginA
         },
         B: {
           outcomeKind: outcomeKindB,
           ttkSeconds: ttkB,
-          shotsToKill: shotsB
+          shotsToKill: shotsB,
+          marginSortRatio: marginB
       }
       },
       diffTtkSeconds: makeDiffMetric(diffTtk),
@@ -184,7 +188,7 @@ test('buildZoneComparisonMetrics computes A, B, and Diff as B minus A', () => {
       'ToMain%': 0,
       ExTarget: 'Part',
       ExMult: 1,
-      IsFatal: false
+      IsFatal: true
     },
     enemyMainHealth: 1000,
     weaponA: { rpm: 60 },
@@ -204,6 +208,59 @@ test('buildZoneComparisonMetrics computes A, B, and Diff as B minus A', () => {
   assert.equal(metrics.diffTtkSeconds.kind, 'numeric');
   assert.equal(metrics.diffTtkSeconds.sortValue, -1);
   assert.equal(metrics.diffTtkSeconds.percentValue, -50);
+});
+
+test('buildZoneComparisonMetrics computes one-shot and multi-shot margin headroom', () => {
+  const metrics = buildZoneComparisonMetrics({
+    zone: {
+      health: 300,
+      Con: 0,
+      AV: 1,
+      'Dur%': 0,
+      'ToMain%': 0,
+      ExTarget: 'Part',
+      ExMult: 1,
+      IsFatal: true
+    },
+    enemyMainHealth: 1000,
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 315)],
+    selectedAttacksB: [makeAttackRow('B', 200)]
+  });
+
+  assert.equal(metrics.bySlot.A.shotsToKill, 1);
+  assert.equal(metrics.bySlot.A.marginPercent, 5);
+  assert.equal(metrics.bySlot.A.displayMarginPercent, 5);
+  assert.equal(metrics.bySlot.A.marginSortRatio, 0.05);
+
+  assert.equal(metrics.bySlot.B.shotsToKill, 2);
+  assert.equal(metrics.bySlot.B.marginPercent, null);
+  assert.equal(metrics.bySlot.B.displayMarginPercent, 33);
+  assert.ok(Math.abs(metrics.bySlot.B.marginSortRatio - (1 / 3)) < 1e-9);
+});
+
+test('buildZoneComparisonMetrics uses main-route health for displayed margin headroom', () => {
+  const metrics = buildZoneComparisonMetrics({
+    zone: {
+      health: 999,
+      Con: 0,
+      AV: 1,
+      'Dur%': 0,
+      'ToMain%': 1,
+      ExTarget: 'Part',
+      ExMult: 1,
+      IsFatal: false
+    },
+    enemyMainHealth: 300,
+    weaponA: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 200)]
+  });
+
+  assert.equal(metrics.bySlot.A.outcomeKind, 'main');
+  assert.equal(metrics.bySlot.A.shotsToKill, 2);
+  assert.equal(metrics.bySlot.A.displayMarginPercent, 33);
+  assert.ok(Math.abs(metrics.bySlot.A.marginSortRatio - (1 / 3)) < 1e-9);
 });
 
 test('buildZoneComparisonMetrics honors hit counts for each slot', () => {
@@ -717,6 +774,27 @@ test('sortEnemyZoneRows keeps the literal Main zone first regardless of sort dir
   assert.deepEqual(
     sorted.map((row) => row.zone.zone_name),
     ['Main', 'head', 'arm']
+  );
+});
+
+test('sortEnemyZoneRows sorts A margin by tighter breakpoint fit', () => {
+  const rows = [
+    makeSortRow(0, 'loose', { marginA: 0.5 }),
+    makeSortRow(1, 'tight', { marginA: 0.1 }),
+    makeSortRow(2, 'unavailable')
+  ];
+
+  const sorted = sortEnemyZoneRows(rows, {
+    mode: 'compare',
+    sortKey: 'marginA',
+    sortDir: 'asc',
+    groupMode: 'none',
+    pinMain: false
+  });
+
+  assert.deepEqual(
+    sorted.map((row) => row.zone.zone_name),
+    ['tight', 'loose', 'unavailable']
   );
 });
 

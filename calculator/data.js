@@ -50,6 +50,8 @@ export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
 export const DEFAULT_RECOMMENDATION_MIN_SHOTS = 1;
 export const DEFAULT_RECOMMENDATION_MAX_SHOTS = 3;
 export const MAX_RECOMMENDATION_SHOTS = 10;
+export const DEFAULT_RECOMMENDATION_SORT_MODE = 'default';
+export const STRICT_MARGIN_RECOMMENDATION_SORT_MODE = 'strict-margin';
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -83,6 +85,12 @@ function normalizeRecommendationWeaponFilterMode(mode) {
   }
 
   return DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE;
+}
+
+function normalizeRecommendationSortMode(sortMode) {
+  return String(sortMode ?? '').trim().toLowerCase() === STRICT_MARGIN_RECOMMENDATION_SORT_MODE
+    ? STRICT_MARGIN_RECOMMENDATION_SORT_MODE
+    : DEFAULT_RECOMMENDATION_SORT_MODE;
 }
 
 function normalizeRecommendationShotsValue(value, min, max, defaultValue) {
@@ -130,6 +138,7 @@ export const calculatorState = {
   recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
   recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
+  recommendationSortMode: DEFAULT_RECOMMENDATION_SORT_MODE,
   selectedAttackKeys: {
     A: [],
     B: []
@@ -470,6 +479,21 @@ export function setRecommendationWeaponFilterMode(mode) {
   calculatorState.recommendationWeaponFilterMode = normalizeRecommendationWeaponFilterMode(mode);
   notifyCalculatorStateChange();
   return calculatorState.recommendationWeaponFilterMode;
+}
+
+export function setRecommendationSortMode(sortMode) {
+  calculatorState.recommendationSortMode = normalizeRecommendationSortMode(sortMode);
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationSortMode;
+}
+
+export function toggleRecommendationSortMode(sortMode = STRICT_MARGIN_RECOMMENDATION_SORT_MODE) {
+  const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
+  calculatorState.recommendationSortMode = calculatorState.recommendationSortMode === normalizedSortMode
+    ? DEFAULT_RECOMMENDATION_SORT_MODE
+    : normalizedSortMode;
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationSortMode;
 }
 
 export function setRecommendationWeaponFilterTypes(types = []) {
