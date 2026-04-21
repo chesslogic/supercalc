@@ -60,6 +60,10 @@ main{
   height: calc(100vh - var(--header-h)); /* fit exactly into viewport below header */
   display:flex; flex-direction:column;
 }
+/* Relax the width cap in Overview and focused-enemy states where tables are wider */
+main.calculator-wide{
+  max-width:none;
+}
 .panel{
   position:relative; background:var(--panel); border:2px solid var(--border); border-radius:0; box-shadow:var(--shadow);
   display:flex; flex-direction:column;
@@ -1507,3 +1511,67 @@ tbody tr:hover {
   color:var(--muted);
   background:rgba(139, 148, 158, 0.08);
 }
+
+/* ─── Zone group expand/collapse rows ───────────────────────────────────── */
+
+/* Toggle button inside the zone_name cell of a summary row */
+.zone-group-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.7em;
+  padding: 0;
+  margin-right: 5px;
+  line-height: 1;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.zone-group-toggle:hover {
+  color: var(--text);
+}
+
+/* Name cell layout for summary rows */
+.calculator-table td.zone-group-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  white-space: nowrap;
+}
+
+/* Member rows: subtle indent for the zone name */
+.calculator-table td.zone-group-member-name-cell {
+  padding-left: 1.4em;
+}
+
+/* Member rows: slight visual de-emphasis */
+.calculator-table tbody tr.zone-group-member td {
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.95em;
+  color: var(--muted);
+}
+
+/* ─── Zone group family main-path row ───────────────────────────────────── */
+
+/* "Main via family" secondary path row — visually subordinate to the summary
+   row but distinct from member rows.  Italic + muted text signals that this
+   is a derived/interpretive metric, not a primary targeting row. */
+.calculator-table tbody tr.zone-group-family-path td {
+  background: rgba(255, 255, 255, 0.015);
+  font-style: italic;
+  color: var(--muted);
+  border-top: none;
+}
+
+.calculator-table td.zone-group-family-path-name-cell {
+  padding-left: 1.4em;
+  font-size: 0.9em;
+  cursor: help;
+}
+
+/* Empty placeholder cells that align the row with target-control columns. */
+.calculator-table td.zone-group-family-path-placeholder {
+  background: inherit;
+}
+

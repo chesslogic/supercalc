@@ -1,5 +1,5 @@
 import { isExplosiveAttack } from './attack-types.js';
-import { buildKillSummary } from './summary.js';
+import { buildKillSummary, calculateTtkSeconds } from './summary.js';
 import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 import { getCriticalZoneInfo } from './tactical-data.js';
@@ -25,8 +25,175 @@ function normalizeZoneName(zone) {
   return String(zone?.zone_name || '').trim().toLowerCase();
 }
 
+function toBoolean(value) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
+      return true;
+    }
+    if (normalized === 'false' || normalized === '0' || normalized === 'no') {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 function isValidZoneIndex(zones, zoneIndex) {
   return Number.isInteger(zoneIndex) && zoneIndex >= 0 && zoneIndex < zones.length;
+}
+
+function hasOverflowCap(zone) {
+  return toBoolean(zone?.MainCap);
+}
+
+function getZoneEffectiveHealth(zone) {
+  const health = toFiniteNumber(zone?.health);
+  if (health === null || health < 0) {
+    return health;
+  }
+
+  const con = toFiniteNumber(zone?.Con) ?? 0;
+  return hasZeroBleedConstitution(zone) ? health + con : health;
+}
+
+function normalizeZoneAttackApplication(detail, zone) {
+  const hits = toPositiveInteger(detail?.hits ?? detail?.attackResult?.hits, 1);
+  const zoneDamagePerHit = ('zoneDamage' in (detail || {}))
+    ? ((toFiniteNumber(detail?.zoneDamage) ?? 0) / hits)
+    : (toFiniteNumber(detail?.damage) ?? 0);
+  const passthroughMainDamagePerHit = ('passthroughMainDamage' in (detail || {}))
+    ? ((toFiniteNumber(detail?.passthroughMainDamage) ?? 0) / hits)
+    : (normalizeZoneName(zone) === 'main' ? 0 : (toFiniteNumber(detail?.damageToMain) ?? 0));
+  const directMainDamagePerHit = ('directMainDamage' in (detail || {}))
+    ? ((toFiniteNumber(detail?.directMainDamage) ?? 0) / hits)
+    : (normalizeZoneName(zone) === 'main' ? (toFiniteNumber(detail?.damage) ?? 0) : 0);
+  const toMainPercent = toFiniteNumber(detail?.attackResult?.toMainPercent ?? detail?.toMainPercent) ?? 0;
+
+  return {
+    hits,
+    appliesToZone: detail?.appliesToZone ?? zoneDamagePerHit > 0,
+    zoneDamagePerHit,
+    passthroughMainDamagePerHit,
+    directMainDamagePerHit,
+    toMainPercent
+  };
+}
+
+function simulateZoneCycleAgainstRemainingHealth(zone, attackDetails, startingRemainingHealth) {
+  const normalizedAttackDetails = Array.isArray(attackDetails) ? attackDetails : [];
+  const overflowCap = hasOverflowCap(zone);
+  let remainingZoneHealth = Math.max(0, toFiniteNumber(startingRemainingHealth) ?? 0);
+  let totalZoneDamageApplied = 0;
+  let totalPassthroughMainDamage = 0;
+  let totalDirectMainDamage = 0;
+
+  normalizedAttackDetails.forEach((detail) => {
+    const application = normalizeZoneAttackApplication(detail, zone);
+    for (let hitIndex = 0; hitIndex < application.hits; hitIndex += 1) {
+      totalDirectMainDamage += application.directMainDamagePerHit;
+
+      if (!application.appliesToZone || application.zoneDamagePerHit <= 0) {
+        continue;
+      }
+
+      const actualZoneDamage = remainingZoneHealth > 0
+        ? Math.min(application.zoneDamagePerHit, remainingZoneHealth)
+        : 0;
+
+      totalZoneDamageApplied += actualZoneDamage;
+      remainingZoneHealth = Math.max(0, remainingZoneHealth - actualZoneDamage);
+
+      if (overflowCap) {
+        totalPassthroughMainDamage += roundDamagePacket(actualZoneDamage * application.toMainPercent) ?? 0;
+      } else {
+        totalPassthroughMainDamage += application.passthroughMainDamagePerHit;
+      }
+    }
+  });
+
+  return {
+    remainingZoneHealth,
+    totalZoneDamageApplied,
+    totalPassthroughMainDamage,
+    totalDirectMainDamage,
+    totalMainDamage: totalDirectMainDamage + totalPassthroughMainDamage
+  };
+}
+
+export function calculateMainKillShotsViaEquivalentZones({
+  zone,
+  zoneSummary,
+  memberCount = 1
+} = {}) {
+  const normalizedMemberCount = toPositiveInteger(memberCount, 1);
+  const mainShotsToKill = zoneSummary?.killSummary?.mainShotsToKill ?? null;
+  const zoneName = normalizeZoneName(zone);
+  const effectiveZoneHealth = getZoneEffectiveHealth(zone);
+  const totalZoneDamagePerCycle = toFiniteNumber(zoneSummary?.totalDamagePerCycle) ?? 0;
+  const attackDetails = Array.isArray(zoneSummary?.attackDetails) ? zoneSummary.attackDetails : [];
+
+  if (zoneName === 'main' || effectiveZoneHealth === null || effectiveZoneHealth < 0) {
+    return mainShotsToKill;
+  }
+
+  if (attackDetails.length === 0 || totalZoneDamagePerCycle <= 0) {
+    return mainShotsToKill;
+  }
+
+  const mainHealth = toFiniteNumber(zoneSummary?.enemyMainHealth);
+  if (mainHealth === null || mainHealth <= 0) {
+    return null;
+  }
+
+  const remainingHealthByMember = Array.from({ length: normalizedMemberCount }, () => effectiveZoneHealth);
+  let remainingMainHealth = mainHealth;
+  let totalShots = 0;
+
+  while (remainingMainHealth > 0) {
+    let bestTargetIndex = -1;
+    let bestCycleResult = null;
+
+    remainingHealthByMember.forEach((remainingZoneHealth, memberIndex) => {
+      if (remainingZoneHealth <= 0) {
+        return;
+      }
+
+      const cycleResult = simulateZoneCycleAgainstRemainingHealth(zone, attackDetails, remainingZoneHealth);
+      if (!bestCycleResult) {
+        bestTargetIndex = memberIndex;
+        bestCycleResult = cycleResult;
+        return;
+      }
+
+      const isBetterMainDamage = cycleResult.totalMainDamage > bestCycleResult.totalMainDamage;
+      const isSameMainDamage = cycleResult.totalMainDamage === bestCycleResult.totalMainDamage;
+      const preservesMoreHealth = cycleResult.remainingZoneHealth > bestCycleResult.remainingZoneHealth;
+
+      if (isBetterMainDamage || (isSameMainDamage && preservesMoreHealth)) {
+        bestTargetIndex = memberIndex;
+        bestCycleResult = cycleResult;
+      }
+    });
+
+    if (!bestCycleResult || bestTargetIndex < 0 || bestCycleResult.totalMainDamage <= 0) {
+      return null;
+    }
+
+    remainingHealthByMember[bestTargetIndex] = bestCycleResult.remainingZoneHealth;
+    remainingMainHealth -= bestCycleResult.totalMainDamage;
+    totalShots += 1;
+  }
+
+  return totalShots;
 }
 
 // ExMult is a direct explosive damage multiplier. Missing/sentinel values mean full damage.
@@ -102,6 +269,28 @@ function buildZoneSummary({
   const zoneHealth = toNumber(zone?.health, -1);
   const zoneCon = toNumber(zone?.Con);
   const normalizedEnemyMainHealth = toNumber(enemyMainHealth);
+  const initialKillSummary = buildKillSummary({
+    zoneHealth,
+    zoneCon,
+    enemyMainHealth: normalizedEnemyMainHealth,
+    totalDamagePerCycle,
+    totalDamageToMainPerCycle,
+    rpm,
+    zoneUsesConAsHealth: hasZeroBleedConstitution(zone)
+  });
+  const overflowAwareMainShotsToKill = hasOverflowCap(zone) && !zone?.IsFatal
+    ? calculateMainKillShotsViaEquivalentZones({
+        zone,
+        zoneSummary: {
+          attackDetails: zoneAttackDetails,
+          totalDamagePerCycle,
+          totalDamageToMainPerCycle,
+          enemyMainHealth: normalizedEnemyMainHealth,
+          killSummary: initialKillSummary
+        },
+        memberCount: 1
+      })
+    : initialKillSummary.mainShotsToKill;
 
   return {
     attackDetails: zoneAttackDetails,
@@ -113,15 +302,11 @@ function buildZoneSummary({
     zoneCon,
     enemyMainHealth: normalizedEnemyMainHealth,
     hasSelectedAttacks,
-    killSummary: buildKillSummary({
-      zoneHealth,
-      zoneCon,
-      enemyMainHealth: normalizedEnemyMainHealth,
-      totalDamagePerCycle,
-      totalDamageToMainPerCycle,
-      rpm,
-      zoneUsesConAsHealth: hasZeroBleedConstitution(zone)
-    })
+    killSummary: {
+      ...initialKillSummary,
+      mainShotsToKill: overflowAwareMainShotsToKill,
+      mainTtkSeconds: calculateTtkSeconds(overflowAwareMainShotsToKill, initialKillSummary.rpm)
+    }
   };
 }
 
@@ -570,6 +755,7 @@ export function getZoneOutcomeKind({
   killSummary
 }) {
   const hasZoneDamage = totalDamagePerCycle > 0;
+  const hasRoutedMainDamage = totalDamageToMainPerCycle > 0;
   const hasMainDamage = totalDamageToMainPerCycle > 0 && killSummary?.mainShotsToKill !== null;
   const zoneShotsToKill = killSummary?.zoneEffectiveShotsToKill ?? killSummary?.zoneShotsToKill ?? null;
   const criticalZoneInfo = getCriticalZoneInfo(enemy, zone);
@@ -596,6 +782,10 @@ export function getZoneOutcomeKind({
     }
 
     return 'main';
+  }
+
+  if (hasZoneDamage && hasRoutedMainDamage) {
+    return criticalZoneInfo ? 'critical' : 'limb';
   }
 
   return criticalZoneInfo ? 'critical' : 'utility';

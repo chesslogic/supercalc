@@ -7,14 +7,12 @@ import {
   toggleEnemySort
 } from '../data.js';
 import { buildFocusedZoneComparisonRows, sortEnemyZoneRows } from '../compare-utils.js';
-import { formatEnemyBaseCell } from './enemy-base-cells.js';
 import {
   ensureEnemySortKeyVisible,
   getEnemyColumns,
   getFocusedTargetingModes
 } from './enemy-columns.js';
-import { buildMetricColumnCell } from './metric-cells.js';
-import { appendEnemyExplosionCell, appendEnemyProjectileCell } from './enemy-target-controls.js';
+import { renderGroupedEnemyRows } from './grouped-enemy-rows.js';
 import { wireZoneRelationHighlights } from './zone-relation-highlights.js';
 
 export function renderFocusedEnemyTable(container, enemy, {
@@ -36,7 +34,6 @@ export function renderFocusedEnemyTable(container, enemy, {
     hasProjectileTargets,
     hasExplosiveTargets
   } = getFocusedTargetingModes(selectedAttacksA, selectedAttacksB);
-  const targetColumnCount = Number(hasProjectileTargets) + Number(hasExplosiveTargets);
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -105,40 +102,12 @@ export function renderFocusedEnemyTable(container, enemy, {
   });
 
   const tbody = document.createElement('tbody');
-  const rowEntries = [];
 
-  sortedRows.forEach(({ zone, zoneIndex, metrics, groupStart }) => {
-    const tr = document.createElement('tr');
-    if (groupStart) {
-      tr.classList.add('group-start');
-    }
-
-    if (hasProjectileTargets) {
-      appendEnemyProjectileCell(tr, enemy.name, zoneIndex, targetColumnCount === 1 && !hasExplosiveTargets, {
-        onRefreshEnemyCalculationViews
-      });
-    }
-
-    if (hasExplosiveTargets) {
-      appendEnemyExplosionCell(tr, zoneIndex, targetColumnCount === 1 && !hasProjectileTargets, {
-        onRefreshEnemyCalculationViews
-      });
-    }
-
-    columns.forEach((column) => {
-      const metricCell = buildMetricColumnCell(column.key, metrics);
-      if (metricCell) {
-        tr.appendChild(metricCell);
-        return;
-      }
-
-      const td = document.createElement('td');
-      formatEnemyBaseCell(td, zone, column.key);
-      tr.appendChild(td);
-    });
-
-    tbody.appendChild(tr);
-    rowEntries.push({ tr, zone, zoneIndex });
+  const rowEntries = renderGroupedEnemyRows(tbody, sortedRows, enemy, {
+    columns,
+    hasProjectileTargets,
+    hasExplosiveTargets,
+    onRefreshEnemyCalculationViews
   });
 
   const selectedZone = Number.isInteger(calculatorState.selectedZoneIndex)

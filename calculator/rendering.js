@@ -7,6 +7,7 @@ import { renderWeaponDetails } from './rendering/weapon-details.js';
 import { renderEnemyControls } from './rendering/enemy-controls.js';
 import { renderOverviewDetails } from './rendering/overview-table.js';
 import { renderFocusedEnemyTable } from './rendering/enemy-focused-table.js';
+import { syncCalculatorLayoutClass } from './rendering/layout-state.js';
 
 export {
   getZoneRelationHighlightKind
@@ -24,6 +25,7 @@ export {
   getFocusedTargetingModes
 } from './rendering/enemy-columns.js';
 export { renderWeaponDetails } from './rendering/weapon-details.js';
+export { getCalculatorLayoutClass } from './rendering/layout-state.js';
 
 export function refreshEnemyCalculationViews() {
   syncAllEngagementRangeWarnings();
@@ -42,6 +44,7 @@ export function renderEnemyDetails(enemy = calculatorState.selectedEnemy) {
     return;
   }
 
+  syncCalculatorLayoutClass(calculatorState);
   container.innerHTML = '';
   const renderCurrentEnemyDetails = (nextEnemy = enemy) => renderEnemyDetails(nextEnemy);
 
