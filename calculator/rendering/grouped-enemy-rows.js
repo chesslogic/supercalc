@@ -14,6 +14,7 @@
 // kill, not a Main kill, and the family cycling makes a Main kill reachable).
 
 import { buildEnemyZoneGroups } from '../enemy-zone-groups.js';
+import { calculatorState } from '../data.js';
 import { calculateEffectiveDistanceInfo } from '../effective-distance.js';
 import { calculateTtkSeconds } from '../summary.js';
 import { calculateMainKillShotsViaEquivalentZones } from '../zone-damage.js';
@@ -43,12 +44,19 @@ export function clearAllGroupExpansions() {
 
 // ─── Row builders ─────────────────────────────────────────────────────────────
 
-function appendTargetCells(tr, zoneIndex, { enemyName, hasProjectileTargets, hasExplosiveTargets, targetColumnCount, onRefreshEnemyCalculationViews }) {
+function appendTargetCells(tr, zoneIndex, {
+  enemyName,
+  hasProjectileTargets,
+  hasExplosiveTargets,
+  targetColumnCount,
+  onRefreshEnemyCalculationViews,
+  projectileCellOptions = null
+}) {
   if (hasProjectileTargets) {
     appendEnemyProjectileCell(
       tr, enemyName, zoneIndex,
       targetColumnCount === 1 && !hasExplosiveTargets,
-      { onRefreshEnemyCalculationViews }
+      { onRefreshEnemyCalculationViews, ...(projectileCellOptions || {}) }
     );
   }
   if (hasExplosiveTargets) {
@@ -58,6 +66,30 @@ function appendTargetCells(tr, zoneIndex, { enemyName, hasProjectileTargets, has
       { onRefreshEnemyCalculationViews }
     );
   }
+}
+
+function buildSummaryProjectileCellOptions(family, enemyName, repIndex) {
+  const selectedZoneIndex = calculatorState.selectedZoneIndex;
+  const selectedIndexWithinFamily = family.memberIndices.includes(selectedZoneIndex)
+    ? selectedZoneIndex
+    : null;
+  const selectedMemberIndex = selectedIndexWithinFamily ?? repIndex;
+  const selectedZonePosition = selectedIndexWithinFamily === null
+    ? -1
+    : family.memberIndices.indexOf(selectedIndexWithinFamily);
+  const selectedZone = selectedZonePosition === -1
+    ? null
+    : family.memberZones[selectedZonePosition] || null;
+
+  return {
+    checked: selectedIndexWithinFamily !== null,
+    controlName: `enemy-zone-family-${enemyName}-${family.familyId}`,
+    controlId: `zone-family-${enemyName}-${family.familyId}`,
+    selectZoneIndex: selectedMemberIndex,
+    title: selectedZone
+      ? `Selected projectile target in this group: ${selectedZone.zone_name}`
+      : ''
+  };
 }
 
 function appendDataCells(tr, zone, metrics, columns) {
@@ -100,7 +132,10 @@ function buildSummaryRow(family, repZone, repIndex, repMetrics, {
   tr.dataset.groupCollapsed = isExpanded ? 'false' : 'true';
   if (groupStart) tr.classList.add('group-start');
 
-  appendTargetCells(tr, repIndex, targetOptions);
+  appendTargetCells(tr, repIndex, {
+    ...targetOptions,
+    projectileCellOptions: buildSummaryProjectileCellOptions(family, targetOptions.enemyName, repIndex)
+  });
 
   columns.forEach((column) => {
     const metricCell = buildMetricColumnCell(column.key, repMetrics);

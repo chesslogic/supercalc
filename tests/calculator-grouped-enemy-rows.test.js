@@ -14,6 +14,7 @@ import {
   buildFamilyMainPathMetrics,
   isFamilyMainPathViableForSlot
 } from '../calculator/rendering/grouped-enemy-rows.js';
+import { calculatorState } from '../calculator/data.js';
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -1058,6 +1059,69 @@ test('family path row placeholder cells added for target columns', () => {
     getDirectChildren(summaryRow).length,
     'family path row and summary row must have the same number of cells'
   );
+});
+
+test('summary projectile cell shows checked state when a non-representative family member is selected', () => {
+  resetState();
+  const originalSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.selectedZoneIndex = 1;
+
+    const zoneL = makeZone({ zone_name: 'left_arm', AV: 1, health: 200 });
+    const zoneR = makeZone({ zone_name: 'right_arm', AV: 1, health: 200 });
+    const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+    const sortedRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+    const { tbody } = renderIntoTbody(sortedRows, enemy, { hasProjectileTargets: true });
+    const rows = [...getDirectChildren(tbody)];
+    const summaryRow = rows.find((tr) => tr.classList.contains('zone-group-summary'));
+    const memberRows = rows.filter((tr) => tr.classList.contains('zone-group-member'));
+
+    const summaryRadio = collectElements(summaryRow, (el) => el.tagName === 'INPUT' && el.type === 'radio')[0];
+    const memberRadio = collectElements(memberRows[1], (el) => el.tagName === 'INPUT' && el.type === 'radio')[0];
+
+    assert.ok(summaryRadio, 'summary row must render a projectile control');
+    assert.equal(summaryRadio.checked, true, 'summary row must show family projectile state as selected');
+    assert.notEqual(
+      summaryRadio.name,
+      memberRadio.name,
+      'summary row uses a proxy radio group so it can stay checked alongside the selected member radio'
+    );
+    assert.match(summaryRadio.title, /right_arm/i);
+  } finally {
+    calculatorState.selectedZoneIndex = originalSelectedZoneIndex;
+  }
+});
+
+test('summary projectile cell selects the representative member when the family is inactive', () => {
+  resetState();
+  const originalSelectedZoneIndex = calculatorState.selectedZoneIndex;
+
+  try {
+    calculatorState.selectedZoneIndex = null;
+
+    const zoneL = makeZone({ zone_name: 'left_arm', AV: 1, health: 200 });
+    const zoneR = makeZone({ zone_name: 'right_arm', AV: 1, health: 200 });
+    const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+    const sortedRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+    let refreshCalls = 0;
+    const { tbody } = renderIntoTbody(sortedRows, enemy, {
+      hasProjectileTargets: true,
+      onRefreshEnemyCalculationViews: () => { refreshCalls += 1; }
+    });
+    const rows = [...getDirectChildren(tbody)];
+    const summaryRow = rows.find((tr) => tr.classList.contains('zone-group-summary'));
+    const summaryRadio = collectElements(summaryRow, (el) => el.tagName === 'INPUT' && el.type === 'radio')[0];
+
+    summaryRadio.dispatch('change');
+
+    assert.equal(calculatorState.selectedZoneIndex, 0);
+    assert.equal(refreshCalls, 1);
+  } finally {
+    calculatorState.selectedZoneIndex = originalSelectedZoneIndex;
+  }
 });
 
 test('family path row blanks non-viable compare-slot cells instead of showing direct-path values', () => {

@@ -6,8 +6,14 @@ import {
 } from '../data.js';
 
 export function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowClick = false, {
-  onRefreshEnemyCalculationViews = null
+  onRefreshEnemyCalculationViews = null,
+  checked = calculatorState.selectedZoneIndex === zoneIndex,
+  controlName = `enemy-zone-${enemyName}`,
+  controlId = `zone-${enemyName}-${zoneIndex}`,
+  selectZoneIndex = zoneIndex,
+  title = ''
 } = {}) {
+  const effectiveZoneIndex = Number.isInteger(selectZoneIndex) ? selectZoneIndex : zoneIndex;
   const radioTd = document.createElement('td');
   radioTd.style.padding = '4px 10px';
   radioTd.style.borderBottom = '1px solid var(--border)';
@@ -16,22 +22,25 @@ export function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowCli
 
   const radio = document.createElement('input');
   radio.type = 'radio';
-  radio.name = `enemy-zone-${enemyName}`;
-  radio.value = zoneIndex;
-  radio.id = `zone-${enemyName}-${zoneIndex}`;
-  radio.checked = calculatorState.selectedZoneIndex === zoneIndex;
-  radio.addEventListener('change', () => {
-    setSelectedZoneIndex(zoneIndex);
+  radio.name = controlName;
+  radio.value = effectiveZoneIndex;
+  radio.id = controlId;
+  radio.checked = checked;
+  radio.title = title;
+
+  const selectProjectileZone = () => {
+    setSelectedZoneIndex(effectiveZoneIndex);
     onRefreshEnemyCalculationViews?.();
-  });
+  };
+
+  radio.addEventListener('change', selectProjectileZone);
 
   if (enableRowClick) {
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', (event) => {
       if (event.target !== radio) {
         radio.checked = true;
-        setSelectedZoneIndex(zoneIndex);
-        onRefreshEnemyCalculationViews?.();
+        selectProjectileZone();
       }
     });
   }
