@@ -58,6 +58,11 @@ test('getZoneNameStem strips right in compound names', () => {
   assert.equal(getZoneNameStem('right_upper_arm'), 'upper_arm');
 });
 
+test('getZoneNameStem strips compact l/r tokens in compound names', () => {
+  assert.equal(getZoneNameStem('armor_lower_l_arm'), 'armor_lower_arm');
+  assert.equal(getZoneNameStem('armor_lower_r_arm'), 'armor_lower_arm');
+});
+
 test('getZoneNameStem preserves front token', () => {
   assert.equal(getZoneNameStem('front_torso'), 'front_torso');
 });
@@ -74,6 +79,11 @@ test('getZoneNameStem preserves upper and lower tokens', () => {
 test('getZoneNameStem strips left but keeps rear in a compound name', () => {
   assert.equal(getZoneNameStem('rear_left_exhaust'), 'rear_exhaust');
   assert.equal(getZoneNameStem('rear_right_exhaust'), 'rear_exhaust');
+});
+
+test('getZoneNameStem strips compact l/r but keeps front and rear tokens', () => {
+  assert.equal(getZoneNameStem('hitzone_l_rear_leg'), 'hitzone_rear_leg');
+  assert.equal(getZoneNameStem('hitzone_r_front_leg'), 'hitzone_front_leg');
 });
 
 test('getZoneNameStem falls back to normalized name when entire name is a laterality token', () => {
@@ -181,6 +191,34 @@ test('auto-groups two zones with identical stats and compatible stem (left/right
   // Label derived from stem (underscores → spaces)
   assert.equal(fam.label, 'pauldron');
   assert.equal(fam.summaryLabel, 'pauldron (×2)');
+});
+
+test('auto-groups compact l/r mirrored zones with identical stats', () => {
+  const zoneL = makeZone({ zone_name: 'l_claw', AV: 2, 'Dur%': 0.5, health: 200, 'ToMain%': 0.4, MainCap: 0 });
+  const zoneR = makeZone({ zone_name: 'r_claw', AV: 2, 'Dur%': 0.5, health: 200, 'ToMain%': 0.4, MainCap: 0 });
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  const { families } = buildEnemyZoneGroups(enemy);
+
+  assert.equal(families.length, 1);
+  assert.equal(families[0].label, 'claw');
+  assert.deepEqual(families[0].memberIndices, [0, 1]);
+});
+
+test('auto-groups compact l/r interior tokens while preserving front/rear distinction', () => {
+  const base = { AV: 1, 'Dur%': 0.5, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false };
+  const enemy = makeEnemy({
+    zones: [
+      { zone_name: 'hitzone_l_rear_leg', ...base },
+      { zone_name: 'hitzone_r_rear_leg', ...base },
+      { zone_name: 'hitzone_l_front_leg', ...base },
+      { zone_name: 'hitzone_r_front_leg', ...base }
+    ]
+  });
+  const { families } = buildEnemyZoneGroups(enemy);
+
+  assert.equal(families.length, 2);
+  assert.deepEqual(families.map((family) => family.memberIndices), [[0, 1], [2, 3]]);
+  assert.deepEqual(families.map((family) => family.label), ['hitzone rear leg', 'hitzone front leg']);
 });
 
 test('auto-groups three zones with identical stats and compatible stem', () => {

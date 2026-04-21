@@ -17,9 +17,10 @@ const COMBAT_SIGNATURE_FIELDS = Object.freeze([
 ]);
 
 // Tokens stripped from zone names to derive a laterality-neutral stem.
-// "front" / "rear" / "upper" / "lower" etc. are intentionally NOT included
-// because they carry meaningful semantic distinctions.
-const LATERALITY_TOKENS = new Set(['left', 'right']);
+// This intentionally covers both the verbose forms ("left"/"right") and the
+// compact dataset forms ("l"/"r"), while still preserving tokens such as
+// "front" / "rear" / "upper" / "lower" that carry real semantic distinctions.
+const LATERALITY_TOKENS = new Set(['left', 'right', 'l', 'r']);
 
 /**
  * Returns a pipe-delimited string that uniquely captures the raw combat
@@ -43,11 +44,13 @@ export function getZoneCombatSignature(zone) {
  * an empty string (e.g. a zone literally named "left").
  *
  * Examples:
- *   "left_pauldron"      → "pauldron"
- *   "right_upper_arm"    → "upper_arm"
- *   "front_torso"        → "front_torso"   (front preserved)
- *   "rear_left_exhaust"  → "rear_exhaust"  (left stripped, rear kept)
- *   "left"               → "left"          (fallback – nothing remains)
+ *   "left_pauldron"       → "pauldron"
+ *   "right_upper_arm"     → "upper_arm"
+ *   "armor_lower_l_arm"   → "armor_lower_arm"
+ *   "hitzone_r_rear_leg"  → "hitzone_rear_leg"
+ *   "front_torso"         → "front_torso"   (front preserved)
+ *   "rear_left_exhaust"   → "rear_exhaust"  (left stripped, rear kept)
+ *   "left"                → "left"          (fallback – nothing remains)
  *
  * @param {string} zoneName
  * @returns {string}
