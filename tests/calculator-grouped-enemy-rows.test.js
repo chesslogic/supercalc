@@ -1124,6 +1124,143 @@ test('summary projectile cell selects the representative member when the family 
   }
 });
 
+test('summary explosive cell shows selected family-member count for homogeneous groups', () => {
+  resetState();
+  const originalSelectedExplosiveZoneIndices = [...calculatorState.selectedExplosiveZoneIndices];
+
+  try {
+    calculatorState.selectedExplosiveZoneIndices = [1, 3];
+
+    const base = {
+      AV: 1, 'Dur%': 0.5, health: 200, Con: 0,
+      ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false
+    };
+    const zones = [
+      { zone_name: 'hitzone_l_rear_leg', ...base },
+      { zone_name: 'hitzone_r_rear_leg', ...base },
+      { zone_name: 'hitzone_l_front_leg', ...base },
+      { zone_name: 'hitzone_r_front_leg', ...base }
+    ];
+    const enemy = makeEnemy({ zones });
+    const sortedRows = zones.map((zone, zoneIndex) => makeRow(zone, zoneIndex));
+
+    const { tbody } = renderIntoTbody(sortedRows, enemy, { hasExplosiveTargets: true });
+    const rows = [...getDirectChildren(tbody)];
+    const summaryRow = rows.find((tr) => tr.classList.contains('zone-group-summary'));
+    const countButton = collectElements(
+      summaryRow,
+      (el) => el.tagName === 'BUTTON' && el.classList.contains('zone-group-explosion-count')
+    )[0];
+
+    assert.ok(countButton, 'homogeneous summary row must render the explosion count button');
+    assert.equal(countButton.textContent, '2');
+    assert.match(countButton.title, /2\/4/);
+  } finally {
+    calculatorState.selectedExplosiveZoneIndices = originalSelectedExplosiveZoneIndices;
+  }
+});
+
+test('summary explosive count button cycles 0 to 1 to all to 0 while preserving unrelated selections', () => {
+  resetState();
+  const originalSelectedExplosiveZoneIndices = [...calculatorState.selectedExplosiveZoneIndices];
+
+  try {
+    calculatorState.selectedExplosiveZoneIndices = [4];
+
+    const base = {
+      AV: 1, 'Dur%': 0.5, health: 200, Con: 0,
+      ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false
+    };
+    const zones = [
+      { zone_name: 'hitzone_l_rear_leg', ...base },
+      { zone_name: 'hitzone_r_rear_leg', ...base },
+      { zone_name: 'hitzone_l_front_leg', ...base },
+      { zone_name: 'hitzone_r_front_leg', ...base },
+      makeZone({ zone_name: 'head', health: 150, IsFatal: true })
+    ];
+    const enemy = makeEnemy({ zones });
+    const sortedRows = zones.map((zone, zoneIndex) => makeRow(zone, zoneIndex));
+
+    let refreshCalls = 0;
+    const { tbody } = renderIntoTbody(sortedRows, enemy, {
+      hasExplosiveTargets: true,
+      onRefreshEnemyCalculationViews: () => { refreshCalls += 1; }
+    });
+    const rows = [...getDirectChildren(tbody)];
+    const summaryRow = rows.find((tr) => tr.classList.contains('zone-group-summary'));
+    const countButton = collectElements(
+      summaryRow,
+      (el) => el.tagName === 'BUTTON' && el.classList.contains('zone-group-explosion-count')
+    )[0];
+
+    countButton.dispatch('click');
+    assert.deepEqual(calculatorState.selectedExplosiveZoneIndices, [4, 0]);
+
+    countButton.dispatch('click');
+    assert.deepEqual(calculatorState.selectedExplosiveZoneIndices, [4, 0, 1, 2, 3]);
+
+    countButton.dispatch('click');
+    assert.deepEqual(calculatorState.selectedExplosiveZoneIndices, [4]);
+    assert.equal(refreshCalls, 3);
+  } finally {
+    calculatorState.selectedExplosiveZoneIndices = originalSelectedExplosiveZoneIndices;
+  }
+});
+
+test('mixed explicit groups keep per-zone explosive checkbox instead of count overlay', () => {
+  resetState();
+  const originalSelectedExplosiveZoneIndices = [...calculatorState.selectedExplosiveZoneIndices];
+
+  try {
+    calculatorState.selectedExplosiveZoneIndices = [1];
+
+    const shoulderplate = makeZone({
+      zone_name: 'shoulderplate_right',
+      AV: 2,
+      health: 150,
+      'ToMain%': 0.25,
+      MainCap: 1
+    });
+    const arm = makeZone({
+      zone_name: 'right_arm',
+      AV: 1,
+      health: 300,
+      'ToMain%': 0.6,
+      MainCap: 0
+    });
+    const enemy = makeEnemy({
+      zones: [shoulderplate, arm],
+      zoneRelationGroups: [
+        {
+          id: 'right-arm',
+          label: 'Right arm',
+          zoneNames: ['shoulderplate_right', 'right_arm'],
+          mirrorGroupIds: [],
+          priorityTargetZoneNames: ['right_arm']
+        }
+      ]
+    });
+    const sortedRows = [makeRow(shoulderplate, 0), makeRow(arm, 1)];
+
+    const { tbody } = renderIntoTbody(sortedRows, enemy, { hasExplosiveTargets: true });
+    const rows = [...getDirectChildren(tbody)];
+    const summaryRow = rows.find((tr) => tr.classList.contains('zone-group-summary'));
+    const countButtons = collectElements(
+      summaryRow,
+      (el) => el.tagName === 'BUTTON' && el.classList.contains('zone-group-explosion-count')
+    );
+    const checkboxes = collectElements(
+      summaryRow,
+      (el) => el.tagName === 'INPUT' && el.type === 'checkbox'
+    );
+
+    assert.equal(countButtons.length, 0, 'mixed explicit group should not render count overlay');
+    assert.equal(checkboxes.length, 1, 'mixed explicit group should keep the standard checkbox');
+  } finally {
+    calculatorState.selectedExplosiveZoneIndices = originalSelectedExplosiveZoneIndices;
+  }
+});
+
 test('family path row blanks non-viable compare-slot cells instead of showing direct-path values', () => {
   resetState();
   const base = {

@@ -50,7 +50,12 @@ export function appendEnemyProjectileCell(tr, enemyName, zoneIndex, enableRowCli
 }
 
 export function appendEnemyExplosionCell(tr, zoneIndex, enableRowClick = false, {
-  onRefreshEnemyCalculationViews = null
+  onRefreshEnemyCalculationViews = null,
+  variant = 'checkbox',
+  checked = getSelectedExplosiveZoneIndices().includes(zoneIndex),
+  title = '',
+  buttonLabel = '',
+  onActivate = null
 } = {}) {
   const checkboxTd = document.createElement('td');
   checkboxTd.style.padding = '4px 10px';
@@ -58,10 +63,44 @@ export function appendEnemyExplosionCell(tr, zoneIndex, enableRowClick = false, 
   checkboxTd.style.width = '30px';
   checkboxTd.style.textAlign = 'center';
 
+  if (variant === 'count') {
+    const triggerActivate = () => {
+      onActivate?.();
+      onRefreshEnemyCalculationViews?.();
+    };
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'zone-group-explosion-count';
+    if (checked) {
+      button.classList.add('is-active');
+    }
+    button.textContent = buttonLabel;
+    button.title = title;
+    button.addEventListener('click', (event) => {
+      event?.stopPropagation?.();
+      triggerActivate();
+    });
+
+    if (enableRowClick) {
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', (event) => {
+        if (event.target !== button) {
+          triggerActivate();
+        }
+      });
+    }
+
+    checkboxTd.appendChild(button);
+    tr.appendChild(checkboxTd);
+    return;
+  }
+
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.value = zoneIndex;
-  checkbox.checked = getSelectedExplosiveZoneIndices().includes(zoneIndex);
+  checkbox.checked = checked;
+  checkbox.title = title;
   checkbox.addEventListener('change', () => {
     setSelectedExplosiveZone(zoneIndex, checkbox.checked);
     onRefreshEnemyCalculationViews?.();

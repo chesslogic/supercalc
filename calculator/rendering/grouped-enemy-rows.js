@@ -13,8 +13,8 @@
 // direct representative-member row (i.e. the direct path displays a zone-break
 // kill, not a Main kill, and the family cycling makes a Main kill reachable).
 
-import { buildEnemyZoneGroups } from '../enemy-zone-groups.js';
-import { calculatorState } from '../data.js';
+import { buildEnemyZoneGroups, getZoneCombatSignature } from '../enemy-zone-groups.js';
+import { calculatorState, getSelectedExplosiveZoneIndices, setSelectedExplosiveZoneIndices } from '../data.js';
 import { calculateEffectiveDistanceInfo } from '../effective-distance.js';
 import { calculateTtkSeconds } from '../summary.js';
 import { calculateMainKillShotsViaEquivalentZones } from '../zone-damage.js';
@@ -50,7 +50,8 @@ function appendTargetCells(tr, zoneIndex, {
   hasExplosiveTargets,
   targetColumnCount,
   onRefreshEnemyCalculationViews,
-  projectileCellOptions = null
+  projectileCellOptions = null,
+  explosionCellOptions = null
 }) {
   if (hasProjectileTargets) {
     appendEnemyProjectileCell(
@@ -63,7 +64,7 @@ function appendTargetCells(tr, zoneIndex, {
     appendEnemyExplosionCell(
       tr, zoneIndex,
       targetColumnCount === 1 && !hasProjectileTargets,
-      { onRefreshEnemyCalculationViews }
+      { onRefreshEnemyCalculationViews, ...(explosionCellOptions || {}) }
     );
   }
 }
@@ -89,6 +90,57 @@ function buildSummaryProjectileCellOptions(family, enemyName, repIndex) {
     title: selectedZone
       ? `Selected projectile target in this group: ${selectedZone.zone_name}`
       : ''
+  };
+}
+
+function isHomogeneousFamily(family) {
+  if (!family || family.isSingleton) {
+    return false;
+  }
+  const signatures = new Set(family.memberZones.map((zone) => getZoneCombatSignature(zone)));
+  return signatures.size === 1;
+}
+
+function getSelectedFamilyExplosiveIndices(family) {
+  const selectedZoneSet = new Set(getSelectedExplosiveZoneIndices());
+  return family.memberIndices.filter((zoneIndex) => selectedZoneSet.has(zoneIndex));
+}
+
+function buildSummaryExplosionCellOptions(family, repIndex) {
+  if (!isHomogeneousFamily(family)) {
+    return null;
+  }
+
+  const selectedFamilyIndices = getSelectedFamilyExplosiveIndices(family);
+  const selectedCount = selectedFamilyIndices.length;
+  const familyCount = family.memberIndices.length;
+
+  const buildNextFamilyIndices = () => {
+    const currentFamilyIndices = getSelectedFamilyExplosiveIndices(family);
+    if (currentFamilyIndices.length === 0) {
+      return [repIndex];
+    }
+    if (currentFamilyIndices.length === 1) {
+      return [...family.memberIndices];
+    }
+    if (currentFamilyIndices.length >= familyCount) {
+      return [];
+    }
+    return [...family.memberIndices];
+  };
+
+  return {
+    variant: 'count',
+    checked: selectedCount > 0,
+    buttonLabel: String(selectedCount),
+    title: `Selected explosive targets in this exact-stat group: ${selectedCount}/${familyCount}. Click to cycle 0 -> 1 -> all.`,
+    onActivate: () => {
+      const nextFamilyIndices = buildNextFamilyIndices();
+      const familyIndexSet = new Set(family.memberIndices);
+      const preservedIndices = getSelectedExplosiveZoneIndices()
+        .filter((zoneIndex) => !familyIndexSet.has(zoneIndex));
+      setSelectedExplosiveZoneIndices([...preservedIndices, ...nextFamilyIndices]);
+    }
   };
 }
 
@@ -134,7 +186,8 @@ function buildSummaryRow(family, repZone, repIndex, repMetrics, {
 
   appendTargetCells(tr, repIndex, {
     ...targetOptions,
-    projectileCellOptions: buildSummaryProjectileCellOptions(family, targetOptions.enemyName, repIndex)
+    projectileCellOptions: buildSummaryProjectileCellOptions(family, targetOptions.enemyName, repIndex),
+    explosionCellOptions: buildSummaryExplosionCellOptions(family, repIndex)
   });
 
   columns.forEach((column) => {
