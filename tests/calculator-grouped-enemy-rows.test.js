@@ -1324,6 +1324,35 @@ test('sortEnemyZoneRows + renderGroupedEnemyRows: compact l/r family survives so
   );
 });
 
+test('sortEnemyZoneRows + renderGroupedEnemyRows: positional variants collapse into one summary row', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0.5, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false
+  };
+  const zones = [
+    { zone_name: 'hitzone_l_rear_leg', ...base },
+    { zone_name: 'hitzone_r_rear_leg', ...base },
+    { zone_name: 'hitzone_l_front_leg', ...base },
+    { zone_name: 'hitzone_r_front_leg', ...base }
+  ];
+  const enemy = makeEnemy({ zones });
+  const rawRows = zones.map((zone, zoneIndex) => makeRow(zone, zoneIndex));
+
+  const sortedRows = sortEnemyZoneRows(rawRows, { mode: 'single', sortKey: 'zone_name', sortDir: 'asc', pinMain: false });
+
+  const tbody = globalThis.document.createElement('tbody');
+  renderGroupedEnemyRows(tbody, sortedRows, enemy, { columns: MINIMAL_COLUMNS });
+
+  const rows = [...getDirectChildren(tbody)];
+  const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
+  const memberRows = rows.filter((tr) => tr.classList.contains('zone-group-member'));
+  assert.equal(summaryRows.length, 1, 'front/rear leg variants must collapse into one summary row');
+  assert.equal(memberRows.length, 4, 'all four exact-match legs should remain inspectable as members');
+  assert.ok(getDirectChildren(summaryRows[0])[0].textContent.includes('hitzone leg'));
+  assert.ok(getDirectChildren(summaryRows[0])[0].textContent.includes('×4'));
+});
+
 test('sortEnemyZoneRows + renderGroupedEnemyRows: outcome-grouped sort keeps family together', () => {
   resetState();
   const base = {

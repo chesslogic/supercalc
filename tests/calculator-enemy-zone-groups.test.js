@@ -8,7 +8,8 @@ import {
   buildEnemyZoneGroups,
   autoClusterZones,
   getZoneCombatSignature,
-  getZoneNameStem
+  getZoneNameStem,
+  getZoneSemanticStem
 } from '../calculator/enemy-zone-groups.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -85,6 +86,18 @@ test('getZoneNameStem strips left but keeps rear in a compound name', () => {
 test('getZoneNameStem strips compact l/r but keeps front and rear tokens', () => {
   assert.equal(getZoneNameStem('hitzone_l_rear_leg'), 'hitzone_rear_leg');
   assert.equal(getZoneNameStem('hitzone_r_front_leg'), 'hitzone_front_leg');
+});
+
+test('getZoneSemanticStem strips front/rear and upper/lower positional tokens', () => {
+  assert.equal(getZoneSemanticStem('hitzone_l_rear_leg'), 'hitzone_leg');
+  assert.equal(getZoneSemanticStem('hitzone_r_front_leg'), 'hitzone_leg');
+  assert.equal(getZoneSemanticStem('armor_lower_l_arm'), 'armor_arm');
+  assert.equal(getZoneSemanticStem('front_torso'), 'torso');
+});
+
+test('getZoneSemanticStem falls back to normalized name when every token is positional', () => {
+  assert.equal(getZoneSemanticStem('left'), 'left');
+  assert.equal(getZoneSemanticStem('rear'), 'rear');
 });
 
 test('getZoneNameStem falls back to normalized name when entire name is a laterality token', () => {
@@ -205,7 +218,7 @@ test('auto-groups compact l/r mirrored zones with identical stats', () => {
   assert.deepEqual(families[0].memberIndices, [0, 1]);
 });
 
-test('auto-groups compact l/r interior tokens while preserving front/rear distinction', () => {
+test('auto-groups compact l/r interior tokens and merges front/rear variants with identical stats', () => {
   const base = { AV: 1, 'Dur%': 0.5, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false };
   const enemy = makeEnemy({
     zones: [
@@ -217,9 +230,10 @@ test('auto-groups compact l/r interior tokens while preserving front/rear distin
   });
   const { families } = buildEnemyZoneGroups(enemy);
 
-  assert.equal(families.length, 2);
-  assert.deepEqual(families.map((family) => family.memberIndices), [[0, 1], [2, 3]]);
-  assert.deepEqual(families.map((family) => family.label), ['hitzone rear leg', 'hitzone front leg']);
+  assert.equal(families.length, 1);
+  assert.deepEqual(families[0].memberIndices, [0, 1, 2, 3]);
+  assert.equal(families[0].label, 'hitzone leg');
+  assert.equal(families[0].summaryLabel, 'hitzone leg (×4)');
 });
 
 test('auto-groups three zones with identical stats and compatible stem', () => {
@@ -267,7 +281,7 @@ test('does NOT auto-group zones with different stats even if names are compatibl
   assert.ok(families.every((f) => f.isSingleton));
 });
 
-test('preserves front/rear distinction — does NOT group front_torso with rear_torso', () => {
+test('auto-groups front/rear torso variants when exact stats match', () => {
   const base = { AV: 2, 'Dur%': 0.5, health: 500, Con: 0, ExMult: null, ExTarget: 'Part', 'ToMain%': 1, MainCap: 0, IsFatal: false };
   const enemy = makeEnemy({
     zones: [
@@ -277,8 +291,10 @@ test('preserves front/rear distinction — does NOT group front_torso with rear_
   });
   const { families } = buildEnemyZoneGroups(enemy);
 
-  assert.equal(families.length, 2);
-  assert.ok(families.every((f) => f.isSingleton));
+  assert.equal(families.length, 1);
+  assert.equal(families[0].isSingleton, false);
+  assert.deepEqual(families[0].memberIndices, [0, 1]);
+  assert.equal(families[0].label, 'torso');
 });
 
 test('auto-groups rear_left_exhaust and rear_right_exhaust (left/right stripped, rear kept)', () => {
@@ -295,6 +311,52 @@ test('auto-groups rear_left_exhaust and rear_right_exhaust (left/right stripped,
   assert.equal(families[0].isSingleton, false);
   assert.equal(families[0].label, 'rear exhaust');
   assert.equal(families[0].summaryLabel, 'rear exhaust (×2)');
+});
+
+test('auto-groups all Alpha Commander legs into one family when their stats are identical', () => {
+  const legStats = {
+    AV: 1,
+    'Dur%': 0.5,
+    health: 200,
+    Con: 0,
+    ExMult: null,
+    ExTarget: 'Main',
+    'ToMain%': 0.6,
+    MainCap: 0,
+    IsFatal: false
+  };
+  const clawStats = {
+    AV: 2,
+    'Dur%': 0.5,
+    health: 200,
+    Con: 0,
+    ExMult: null,
+    ExTarget: 'Main',
+    'ToMain%': 0.4,
+    MainCap: 0,
+    IsFatal: false
+  };
+  const enemy = makeEnemy({
+    zones: [
+      makeZone({ zone_name: 'Main', AV: 2, 'Dur%': 0.7, health: 1000, ExTarget: 'Part', MainCap: 1, 'ToMain%': 1 }),
+      makeZone({ zone_name: 'face', AV: 2, Con: 300, 'Dur%': 0.7, health: 250, ExTarget: 'Main', MainCap: 0, 'ToMain%': 1, IsFatal: true }),
+      { zone_name: 'hitzone_l_rear_leg', ...legStats },
+      { zone_name: 'hitzone_r_rear_leg', ...legStats },
+      { zone_name: 'hitzone_r_front_leg', ...legStats },
+      { zone_name: 'hitzone_l_front_leg', ...legStats },
+      { zone_name: 'r_claw', ...clawStats },
+      { zone_name: 'l_claw', ...clawStats }
+    ]
+  });
+  const { families } = buildEnemyZoneGroups(enemy);
+
+  const legFamily = families.find((family) => family.label === 'hitzone leg');
+  assert.ok(legFamily, 'expected Alpha Commander legs to collapse into one family');
+  assert.deepEqual(legFamily.memberIndices, [2, 3, 4, 5]);
+
+  const clawFamily = families.find((family) => family.label === 'claw');
+  assert.ok(clawFamily, 'expected claws to remain a separate family');
+  assert.deepEqual(clawFamily.memberIndices, [6, 7]);
 });
 
 // ─── buildEnemyZoneGroups — explicit zoneRelationGroups ────────────────────────
@@ -548,17 +610,18 @@ test('autoClusterZones clusters interior compact l/r tokens (armor_lower_l_arm /
   assert.equal(clusters[0].members[1].stem, 'armor_lower_arm');
 });
 
-test('autoClusterZones keeps front/rear stems separate even with identical stats', () => {
+test('autoClusterZones merges front/rear stems when the semantic core and stats match', () => {
   const base = { AV: 2, 'Dur%': 0.5, health: 500, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 0, IsFatal: false };
   const zones = [
     { idx: 0, zone: { zone_name: 'front_torso', ...base } },
     { idx: 1, zone: { zone_name: 'rear_torso', ...base } }
   ];
   const clusters = autoClusterZones(zones);
-  assert.equal(clusters.length, 2);
-  assert.ok(clusters.every((c) => c.members.length === 1));
+  assert.equal(clusters.length, 1);
+  assert.equal(clusters[0].members.length, 2);
   assert.equal(clusters[0].members[0].stem, 'front_torso');
-  assert.equal(clusters[1].members[0].stem, 'rear_torso');
+  assert.equal(clusters[0].members[1].stem, 'rear_torso');
+  assert.equal(clusters[0].labelStem, 'torso');
 });
 
 test('autoClusterZones does not merge zones with different name stems even if stats match', () => {
@@ -570,6 +633,18 @@ test('autoClusterZones does not merge zones with different name stems even if st
   const clusters = autoClusterZones(zones);
   assert.equal(clusters.length, 2);
   assert.ok(clusters.every((c) => c.members.length === 1));
+});
+
+test('autoClusterZones merges upper/lower variants when the semantic core and stats match', () => {
+  const base = { AV: 1, 'Dur%': 0.3, health: 250, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'armor_lower_l_arm', ...base } },
+    { idx: 1, zone: { zone_name: 'armor_upper_r_arm', ...base } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 1);
+  assert.equal(clusters[0].members.length, 2);
+  assert.equal(clusters[0].labelStem, 'armor_arm');
 });
 
 test('autoClusterZones does not merge zones with different stats even if stems match', () => {

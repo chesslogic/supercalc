@@ -3,10 +3,12 @@
 //
 // Grouping strategy (conservative, metadata-first):
 //   1. Use explicit enemy.zoneRelationGroups when present.
-//   2. Fall back to auto-clustering (autoClusterZones) only when ungrouped
-//      zones share an identical raw combat signature AND a compatible
-//      laterality-stripped name stem (strips "left"/"right"/"l"/"r" but
-//      keeps "front"/"rear"/"upper"/"lower" etc.).
+//   2. Fall back to auto-clustering only when ungrouped zones share an
+//      identical raw combat signature and a compatible normalized name stem.
+//      This happens in two passes:
+//        a. laterality-neutral grouping ("left"/"right"/"l"/"r")
+//        b. positional-neutral merge ("front"/"rear"/"upper"/"lower")
+//           when the remaining semantic core is still identical
 //   3. Keep semantically dissimilar names separate even if stats match.
 import { normalizeText } from './domain-utils.js';
 
@@ -19,9 +21,24 @@ const COMBAT_SIGNATURE_FIELDS = Object.freeze([
 
 // Tokens stripped from zone names to derive a laterality-neutral stem.
 // This intentionally covers both the verbose forms ("left"/"right") and the
-// compact dataset forms ("l"/"r"), while still preserving tokens such as
-// "front" / "rear" / "upper" / "lower" that carry real semantic distinctions.
+// compact dataset forms ("l"/"r").
 const LATERALITY_TOKENS = new Set(['left', 'right', 'l', 'r']);
+
+// Positional tokens that can vary between otherwise equivalent parts. These are
+// only used in the secondary semantic merge pass after exact combat signature
+// equality has already been established.
+const POSITIONAL_VARIANT_TOKENS = new Set([
+  ...LATERALITY_TOKENS,
+  'front', 'rear', 'upper', 'lower'
+]);
+
+function buildZoneNameStem(zoneName, strippedTokens) {
+  const normalized = normalizeText(zoneName);
+  const parts = normalized
+    .split('_')
+    .filter((part) => part && !strippedTokens.has(part));
+  return parts.length > 0 ? parts.join('_') : normalized;
+}
 
 /**
  * Returns a pipe-delimited string that uniquely captures the raw combat
@@ -57,9 +74,27 @@ export function getZoneCombatSignature(zone) {
  * @returns {string}
  */
 export function getZoneNameStem(zoneName) {
-  const normalized = normalizeText(zoneName);
-  const parts = normalized.split('_').filter((part) => part && !LATERALITY_TOKENS.has(part));
-  return parts.length > 0 ? parts.join('_') : normalized;
+  return buildZoneNameStem(zoneName, LATERALITY_TOKENS);
+}
+
+/**
+ * Returns a broader semantic stem for a zone name by stripping both laterality
+ * and positional-variant tokens. This allows exact-stat matches like
+ * front/rear or upper/lower leg pairs to collapse into one family while still
+ * keeping different component nouns (e.g. leg vs claw) separate.
+ *
+ * Examples:
+ *   "hitzone_l_rear_leg"  → "hitzone_leg"
+ *   "hitzone_r_front_leg" → "hitzone_leg"
+ *   "armor_lower_l_arm"   → "armor_arm"
+ *   "front_torso"         → "torso"
+ *   "left"                → "left"         (fallback – nothing remains)
+ *
+ * @param {string} zoneName
+ * @returns {string}
+ */
+export function getZoneSemanticStem(zoneName) {
+  return buildZoneNameStem(zoneName, POSITIONAL_VARIANT_TOKENS);
 }
 
 /**
@@ -75,24 +110,26 @@ function buildAutoStemLabel(stem) {
 
 /**
  * Clusters an array of indexed zones by identical combat signature and
- * laterality-neutral name stem.
+ * compatible normalized name stem.
  *
- * Rules (conservative):
+ * Rules (conservative-but-statistical):
  *  - Exact combat signature match is required (all COMBAT_SIGNATURE_FIELDS).
- *  - left/right and compact l/r tokens normalise to the same stem, so mirrored
+ *  - left/right and compact l/r tokens normalize to the same stem, so mirrored
  *    pairs like "left_arm"/"right_arm" or "l_claw"/"r_claw" can cluster.
- *  - front/rear/upper/lower tokens are preserved in the stem, so
- *    "front_torso" and "rear_torso" always remain separate families.
+ *  - If multiple exact-stat strict stems differ only by positional tokens
+ *    (front/rear/upper/lower), they are merged into one broader semantic
+ *    family using the positional-neutral stem for the summary label.
  *  - A zone whose name reduces to an empty stem (e.g. a zone literally named
  *    "left") is returned as a degenerate singleton so it is never collapsed
  *    with other zones.
- *  - Zones with different name stems never merge, even if stats match.
+ *  - Zones with different semantic cores never merge, even if stats match.
  *
  * @param {Array<{idx: number, zone: object}>} indexedZones
  *   Unassigned zones to cluster.  Each entry must carry `.idx` (canonical
  *   zone index) and `.zone` (zone object).
  * @returns {Array<{
  *   members: Array<{idx: number, zone: object, stem: string}>,
+ *   labelStem: string,
  *   isDegenerate: boolean
  * }>}
  *   Clusters sorted by the smallest member idx within each cluster.
@@ -101,34 +138,69 @@ function buildAutoStemLabel(stem) {
  */
 export function autoClusterZones(indexedZones) {
   const clusters = [];
-  const groupMap = new Map(); // groupKey → [{idx, zone, stem}]
+  const strictClusterMap = new Map(); // strictKey → { signature, stem, semanticStem, members }
 
   for (const { idx, zone } of indexedZones) {
     const sig = getZoneCombatSignature(zone);
     const stem = getZoneNameStem(zone?.zone_name);
+    const semanticStem = getZoneSemanticStem(zone?.zone_name);
 
     if (!stem) {
       // Degenerate: empty zone name – isolate as a singleton cluster.
-      clusters.push({ members: [{ idx, zone, stem }], isDegenerate: true });
+      clusters.push({
+        members: [{ idx, zone, stem, semanticStem }],
+        labelStem: stem,
+        isDegenerate: true
+      });
       continue;
     }
 
-    const groupKey = `${sig}||${stem}`;
-    if (!groupMap.has(groupKey)) {
-      groupMap.set(groupKey, []);
+    const strictKey = `${sig}||${stem}`;
+    if (!strictClusterMap.has(strictKey)) {
+      strictClusterMap.set(strictKey, {
+        signature: sig,
+        stem,
+        semanticStem,
+        members: []
+      });
     }
-    groupMap.get(groupKey).push({ idx, zone, stem });
+    strictClusterMap.get(strictKey).members.push({ idx, zone, stem, semanticStem });
   }
 
-  for (const members of groupMap.values()) {
-    clusters.push({ members, isDegenerate: false });
+  const semanticClusterMap = new Map(); // semanticKey → strictCluster[]
+  for (const strictCluster of strictClusterMap.values()) {
+    strictCluster.members.sort((a, b) => a.idx - b.idx);
+    const semanticKey = `${strictCluster.signature}||${strictCluster.semanticStem || strictCluster.stem}`;
+    if (!semanticClusterMap.has(semanticKey)) {
+      semanticClusterMap.set(semanticKey, []);
+    }
+    semanticClusterMap.get(semanticKey).push(strictCluster);
   }
 
-  // Sort members within each cluster by index, then sort clusters by their
-  // representative (smallest) member index for stable, predictable output.
-  for (const cluster of clusters) {
-    cluster.members.sort((a, b) => a.idx - b.idx);
+  for (const strictClusters of semanticClusterMap.values()) {
+    if (strictClusters.length === 1) {
+      const [strictCluster] = strictClusters;
+      clusters.push({
+        members: strictCluster.members,
+        labelStem: strictCluster.stem,
+        isDegenerate: false
+      });
+      continue;
+    }
+
+    const mergedMembers = strictClusters
+      .flatMap((strictCluster) => strictCluster.members)
+      .sort((a, b) => a.idx - b.idx);
+    const labelStem = strictClusters[0].semanticStem || strictClusters[0].stem;
+    clusters.push({
+      members: mergedMembers,
+      labelStem,
+      isDegenerate: false
+    });
   }
+
+  // Sort clusters by their representative (smallest) member index for stable,
+  // predictable output.
   clusters.sort((a, b) => a.members[0].idx - b.members[0].idx);
 
   return clusters;
@@ -238,12 +310,13 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
   }
 
   // ─── Phase 2: auto-fallback for ungrouped zones ───────────────────────────
-  // Delegate to autoClusterZones, which groups by identical combat signature
-  // + identical laterality-neutral name stem.
+  // Delegate to autoClusterZones, which first groups by identical combat
+  // signature + laterality-neutral stem, then optionally merges positional
+  // variants whose semantic core still matches exactly.
   const ungroupedZones = indexedZones.filter(({ idx }) => !assignedZoneIndices.has(idx));
   const clusters = autoClusterZones(ungroupedZones);
 
-  for (const { members, isDegenerate } of clusters) {
+  for (const { members, labelStem, isDegenerate } of clusters) {
     const memberIndices = members.map((m) => m.idx);
     const representativeIndex = memberIndices[0];
     const representativeZone = members[0].zone;
@@ -252,10 +325,11 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
 
     // Degenerate (empty-stem) zones always become labelled singletons.
     // For normal clusters: singletons use the zone's own name; multi-member
-    // groups derive their label from the shared stem (underscores → spaces).
+    // groups derive their label from the shared strict or semantic stem
+    // (underscores → spaces).
     const label = isDegenerate || isSingleton
       ? (representativeZone?.zone_name || `[zone ${representativeIndex}]`)
-      : buildAutoStemLabel(members[0].stem);
+      : buildAutoStemLabel(labelStem);
 
     const summaryLabel = isSingleton
       ? label
