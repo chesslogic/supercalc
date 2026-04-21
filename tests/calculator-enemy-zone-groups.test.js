@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildEnemyZoneGroups,
+  autoClusterZones,
   getZoneCombatSignature,
   getZoneNameStem
 } from '../calculator/enemy-zone-groups.js';
@@ -504,4 +505,125 @@ test('summaryLabel includes count suffix for multi-member families', () => {
   });
   const { families } = buildEnemyZoneGroups(enemy);
   assert.ok(families[0].summaryLabel.includes('×2'));
+});
+
+// ─── autoClusterZones — direct unit tests ─────────────────────────────────────
+
+test('autoClusterZones clusters left/right mirrored zones with identical stats', () => {
+  const base = { AV: 2, 'Dur%': 0, health: 300, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'left_arm', ...base } },
+    { idx: 1, zone: { zone_name: 'right_arm', ...base } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 1);
+  assert.equal(clusters[0].isDegenerate, false);
+  assert.equal(clusters[0].members.length, 2);
+  assert.equal(clusters[0].members[0].stem, 'arm');
+  assert.equal(clusters[0].members[1].stem, 'arm');
+});
+
+test('autoClusterZones clusters compact l/r mirrored zones', () => {
+  const base = { AV: 2, 'Dur%': 0.5, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.4, MainCap: 0, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'l_claw', ...base } },
+    { idx: 1, zone: { zone_name: 'r_claw', ...base } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 1);
+  assert.equal(clusters[0].members.length, 2);
+  assert.equal(clusters[0].members[0].stem, 'claw');
+});
+
+test('autoClusterZones clusters interior compact l/r tokens (armor_lower_l_arm / armor_lower_r_arm)', () => {
+  const base = { AV: 1, 'Dur%': 0.3, health: 250, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'armor_lower_l_arm', ...base } },
+    { idx: 1, zone: { zone_name: 'armor_lower_r_arm', ...base } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 1);
+  assert.equal(clusters[0].members.length, 2);
+  assert.equal(clusters[0].members[0].stem, 'armor_lower_arm');
+  assert.equal(clusters[0].members[1].stem, 'armor_lower_arm');
+});
+
+test('autoClusterZones keeps front/rear stems separate even with identical stats', () => {
+  const base = { AV: 2, 'Dur%': 0.5, health: 500, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 0, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'front_torso', ...base } },
+    { idx: 1, zone: { zone_name: 'rear_torso', ...base } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 2);
+  assert.ok(clusters.every((c) => c.members.length === 1));
+  assert.equal(clusters[0].members[0].stem, 'front_torso');
+  assert.equal(clusters[1].members[0].stem, 'rear_torso');
+});
+
+test('autoClusterZones does not merge zones with different name stems even if stats match', () => {
+  const base = { AV: 2, 'Dur%': 0, health: 300, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'left_arm', ...base } },
+    { idx: 1, zone: { zone_name: 'left_leg', ...base } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 2);
+  assert.ok(clusters.every((c) => c.members.length === 1));
+});
+
+test('autoClusterZones does not merge zones with different stats even if stems match', () => {
+  const zones = [
+    { idx: 0, zone: { zone_name: 'left_arm', AV: 2, 'Dur%': 0, health: 300, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false } },
+    { idx: 1, zone: { zone_name: 'right_arm', AV: 3, 'Dur%': 0, health: 300, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 2);
+  assert.ok(clusters.every((c) => c.members.length === 1));
+});
+
+test('autoClusterZones returns degenerate cluster for empty-name zone', () => {
+  const zones = [
+    { idx: 0, zone: { zone_name: '', AV: 0, 'Dur%': 0, health: 100, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 1);
+  assert.equal(clusters[0].isDegenerate, true);
+  assert.equal(clusters[0].members.length, 1);
+});
+
+test('autoClusterZones clusters are sorted by smallest member idx', () => {
+  const base = { AV: 1, 'Dur%': 0, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false };
+  const base2 = { AV: 2, 'Dur%': 0, health: 400, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false };
+  const zones = [
+    { idx: 0, zone: { zone_name: 'left_pauldron', ...base } },
+    { idx: 1, zone: { zone_name: 'left_arm', ...base2 } },
+    { idx: 2, zone: { zone_name: 'right_pauldron', ...base } },
+    { idx: 3, zone: { zone_name: 'right_arm', ...base2 } }
+  ];
+  const clusters = autoClusterZones(zones);
+  assert.equal(clusters.length, 2);
+  assert.equal(clusters[0].members[0].idx, 0); // pauldron cluster first
+  assert.equal(clusters[1].members[0].idx, 1); // arm cluster second
+});
+
+// ─── buildEnemyZoneGroups — interior compact l/r integration ──────────────────
+
+test('auto-groups interior compact l/r tokens: armor_lower_l_arm / armor_lower_r_arm', () => {
+  const base = { AV: 1, 'Dur%': 0.3, health: 250, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false };
+  const enemy = makeEnemy({
+    zones: [
+      { zone_name: 'armor_lower_l_arm', ...base },
+      { zone_name: 'armor_lower_r_arm', ...base }
+    ]
+  });
+  const { families } = buildEnemyZoneGroups(enemy);
+
+  assert.equal(families.length, 1);
+  const [fam] = families;
+  assert.equal(fam.isSingleton, false);
+  assert.equal(fam.isExplicit, false);
+  assert.deepEqual(fam.memberIndices, [0, 1]);
+  assert.equal(fam.label, 'armor lower arm');
+  assert.equal(fam.summaryLabel, 'armor lower arm (×2)');
 });

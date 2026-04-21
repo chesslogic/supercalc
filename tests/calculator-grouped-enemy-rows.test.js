@@ -1101,3 +1101,259 @@ test('family path row blanks non-viable compare-slot cells instead of showing di
   assert.equal(cells[2].textContent.trim(), '-');
   assert.equal(cells[3].textContent.trim(), '-');
 });
+
+// ─── Focused-table integration: compact l/r laterality tokens ─────────────────
+// Verifies that the recent broadening of laterality stripping to compact l/r
+// tokens is surfaced all the way through the renderer — i.e. that a detected
+// family with compact-token names actually becomes a grouped summary row, not
+// two separate plain rows.
+
+test('compact l/r names (arm_l / arm_r) produce a grouped summary row', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = { zone_name: 'arm_l', ...base };
+  const zoneR = { zone_name: 'arm_r', ...base };
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  const sortedRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const rows = [...getDirectChildren(tbody)];
+  const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
+  assert.equal(summaryRows.length, 1, 'compact l/r zones must produce exactly one summary row');
+  assert.equal(
+    rows.filter((tr) => tr.classList.contains('zone-group-member')).length,
+    2,
+    'compact l/r zones must produce two member rows'
+  );
+  // Plain rows (no class) must be absent — both zones are grouped.
+  const plainRows = rows.filter(
+    (tr) => !tr.classList.contains('zone-group-summary') && !tr.classList.contains('zone-group-member')
+  );
+  assert.equal(plainRows.length, 0, 'no plain rows expected when both zones belong to a group');
+});
+
+test('compact l/r summary row label derives stem from the stripped name', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = { zone_name: 'arm_l', ...base };
+  const zoneR = { zone_name: 'arm_r', ...base };
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  const sortedRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const summaryRow = [...getDirectChildren(tbody)].find((tr) => tr.classList.contains('zone-group-summary'));
+  const nameCell = getDirectChildren(summaryRow)[0];
+  // Stem after stripping 'l'/'r' from 'arm_l'/'arm_r' is 'arm'.
+  assert.ok(
+    nameCell.textContent.includes('arm'),
+    `Expected name cell to include "arm", got: "${nameCell.textContent}"`
+  );
+  assert.ok(
+    nameCell.textContent.includes('×2'),
+    `Expected summaryLabel to include "×2", got: "${nameCell.textContent}"`
+  );
+});
+
+test('compound compact l/r names (armor_lower_l_arm / armor_lower_r_arm) group correctly', () => {
+  resetState();
+  const base = {
+    AV: 2, 'Dur%': 0, health: 300, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = { zone_name: 'armor_lower_l_arm', ...base };
+  const zoneR = { zone_name: 'armor_lower_r_arm', ...base };
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  const sortedRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const rows = [...getDirectChildren(tbody)];
+  const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
+  assert.equal(summaryRows.length, 1, 'compound compact l/r zones must collapse to one summary row');
+});
+
+// ─── Focused-table integration: sorted row ordering ───────────────────────────
+// Verifies that the renderer's pre-collection phase handles any row ordering
+// from sortEnemyZoneRows — including when family members arrive in reverse
+// order or are interleaved with other zones.
+
+test('family members in reverse sort order still produce a grouped summary row', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = makeZone({ zone_name: 'left_arm', ...base });
+  const zoneR = makeZone({ zone_name: 'right_arm', ...base });
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  // Deliberately reversed: right (idx 1) before left (idx 0).
+  const sortedRows = [makeRow(zoneR, 1), makeRow(zoneL, 0)];
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const rows = [...getDirectChildren(tbody)];
+  assert.equal(
+    rows.filter((tr) => tr.classList.contains('zone-group-summary')).length,
+    1,
+    'reversed family members must still produce one summary row'
+  );
+  assert.equal(
+    rows.filter((tr) => tr.classList.contains('zone-group-member')).length,
+    2,
+    'reversed family must still produce two member rows'
+  );
+});
+
+test('when family members are reversed the representative is still the lower-index zone', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = makeZone({ zone_name: 'left_arm', ...base });
+  const zoneR = makeZone({ zone_name: 'right_arm', ...base });
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  // right_arm has zoneIndex=1 but left_arm has zoneIndex=0; representative should be idx 0.
+  const sortedRows = [makeRow(zoneR, 1), makeRow(zoneL, 0)];
+
+  const { rowEntries } = renderIntoTbody(sortedRows, enemy);
+
+  const summaryEntry = rowEntries.find(({ tr }) => tr.classList.contains('zone-group-summary'));
+  assert.ok(summaryEntry, 'must have a summary entry');
+  assert.equal(summaryEntry.zoneIndex, 0, 'representative should be the lower-index zone (left_arm)');
+  assert.equal(summaryEntry.zone.zone_name, 'left_arm');
+});
+
+test('family interleaved with singletons renders correctly regardless of member positions', () => {
+  resetState();
+  const base = { AV: 1, 'Dur%': 0, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false };
+  const zoneHead = makeZone({ zone_name: 'Head', AV: 0, health: 150, IsFatal: true });
+  const zoneL = makeZone({ zone_name: 'left_arm', ...base });
+  const zoneR = makeZone({ zone_name: 'right_arm', ...base });
+  const zoneChest = makeZone({ zone_name: 'chest', AV: 3, health: 500 });
+  const enemy = makeEnemy({ zones: [zoneHead, zoneL, zoneR, zoneChest] });
+
+  // Simulate outcome-sorted order: Head and Chest are singletons interleaved with family members.
+  // Sorted by shots (hypothetical): right_arm, left_arm, head, chest
+  const sortedRows = [
+    makeRow(zoneR, 2),
+    makeRow(zoneL, 1),
+    makeRow(zoneHead, 0),
+    makeRow(zoneChest, 3)
+  ];
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const rows = [...getDirectChildren(tbody)];
+  const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
+  const memberRows = rows.filter((tr) => tr.classList.contains('zone-group-member'));
+  const plainRows = rows.filter(
+    (tr) => !tr.classList.contains('zone-group-summary') && !tr.classList.contains('zone-group-member')
+  );
+
+  assert.equal(summaryRows.length, 1, 'one summary row for the arm group');
+  assert.equal(memberRows.length, 2, 'two member rows for left/right arm');
+  assert.equal(plainRows.length, 2, 'two plain rows for Head and chest singletons');
+  // Total: 1 summary + 2 members + 2 plain = 5
+  assert.equal(rows.length, 5);
+});
+
+// ─── Focused-table integration: sortEnemyZoneRows pipeline ───────────────────
+// Verifies the full renderer pipeline that enemy-focused-table.js uses:
+//   sortEnemyZoneRows output → renderGroupedEnemyRows → grouped summary rows.
+// This pins that a detected family survives the sort step intact.
+
+import { sortEnemyZoneRows } from '../calculator/compare-utils.js';
+
+test('sortEnemyZoneRows + renderGroupedEnemyRows: family survives default sort', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = makeZone({ zone_name: 'left_arm', ...base });
+  const zoneR = makeZone({ zone_name: 'right_arm', ...base });
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  const rawRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+  const sortedRows = sortEnemyZoneRows(rawRows, { mode: 'single', sortKey: 'zone_name', sortDir: 'asc', pinMain: false });
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const rows = [...getDirectChildren(tbody)];
+  assert.equal(
+    rows.filter((tr) => tr.classList.contains('zone-group-summary')).length,
+    1,
+    'family must still produce summary row after sortEnemyZoneRows'
+  );
+});
+
+test('sortEnemyZoneRows + renderGroupedEnemyRows: compact l/r family survives sort', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneL = { zone_name: 'leg_l', ...base };
+  const zoneR = { zone_name: 'leg_r', ...base };
+  const enemy = makeEnemy({ zones: [zoneL, zoneR] });
+  const rawRows = [makeRow(zoneL, 0), makeRow(zoneR, 1)];
+
+  const sortedRows = sortEnemyZoneRows(rawRows, { mode: 'single', sortKey: 'zone_name', sortDir: 'asc', pinMain: false });
+
+  const tbody = globalThis.document.createElement('tbody');
+  renderGroupedEnemyRows(tbody, sortedRows, enemy, { columns: MINIMAL_COLUMNS });
+
+  const rows = [...getDirectChildren(tbody)];
+  assert.equal(
+    rows.filter((tr) => tr.classList.contains('zone-group-summary')).length,
+    1,
+    'compact l/r family must produce summary row after sort step'
+  );
+  assert.equal(
+    rows.filter((tr) => tr.classList.contains('zone-group-member')).length,
+    2
+  );
+});
+
+test('sortEnemyZoneRows + renderGroupedEnemyRows: outcome-grouped sort keeps family together', () => {
+  resetState();
+  const base = {
+    AV: 0, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneMain = makeZone({ zone_name: 'Main', health: 800, 'ToMain%': 1 });
+  const zoneL = makeZone({ zone_name: 'left_arm', ...base });
+  const zoneR = makeZone({ zone_name: 'right_arm', ...base });
+  const slotA = makeSlotMetrics({ outcomeKind: 'limb', zoneShotsToKill: 3, mainShotsToKill: 6 });
+  const armMetrics = { bySlot: { A: slotA, B: null }, diffShots: null, diffTtkSeconds: null };
+  const enemy = makeEnemy({ zones: [zoneMain, zoneL, zoneR] });
+  const rawRows = [
+    makeRow(zoneMain, 0, { metrics: null }),
+    makeRow(zoneL, 1, { metrics: armMetrics }),
+    makeRow(zoneR, 2, { metrics: armMetrics })
+  ];
+
+  const sortedRows = sortEnemyZoneRows(rawRows, {
+    mode: 'single',
+    sortKey: 'shotsA',
+    sortDir: 'asc',
+    groupMode: 'outcome',
+    pinMain: true
+  });
+
+  const tbody = globalThis.document.createElement('tbody');
+  renderGroupedEnemyRows(tbody, sortedRows, enemy, { columns: MINIMAL_COLUMNS });
+
+  const rows = [...getDirectChildren(tbody)];
+  const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
+  assert.equal(summaryRows.length, 1, 'arm family must still produce one summary row after outcome sort');
+});

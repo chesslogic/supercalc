@@ -3,9 +3,10 @@
 //
 // Grouping strategy (conservative, metadata-first):
 //   1. Use explicit enemy.zoneRelationGroups when present.
-//   2. Fall back to auto-clustering only when ungrouped zones share an
-//      identical raw combat signature AND a compatible laterality-stripped
-//      name stem (strips "left"/"right" but keeps "front"/"rear" etc.).
+//   2. Fall back to auto-clustering (autoClusterZones) only when ungrouped
+//      zones share an identical raw combat signature AND a compatible
+//      laterality-stripped name stem (strips "left"/"right"/"l"/"r" but
+//      keeps "front"/"rear"/"upper"/"lower" etc.).
 //   3. Keep semantically dissimilar names separate even if stats match.
 import { normalizeText } from './domain-utils.js';
 
@@ -70,6 +71,67 @@ export function getZoneNameStem(zoneName) {
  */
 function buildAutoStemLabel(stem) {
   return stem.replace(/_/g, ' ');
+}
+
+/**
+ * Clusters an array of indexed zones by identical combat signature and
+ * laterality-neutral name stem.
+ *
+ * Rules (conservative):
+ *  - Exact combat signature match is required (all COMBAT_SIGNATURE_FIELDS).
+ *  - left/right and compact l/r tokens normalise to the same stem, so mirrored
+ *    pairs like "left_arm"/"right_arm" or "l_claw"/"r_claw" can cluster.
+ *  - front/rear/upper/lower tokens are preserved in the stem, so
+ *    "front_torso" and "rear_torso" always remain separate families.
+ *  - A zone whose name reduces to an empty stem (e.g. a zone literally named
+ *    "left") is returned as a degenerate singleton so it is never collapsed
+ *    with other zones.
+ *  - Zones with different name stems never merge, even if stats match.
+ *
+ * @param {Array<{idx: number, zone: object}>} indexedZones
+ *   Unassigned zones to cluster.  Each entry must carry `.idx` (canonical
+ *   zone index) and `.zone` (zone object).
+ * @returns {Array<{
+ *   members: Array<{idx: number, zone: object, stem: string}>,
+ *   isDegenerate: boolean
+ * }>}
+ *   Clusters sorted by the smallest member idx within each cluster.
+ *   `isDegenerate` is true for the empty-stem singleton cluster produced when
+ *   a zone name reduces to nothing after laterality stripping.
+ */
+export function autoClusterZones(indexedZones) {
+  const clusters = [];
+  const groupMap = new Map(); // groupKey → [{idx, zone, stem}]
+
+  for (const { idx, zone } of indexedZones) {
+    const sig = getZoneCombatSignature(zone);
+    const stem = getZoneNameStem(zone?.zone_name);
+
+    if (!stem) {
+      // Degenerate: empty zone name – isolate as a singleton cluster.
+      clusters.push({ members: [{ idx, zone, stem }], isDegenerate: true });
+      continue;
+    }
+
+    const groupKey = `${sig}||${stem}`;
+    if (!groupMap.has(groupKey)) {
+      groupMap.set(groupKey, []);
+    }
+    groupMap.get(groupKey).push({ idx, zone, stem });
+  }
+
+  for (const members of groupMap.values()) {
+    clusters.push({ members, isDegenerate: false });
+  }
+
+  // Sort members within each cluster by index, then sort clusters by their
+  // representative (smallest) member index for stable, predictable output.
+  for (const cluster of clusters) {
+    cluster.members.sort((a, b) => a.idx - b.idx);
+  }
+  clusters.sort((a, b) => a.members[0].idx - b.members[0].idx);
+
+  return clusters;
 }
 
 /**
@@ -176,62 +238,22 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
   }
 
   // ─── Phase 2: auto-fallback for ungrouped zones ───────────────────────────
-  // Cluster by identical combat signature + identical laterality-neutral stem.
-  // A non-empty stem is required; a zone whose name reduces to an empty stem
-  // (e.g. literally "left") is treated as a singleton to avoid incorrect
-  // collapsing of semantically distinct unnamed zones.
-  const autoGroupMap = new Map(); // groupKey → [{ idx, zone, stem }]
+  // Delegate to autoClusterZones, which groups by identical combat signature
+  // + identical laterality-neutral name stem.
+  const ungroupedZones = indexedZones.filter(({ idx }) => !assignedZoneIndices.has(idx));
+  const clusters = autoClusterZones(ungroupedZones);
 
-  indexedZones.forEach(({ idx, zone }) => {
-    if (assignedZoneIndices.has(idx)) {
-      return;
-    }
-
-    const sig = getZoneCombatSignature(zone);
-    const stem = getZoneNameStem(zone?.zone_name);
-    // Require a non-empty stem that actually contained content after stripping;
-    // a stem equal to the raw normalised name might just be a lone laterality
-    // word – still group by it (e.g. two zones both literally named "torso"
-    // should cluster), but an empty stem cannot.
-    if (!stem) {
-      // Degenerate: empty zone name – force singleton.
-      const familyId = `auto:${idx}`;
-      assignedZoneIndices.add(idx);
-      zoneIndexToFamilyId.set(idx, familyId);
-      const label = zone?.zone_name || `[zone ${idx}]`;
-      families.push({
-        familyId,
-        memberIndices: [idx],
-        memberZones: [zone],
-        representativeIndex: idx,
-        representativeZone: zone,
-        label,
-        summaryLabel: label,
-        isExplicit: false,
-        isSingleton: true,
-        groupId: null
-      });
-      return;
-    }
-
-    const groupKey = `${sig}||${stem}`;
-    if (!autoGroupMap.has(groupKey)) {
-      autoGroupMap.set(groupKey, []);
-    }
-    autoGroupMap.get(groupKey).push({ idx, zone, stem });
-  });
-
-  autoGroupMap.forEach((members) => {
-    members.sort((a, b) => a.idx - b.idx);
+  for (const { members, isDegenerate } of clusters) {
     const memberIndices = members.map((m) => m.idx);
     const representativeIndex = memberIndices[0];
     const representativeZone = members[0].zone;
     const isSingleton = memberIndices.length === 1;
     const familyId = `auto:${representativeIndex}`;
 
-    // Label: use the zone's own name for singletons; derive from stem for
-    // groups so labels like "pauldron" describe both left & right members.
-    const label = isSingleton
+    // Degenerate (empty-stem) zones always become labelled singletons.
+    // For normal clusters: singletons use the zone's own name; multi-member
+    // groups derive their label from the shared stem (underscores → spaces).
+    const label = isDegenerate || isSingleton
       ? (representativeZone?.zone_name || `[zone ${representativeIndex}]`)
       : buildAutoStemLabel(members[0].stem);
 
@@ -256,7 +278,7 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
       isSingleton,
       groupId: null
     });
-  });
+  }
 
   // Sort by representative zone index for stable, index-preserving order.
   families.sort((a, b) => a.representativeIndex - b.representativeIndex);
