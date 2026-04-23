@@ -5,7 +5,12 @@ import {
   RECOMMENDATION_FILTER_TYPE_ORDER,
   RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE
 } from './recommendation-constants.js';
-import { getWeaponRecommendationFeatureGroupId, getWeaponRoleId, getWeaponRoleLabel } from '../../weapons/weapon-taxonomy.js';
+import {
+  getWeaponRecommendationFeatureGroupId,
+  getWeaponRoleId,
+  getWeaponRoleLabel,
+  getWeaponSubLabel
+} from '../../weapons/weapon-taxonomy.js';
 
 export function getRecommendationSummaryTitle(hasHighlightedRows) {
   return hasHighlightedRows
@@ -47,16 +52,6 @@ export function getAvailableRecommendationWeaponTypes(weapons = []) {
   );
 
   return RECOMMENDATION_FILTER_TYPE_ORDER.filter((type) => presentTypes.has(type));
-}
-
-export function getAvailableRecommendationWeaponSubs(weapons = []) {
-  const presentSubs = new Set(
-    (Array.isArray(weapons) ? weapons : [])
-      .map((weapon) => normalizeRecommendationWeaponSub(weapon?.sub))
-      .filter(Boolean)
-  );
-
-  return [...presentSubs].sort((left, right) => left.localeCompare(right));
 }
 
 export function getAvailableRecommendationWeaponFeatureGroups(weapons = []) {
@@ -126,7 +121,7 @@ export function getRecommendationWeaponFilterSummaryText() {
     .map((roleId) => getWeaponRoleLabel(roleId))
     .filter(Boolean);
   const subLabels = calculatorState.recommendationWeaponFilterSubs
-    .map((sub) => getRecommendationFilterChipLabel(sub, 'sub'))
+    .map((sub) => getWeaponSubLabel(sub))
     .filter(Boolean);
   const clauses = [
     typeLabels.length > 0 ? `Type: ${typeLabels.join(' or ')}` : '',

@@ -12,6 +12,7 @@ import {
 import { applyFilters, renderTable } from './table.js';
 import { createFilterChip, normalizeFilterValues } from '../filter-utils.js';
 import { createRoleFilterChipRow } from './role-filter-row.js';
+import { createSubtypeFilterChipRow } from './sub-filter-row.js';
 import { debounce } from '../utils.js';
 
 function syncSearchInput() {
@@ -192,22 +193,24 @@ export function buildTypeFilters() {
 export function buildSubFilters() {
   const el = globalThis.document?.getElementById('subFilters');
   if (!el) return;
-  const subs = new Set();
-  for (const g of state.groups) { const s = (g.sub || '').toString().trim(); if (s) subs.add(s.toLowerCase()); }
-  const ordered = Array.from(subs).sort((a, b) => a.localeCompare(b));
   el.innerHTML = '';
-  ordered.forEach(s => {
-    const chip = createFilterChip({
-      label: s.toUpperCase(),
-      active: state.activeSubs.includes(s),
-      dataset: { val: s },
-      onClick: (button) => {
-        toggleActiveWeaponSub(button.dataset.val);
-        syncSubChipState();
-        applyFilters();
-      }
-    });
-    el.appendChild(chip);
+
+  const chipRow = createSubtypeFilterChipRow({
+    weapons: state.groups,
+    activeSubs: state.activeSubs,
+    onToggleSub: (subId) => {
+      toggleActiveWeaponSub(subId);
+    },
+    onRefresh: () => {
+      syncSubChipState();
+      applyFilters();
+    },
+    label: 'Sub',
+    visibility: 'shared'
   });
+
+  while (chipRow.children.length > 0) {
+    el.appendChild(chipRow.children[0]);
+  }
   applyFilters();
 }

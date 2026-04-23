@@ -209,7 +209,7 @@ test('renderRecommendationPanel surfaces subtype and feature rows in stable orde
       .filter((child) => child.tagName === 'BUTTON')
       .map((child) => child.textContent);
 
-    assert.deepEqual(subChips, ['AR', 'BCK', 'DMR', 'EXP', 'RL']);
+    assert.deepEqual(subChips, ['AR', 'DMR', 'EXP', 'RL']);
     assert.deepEqual(featureChips, ['Automatic', 'Explosive', 'Special', 'Ordnance']);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;

@@ -10,6 +10,32 @@ const WEAPON_ROLE_LABELS = new Map([
 
 export const WEAPON_ROLE_ORDER = Object.freeze([...WEAPON_ROLE_LABELS.keys()]);
 
+const WEAPON_SUBTYPE_DEFINITIONS = Object.freeze([
+  { id: 'ar', label: 'AR', showInSharedFilters: true },
+  { id: 'dmr', label: 'DMR', showInSharedFilters: true },
+  { id: 'smg', label: 'SMG', showInSharedFilters: true },
+  { id: 'sg', label: 'SG', showInSharedFilters: true },
+  { id: 'pdw', label: 'PDW', showInSharedFilters: true },
+  { id: 'exp', label: 'EXP', showInSharedFilters: true },
+  { id: 'mg', label: 'MG', showInSharedFilters: true },
+  { id: 'gl', label: 'GL', showInSharedFilters: true },
+  { id: 'rl', label: 'RL', showInSharedFilters: true },
+  { id: 'gr', label: 'GR', showInSharedFilters: true },
+  { id: 'cqc', label: 'CQC', showInSharedFilters: false },
+  { id: 'nrg', label: 'NRG', showInSharedFilters: false },
+  { id: 'spc', label: 'SPC', showInSharedFilters: false },
+  { id: 'can', label: 'CAN', showInSharedFilters: false },
+  { id: 'bck', label: 'BCK', showInSharedFilters: false },
+  { id: 'egl', label: 'EGL', showInSharedFilters: false },
+  { id: 'emp', label: 'EMP', showInSharedFilters: false },
+  { id: 'orb', label: 'ORB', showInSharedFilters: false },
+  { id: 'vhl', label: 'VHL', showInSharedFilters: false }
+]);
+
+const WEAPON_SUBTYPE_LOOKUP = new Map(
+  WEAPON_SUBTYPE_DEFINITIONS.map((definition) => [definition.id, definition])
+);
+
 const LEGACY_WEAPON_ROLE_SUB_LOOKUP = new Map([
   ['gr', 'explosive'],
   ['ar', 'automatic'],
@@ -62,6 +88,11 @@ export function normalizeWeaponRoleId(role) {
   return normalizedRole || null;
 }
 
+export function normalizeWeaponSubId(sub) {
+  const normalizedSub = normalizeWeaponTaxonomyValue(sub);
+  return normalizedSub || null;
+}
+
 export function getWeaponRoleLabel(roleId) {
   const normalizedRoleId = normalizeWeaponRoleId(roleId);
   if (!normalizedRoleId) {
@@ -75,6 +106,15 @@ export function getWeaponExplicitRoleId(weapon) {
   return normalizeWeaponRoleId(weapon?.role);
 }
 
+export function getWeaponSubLabel(subId) {
+  const normalizedSubId = normalizeWeaponSubId(subId);
+  if (!normalizedSubId) {
+    return '';
+  }
+
+  return WEAPON_SUBTYPE_LOOKUP.get(normalizedSubId)?.label || normalizedSubId.toUpperCase();
+}
+
 export function getWeaponLegacyRoleId(weapon) {
   const normalizedSub = normalizeWeaponTaxonomyValue(weapon?.sub);
   return normalizedSub
@@ -84,6 +124,31 @@ export function getWeaponLegacyRoleId(weapon) {
 
 export function getWeaponRoleId(weapon) {
   return getWeaponExplicitRoleId(weapon) || getWeaponLegacyRoleId(weapon);
+}
+
+export function getAvailableWeaponSubIds(weapons, {
+  visibility = 'all'
+} = {}) {
+  const presentSubIds = new Set(
+    (Array.isArray(weapons) ? weapons : [])
+      .map((weapon) => normalizeWeaponSubId(weapon?.sub))
+      .filter(Boolean)
+  );
+
+  const orderedKnownSubIds = WEAPON_SUBTYPE_DEFINITIONS
+    .filter((definition) => presentSubIds.has(definition.id))
+    .filter((definition) => visibility !== 'shared' || definition.showInSharedFilters)
+    .map((definition) => definition.id);
+
+  if (visibility === 'shared') {
+    return orderedKnownSubIds;
+  }
+
+  const unknownSubIds = [...presentSubIds]
+    .filter((subId) => !WEAPON_SUBTYPE_LOOKUP.has(subId))
+    .sort((left, right) => left.localeCompare(right));
+
+  return [...orderedKnownSubIds, ...unknownSubIds];
 }
 
 export function getWeaponRecommendationFeatureGroupId(weapon) {

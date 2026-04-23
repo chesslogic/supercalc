@@ -15,9 +15,9 @@ import {
   toggleRecommendationWeaponFilterType
 } from '../data.js';
 import { createRoleFilterChipRow } from '../../weapons/role-filter-row.js';
+import { createSubtypeFilterChipRow } from '../../weapons/sub-filter-row.js';
 import {
   getAvailableRecommendationWeaponFeatureGroups,
-  getAvailableRecommendationWeaponSubs,
   getAvailableRecommendationWeaponTypes,
   getRecommendationFilterChipLabel,
   hasActiveRecommendationWeaponFilters
@@ -216,17 +216,18 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
     }));
   }
 
-  const subChips = getAvailableRecommendationWeaponSubs(weapons).map((sub) => createRecommendationFilterChip({
-    label: getRecommendationFilterChipLabel(sub, 'sub'),
-    active: calculatorState.recommendationWeaponFilterSubs.includes(sub),
-    onClick: () => toggleRecommendationWeaponFilterSub(sub),
-    onRefresh
-  }));
-  if (subChips.length > 0) {
-    wrapper.appendChild(createFilterChipRow({
-      label: 'Sub',
-      children: subChips
-    }));
+  const subRow = createSubtypeFilterChipRow({
+    weapons,
+    activeSubs: calculatorState.recommendationWeaponFilterSubs,
+    onToggleSub: (subId) => toggleRecommendationWeaponFilterSub(subId),
+    onRefresh,
+    visibility: 'shared'
+  });
+  const subChipCount = Array.from(subRow.children || [])
+    .filter((child) => child.tagName === 'BUTTON')
+    .length;
+  if (subChipCount > 0) {
+    wrapper.appendChild(subRow);
   }
 
   const featureChips = getAvailableRecommendationWeaponFeatureGroups(weapons)

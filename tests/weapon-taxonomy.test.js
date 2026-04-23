@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 const {
+  getAvailableWeaponSubIds,
   getWeaponCompareSortFamilyId,
   getWeaponRecommendationFeatureGroupId,
   getWeaponRoleId,
-  getWeaponRoleLabel
+  getWeaponRoleLabel,
+  getWeaponSubLabel
 } = await import('../weapons/weapon-taxonomy.js');
 
 test('explicit role wins over legacy fallback overrides', () => {
@@ -27,6 +29,23 @@ test('mixed NRG weapons rely on explicit CSV roles instead of subtype fallbacks'
   assert.equal(getWeaponRoleId({ sub: 'NRG', role: 'explosive' }), 'explosive');
   assert.equal(getWeaponRoleId({ sub: 'NRG', role: 'shotgun' }), 'shotgun');
   assert.equal(getWeaponRoleId({ sub: 'NRG', role: 'energy' }), 'energy');
+});
+
+test('shared subtype taxonomy only surfaces curated player-facing subtype families', () => {
+  assert.deepEqual(
+    getAvailableWeaponSubIds([
+      { sub: 'BCK' },
+      { sub: 'AR' },
+      { sub: 'RL' },
+      { sub: 'CAN' }
+    ], { visibility: 'shared' }),
+    ['ar', 'rl']
+  );
+});
+
+test('subtype labels stay stable for known ids and fall back to uppercase for unknown ids', () => {
+  assert.equal(getWeaponSubLabel('ar'), 'AR');
+  assert.equal(getWeaponSubLabel('lsr'), 'LSR');
 });
 
 test('recommendation feature groups only expose the currently grouped player-facing roles', () => {
