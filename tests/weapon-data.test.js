@@ -384,6 +384,531 @@ test('checked-in weapon codes reflect current wiki designations for corrected ro
   }));
 });
 
+test('checked-in stratagem wiki pass backfills adopted codes, statuses, stats, and RPMs', () => {
+  const rows = loadCheckedInWeaponRows();
+  const dogBreath = rows.find((row) => (
+    row.Code === 'AX/TX-13'
+    && row['Atk Type'] === 'spray'
+    && row['Atk Name'] === 'AX/TX-13 "GUARD DOG" DOG BREATH_S'
+  ));
+  const eagleClusterBomblet = rows.find((row) => (
+    row.Code === '-'
+    && row.Name === 'EAGLE CLUSTER BOMB'
+    && row['Atk Type'] === 'projectile'
+    && row['Atk Name'] === 'CLUSTER BOMB_P4 x8'
+  ));
+  const orbitalEms = rows.find((row) => (
+    row.Code === '-'
+    && row.Name === 'ORBITAL EMS STRIKE'
+    && row['Atk Type'] === 'explosion'
+    && row['Atk Name'] === '110mm E.M.S. CANNON ROUND_P_IE'
+  ));
+
+  assert.ok(findWeaponRow(rows, {
+    code: 'MD-6',
+    attackType: 'explosion',
+    attackName: 'ANTI-PERSONNEL MINEFIELD_E'
+  }));
+  assert.ok(findWeaponRow(rows, {
+    code: 'MD-17',
+    attackType: 'explosion',
+    attackName: 'ANTI-TANK MINES_E'
+  }));
+  assert.ok(findWeaponRow(rows, {
+    code: 'MD-8',
+    attackType: 'explosion',
+    attackName: 'GAS MINES_E'
+  }));
+  assert.ok(findWeaponRow(rows, {
+    code: 'MD-I4',
+    attackType: 'explosion',
+    attackName: 'INCENDIARY MINES_E'
+  }));
+
+  assert.ok(dogBreath);
+  assert.equal(dogBreath.Status, 'Gas_Var2 • Gas_Confusion_Var2');
+
+  assert.ok(eagleClusterBomblet);
+  assert.equal(eagleClusterBomblet.ST, '30');
+
+  assert.ok(orbitalEms);
+  assert.equal(orbitalEms.AP, '6');
+
+  assert.equal(findWeaponRow(rows, {
+    code: 'EXO-49',
+    attackType: 'projectile',
+    attackName: '30mm APHE CANNON P'
+  })?.RPM, '175');
+  assert.equal(findWeaponRow(rows, {
+    code: 'EXO-49',
+    attackType: 'explosion',
+    attackName: '30mm APHE CANNON P IE '
+  })?.RPM, '175');
+  assert.equal(findWeaponRow(rows, {
+    code: 'EXO-45',
+    attackType: 'projectile',
+    attackName: '8x60mm FULL METAL JACKET_P1'
+  })?.RPM, '1200');
+  assert.equal(findWeaponRow(rows, {
+    code: 'EXO-45',
+    attackType: 'explosion',
+    attackName: 'Missile Exosuit '
+  })?.RPM, '90');
+  assert.equal(findWeaponRow(rows, {
+    code: 'EXO-45',
+    attackType: 'projectile',
+    attackName: 'Missile Exosuit '
+  })?.RPM, '90');
+});
+
+test('checked-in stratagem wiki pass includes adopted sentry and deployable rows', () => {
+  const rows = loadCheckedInWeaponRows();
+  const expectedRows = [
+    {
+      code: '-',
+      attackType: 'projectile',
+      attackName: '23mm HE CANNON_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EGL',
+        Role: 'ordnance',
+        Name: 'EAGLE STRAFING RUN',
+        RPM: '',
+        DMG: '350',
+        DUR: '200',
+        AP: '5',
+        DF: '30',
+        ST: '35',
+        PF: '3',
+        Status: ''
+      }
+    },
+    {
+      code: '-',
+      attackType: 'explosion',
+      attackName: '23mm HE CANNON_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EGL',
+        Role: 'ordnance',
+        Name: 'EAGLE STRAFING RUN',
+        RPM: '',
+        DMG: '350',
+        DUR: '350',
+        AP: '3',
+        DF: '30',
+        ST: '35',
+        PF: '5',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/AC-8',
+      attackType: 'projectile',
+      attackName: '40mm APHE CANNON_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'AUTOCANNON SENTRY',
+        RPM: '160',
+        DMG: '450',
+        DUR: '450',
+        AP: '5',
+        DF: '30',
+        ST: '40',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/AC-8',
+      attackType: 'explosion',
+      attackName: '40mm APHE CANNON_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'AUTOCANNON SENTRY',
+        RPM: '160',
+        DMG: '150',
+        DUR: '150',
+        AP: '3',
+        DF: '30',
+        ST: '30',
+        PF: '30',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/M-23',
+      attackType: 'projectile',
+      attackName: 'EMS MORTAR SHELL_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'EMS MORTAR SENTRY',
+        RPM: '60',
+        DMG: '0',
+        DUR: '0',
+        AP: '4',
+        DF: '10',
+        ST: '30',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/M-23',
+      attackType: 'explosion',
+      attackName: 'EMS MORTAR SHELL_P_E',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'EMS MORTAR SENTRY',
+        RPM: '60',
+        DMG: '0',
+        DUR: '0',
+        AP: '6',
+        DF: '30',
+        ST: '50',
+        PF: '0',
+        Status: 'Stun Medium'
+      }
+    },
+    {
+      code: 'A/M-23',
+      attackType: 'explosion',
+      attackName: 'EMS MORTAR SHELL_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'EMS MORTAR SENTRY',
+        RPM: '60',
+        DMG: '150',
+        DUR: '150',
+        AP: '3',
+        DF: '30',
+        ST: '30',
+        PF: '20',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/FLAM-40',
+      attackType: 'spray',
+      attackName: 'SWP_FLAME SENTRY_S',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'energy',
+        Name: 'FLAME SENTRY',
+        RPM: '',
+        DMG: '2',
+        DUR: '2',
+        AP: '4',
+        DF: '10',
+        ST: '5',
+        PF: '5',
+        Status: 'Fire'
+      }
+    },
+    {
+      code: 'A/GM-17',
+      attackType: 'projectile',
+      attackName: 'GAS MORTAR SHELL_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'GAS MORTAR SENTRY',
+        RPM: '80',
+        DMG: '20',
+        DUR: '2',
+        AP: '0',
+        DF: '10',
+        ST: '30',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/GM-17',
+      attackType: 'explosion',
+      attackName: 'GAS MORTAR SHELL_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'GAS MORTAR SENTRY',
+        RPM: '80',
+        DMG: '0',
+        DUR: '0',
+        AP: '6',
+        DF: '30',
+        ST: '10',
+        PF: '20',
+        Status: 'Gas • Gas_Confusion'
+      }
+    },
+    {
+      code: 'E/GL-21',
+      attackType: 'projectile',
+      attackName: '40mm HE GRENADE_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'GRENADIER BATTLEMENT',
+        RPM: '160',
+        DMG: '0',
+        DUR: '0',
+        AP: '4',
+        DF: '10',
+        ST: '30',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'E/GL-21',
+      attackType: 'explosion',
+      attackName: '40mm HE GRENADE_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'GRENADIER BATTLEMENT',
+        RPM: '160',
+        DMG: '400',
+        DUR: '400',
+        AP: '3',
+        DF: '30',
+        ST: '25',
+        PF: '30',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/LAS-98',
+      attackType: 'beam',
+      attackName: 'SWP_LASER SENTRY_B',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'energy',
+        Name: 'LASER SENTRY',
+        RPM: '',
+        DMG: '350',
+        DUR: '200',
+        AP: '4',
+        DF: '20',
+        ST: '0',
+        PF: '0',
+        Status: 'Fire'
+      }
+    },
+    {
+      code: 'A/M-12',
+      attackType: 'projectile',
+      attackName: '40mm HE MORTAR_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'MORTAR SENTRY',
+        RPM: '60',
+        DMG: '0',
+        DUR: '0',
+        AP: '4',
+        DF: '10',
+        ST: '30',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/M-12',
+      attackType: 'explosion',
+      attackName: '40mm HE MORTAR_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'MORTAR SENTRY',
+        RPM: '60',
+        DMG: '400',
+        DUR: '400',
+        AP: '3',
+        DF: '30',
+        ST: '35',
+        PF: '40',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/M-12',
+      attackType: 'projectile',
+      attackName: 'SHRAPNEL_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'MORTAR SENTRY',
+        RPM: '60',
+        DMG: '110',
+        DUR: '35',
+        AP: '3',
+        DF: '10',
+        ST: '10',
+        PF: '20',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/MLS-4X',
+      attackType: 'projectile',
+      attackName: '70mm STANDARD ROCKET_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'ROCKET SENTRY',
+        RPM: '90',
+        DMG: '525',
+        DUR: '525',
+        AP: '5',
+        DF: '30',
+        ST: '35',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'A/MLS-4X',
+      attackType: 'explosion',
+      attackName: '70mm STANDARD ROCKET_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'ROCKET SENTRY',
+        RPM: '90',
+        DMG: '150',
+        DUR: '150',
+        AP: '3',
+        DF: '30',
+        ST: '30',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'TD-220',
+      attackType: 'projectile',
+      attackName: '120mm HE CANNON ROUND_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'BASTION MK XVI',
+        RPM: '12',
+        DMG: '3500',
+        DUR: '3500',
+        AP: '8',
+        DF: '40',
+        ST: '50',
+        PF: '20',
+        Status: ''
+      }
+    },
+    {
+      code: 'TD-220',
+      attackType: 'explosion',
+      attackName: '120mm HE CANNON ROUND_P_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'explosive',
+        Name: 'BASTION MK XVI',
+        RPM: '12',
+        DMG: '750',
+        DUR: '750',
+        AP: '5',
+        DF: '40',
+        ST: '70',
+        PF: '40',
+        Status: ''
+      }
+    },
+    {
+      code: 'TD-220',
+      attackType: 'projectile',
+      attackName: '12.5mm BCHP RIFLE ROUNDS_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'EMP',
+        Role: 'automatic',
+        Name: 'BASTION MK XVI',
+        RPM: '600',
+        DMG: '150',
+        DUR: '35',
+        AP: '4',
+        DF: '15',
+        ST: '25',
+        PF: '20',
+        Status: ''
+      }
+    },
+    {
+      code: 'M-102',
+      attackType: 'projectile',
+      attackName: '12.5mm BCHP RIFLE ROUNDS_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'VHL',
+        Role: 'automatic',
+        Name: 'FAST RECON VEHICLE',
+        RPM: '600',
+        DMG: '150',
+        DUR: '35',
+        AP: '4',
+        DF: '15',
+        ST: '25',
+        PF: '20',
+        Status: ''
+      }
+    }
+  ];
+
+  for (const expected of expectedRows) {
+    const row = findWeaponRow(rows, {
+      code: expected.code,
+      attackType: expected.attackType,
+      attackName: expected.attackName
+    });
+
+    assert.ok(row, `Missing adopted row: ${expected.code} ${expected.attackType} ${expected.attackName}`);
+    assert.deepEqual({
+      Type: row.Type,
+      Sub: row.Sub,
+      Role: row.Role,
+      Name: row.Name,
+      RPM: row.RPM,
+      DMG: row.DMG,
+      DUR: row.DUR,
+      AP: row.AP,
+      DF: row.DF,
+      ST: row.ST,
+      PF: row.PF,
+      Status: row.Status
+    }, expected.fields);
+  }
+});
+
 test('checked-in VG-70 data exposes selectable auto, volley, and total attack rows', () => {
   const csv = readFileSync(new URL('../weapons/weapondata.csv', import.meta.url), 'utf8');
   loadFromText(csv);

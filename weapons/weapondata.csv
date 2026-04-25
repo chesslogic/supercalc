@@ -120,7 +120,7 @@ Secondary,SPC,explosive,PLAS-15,Loyalist (Charged),80,explosion,SMALL PLASMA BOL
 Stratagem,BCK,automatic,AX/AR-23,"""GUARD DOG""",,projectile,5.5x50mm PENETRATOR_P,65,15,3,10,10,10,
 Stratagem,BCK,energy,AX/ARC-3,"""GUARD DOG"" K-9",12,arc,"AX/ARC-3 ""GUARD DOG"" K-9_A",250,45,7,10,30,25,Stun Small
 Stratagem,BCK,energy,AX/LAS-5,"""GUARD DOG"" ROVER",,beam,"AX/LAS-5 ""GUARD DOG"" ROVER_B",200,40,2,10,0,0,Fire
-Stratagem,BCK,energy,AX/TX-13,"""GUARD DOG"" DOG BREATH",,spray,"AX/TX-13 ""GUARD DOG"" DOG BREATH_S",1,1,5,5,10,5,Gas • Gas_Confusion
+Stratagem,BCK,energy,AX/TX-13,"""GUARD DOG"" DOG BREATH",,spray,"AX/TX-13 ""GUARD DOG"" DOG BREATH_S",1,1,5,5,10,5,Gas_Var2 • Gas_Confusion_Var2
 Stratagem,EGL,ordnance,-,EAGLE AIRSTRIKE,,projectile,100KG BOMB_P,1500,1500,7,40,20,15,
 Stratagem,EGL,ordnance,-,EAGLE AIRSTRIKE,,explosion,100KG BOMB_P_IE,800,800,5,40,50,40,
 Stratagem,EGL,ordnance,-,EAGLE SMOKE STRIKE,,projectile,100KG BOMB_P1,1500,1500,7,40,20,15,
@@ -132,23 +132,44 @@ Stratagem,EGL,ordnance,-,EAGLE 110MM ROCKET PODS,,explosion,110mm STANDARD ROCKE
 Stratagem,EGL,ordnance,-,EAGLE 500KG BOMB,,projectile,500kg BOMB_P,2000,2000,7,50,20,15,
 Stratagem,EGL,ordnance,-,EAGLE 500KG BOMB,,explosion,500kg BOMB_P_E,1500,1500,6,50,100,40,
 Stratagem,EGL,ordnance,-,EAGLE 500KG BOMB,,explosion,500kg BOMB_P_IE,100,100,3,40,10,40,
-Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,projectile,CLUSTER BOMB_P4 x8,20,2,0,10,40,10,
+Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,projectile,CLUSTER BOMB_P4 x8,20,2,0,10,30,10,
 Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,explosion,CLUSTER BOMB_P4_IE x64,350,350,3,30,50,40,
 Stratagem,EGL,ordnance,-,EAGLE NAPALM AIRSTRIKE,,projectile,NAPALM BOMB_P,1500,1500,7,40,20,15,
 Stratagem,EGL,ordnance,-,EAGLE NAPALM AIRSTRIKE,,explosion,NAPALM BOMB_P_IE,250,250,3,30,50,40,Fire • BurningHeavy
+Stratagem,EGL,ordnance,-,EAGLE STRAFING RUN,,projectile,23mm HE CANNON_P,350,200,5,30,35,3,
+Stratagem,EGL,ordnance,-,EAGLE STRAFING RUN,,explosion,23mm HE CANNON_P_IE,350,350,3,30,35,5,
 Stratagem,EMP,automatic,A/G-16,Gatling Sentry,1600,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
 Stratagem,EMP,automatic,A/MG-43,Machine Gun Sentry,630,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
-Stratagem,EMP,ordnance,-,ANTI-PERSONNEL MINEFIELD,,explosion,ANTI-PERSONNEL MINEFIELD_E,700,700,3,30,30,30,
-Stratagem,EMP,ordnance,-,ANTI-TANK MINES,,explosion,ANTI-TANK MINES_E,2000,2000,5,30,30,40,
+Stratagem,EMP,ordnance,MD-6,ANTI-PERSONNEL MINEFIELD,,explosion,ANTI-PERSONNEL MINEFIELD_E,700,700,3,30,30,30,
+Stratagem,EMP,ordnance,MD-17,ANTI-TANK MINES,,explosion,ANTI-TANK MINES_E,2000,2000,5,30,30,40,
 Stratagem,EMP,explosive,E/AT-12,Anti-Tank Emplacement,60,projectile,ET Cannon 75mm APHE ,1300,1300,6,30,50,25,
 Stratagem,EMP,explosive,E/AT-12,Anti-Tank Emplacement,60,explosion,ET Cannon 75mm APHE IE,150,150,3,30,60,40,
-Stratagem,EMP,ordnance,-,GAS MINES,,explosion,GAS MINES_E,3,3,6,30,10,10,Gas • Gas_Confusion
-Stratagem,EMP,ordnance,-,INCENDIARY MINES,,explosion,INCENDIARY MINES_E,300,300,3,30,30,30,Fire
+Stratagem,EMP,ordnance,MD-8,GAS MINES,,explosion,GAS MINES_E,3,3,6,30,10,10,Gas • Gas_Confusion
+Stratagem,EMP,ordnance,MD-I4,INCENDIARY MINES,,explosion,INCENDIARY MINES_E,300,300,3,30,30,30,Fire
 Stratagem,EMP,automatic,E/MG-101,HMG Emplacement,600,projectile,Rifle 12.5x100mm Full Metal Jacket ,200,40,4,20,25,15,
+Stratagem,EMP,explosive,A/AC-8,AUTOCANNON SENTRY,160,projectile,40mm APHE CANNON_P,450,450,5,30,40,10,
+Stratagem,EMP,explosive,A/AC-8,AUTOCANNON SENTRY,160,explosion,40mm APHE CANNON_P_IE,150,150,3,30,30,30,
+Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,projectile,EMS MORTAR SHELL_P,0,0,4,10,30,10,
+Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,explosion,EMS MORTAR SHELL_P_E,0,0,6,30,50,0,Stun Medium
+Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,explosion,EMS MORTAR SHELL_P_IE,150,150,3,30,30,20,
+Stratagem,EMP,energy,A/FLAM-40,FLAME SENTRY,,spray,SWP_FLAME SENTRY_S,2,2,4,10,5,5,Fire
+Stratagem,EMP,explosive,A/GM-17,GAS MORTAR SENTRY,80,projectile,GAS MORTAR SHELL_P,20,2,0,10,30,10,
+Stratagem,EMP,explosive,A/GM-17,GAS MORTAR SENTRY,80,explosion,GAS MORTAR SHELL_P_IE,0,0,6,30,10,20,Gas • Gas_Confusion
+Stratagem,EMP,explosive,E/GL-21,GRENADIER BATTLEMENT,160,projectile,40mm HE GRENADE_P,0,0,4,10,30,10,
+Stratagem,EMP,explosive,E/GL-21,GRENADIER BATTLEMENT,160,explosion,40mm HE GRENADE_P_IE,400,400,3,30,25,30,
+Stratagem,EMP,energy,A/LAS-98,LASER SENTRY,,beam,SWP_LASER SENTRY_B,350,200,4,20,0,0,Fire
+Stratagem,EMP,explosive,A/M-12,MORTAR SENTRY,60,projectile,40mm HE MORTAR_P,0,0,4,10,30,10,
+Stratagem,EMP,explosive,A/M-12,MORTAR SENTRY,60,explosion,40mm HE MORTAR_P_IE,400,400,3,30,35,40,
+Stratagem,EMP,explosive,A/M-12,MORTAR SENTRY,60,projectile,SHRAPNEL_P,110,35,3,10,10,20,
+Stratagem,EMP,explosive,A/MLS-4X,ROCKET SENTRY,90,projectile,70mm STANDARD ROCKET_P,525,525,5,30,35,10,
+Stratagem,EMP,explosive,A/MLS-4X,ROCKET SENTRY,90,explosion,70mm STANDARD ROCKET_P_IE,150,150,3,30,30,10,
+Stratagem,EMP,explosive,TD-220,BASTION MK XVI,12,projectile,120mm HE CANNON ROUND_P,3500,3500,8,40,50,20,
+Stratagem,EMP,explosive,TD-220,BASTION MK XVI,12,explosion,120mm HE CANNON ROUND_P_IE,750,750,5,40,70,40,
+Stratagem,EMP,automatic,TD-220,BASTION MK XVI,600,projectile,12.5mm BCHP RIFLE ROUNDS_P,150,35,4,15,25,20,
 Stratagem,ORB,ordnance,-,ORBITAL AIRBURST STRIKE,,projectile,110mm AIRBURST CANNON ROUND_P,300,300,7,50,60,15,
 Stratagem,ORB,ordnance,-,ORBITAL AIRBURST STRIKE,,explosion,110mm AIRBURST CANNON ROUND_P_IE,350,350,3,30,50,40,
 Stratagem,ORB,ordnance,-,ORBITAL EMS STRIKE,,projectile,110mm E.M.S. CANNON ROUND_P,300,300,7,50,60,15,
-Stratagem,ORB,ordnance,-,ORBITAL EMS STRIKE,,explosion,110mm E.M.S. CANNON ROUND_P_IE,0,0,4,30,50,0,Stun Medium
+Stratagem,ORB,ordnance,-,ORBITAL EMS STRIKE,,explosion,110mm E.M.S. CANNON ROUND_P_IE,0,0,6,30,50,0,Stun Medium
 Stratagem,ORB,ordnance,-,ORBITAL GAS STRIKE,,projectile,110mm GAS CANNON ROUND_P,300,300,7,50,60,15,
 Stratagem,ORB,ordnance,-,ORBITAL GAS STRIKE,,explosion,110mm GAS CANNON ROUND_P_IE,0,0,6,50,10,40,Gas • Gas_Confusion
 Stratagem,ORB,ordnance,-,ORBITAL 120MM HE BARRAGE,,projectile,120mm HE CANNON ROUND_P,2500,2500,7,50,20,20,
@@ -170,11 +191,12 @@ Stratagem,ORB,ordnance,-,ORBITAL SMOKE STRIKE,,projectile,S_P,300,300,7,50,60,15
 Stratagem,ORB,ordnance,-,ORBITAL SMOKE STRIKE,,explosion,S_P_IE,,,0,,,,
 Stratagem,ORB,ordnance,-,ORBITAL AIRBURST STRIKE,,projectile,SHRAPNEL_P1 x12,300,150,3,10,10,20,
 Stratagem,ORB,ordnance,-,ORBITAL AIRBURST STRIKE,,explosion,SHRAPNEL_P1_IE x12,350,350,3,30,50,40,
-Stratagem,VHL,explosive,EXO-45,Emancipator Exosuit (AC),,projectile,30mm APHE CANNON P,300,150,5,30,30,10,
-Stratagem,VHL,explosive,EXO-45,Emancipator Exosuit (AC),,explosion,30mm APHE CANNON P IE ,150,150,3,30,40,40,
-Stratagem,VHL,automatic,EXO-45,Patriot Exosuit (MG),,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
-Stratagem,VHL,explosive,EXO-45,Patriot Exosuit (Missile),,explosion,Missile Exosuit ,400,400,3,30,60,70,
-Stratagem,VHL,explosive,EXO-45,Patriot Exosuit (Missile),,projectile,Missile Exosuit ,1250,1250,6,30,40,25,
+Stratagem,VHL,automatic,M-102,FAST RECON VEHICLE,600,projectile,12.5mm BCHP RIFLE ROUNDS_P,150,35,4,15,25,20,
+Stratagem,VHL,explosive,EXO-49,Emancipator Exosuit (AC),175,projectile,30mm APHE CANNON P,300,150,5,30,30,10,
+Stratagem,VHL,explosive,EXO-49,Emancipator Exosuit (AC),175,explosion,30mm APHE CANNON P IE ,150,150,3,30,40,40,
+Stratagem,VHL,automatic,EXO-45,Patriot Exosuit (MG),1200,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
+Stratagem,VHL,explosive,EXO-45,Patriot Exosuit (Missile),90,explosion,Missile Exosuit ,400,400,3,30,60,70,
+Stratagem,VHL,explosive,EXO-45,Patriot Exosuit (Missile),90,projectile,Missile Exosuit ,1250,1250,6,30,40,25,
 Support,CAN,precision,APW-1,Anti-Materiel Rifle,400,projectile,12.5mm EIT ROUNDS_P,450,225,4,20,25,25,
 Support,CAN,explosive,AC-8,Autocannon (APHET),190,projectile,20mm APHET ROUNDS_P,325,260,4,30,30,20,
 Support,CAN,explosive,AC-8,Autocannon (APHET),190,explosion,20mm APHET ROUNDS_P_IE,150,150,3,30,40,40,
