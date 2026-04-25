@@ -4,6 +4,8 @@ import {
   DEFAULT_RECOMMENDATION_MIN_SHOTS,
   DEFAULT_RECOMMENDATION_MAX_SHOTS,
   MAX_RECOMMENDATION_SHOTS,
+  RECOMMENDATION_MAX_SHOTS_ANY,
+  isRecommendationMaxShotsAny,
   setRecommendationMinShots,
   setRecommendationMaxShots,
   setRecommendationWeaponFilterMode,
@@ -25,6 +27,7 @@ import {
 import { createFilterChip, createFilterChipRow } from '../../filter-utils.js';
 
 const RELATED_TARGET_CHIP_MAX = 8;
+const ANY_RECOMMENDATION_MAX_SHOT_SLIDER_VALUE = MAX_RECOMMENDATION_SHOTS + 1;
 
 function createRecommendationFilterChip({
   onClick,
@@ -46,6 +49,9 @@ function createRecommendationShotSlider({
   min = DEFAULT_RECOMMENDATION_MIN_SHOTS,
   max = MAX_RECOMMENDATION_SHOTS,
   title = '',
+  formatValue = (currentValue) => currentValue,
+  toInputValue = (currentValue) => currentValue,
+  fromInputValue = (rawValue) => Number(rawValue),
   onInput,
   onRefresh = null
 }) {
@@ -54,7 +60,7 @@ function createRecommendationShotSlider({
 
   const sliderLabel = document.createElement('span');
   sliderLabel.className = 'calc-recommend-shot-slider-label';
-  sliderLabel.textContent = `${label}: ${value}`;
+  sliderLabel.textContent = `${label}: ${formatValue(value)}`;
   slider.appendChild(sliderLabel);
 
   const input = document.createElement('input');
@@ -63,10 +69,10 @@ function createRecommendationShotSlider({
   input.min = String(min);
   input.max = String(max);
   input.step = '1';
-  input.value = String(value);
+  input.value = String(toInputValue(value));
   input.title = title;
   input.addEventListener('input', () => {
-    onInput?.(Number(input.value));
+    onInput?.(fromInputValue(input.value));
     onRefresh?.();
   });
   slider.appendChild(input);
@@ -85,7 +91,8 @@ function createRecommendationShotRangeRow({
         value: calculatorState.recommendationMinShots,
         title: 'Filter displayed recommendation rows by minimum shots to kill.',
         onInput: (nextValue) => {
-          if (nextValue > calculatorState.recommendationMaxShots) {
+          if (!isRecommendationMaxShotsAny(calculatorState.recommendationMaxShots)
+            && nextValue > calculatorState.recommendationMaxShots) {
             setRecommendationMaxShots(nextValue);
           }
           setRecommendationMinShots(nextValue);
@@ -95,9 +102,27 @@ function createRecommendationShotRangeRow({
       createRecommendationShotSlider({
         label: 'Max',
         value: calculatorState.recommendationMaxShots,
-        title: 'Filter displayed recommendation rows by maximum shots to kill.',
+        max: ANY_RECOMMENDATION_MAX_SHOT_SLIDER_VALUE,
+        title: 'Filter displayed recommendation rows by maximum shots to kill. Slide one step past 10 to keep any shot count.',
+        formatValue: (currentValue) => (
+          isRecommendationMaxShotsAny(currentValue)
+            ? 'Any'
+            : currentValue
+        ),
+        toInputValue: (currentValue) => (
+          isRecommendationMaxShotsAny(currentValue)
+            ? ANY_RECOMMENDATION_MAX_SHOT_SLIDER_VALUE
+            : currentValue
+        ),
+        fromInputValue: (rawValue) => {
+          const nextValue = Number(rawValue);
+          return nextValue > MAX_RECOMMENDATION_SHOTS
+            ? RECOMMENDATION_MAX_SHOTS_ANY
+            : nextValue;
+        },
         onInput: (nextValue) => {
-          if (nextValue < calculatorState.recommendationMinShots) {
+          if (!isRecommendationMaxShotsAny(nextValue)
+            && nextValue < calculatorState.recommendationMinShots) {
             setRecommendationMinShots(nextValue);
           }
           setRecommendationMaxShots(nextValue);

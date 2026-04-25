@@ -26,6 +26,13 @@ const {
   getRecommendationMarginTitle
 } = await import('../calculator/calculation/recommendation-titles.js');
 
+function makeBeamAttackRow(name, damage, ap = 2) {
+  return {
+    ...makeAttackRow(name, damage, ap),
+    'Atk Type': 'beam'
+  };
+}
+
 function renderPanelForTest(enemy) {
   const previousDocument = globalThis.document;
   const previousNode = globalThis.Node;
@@ -75,13 +82,15 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
 
     assert.equal(
       headers.find((element) => element.textContent === 'Margin')?.title,
-      'One-shot margin is highlighted at +25% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight.'
+      'One-shot margin is highlighted at +25% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight. Beam rows leave Margin hidden because continuous-contact tick headroom is misleading.'
     );
     assert.equal(
       headers.find((element) => element.textContent === 'Crit')?.title,
       'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.'
     );
     assert.match(headers.find((element) => element.textContent === 'Target')?.title || '', /target zone/i);
+    assert.equal(cells[1].dataset.damageType, 'Projectile');
+    assert.match(cells[1].title, /Damage type: Projectile\./i);
     assert.match(cells[1].title, /5 hits per firing cycle/i);
     assert.match(cells[2].title, /Best-ranked target: head/i);
     assert.match(cells[2].title, /Killing this part kills the enemy/i);
@@ -141,6 +150,48 @@ test('renderRecommendationPanel explains fallback rows and unknown range rows wh
   }
 });
 
+test('renderRecommendationPanel uses beam tick copy and suppresses Margin for beam rows', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    weaponsState.groups = [
+      makeWeapon('Scythe', {
+        code: 'LAS-5',
+        rpm: null,
+        sub: 'NRG',
+        rows: [makeBeamAttackRow('Scythe Beam', 335, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Beam Tooltip Dummy',
+      health: 500,
+      zones: [
+        makeZone('core', { health: 5, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const headers = collectElements(container, (element) => element.tagName === 'TH');
+    const cells = collectElements(container, (element) => element.tagName === 'TD');
+    const flags = collectElements(container, (element) => element.classList.contains('calc-recommend-flag'));
+
+    assert.match(headers.find((element) => element.textContent === 'Margin')?.title || '', /beam rows leave Margin hidden/i);
+    assert.match(cells[1].title, /sustained beam contact/i);
+    assert.match(cells[3].title, /beam tick/i);
+    assert.match(cells[3].title, /not trigger pulls/i);
+    assert.match(cells[4].title, /modeled beam cadence/i);
+    assert.match(cells[4].title, /67 damage ticks\/sec/i);
+    assert.doesNotMatch(cells[4].title, /weapon's RPM/i);
+    assert.equal(flags[0].textContent, '—');
+    assert.equal(flags[0].title, 'Margin is hidden for beam rows because continuous-contact tick headroom is misleading.');
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    weaponsState.groups = previousGroups;
+  }
+});
+
 test('renderRecommendationPanel explains combined firing packages in targeted recommendation titles', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
@@ -170,7 +221,10 @@ test('renderRecommendationPanel explains combined firing packages in targeted re
     const cells = collectElements(container, (element) => element.tagName === 'TD');
     const attackCell = cells.find((cell) => cell.textContent === '15x100mm HIGH EXPLOSIVE [Proj + Blast]');
     assert.ok(attackCell);
+    assert.equal(attackCell.dataset.damageType, 'Mixed');
+    assert.equal(attackCell.dataset.damageTypeDetail, 'Projectile + Explosion');
     assert.match(attackCell.title, /Attack package:/i);
+    assert.match(attackCell.title, /Damage type: Mixed \(Projectile \+ Explosion\)\./i);
     assert.match(attackCell.title, /1\. 15x100mm HIGH EXPLOSIVE_P: 1 hit/i);
     assert.match(attackCell.title, /2\. 15x100mm HIGH EXPLOSIVE_P_IE: 1 hit/i);
   } finally {
@@ -208,7 +262,9 @@ test('renderRecommendationPanel keeps the original attack-row wording when a pac
     const cells = collectElements(container, (element) => element.tagName === 'TD');
     const attackCell = cells.find((cell) => cell.textContent === '90mm SABOT_P');
     assert.ok(attackCell);
+    assert.equal(attackCell.dataset.damageType, 'Projectile');
     assert.match(attackCell.title, /^Attack row:/i);
+    assert.match(attackCell.title, /Damage type: Projectile\./i);
     assert.doesNotMatch(attackCell.title, /Attack package:/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
@@ -241,6 +297,15 @@ test('getRecommendationMarginLabel returns em-dash when neither marginPercent no
   assert.equal(getRecommendationMarginLabel(row), '—');
 });
 
+test('getRecommendationMarginLabel suppresses beam rows even if legacy margin values leak through', () => {
+  const row = {
+    suppressesMargin: true,
+    marginPercent: 6600,
+    displayMarginPercent: 6600
+  };
+  assert.equal(getRecommendationMarginLabel(row), '—');
+});
+
 // ---------------------------------------------------------------------------
 // getRecommendationMarginTitle — pure unit tests
 // ---------------------------------------------------------------------------
@@ -268,6 +333,14 @@ test('getRecommendationMarginTitle uses one-shot copy when marginPercent is avai
   assert.match(title, /one-shot margin/i, 'should use one-shot margin copy');
   assert.match(title, /\+10%/, 'should include the margin label');
   assert.doesNotMatch(title, /display-only headroom/i, 'should not use multi-shot headroom copy when one-shot margin is set');
+});
+
+test('getRecommendationMarginTitle explains why beam rows suppress Margin', () => {
+  const row = { suppressesMargin: true, usesBeamCadence: true, beamTicksPerSecond: 67 };
+  assert.equal(
+    getRecommendationMarginTitle(row),
+    'Margin is hidden for beam rows because continuous-contact tick headroom is misleading.'
+  );
 });
 
 // ---------------------------------------------------------------------------

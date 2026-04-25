@@ -7,8 +7,8 @@ import { appendRecommendationTableRow } from './recommendation-row.js';
 
 function getRecommendationMarginSortTitle(sortMode = DEFAULT_RECOMMENDATION_SORT_MODE) {
   return sortMode === STRICT_MARGIN_RECOMMENDATION_SORT_MODE
-    ? 'Strict Margin sorting is active. Click again to return to the default recommendation ranking.'
-    : 'Click to sort recommendations by the strictest Margin first. Click again to return to the default recommendation ranking.';
+    ? 'Strict Margin sorting is active. Beam rows skip Margin headroom because continuous-contact tick headroom is suppressed. Click again to return to the default recommendation ranking.'
+    : 'Click to sort recommendations by the strictest Margin first. Beam rows skip Margin headroom because continuous-contact tick headroom is suppressed. Click again to return to the default recommendation ranking.';
 }
 
 function renderRecommendationTable({

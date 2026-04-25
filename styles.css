@@ -1510,6 +1510,49 @@ tbody tr:hover {
   gap:6px;
 }
 
+.calc-recommend-attack-cell{
+  max-width:28ch;
+  line-height:1.4;
+  white-space:normal;
+  word-break:break-word;
+}
+
+@media (min-width: 1400px){
+  .calc-recommend-attack-cell{
+    max-width:36ch;
+  }
+}
+
+@media (max-width: 900px){
+  .calc-recommend-attack-cell{
+    max-width:18ch;
+  }
+}
+
+.calc-recommend-attack-cell[data-damage-type]::after{
+  content:attr(data-damage-type);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:6px;
+  padding:1px 6px;
+  border-radius:999px;
+  border:1px solid rgba(139, 148, 158, 0.35);
+  background:rgba(139, 148, 158, 0.08);
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  line-height:1.4;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.calc-recommend-attack-cell[data-damage-type-kind="mixed"]::after{
+  border-color:rgba(88, 166, 255, 0.35);
+  background:rgba(88, 166, 255, 0.12);
+  color:var(--accent);
+}
+
 .calc-recommend-flag{
   display:inline-flex;
   align-items:center;

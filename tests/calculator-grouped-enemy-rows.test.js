@@ -209,8 +209,8 @@ test('summary row zone_name cell shows summaryLabel', () => {
   // The zone_name td is the first cell (no target columns in this test).
   const nameCell = getDirectChildren(summaryRow)[0];
   assert.ok(
-    nameCell.textContent.includes('pauldron'),
-    `Expected zone name to include "pauldron", got: "${nameCell.textContent}"`
+    nameCell.textContent.includes('Exact-stat group'),
+    `Expected summaryLabel to include "Exact-stat group", got: "${nameCell.textContent}"`
   );
   assert.ok(
     nameCell.textContent.includes('×2'),
@@ -629,10 +629,14 @@ test('handles null enemy gracefully (returns empty)', () => {
  * `zoneShotsToKill` and `mainShotsToKill` are the two values the condition
  * checks.
  */
-function makeKillSummary({ zoneShotsToKill, mainShotsToKill, rpm = null } = {}) {
+function makeKillSummary({ zoneShotsToKill, mainShotsToKill, rpm = null, cadenceModel = null } = {}) {
+  const usesBeamCadence = String(cadenceModel?.type || '').trim().toLowerCase() === 'beam';
   return {
-    hasRpm: rpm !== null,
+    hasRpm: rpm !== null || usesBeamCadence,
     rpm,
+    cadenceModel,
+    usesBeamCadence,
+    beamTicksPerSecond: cadenceModel?.beamTicksPerSecond ?? null,
     zoneShotsToKill: zoneShotsToKill ?? null,
     zoneTtkSeconds: null,
     zoneShotsToKillWithCon: null,
@@ -653,15 +657,20 @@ function makeSlotMetrics({
   ttkSeconds = null,
   damagesZone = true,
   zoneShotsToKill = 2,
-  mainShotsToKill = 5
+  mainShotsToKill = 5,
+  rpm = null,
+  cadenceModel = null
 } = {}) {
+  const usesBeamCadence = String(cadenceModel?.type || '').trim().toLowerCase() === 'beam';
   return {
     outcomeKind,
     shotsToKill,
     ttkSeconds,
     damagesZone,
+    usesBeamCadence,
+    beamTicksPerSecond: cadenceModel?.beamTicksPerSecond ?? null,
     zoneSummary: {
-      killSummary: makeKillSummary({ zoneShotsToKill, mainShotsToKill })
+      killSummary: makeKillSummary({ zoneShotsToKill, mainShotsToKill, rpm, cadenceModel })
     },
     marginRatio: null,
     marginPercent: null,
@@ -775,6 +784,23 @@ test('buildFamilyMainPathMetrics clears margin info on viable slot', () => {
   const result = buildFamilyMainPathMetrics(repMetrics, family);
   assert.equal(result.bySlot.A.marginPercent, null);
   assert.equal(result.bySlot.A.marginRatio, null);
+});
+
+test('buildFamilyMainPathMetrics keeps beam cadence timing for viable family paths', () => {
+  const family = { isSingleton: false, memberIndices: [0, 1, 2] };
+  const repMetrics = makeRepMetrics({
+    outcomeKind: 'limb',
+    zoneShotsToKill: 2,
+    mainShotsToKill: 5,
+    cadenceModel: {
+      type: 'beam',
+      beamTicksPerSecond: 67
+    }
+  });
+  const result = buildFamilyMainPathMetrics(repMetrics, family);
+
+  assert.equal(result.bySlot.A.usesBeamCadence, true);
+  assert.equal(result.bySlot.A.ttkSeconds, 5 / 67);
 });
 
 test('buildFamilyMainPathMetrics returns null repMetrics', () => {
@@ -1303,13 +1329,11 @@ test('family path row blanks non-viable compare-slot cells instead of showing di
   assert.equal(cells[3].textContent.trim(), '-');
 });
 
-// ─── Focused-table integration: compact l/r laterality tokens ─────────────────
-// Verifies that the recent broadening of laterality stripping to compact l/r
-// tokens is surfaced all the way through the renderer — i.e. that a detected
-// family with compact-token names actually becomes a grouped summary row, not
-// two separate plain rows.
+// ─── Focused-table integration: exact-signature auto-families ─────────────────
+// Verifies that renderer integration still surfaces grouped summary rows for
+// same-signature zones, even when names differ.
 
-test('compact l/r names (arm_l / arm_r) produce a grouped summary row', () => {
+test('same-signature zones (arm_l / arm_r) produce a grouped summary row', () => {
   resetState();
   const base = {
     AV: 1, 'Dur%': 0, health: 200, Con: 0,
@@ -1324,11 +1348,11 @@ test('compact l/r names (arm_l / arm_r) produce a grouped summary row', () => {
 
   const rows = [...getDirectChildren(tbody)];
   const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
-  assert.equal(summaryRows.length, 1, 'compact l/r zones must produce exactly one summary row');
+  assert.equal(summaryRows.length, 1, 'same-signature zones must produce exactly one summary row');
   assert.equal(
     rows.filter((tr) => tr.classList.contains('zone-group-member')).length,
     2,
-    'compact l/r zones must produce two member rows'
+    'same-signature zones must produce two member rows'
   );
   // Plain rows (no class) must be absent — both zones are grouped.
   const plainRows = rows.filter(
@@ -1337,7 +1361,7 @@ test('compact l/r names (arm_l / arm_r) produce a grouped summary row', () => {
   assert.equal(plainRows.length, 0, 'no plain rows expected when both zones belong to a group');
 });
 
-test('compact l/r summary row label derives stem from the stripped name', () => {
+test('grouped summary row label uses a neutral exact-stat label for auto families', () => {
   resetState();
   const base = {
     AV: 1, 'Dur%': 0, health: 200, Con: 0,
@@ -1352,10 +1376,13 @@ test('compact l/r summary row label derives stem from the stripped name', () => 
 
   const summaryRow = [...getDirectChildren(tbody)].find((tr) => tr.classList.contains('zone-group-summary'));
   const nameCell = getDirectChildren(summaryRow)[0];
-  // Stem after stripping 'l'/'r' from 'arm_l'/'arm_r' is 'arm'.
   assert.ok(
-    nameCell.textContent.includes('arm'),
-    `Expected name cell to include "arm", got: "${nameCell.textContent}"`
+    nameCell.textContent.includes('Exact-stat group'),
+    `Expected name cell to include "Exact-stat group", got: "${nameCell.textContent}"`
+  );
+  assert.ok(
+    !nameCell.textContent.includes('arm l'),
+    `Expected name cell to omit representative name "arm l", got: "${nameCell.textContent}"`
   );
   assert.ok(
     nameCell.textContent.includes('×2'),
@@ -1363,7 +1390,7 @@ test('compact l/r summary row label derives stem from the stripped name', () => 
   );
 });
 
-test('compound compact l/r names (armor_lower_l_arm / armor_lower_r_arm) group correctly', () => {
+test('same-signature compound names (armor_lower_l_arm / armor_lower_r_arm) group correctly', () => {
   resetState();
   const base = {
     AV: 2, 'Dur%': 0, health: 300, Con: 0,
@@ -1525,7 +1552,7 @@ test('sortEnemyZoneRows + renderGroupedEnemyRows: compact l/r family survives so
   );
 });
 
-test('sortEnemyZoneRows + renderGroupedEnemyRows: positional variants collapse into one summary row', () => {
+test('sortEnemyZoneRows + renderGroupedEnemyRows: exact-signature leg variants collapse into one summary row', () => {
   resetState();
   const base = {
     AV: 1, 'Dur%': 0.5, health: 200, Con: 0,
@@ -1548,10 +1575,11 @@ test('sortEnemyZoneRows + renderGroupedEnemyRows: positional variants collapse i
   const rows = [...getDirectChildren(tbody)];
   const summaryRows = rows.filter((tr) => tr.classList.contains('zone-group-summary'));
   const memberRows = rows.filter((tr) => tr.classList.contains('zone-group-member'));
-  assert.equal(summaryRows.length, 1, 'front/rear leg variants must collapse into one summary row');
+  assert.equal(summaryRows.length, 1, 'exact-signature leg variants must collapse into one summary row');
   assert.equal(memberRows.length, 4, 'all four exact-match legs should remain inspectable as members');
-  assert.ok(getDirectChildren(summaryRows[0])[0].textContent.includes('hitzone leg'));
-  assert.ok(getDirectChildren(summaryRows[0])[0].textContent.includes('×4'));
+  const summaryText = getDirectChildren(summaryRows[0])[0].textContent;
+  assert.ok(summaryText.includes('Exact-stat group'));
+  assert.ok(summaryText.includes('×4'));
 });
 
 test('sortEnemyZoneRows + renderGroupedEnemyRows: outcome-grouped sort keeps family together', () => {

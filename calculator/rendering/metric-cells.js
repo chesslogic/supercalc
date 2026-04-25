@@ -9,6 +9,10 @@ function createElement(tagName) {
   return globalThis.document.createElement(tagName);
 }
 
+function usesBeamCadence(slotMetrics) {
+  return Boolean(slotMetrics?.usesBeamCadence);
+}
+
 function appendOutcomeBadge(cell, outcomeKind) {
   const outcomeLabel = getZoneOutcomeLabel(outcomeKind);
   const outcomeDescription = getZoneOutcomeDescription(outcomeKind);
@@ -64,6 +68,12 @@ function createRangeValueNode(distanceInfo) {
 function createMarginValueNode(slotMetrics) {
   const marginValue = createElement('span');
   marginValue.className = 'calc-derived-value';
+
+  if (usesBeamCadence(slotMetrics)) {
+    marginValue.textContent = '-';
+    marginValue.classList.add('muted');
+    return marginValue;
+  }
 
   const displayPercent = Number.isFinite(slotMetrics?.marginPercent)
     ? slotMetrics.marginPercent
@@ -164,7 +174,10 @@ function buildSingleMetricCell(slot, slotMetrics, type, metrics = null) {
 
   if (type === 'margin') {
     td.appendChild(createMarginValueNode(slotMetrics));
-    if (!Number.isFinite(slotMetrics?.marginPercent) && !Number.isFinite(slotMetrics?.displayMarginPercent)) {
+    if (
+      usesBeamCadence(slotMetrics)
+      || (!Number.isFinite(slotMetrics?.marginPercent) && !Number.isFinite(slotMetrics?.displayMarginPercent))
+    ) {
       td.classList.add('muted');
     }
     td.title = getMetricTitle(slot, slotMetrics, 'margin', metrics) || '';

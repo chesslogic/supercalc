@@ -14,7 +14,7 @@ export const RECOMMENDATION_FILTER_TYPE_ORDER = ['primary', 'secondary', 'grenad
 export const RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE = `Highlighted rows are recommendations that light up Margin, Crit, <${FAST_TTK_THRESHOLD_SECONDS}s, or Pen All.`;
 export const RECOMMENDATION_HEADER_DEFINITIONS = [
   { label: 'Weapon', title: 'Weapon entry for this recommendation row.' },
-  { label: 'Attack', title: 'Best-ranked attack row or firing package for this weapon.' },
+  { label: 'Attack', title: 'Best-ranked attack row or firing package for this weapon, plus a damage-type tag.' },
   { label: 'Target', title: 'Best-ranked target zone for the listed attack setup, plus the outcome badge.' },
   { label: 'Shots', title: 'Shots or firing cycles needed to reach the listed outcome using the recommendation preview hit-count.' },
   { label: 'TTK', title: 'Modeled time to reach the listed outcome at the weapon\'s RPM.' },
@@ -22,7 +22,7 @@ export const RECOMMENDATION_HEADER_DEFINITIONS = [
     label: 'Range',
     title: `${EFFECTIVE_DISTANCE_TOOLTIP}\nUnknown-range rows stay listed, but range-sensitive highlights only count when the breakpoint qualifies.`
   },
-  { label: 'Margin', title: `One-shot margin is highlighted at +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight.` },
+  { label: 'Margin', title: `One-shot margin is highlighted at +${RECOMMENDATION_MARGIN_THRESHOLD_PERCENT}% or less extra damage. Multi-shot rows show extra per-shot headroom for the listed shot count without changing the one-shot highlight. Beam rows leave Margin hidden because continuous-contact tick headroom is misleading.` },
   { label: 'Crit', title: 'Critical-disable highlight at the current range floor, covering one- and two-shot critical breakpoints.' },
   { label: `<${FAST_TTK_THRESHOLD_SECONDS}s`, title: `Fast-TTK highlight for rows under ${FAST_TTK_THRESHOLD_SECONDS} seconds at the current range floor.` },
   { label: 'Pen All', title: 'Highlights attack setups that can damage every zone on the current enemy.' },

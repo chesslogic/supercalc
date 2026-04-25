@@ -50,6 +50,7 @@ export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
 export const DEFAULT_RECOMMENDATION_MIN_SHOTS = 1;
 export const DEFAULT_RECOMMENDATION_MAX_SHOTS = 3;
 export const MAX_RECOMMENDATION_SHOTS = 10;
+export const RECOMMENDATION_MAX_SHOTS_ANY = 'any';
 export const DEFAULT_RECOMMENDATION_SORT_MODE = 'default';
 export const STRICT_MARGIN_RECOMMENDATION_SORT_MODE = 'strict-margin';
 
@@ -93,12 +94,54 @@ function normalizeRecommendationSortMode(sortMode) {
     : DEFAULT_RECOMMENDATION_SORT_MODE;
 }
 
+function clampRecommendationShotsValue(value, min, max) {
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
 function normalizeRecommendationShotsValue(value, min, max, defaultValue) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || !Number.isInteger(numeric)) {
-    return defaultValue;
+    return clampRecommendationShotsValue(defaultValue, min, max);
   }
-  return Math.min(max, Math.max(min, Math.round(numeric)));
+  return clampRecommendationShotsValue(numeric, min, max);
+}
+
+export function isRecommendationMaxShotsAny(value) {
+  return String(value ?? '').trim().toLowerCase() === RECOMMENDATION_MAX_SHOTS_ANY;
+}
+
+function normalizeRecommendationMaxShotsValue(value, min, defaultValue) {
+  if (isRecommendationMaxShotsAny(value)) {
+    return RECOMMENDATION_MAX_SHOTS_ANY;
+  }
+  return normalizeRecommendationShotsValue(value, min, MAX_RECOMMENDATION_SHOTS, defaultValue);
+}
+
+function normalizeRecommendationShotRange(minValue, maxValue) {
+  const normalizedMaxShots = normalizeRecommendationMaxShotsValue(
+    maxValue,
+    1,
+    DEFAULT_RECOMMENDATION_MAX_SHOTS
+  );
+  const normalizedMinShots = normalizeRecommendationShotsValue(
+    minValue,
+    1,
+    isRecommendationMaxShotsAny(normalizedMaxShots)
+      ? MAX_RECOMMENDATION_SHOTS
+      : normalizedMaxShots,
+    DEFAULT_RECOMMENDATION_MIN_SHOTS
+  );
+  return {
+    minShots: normalizedMinShots,
+    maxShots: isRecommendationMaxShotsAny(normalizedMaxShots)
+      ? RECOMMENDATION_MAX_SHOTS_ANY
+      : normalizeRecommendationShotsValue(
+          normalizedMaxShots,
+          normalizedMinShots,
+          MAX_RECOMMENDATION_SHOTS,
+          DEFAULT_RECOMMENDATION_MAX_SHOTS
+        )
+  };
 }
 
 let calculatorStateChangeListener = null;
@@ -597,7 +640,7 @@ export function setRecommendationMinShots(value) {
   calculatorState.recommendationMinShots = normalizeRecommendationShotsValue(
     value,
     1,
-    currentMax,
+    isRecommendationMaxShotsAny(currentMax) ? MAX_RECOMMENDATION_SHOTS : currentMax,
     DEFAULT_RECOMMENDATION_MIN_SHOTS
   );
   notifyCalculatorStateChange();
@@ -606,14 +649,27 @@ export function setRecommendationMinShots(value) {
 
 export function setRecommendationMaxShots(value) {
   const currentMin = calculatorState.recommendationMinShots;
-  calculatorState.recommendationMaxShots = normalizeRecommendationShotsValue(
+  calculatorState.recommendationMaxShots = normalizeRecommendationMaxShotsValue(
     value,
     currentMin,
-    MAX_RECOMMENDATION_SHOTS,
     DEFAULT_RECOMMENDATION_MAX_SHOTS
   );
   notifyCalculatorStateChange();
   return calculatorState.recommendationMaxShots;
+}
+
+export function setRecommendationShotRange(minValue, maxValue) {
+  const {
+    minShots,
+    maxShots
+  } = normalizeRecommendationShotRange(minValue, maxValue);
+  calculatorState.recommendationMinShots = minShots;
+  calculatorState.recommendationMaxShots = maxShots;
+  notifyCalculatorStateChange();
+  return {
+    minShots: calculatorState.recommendationMinShots,
+    maxShots: calculatorState.recommendationMaxShots
+  };
 }
 
 export function setSelectedExplosiveZone(zoneIndex, selected) {

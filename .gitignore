@@ -3,6 +3,7 @@ node_modules/
 
 # Local reference-only notes
 tools/issues/
+tools/artifacts/
 
 # Python cache artifacts
 __pycache__/

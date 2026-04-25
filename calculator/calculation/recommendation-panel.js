@@ -1,6 +1,7 @@
 import {
   calculatorState,
   getEngagementRangeMeters,
+  isRecommendationMaxShotsAny,
   STRICT_MARGIN_RECOMMENDATION_SORT_MODE,
   toggleRecommendationSortMode
 } from '../data.js';
@@ -39,7 +40,7 @@ const NEAR_MISS_HEADER_DEFINITIONS = RECOMMENDATION_HEADER_DEFINITIONS.map((defi
   definition.label === 'Margin'
     ? {
         label: 'Near miss',
-        title: 'Last-shot near miss share. 99% means the final shot would overkill by 99% of one displayed shot, so this row nearly needed one fewer shot.'
+        title: 'Last-shot near miss share. 99% means the final shot would overkill by 99% of one displayed shot, so this row nearly needed one fewer shot. Beam rows omit this because continuous-contact tick headroom is suppressed.'
       }
     : definition
 ));
@@ -68,7 +69,7 @@ function compareNearMissDisplayRows(left, right) {
 
 function buildNearMissDisplayRows(rows = []) {
   return (Array.isArray(rows) ? rows : [])
-    .filter((row) => row?.qualifiesForNearMiss && Number.isFinite(row?.nearMissPercent))
+    .filter((row) => !row?.suppressesMargin && row?.qualifiesForNearMiss && Number.isFinite(row?.nearMissPercent))
     .map((row) => ({
       ...row,
       nearMissDisplayPercent: row.nearMissPercent,
@@ -81,12 +82,13 @@ function filterRowsByShotRange(rows = [], minShots, maxShots) {
   if (!Array.isArray(rows)) {
     return [];
   }
+  const hasUnlimitedMaxShots = isRecommendationMaxShotsAny(maxShots);
   return rows.filter((row) => {
     const shots = row?.shotsToKill;
     if (!Number.isFinite(shots)) {
       return true;
     }
-    return shots >= minShots && shots <= maxShots;
+    return shots >= minShots && (hasUnlimitedMaxShots || shots <= maxShots);
   });
 }
 

@@ -15,6 +15,36 @@ function toFiniteNumber(value) {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
+function usesBeamCadence(slotMetrics) {
+  return Boolean(slotMetrics?.usesBeamCadence);
+}
+
+function getBeamTicksPerSecond(slotMetrics) {
+  const beamTicksPerSecond = toFiniteNumber(slotMetrics?.beamTicksPerSecond);
+  return beamTicksPerSecond !== null && beamTicksPerSecond > 0
+    ? beamTicksPerSecond
+    : null;
+}
+
+function buildBeamCadenceNote(slotA, slotB) {
+  const beamSlots = [
+    ['A', slotA],
+    ['B', slotB]
+  ].filter(([, slotMetrics]) => usesBeamCadence(slotMetrics));
+  if (beamSlots.length === 0) {
+    return null;
+  }
+
+  const cadenceLabels = beamSlots.map(([slot, slotMetrics]) => {
+    const beamTicksPerSecond = getBeamTicksPerSecond(slotMetrics);
+    return beamTicksPerSecond === null
+      ? `Weapon ${slot} beam cadence`
+      : `Weapon ${slot}: ${beamTicksPerSecond} beam ticks/sec`;
+  });
+
+  return `Continuous beam rows use sustained contact (${cadenceLabels.join('; ')}), not trigger pulls or RPM gaps.`;
+}
+
 function getSlotLabel(slot, slotMetrics) {
   const weaponName = String(slotMetrics?.weapon?.name || '').trim();
   return weaponName
@@ -63,6 +93,8 @@ function buildWinnerReason(slotA, slotB, winnerSlot) {
   const loser = getCompareLoser(slotA, slotB, winnerSlot);
   const winnerShots = toFiniteNumber(winner.metrics?.shotsToKill);
   const loserShots = toFiniteNumber(loser.metrics?.shotsToKill);
+  const winnerUsesBeamCadence = usesBeamCadence(winner.metrics);
+  const loserUsesBeamCadence = usesBeamCadence(loser.metrics);
   const winnerRpm = toFiniteNumber(winner.metrics?.weapon?.rpm);
   const loserRpm = toFiniteNumber(loser.metrics?.weapon?.rpm);
 
@@ -72,6 +104,13 @@ function buildWinnerReason(slotA, slotB, winnerSlot) {
   const rpmEqual = rpmComparable && areEqualNumbers(winnerRpm, loserRpm);
   const winnerHasFewerShots = shotsComparable && winnerShots < loserShots && !shotsEqual;
   const winnerHasHigherRpm = rpmComparable && winnerRpm > loserRpm && !rpmEqual;
+
+  if (winnerUsesBeamCadence || loserUsesBeamCadence) {
+    if (winnerUsesBeamCadence && loserUsesBeamCadence && shotsComparable && !shotsEqual) {
+      return `${winner.shortLabel} needs fewer sustained-contact beam ticks (${winnerShots} vs ${loserShots}).`;
+    }
+    return null;
+  }
 
   if (shotsComparable && shotsEqual && rpmComparable && !rpmEqual) {
     return `Equal shots to kill, but ${winner.shortLabel} has higher RPM (${winnerRpm} vs ${loserRpm}).`;
@@ -101,11 +140,25 @@ function buildWinnerReason(slotA, slotB, winnerSlot) {
 function buildEqualTtkReason(slotA, slotB) {
   const shotsA = toFiniteNumber(slotA?.shotsToKill);
   const shotsB = toFiniteNumber(slotB?.shotsToKill);
+  const slotAUsesBeamCadence = usesBeamCadence(slotA);
+  const slotBUsesBeamCadence = usesBeamCadence(slotB);
   const rpmA = toFiniteNumber(slotA?.weapon?.rpm);
   const rpmB = toFiniteNumber(slotB?.weapon?.rpm);
 
   const shotsComparable = shotsA !== null && shotsB !== null;
   const rpmComparable = rpmA !== null && rpmB !== null;
+
+  if (slotAUsesBeamCadence || slotBUsesBeamCadence) {
+    if (
+      slotAUsesBeamCadence
+      && slotBUsesBeamCadence
+      && shotsComparable
+      && areEqualNumbers(shotsA, shotsB)
+    ) {
+      return 'Equal sustained-contact beam ticks to kill.';
+    }
+    return null;
+  }
 
   if (shotsComparable && areEqualNumbers(shotsA, shotsB) && rpmComparable && areEqualNumbers(rpmA, rpmB)) {
     return 'Equal shots to kill and equal RPM.';
@@ -123,17 +176,24 @@ export function buildCompareTtkTooltip(slotA, slotB) {
   const ttkB = toFiniteNumber(slotB?.ttkSeconds);
   const labelA = getSlotLabel('A', slotA);
   const labelB = getSlotLabel('B', slotB);
+  const beamCadenceNote = buildBeamCadenceNote(slotA, slotB);
 
   if (ttkA === null && ttkB === null) {
     return null;
   }
 
   if (ttkA !== null && ttkB === null) {
-    return `${labelA} has a finite TTK with the current selection; ${labelB} does not.`;
+    return [
+      `${labelA} has a finite TTK with the current selection; ${labelB} does not.`,
+      beamCadenceNote
+    ].filter(Boolean).join('\n');
   }
 
   if (ttkA === null && ttkB !== null) {
-    return `${labelB} has a finite TTK with the current selection; ${labelA} does not.`;
+    return [
+      `${labelB} has a finite TTK with the current selection; ${labelA} does not.`,
+      beamCadenceNote
+    ].filter(Boolean).join('\n');
   }
 
   if (areEqualNumbers(ttkA, ttkB)) {
@@ -141,6 +201,9 @@ export function buildCompareTtkTooltip(slotA, slotB) {
     const reason = buildEqualTtkReason(slotA, slotB);
     if (reason) {
       lines.push(reason);
+    }
+    if (beamCadenceNote) {
+      lines.push(beamCadenceNote);
     }
     return lines.join('\n');
   }
@@ -154,6 +217,9 @@ export function buildCompareTtkTooltip(slotA, slotB) {
   const reason = buildWinnerReason(slotA, slotB, winnerSlot);
   if (reason) {
     lines.push(reason);
+  }
+  if (beamCadenceNote) {
+    lines.push(beamCadenceNote);
   }
   return lines.join('\n');
 }

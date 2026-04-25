@@ -153,6 +153,51 @@ test('margin metric cells render one-shot and multi-shot headroom titles', () =>
   }
 });
 
+test('beam metric cells use beam timing copy and hide margin headroom', () => {
+  const originalDocument = globalThis.document;
+
+  try {
+    globalThis.document = new TestDocument();
+
+    const beamSlotMetrics = {
+      weapon: { name: 'Scythe' },
+      selectedAttackCount: 1,
+      damagesZone: true,
+      shotsToKill: 5,
+      ttkSeconds: 5 / 67,
+      hasRpm: true,
+      usesBeamCadence: true,
+      beamTicksPerSecond: 67,
+      outcomeKind: 'utility',
+      marginPercent: 1,
+      displayMarginPercent: 6600
+    };
+
+    const shotsCell = buildMetricColumnCell('shots', {
+      bySlot: { A: beamSlotMetrics }
+    });
+    assert.equal(shotsCell.textContent, '5');
+    assert.match(shotsCell.title, /beam ticks to kill/i);
+    assert.match(shotsCell.title, /67 beam ticks\/sec/i);
+
+    const ttkCell = buildMetricColumnCell('ttk', {
+      bySlot: { A: beamSlotMetrics }
+    });
+    assert.match(ttkCell.textContent, /^0\.07s/);
+    assert.match(ttkCell.title, /sustained contact/i);
+    assert.match(ttkCell.title, /67 beam ticks\/sec/i);
+
+    const marginCell = buildMetricColumnCell('marginA', {
+      bySlot: { A: beamSlotMetrics }
+    });
+    assert.equal(marginCell.textContent, '-');
+    assert.match(marginCell.title, /margin unavailable for continuous beam rows/i);
+    assert.equal(marginCell.classList.contains('muted'), true);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+});
+
 // ========================================================================
 // Explosive display
 // ========================================================================
@@ -233,6 +278,18 @@ test('enemy zone health display folds zero-bleed Constitution into effective hea
   assert.equal(info.usesConAsHealth, true);
 });
 
+test('enemy zone health display preserves main-health passthrough markers', () => {
+  const info = getEnemyZoneHealthDisplayInfo({
+    health: 'Main'
+  });
+
+  assert.equal(info.text, 'Main');
+  assert.equal(info.sortValue, null);
+  assert.equal(info.title, '');
+  assert.equal(info.usesConAsHealth, false);
+  assert.equal(info.effectiveHealth, null);
+});
+
 test('enemy zone Constitution display shows a starred tooltip for zero-bleed Constitution', () => {
   const info = getEnemyZoneConDisplayInfo({
     health: 1200,
@@ -311,4 +368,28 @@ test('compare TTK tooltip explains when lower shots beat higher RPM', () => {
 
   assert.match(tooltip, /Weapon A \(Weapon A\) has a shorter TTK/i);
   assert.match(tooltip, /Weapon A has higher RPM \(900 vs 600\), which outweighs Weapon B's lower shot count \(4 vs 5\)\./i);
+});
+
+test('compare TTK tooltip explains sustained-contact beam timing without RPM language', () => {
+  const tooltip = buildCompareTtkTooltip(
+    {
+      weapon: { name: 'Scythe', rpm: 600 },
+      shotsToKill: 5,
+      ttkSeconds: 5 / 67,
+      usesBeamCadence: true,
+      beamTicksPerSecond: 67
+    },
+    {
+      weapon: { name: 'Dagger', rpm: 900 },
+      shotsToKill: 7,
+      ttkSeconds: 7 / 67,
+      usesBeamCadence: true,
+      beamTicksPerSecond: 67
+    }
+  );
+
+  assert.match(tooltip, /Weapon A \(Scythe\) has a shorter TTK/i);
+  assert.match(tooltip, /fewer sustained-contact beam ticks/i);
+  assert.match(tooltip, /67 beam ticks\/sec/i);
+  assert.doesNotMatch(tooltip, /higher RPM/i);
 });

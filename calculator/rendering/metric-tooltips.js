@@ -9,6 +9,62 @@ export function formatPercentDiff(value) {
   return `${prefix}${value.toFixed(1).replace(/\.0$/, '')}%`;
 }
 
+function usesBeamCadence(slotMetrics) {
+  return Boolean(slotMetrics?.usesBeamCadence);
+}
+
+function metricsUseBeamCadence(metrics) {
+  return usesBeamCadence(metrics?.bySlot?.A) || usesBeamCadence(metrics?.bySlot?.B);
+}
+
+function getBeamTicksPerSecond(slotMetrics) {
+  const beamTicksPerSecond = Number(slotMetrics?.beamTicksPerSecond);
+  return Number.isFinite(beamTicksPerSecond) && beamTicksPerSecond > 0
+    ? beamTicksPerSecond
+    : null;
+}
+
+function joinTooltipLines(...lines) {
+  return lines.filter(Boolean).join('\n') || null;
+}
+
+function buildBeamShotsTitle(slotMetrics) {
+  const beamTicksPerSecond = getBeamTicksPerSecond(slotMetrics);
+  const cadenceText = beamTicksPerSecond === null
+    ? 'beam cadence'
+    : `${beamTicksPerSecond} beam ticks/sec`;
+  return `Continuous beam row: displayed count is sustained-contact beam ticks to kill (${cadenceText}), not trigger pulls.`;
+}
+
+function buildBeamTtkTitle(slotMetrics) {
+  const beamTicksPerSecond = getBeamTicksPerSecond(slotMetrics);
+  const cadenceText = beamTicksPerSecond === null
+    ? 'beam cadence'
+    : `${beamTicksPerSecond} beam ticks/sec`;
+  return `Continuous beam row: displayed TTK assumes sustained contact at ${cadenceText}.`;
+}
+
+function buildBeamMarginUnavailableTitle() {
+  return 'Margin unavailable for continuous beam rows. Tiny tick-boundary overfill is not a useful signal; use beam ticks and sustained-contact TTK instead.';
+}
+
+function getOutcomeDescription(slotMetrics, valueType) {
+  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'limb') {
+    return 'This part can be removed, but it breaks before it can kill main';
+  }
+
+  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'critical') {
+    return slotMetrics.criticalInfo?.tip
+      || 'This part is a critical disable target and breaks before the body kill path.';
+  }
+
+  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'utility') {
+    return 'This part can be removed, but destroying it does not kill the enemy';
+  }
+
+  return getZoneOutcomeDescription(slotMetrics.outcomeKind);
+}
+
 export function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'absolute', metrics = null) {
   if (calculatorState.mode === 'compare' && valueType === 'ttk') {
     const compareTitle = buildCompareTtkTooltip(metrics?.bySlot?.A, metrics?.bySlot?.B);
@@ -26,11 +82,19 @@ export function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'abs
   }
 
   if (displayMetric.kind === 'one-sided') {
-    const metricLabel = valueType === 'ttk' ? 'TTK' : 'shots';
+    const metricLabel = valueType === 'ttk'
+      ? 'TTK'
+      : (metricsUseBeamCadence(metrics) ? 'displayed count' : 'shots');
     const displayValue = valueType === 'ttk'
       ? formatTtkSeconds(displayMetric.displayValue)
       : String(displayMetric.displayValue);
     return `Only weapon ${displayMetric.winner} can damage this part with the current selection (${displayMetric.winner} ${metricLabel}: ${displayValue})`;
+  }
+
+  if (valueType === 'shots' && metricsUseBeamCadence(metrics)) {
+    return diffDisplayMode === 'percent'
+      ? 'Percent diff = ((B - A) / A) × 100. Continuous beam rows use beam ticks, not trigger pulls.'
+      : 'Diff = B - A. Continuous beam rows use beam ticks, not trigger pulls.';
   }
 
   return diffDisplayMode === 'percent'
@@ -58,6 +122,10 @@ export function getMetricTitle(slot, slotMetrics, valueType, metrics = null) {
   }
 
   if (valueType === 'margin') {
+    if (usesBeamCadence(slotMetrics)) {
+      return buildBeamMarginUnavailableTitle();
+    }
+
     const displayPercent = Number.isFinite(slotMetrics?.marginPercent)
       ? slotMetrics.marginPercent
       : (Number.isFinite(slotMetrics?.displayMarginPercent)
@@ -81,28 +149,19 @@ export function getMetricTitle(slot, slotMetrics, valueType, metrics = null) {
       : 'TTK unavailable without RPM';
   }
 
-  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'limb') {
-    return 'This part can be removed, but it breaks before it can kill main';
+  const outcomeDescription = getOutcomeDescription(slotMetrics, valueType);
+
+  if (valueType === 'shots' && usesBeamCadence(slotMetrics)) {
+    return joinTooltipLines(buildBeamShotsTitle(slotMetrics), outcomeDescription);
   }
 
-  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'critical') {
-    return slotMetrics.criticalInfo?.tip
-      || 'This part is a critical disable target and breaks before the body kill path.';
-  }
-
-  if (valueType === 'ttk' && slotMetrics.outcomeKind === 'utility') {
-    return 'This part can be removed, but destroying it does not kill the enemy';
-  }
-
-  const outcomeDescription = getZoneOutcomeDescription(slotMetrics.outcomeKind);
   if (calculatorState.mode === 'compare' && valueType === 'ttk') {
     const compareTitle = buildCompareTtkTooltip(metrics?.bySlot?.A, metrics?.bySlot?.B);
-    if (compareTitle && outcomeDescription) {
-      return `${compareTitle}\n${outcomeDescription}`;
-    }
-    if (compareTitle) {
-      return compareTitle;
-    }
+    return joinTooltipLines(compareTitle, outcomeDescription);
+  }
+
+  if (valueType === 'ttk' && usesBeamCadence(slotMetrics)) {
+    return joinTooltipLines(buildBeamTtkTitle(slotMetrics), outcomeDescription);
   }
 
   return outcomeDescription || null;

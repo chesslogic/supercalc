@@ -33,6 +33,7 @@ const {
 } = enemyFiltersModule;
 const {
   calculatorState,
+  RECOMMENDATION_MAX_SHOTS_ANY,
   setAttackHitCounts,
   setCalculatorMode,
   setCalculatorStateChangeListener,
@@ -1224,6 +1225,15 @@ test('setRecommendationMaxShots clamps to allowed range', { concurrency: false }
   assert.equal(calculatorState.recommendationMaxShots, 10, 'max shots is capped at 10');
 }));
 
+test('setRecommendationMaxShots accepts the any sentinel', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(RECOMMENDATION_MAX_SHOTS_ANY);
+  assert.equal(calculatorState.recommendationMaxShots, RECOMMENDATION_MAX_SHOTS_ANY);
+
+  setRecommendationMinShots(9);
+  assert.equal(calculatorState.recommendationMinShots, 9);
+  assert.equal(calculatorState.recommendationMaxShots, RECOMMENDATION_MAX_SHOTS_ANY);
+}));
+
 test('setRecommendationMinShots clamps to allowed range', { concurrency: false }, () => withStateFixture(() => {
   setRecommendationMaxShots(5);
   setRecommendationMinShots(3);
@@ -1284,6 +1294,23 @@ test('encodeUrlState and hydrateUrlState round-trip min/max shots', { concurrenc
 
   assert.equal(calculatorState.recommendationMinShots, 2);
   assert.equal(calculatorState.recommendationMaxShots, 4);
+}));
+
+test('encodeUrlState and hydrateUrlState round-trip min shots with an Any max', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationMaxShots(RECOMMENDATION_MAX_SHOTS_ANY);
+  setRecommendationMinShots(9);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+
+  assert.equal(params.get('crmin'), '9');
+  assert.equal(params.get('crmax'), RECOMMENDATION_MAX_SHOTS_ANY);
+
+  setRecommendationMaxShots(3);
+  setRecommendationMinShots(1);
+  hydrateUrlState(params);
+
+  assert.equal(calculatorState.recommendationMinShots, 9);
+  assert.equal(calculatorState.recommendationMaxShots, RECOMMENDATION_MAX_SHOTS_ANY);
 }));
 
 // ===========================================================================

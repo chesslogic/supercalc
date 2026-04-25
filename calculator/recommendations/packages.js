@@ -35,6 +35,17 @@ const RECOMMENDATION_PACKAGE_FAMILY_LABELS = {
   melee: 'Melee'
 };
 
+const RECOMMENDATION_DAMAGE_TYPE_LABELS = {
+  projectile: 'Projectile',
+  explosion: 'Explosion',
+  spray: 'Spray',
+  beam: 'Beam',
+  arc: 'Arc',
+  flame: 'Flame',
+  gas: 'Gas',
+  melee: 'Melee'
+};
+
 const RECOMMENDATION_PACKAGE_SUFFIX_PATTERNS = [
   /(?:[_\s]+)P(?:[_\s]+)IE$/i,
   /(?:[_\s]+)IE$/i,
@@ -121,6 +132,54 @@ export function getRecommendationAttackFamily(attackRow) {
   }
 
   return 'projectile';
+}
+
+function getRecommendationDamageTypeLabel(family) {
+  return RECOMMENDATION_DAMAGE_TYPE_LABELS[family] || family;
+}
+
+function getRecommendationPackageDamageProfile({
+  packageComponents = [],
+  attackRows = [],
+  attackRow = null
+} = {}) {
+  const familySet = new Set();
+
+  (Array.isArray(packageComponents) ? packageComponents : []).forEach((component) => {
+    const family = String(component?.family || '').trim();
+    if (family) {
+      familySet.add(family);
+    }
+  });
+
+  const resolvedAttackRows = Array.isArray(attackRows)
+    ? attackRows.filter(Boolean)
+    : [attackRow].filter(Boolean);
+
+  if (familySet.size === 0) {
+    resolvedAttackRows.forEach((row) => {
+      const family = getRecommendationAttackFamily(row);
+      if (family) {
+        familySet.add(family);
+      }
+    });
+  }
+
+  const damageTypeFamilies = [...familySet];
+  const damageTypeDetail = damageTypeFamilies
+    .map((family) => getRecommendationDamageTypeLabel(family))
+    .filter(Boolean)
+    .join(' + ');
+  const isMixedDamageType = damageTypeFamilies.length > 1;
+
+  return {
+    damageTypeFamilies,
+    damageTypeLabel: isMixedDamageType
+      ? 'Mixed'
+      : (damageTypeDetail || 'Projectile'),
+    damageTypeDetail: damageTypeDetail || 'Projectile',
+    isMixedDamageType
+  };
 }
 
 function isBundledRecommendationAttack(attackName) {
@@ -317,6 +376,7 @@ function buildRecommendationAttackPackage(descriptors = [], {
     .filter(Boolean)
     .slice()
     .sort((left, right) => (left?.rowIndex ?? 0) - (right?.rowIndex ?? 0));
+  const attackRows = orderedDescriptors.map((descriptor) => descriptor.attackRow);
   const packageComponents = orderedDescriptors.map((descriptor) => ({
     attackRow: descriptor.attackRow,
     attackKey: descriptor.attackKey,
@@ -324,15 +384,21 @@ function buildRecommendationAttackPackage(descriptors = [], {
     hitCount: descriptor.hitCount,
     family: descriptor.family
   }));
+  const damageProfile = getRecommendationPackageDamageProfile({
+    packageComponents,
+    attackRows,
+    attackRow: orderedDescriptors[0]?.attackRow || null
+  });
 
   return {
-    attackRow: orderedDescriptors[0]?.attackRow || null,
-    attackRows: orderedDescriptors.map((descriptor) => descriptor.attackRow),
+    attackRow: attackRows[0] || null,
+    attackRows,
     attackName: buildRecommendationPackageLabel(orderedDescriptors),
     hitCount: orderedDescriptors[0]?.hitCount ?? 1,
     hitCounts: orderedDescriptors.map((descriptor) => descriptor.hitCount),
     packageComponents,
     excludedAttackNames: [...new Set((Array.isArray(excludedAttackNames) ? excludedAttackNames : []).filter(Boolean))],
+    ...damageProfile,
     isCombinedPackage: orderedDescriptors.length > 1
   };
 }

@@ -21,6 +21,13 @@ import {
   makeZone
 } from './fixtures/weapon-fixtures.js';
 
+function makeBeamAttackRow(name, damage, ap = 2) {
+  return {
+    ...makeAttackRow(name, damage, ap),
+    'Atk Type': 'beam'
+  };
+}
+
 const TEST_FALLOFF_CSV = `Category,Weapon,Caliber,Mass,Velocity,Drag,,2m,5m,15m,25m,50m,75m,100m,150m,200m
 Primary / Assault Rifle,AR-23 Liberator,5.5,4.5,900,0.3,,0.70%,0.75%,2.15%,3.76%,6.82%,10.20%,13.34%,18.98%,23.96%
 Marksman / DMR,R-63 Diligence,8,8.5,960,0.15,,0.30%,0.45%,1.10%,1.90%,3.80%,5.70%,7.50%,11.20%,14.90%`;
@@ -444,6 +451,77 @@ test('buildWeaponRecommendationRows leaves pre-bundled volley rows at one firing
   assert.equal(rows[0].hitCount, 1);
   assert.equal(rows[0].shotsToKill, 2);
   assert.equal(rows[0].hasOneShotKill, false);
+});
+
+test('beam recommendation rows keep beam-aware shots and ttk while suppressing Margin surfaces', () => {
+  const enemy = {
+    name: 'Beam Dummy',
+    health: 500,
+    recommendationSequences: [
+      {
+        targetZoneName: 'pilot',
+        label: 'pilot (via hatch)',
+        suppressDirectTarget: true,
+        steps: [{ zoneName: 'hatch' }, { zoneName: 'pilot' }]
+      }
+    ],
+    zones: [
+      makeZone('core', { health: 25, isFatal: true, av: 1, toMainPercent: 1 }),
+      makeZone('hatch', { health: 25, av: 1, toMainPercent: 0 }),
+      makeZone('pilot', { health: 25, isFatal: true, av: 1, toMainPercent: 0 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Scythe', {
+      index: 0,
+      type: 'Primary',
+      sub: 'NRG',
+      rpm: null,
+      rows: [makeBeamAttackRow('Scythe Beam', 335, 2)]
+    })
+  ];
+
+  const [overallRow] = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0
+  });
+  const [targetedRow] = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+  const stagedRow = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 2
+  }).find((row) => row.bestZoneName === 'pilot (via hatch)');
+
+  [overallRow, targetedRow].forEach((row) => {
+    assert.ok(row);
+    assert.equal(row.shotsToKill, 5);
+    assert.equal(row.ttkSeconds, 5 / 67);
+    assert.equal(row.usesBeamCadence, true);
+    assert.equal(row.beamTicksPerSecond, 67);
+    assert.equal(row.marginPercent, null);
+    assert.equal(row.displayMarginPercent, null);
+    assert.equal(row.nearMissPercent, null);
+    assert.equal(row.qualifiesForMargin, false);
+    assert.equal(row.qualifiesForNearMiss, false);
+    assert.equal(row.suppressesMargin, true);
+    assert.equal(row.hasFastTtk, true);
+  });
+
+  assert.ok(stagedRow, 'staged beam recommendation should still be built');
+  assert.equal(stagedRow.isSequenceCandidate, true);
+  assert.equal(stagedRow.shotsToKill, 10);
+  assert.equal(stagedRow.ttkSeconds, 10 / 67);
+  assert.equal(stagedRow.usesBeamCadence, true);
+  assert.equal(stagedRow.marginPercent, null);
+  assert.equal(stagedRow.displayMarginPercent, null);
+  assert.equal(stagedRow.suppressesMargin, true);
 });
 
 test('getEnemyTacticalInfoChips merges faction, class, and enemy-specific guidance', () => {
@@ -878,8 +956,11 @@ test('buildSelectedTargetRecommendationRows keeps the combined stratagem package
   assert.equal(targetedRows.length, 1);
   assert.equal(targetedRows[0].attackName, '100KG BOMB [Proj + Blast]');
   assert.equal(targetedRows[0].isCombinedPackage, true);
+  assert.equal(targetedRows[0].damageTypeLabel, 'Mixed');
+  assert.equal(targetedRows[0].damageTypeDetail, 'Projectile + Explosion');
   assert.equal(overallRows.length, 1);
   assert.equal(overallRows[0].attackName, '100KG BOMB_P');
+  assert.equal(overallRows[0].damageTypeLabel, 'Projectile');
 });
 
 test('buildSelectedTargetRecommendationRows can rank a combined projectile and blast package', () => {
@@ -910,6 +991,9 @@ test('buildSelectedTargetRecommendationRows can rank a combined projectile and b
   assert.equal(rows.length, 1);
   assert.equal(rows[0].attackName, '15x100mm HIGH EXPLOSIVE [Proj + Blast]');
   assert.equal(rows[0].isCombinedPackage, true);
+  assert.equal(rows[0].damageTypeLabel, 'Mixed');
+  assert.equal(rows[0].damageTypeDetail, 'Projectile + Explosion');
+  assert.equal(rows[0].isMixedDamageType, true);
   assert.deepEqual(
     rows[0].packageComponents.map((component) => component.attackName),
     ['15x100mm HIGH EXPLOSIVE_P', '15x100mm HIGH EXPLOSIVE_P_IE']
@@ -980,8 +1064,43 @@ test('buildSelectedTargetRecommendationRows prefers the original attack row when
   assert.equal(rows.length, 1);
   assert.equal(rows[0].attackName, '90mm SABOT_P');
   assert.equal(rows[0].isCombinedPackage, false);
+  assert.equal(rows[0].damageTypeLabel, 'Projectile');
+  assert.equal(rows[0].damageTypeDetail, 'Projectile');
+  assert.equal(rows[0].isMixedDamageType, false);
   assert.equal(rows[0].shotsToKill, 1);
   assert.equal(rows[0].bestOutcomeKind, 'fatal');
+});
+
+test('buildSelectedTargetRecommendationRows keeps Talon-like energy projectiles labeled as Projectile', () => {
+  const enemy = {
+    name: 'Energy Projectile Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 200, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('LAS-58 Talon', {
+      code: 'LAS-58',
+      type: 'Secondary',
+      sub: 'SPC',
+      role: 'energy',
+      rows: [makeAttackRow('LASER_P1', 200, 3)]
+    })
+  ];
+
+  const rows = buildSelectedTargetRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 0
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].weapon.name, 'LAS-58 Talon');
+  assert.equal(rows[0].damageTypeLabel, 'Projectile');
+  assert.equal(rows[0].damageTypeDetail, 'Projectile');
+  assert.equal(rows[0].isMixedDamageType, false);
 });
 
 test('buildSelectedTargetRecommendationRows keeps staged target paths when a combined package is best', () => {

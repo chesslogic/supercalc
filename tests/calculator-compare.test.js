@@ -263,6 +263,39 @@ test('buildZoneComparisonMetrics uses main-route health for displayed margin hea
   assert.ok(Math.abs(metrics.bySlot.A.marginSortRatio - (1 / 3)) < 1e-9);
 });
 
+test('buildZoneComparisonMetrics keeps beam tick counts and suppresses beam margin headroom', () => {
+  const metrics = buildZoneComparisonMetrics({
+    zone: {
+      health: 25,
+      Con: 0,
+      AV: 1,
+      'Dur%': 0,
+      'ToMain%': 0,
+      ExTarget: 'Part',
+      ExMult: 1,
+      IsFatal: false
+    },
+    enemyMainHealth: 1000,
+    weaponA: { name: 'Scythe', rpm: null },
+    selectedAttacksA: [{
+      'Atk Name': 'Beam',
+      'Atk Type': 'beam',
+      DMG: 335,
+      DUR: 0,
+      AP: 2
+    }]
+  });
+
+  assert.equal(metrics.bySlot.A.usesBeamCadence, true);
+  assert.equal(metrics.bySlot.A.beamTicksPerSecond, 67);
+  assert.equal(metrics.bySlot.A.shotsToKill, 5);
+  assert.equal(metrics.bySlot.A.ttkSeconds, 5 / 67);
+  assert.equal(metrics.bySlot.A.marginPercent, null);
+  assert.equal(metrics.bySlot.A.displayMarginPercent, null);
+  assert.equal(metrics.bySlot.A.marginSortRatio, null);
+  assert.equal(metrics.bySlot.A.marginDisplayPercent, null);
+});
+
 test('buildZoneComparisonMetrics honors hit counts for each slot', () => {
   const metrics = buildZoneComparisonMetrics({
     zone: {

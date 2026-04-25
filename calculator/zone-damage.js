@@ -1,10 +1,10 @@
-import { isExplosiveAttack } from './attack-types.js';
-import { buildKillSummary, calculateTtkSeconds } from './summary.js';
+import { isExplosiveAttack, resolveAttackCadenceModel } from './attack-types.js';
+import { buildKillSummary, calculateCadencedTtkSeconds } from './summary.js';
 import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
 import { getCriticalZoneInfo } from './tactical-data.js';
 import { calculateBallisticDamageMultiplier, resolveBallisticFalloffProfileForWeapon } from '../weapons/falloff.js';
-import { toFiniteNumber } from './domain-utils.js';
+import { isMainHealthReference, toFiniteNumber } from './domain-utils.js';
 import { AP_EQUALS_AV_DAMAGE_MULTIPLIER } from './combat-constants.js';
 export {
   getZoneOutcomeLabel,
@@ -56,6 +56,10 @@ function hasOverflowCap(zone) {
 }
 
 function getZoneEffectiveHealth(zone) {
+  if (isMainHealthReference(zone?.health)) {
+    return -1;
+  }
+
   const health = toFiniteNumber(zone?.health);
   if (health === null || health < 0) {
     return health;
@@ -65,17 +69,34 @@ function getZoneEffectiveHealth(zone) {
   return hasZeroBleedConstitution(zone) ? health + con : health;
 }
 
-function normalizeZoneAttackApplication(detail, zone) {
+function getCadenceUnitDivisor(cadenceModel) {
+  const cadenceType = String(cadenceModel?.type || '').trim().toLowerCase();
+  if (cadenceType !== 'beam') {
+    return 1;
+  }
+
+  const beamTicksPerSecond = toFiniteNumber(cadenceModel?.beamTicksPerSecond);
+  return beamTicksPerSecond !== null && beamTicksPerSecond > 0
+    ? beamTicksPerSecond
+    : 1;
+}
+
+function normalizeZoneAttackApplication(detail, zone, cadenceUnitDivisor = 1) {
   const hits = toPositiveInteger(detail?.hits ?? detail?.attackResult?.hits, 1);
+  const normalizedCadenceUnitDivisor = Math.max(1, toNumber(cadenceUnitDivisor, 1));
   const zoneDamagePerHit = ('zoneDamage' in (detail || {}))
-    ? ((toFiniteNumber(detail?.zoneDamage) ?? 0) / hits)
-    : (toFiniteNumber(detail?.damage) ?? 0);
+    ? ((toFiniteNumber(detail?.zoneDamage) ?? 0) / hits / normalizedCadenceUnitDivisor)
+    : ((toFiniteNumber(detail?.damage) ?? 0) / normalizedCadenceUnitDivisor);
   const passthroughMainDamagePerHit = ('passthroughMainDamage' in (detail || {}))
-    ? ((toFiniteNumber(detail?.passthroughMainDamage) ?? 0) / hits)
-    : (normalizeZoneName(zone) === 'main' ? 0 : (toFiniteNumber(detail?.damageToMain) ?? 0));
+    ? ((toFiniteNumber(detail?.passthroughMainDamage) ?? 0) / hits / normalizedCadenceUnitDivisor)
+    : (normalizeZoneName(zone) === 'main'
+        ? 0
+        : ((toFiniteNumber(detail?.damageToMain) ?? 0) / normalizedCadenceUnitDivisor));
   const directMainDamagePerHit = ('directMainDamage' in (detail || {}))
-    ? ((toFiniteNumber(detail?.directMainDamage) ?? 0) / hits)
-    : (normalizeZoneName(zone) === 'main' ? (toFiniteNumber(detail?.damage) ?? 0) : 0);
+    ? ((toFiniteNumber(detail?.directMainDamage) ?? 0) / hits / normalizedCadenceUnitDivisor)
+    : (normalizeZoneName(zone) === 'main'
+        ? ((toFiniteNumber(detail?.damage) ?? 0) / normalizedCadenceUnitDivisor)
+        : 0);
   const toMainPercent = toFiniteNumber(detail?.attackResult?.toMainPercent ?? detail?.toMainPercent) ?? 0;
 
   return {
@@ -88,7 +109,12 @@ function normalizeZoneAttackApplication(detail, zone) {
   };
 }
 
-function simulateZoneCycleAgainstRemainingHealth(zone, attackDetails, startingRemainingHealth) {
+function simulateZoneCycleAgainstRemainingHealth(
+  zone,
+  attackDetails,
+  startingRemainingHealth,
+  cadenceUnitDivisor = 1
+) {
   const normalizedAttackDetails = Array.isArray(attackDetails) ? attackDetails : [];
   const overflowCap = hasOverflowCap(zone);
   let remainingZoneHealth = Math.max(0, toFiniteNumber(startingRemainingHealth) ?? 0);
@@ -97,7 +123,7 @@ function simulateZoneCycleAgainstRemainingHealth(zone, attackDetails, startingRe
   let totalDirectMainDamage = 0;
 
   normalizedAttackDetails.forEach((detail) => {
-    const application = normalizeZoneAttackApplication(detail, zone);
+    const application = normalizeZoneAttackApplication(detail, zone, cadenceUnitDivisor);
     for (let hitIndex = 0; hitIndex < application.hits; hitIndex += 1) {
       totalDirectMainDamage += application.directMainDamagePerHit;
 
@@ -140,6 +166,7 @@ export function calculateMainKillShotsViaEquivalentZones({
   const effectiveZoneHealth = getZoneEffectiveHealth(zone);
   const totalZoneDamagePerCycle = toFiniteNumber(zoneSummary?.totalDamagePerCycle) ?? 0;
   const attackDetails = Array.isArray(zoneSummary?.attackDetails) ? zoneSummary.attackDetails : [];
+  const cadenceUnitDivisor = getCadenceUnitDivisor(zoneSummary?.killSummary?.cadenceModel);
 
   if (zoneName === 'main' || effectiveZoneHealth === null || effectiveZoneHealth < 0) {
     return mainShotsToKill;
@@ -167,7 +194,12 @@ export function calculateMainKillShotsViaEquivalentZones({
         return;
       }
 
-      const cycleResult = simulateZoneCycleAgainstRemainingHealth(zone, attackDetails, remainingZoneHealth);
+      const cycleResult = simulateZoneCycleAgainstRemainingHealth(
+        zone,
+        attackDetails,
+        remainingZoneHealth,
+        cadenceUnitDivisor
+      );
       if (!bestCycleResult) {
         bestTargetIndex = memberIndex;
         bestCycleResult = cycleResult;
@@ -264,9 +296,12 @@ function buildZoneSummary({
   totalPassthroughMainDamagePerCycle = 0,
   enemyMainHealth = 0,
   rpm,
+  cadenceModel = null,
   hasSelectedAttacks = false
 }) {
-  const zoneHealth = toNumber(zone?.health, -1);
+  const zoneHealth = isMainHealthReference(zone?.health)
+    ? -1
+    : toNumber(zone?.health, -1);
   const zoneCon = toNumber(zone?.Con);
   const normalizedEnemyMainHealth = toNumber(enemyMainHealth);
   const initialKillSummary = buildKillSummary({
@@ -276,7 +311,8 @@ function buildZoneSummary({
     totalDamagePerCycle,
     totalDamageToMainPerCycle,
     rpm,
-    zoneUsesConAsHealth: hasZeroBleedConstitution(zone)
+    zoneUsesConAsHealth: hasZeroBleedConstitution(zone),
+    cadenceModel
   });
   const overflowAwareMainShotsToKill = hasOverflowCap(zone) && !zone?.IsFatal
     ? calculateMainKillShotsViaEquivalentZones({
@@ -305,7 +341,10 @@ function buildZoneSummary({
     killSummary: {
       ...initialKillSummary,
       mainShotsToKill: overflowAwareMainShotsToKill,
-      mainTtkSeconds: calculateTtkSeconds(overflowAwareMainShotsToKill, initialKillSummary.rpm)
+      mainTtkSeconds: calculateCadencedTtkSeconds(
+        overflowAwareMainShotsToKill,
+        initialKillSummary.cadenceModel
+      )
     }
   };
 }
@@ -480,6 +519,7 @@ export function summarizeZoneDamage({
   const falloffAttributes = falloffResolution?.status === 'available'
     ? falloffResolution.profile?.attributes || null
     : null;
+  const cadenceModel = resolveAttackCadenceModel(selectedAttacks);
   const attackDetails = selectedAttacks.map((attack, index) =>
     calculateAttackAgainstZoneAtDistance(attack, zone, {
       hits: hitCounts[index],
@@ -502,6 +542,7 @@ export function summarizeZoneDamage({
     totalDamageToMainPerCycle,
     enemyMainHealth,
     rpm,
+    cadenceModel,
     hasSelectedAttacks: selectedAttacks.length > 0
   });
 }
@@ -672,6 +713,7 @@ export function summarizeEnemyTargetScenario({
   const falloffAttributes = falloffResolution?.status === 'available'
     ? falloffResolution.profile?.attributes || null
     : null;
+  const cadenceModel = resolveAttackCadenceModel(selectedAttacks);
 
   selectedAttacks.forEach((attack, index) => {
     const hits = toPositiveInteger(hitCounts[index], 1);
@@ -724,6 +766,7 @@ export function summarizeEnemyTargetScenario({
       totalPassthroughMainDamagePerCycle,
       enemyMainHealth: enemy.health,
       rpm,
+      cadenceModel,
       hasSelectedAttacks: selectedAttacks.length > 0
     });
   });

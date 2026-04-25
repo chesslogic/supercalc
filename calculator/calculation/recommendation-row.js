@@ -28,6 +28,7 @@ function appendRecommendationCell(row, content, className = '', title = '') {
   }
 
   row.appendChild(cell);
+  return cell;
 }
 
 function createOutcomeBadge(outcomeKind) {
@@ -58,7 +59,17 @@ export function appendRecommendationTableRow(tbody, row, usingFallbackRows = fal
   const tableRow = document.createElement('tr');
 
   appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
-  appendRecommendationCell(tableRow, row.attackName, 'trunc', getRecommendationAttackTitle(row));
+  const attackCell = appendRecommendationCell(
+    tableRow,
+    row.attackName,
+    'calc-recommend-attack-cell',
+    getRecommendationAttackTitle(row)
+  );
+  if (row?.damageTypeLabel) {
+    attackCell.dataset.damageType = row.damageTypeLabel;
+    attackCell.dataset.damageTypeDetail = row.damageTypeDetail || row.damageTypeLabel;
+    attackCell.dataset.damageTypeKind = row?.isMixedDamageType ? 'mixed' : 'single';
+  }
 
   const target = document.createElement('div');
   target.className = 'calc-recommend-target';

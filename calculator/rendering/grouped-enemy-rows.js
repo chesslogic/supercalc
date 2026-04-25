@@ -16,7 +16,7 @@
 import { buildEnemyZoneGroups, getZoneCombatSignature } from '../enemy-zone-groups.js';
 import { calculatorState, getSelectedExplosiveZoneIndices, setSelectedExplosiveZoneIndices } from '../data.js';
 import { calculateEffectiveDistanceInfo } from '../effective-distance.js';
-import { calculateTtkSeconds } from '../summary.js';
+import { calculateCadencedTtkSeconds } from '../summary.js';
 import { calculateMainKillShotsViaEquivalentZones } from '../zone-damage.js';
 import { formatEnemyBaseCell } from './enemy-base-cells.js';
 import { buildMetricColumnCell } from './metric-cells.js';
@@ -383,9 +383,12 @@ function buildFamilyMainPathSlotMetrics(slotMetrics, zone, memberCount) {
 
   const killSummary = slotMetrics?.zoneSummary?.killSummary;
   const mainShotsToKill = getFamilyMainPathShotsToKill(slotMetrics, zone, memberCount);
-  const mainTtkSeconds = calculateTtkSeconds(
+  const mainTtkSeconds = calculateCadencedTtkSeconds(
     mainShotsToKill,
-    killSummary?.rpm ?? slotMetrics?.weapon?.rpm ?? null
+    killSummary?.cadenceModel || {
+      type: 'discrete',
+      rpm: killSummary?.rpm ?? slotMetrics?.weapon?.rpm ?? null
+    }
   );
 
   if (mainShotsToKill === null) return null;

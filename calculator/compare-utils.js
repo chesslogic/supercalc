@@ -301,22 +301,29 @@ function summarizeZoneForSlot({
     selectedAttackCount: selectedAttacks.length,
     damagesZone
   });
-  const marginInfo = getZoneMarginInfo({
-    zoneSummary,
-    outcomeKind,
-    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary)
-  });
-  const displayMarginInfo = getZoneDisplayMarginInfo({
-    zoneSummary,
-    outcomeKind,
-    shotsToKill: getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary)
-  });
+  const killSummary = zoneSummary?.killSummary || null;
+  const displayedShotsToKill = getZoneDisplayedShotsToKill(outcomeKind, killSummary);
+  const displayedTtkSeconds = getZoneDisplayedTtkSeconds(outcomeKind, killSummary);
+  const usesBeamCadence = killSummary?.usesBeamCadence ?? false;
+  const beamTicksPerSecond = killSummary?.beamTicksPerSecond ?? null;
+  const marginInfo = usesBeamCadence
+    ? null
+    : getZoneMarginInfo({
+        zoneSummary,
+        outcomeKind,
+        shotsToKill: displayedShotsToKill
+      });
+  const displayMarginInfo = usesBeamCadence
+    ? null
+    : getZoneDisplayMarginInfo({
+        zoneSummary,
+        outcomeKind,
+        shotsToKill: displayedShotsToKill
+      });
   const marginDisplayPercent = Number.isFinite(marginInfo?.percent)
     ? marginInfo.percent
     : (displayMarginInfo?.percent ?? null);
   const marginSortRatio = marginInfo?.ratio ?? displayMarginInfo?.ratio ?? null;
-  const displayedShotsToKill = getZoneDisplayedShotsToKill(outcomeKind, zoneSummary?.killSummary);
-  const displayedTtkSeconds = getZoneDisplayedTtkSeconds(outcomeKind, zoneSummary?.killSummary);
 
   return {
     weapon,
@@ -327,7 +334,9 @@ function summarizeZoneForSlot({
     damagesZone,
     shotsToKill: displayedShotsToKill,
     ttkSeconds: displayedTtkSeconds,
-    hasRpm: zoneSummary?.killSummary?.hasRpm ?? false,
+    hasRpm: killSummary?.hasRpm ?? false,
+    usesBeamCadence,
+    beamTicksPerSecond,
     effectiveDistance,
     marginRatio: marginInfo?.ratio ?? null,
     marginPercent: marginInfo?.percent ?? null,

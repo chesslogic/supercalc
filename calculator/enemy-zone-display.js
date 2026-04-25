@@ -1,3 +1,5 @@
+import { isMainHealthReference } from './domain-utils.js';
+
 function toFiniteNumber(value) {
   if (value === null || value === undefined || value === '') {
     return null;
@@ -44,6 +46,16 @@ function hasAnyDeathConstitutionNote(zone) {
 }
 
 export function getEnemyZoneHealthDisplayInfo(zone) {
+  if (isMainHealthReference(zone?.health)) {
+    return {
+      text: 'Main',
+      sortValue: null,
+      title: '',
+      usesConAsHealth: false,
+      effectiveHealth: null
+    };
+  }
+
   const health = toFiniteNumber(zone?.health);
   const con = toFiniteNumber(zone?.Con) ?? 0;
   const usesConAsHealth = hasZeroBleedConstitution(zone);

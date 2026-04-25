@@ -1,6 +1,7 @@
 // Filter UI tests: verifies chip ordering, chip toggle state, shot-range
-// sliders, pagination controls, the no-main-via-limbs preference chip, the
-// browser-like children collection compatibility, and role chip data attributes.
+// sliders (including Max: Any), pagination controls, the
+// no-main-via-limbs preference chip, the browser-like children collection
+// compatibility, and role chip data attributes.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,9 +21,19 @@ import {
   getRecommendationSection
 } from './fixtures/tooltip-dom-stubs.js';
 
-const { calculatorState } = await import('../calculator/data.js');
+const {
+  calculatorState,
+  RECOMMENDATION_MAX_SHOTS_ANY
+} = await import('../calculator/data.js');
 const { renderRecommendationPanel } = await import('../calculator/calculation.js');
 const { state: weaponsState } = await import('../weapons/data.js');
+
+function makeBeamAttackRow(name, damage, ap = 2) {
+  return {
+    ...makeAttackRow(name, damage, ap),
+    'Atk Type': 'beam'
+  };
+}
 
 function renderPanelForTest(enemy, options = {}) {
   const previousDocument = globalThis.document;
@@ -634,7 +645,7 @@ test('renderRecommendationPanel keeps overall strict-margin ordering ascending f
   }
 });
 
-test('renderRecommendationPanel exposes shot-range sliders that update calculator state', () => {
+test('renderRecommendationPanel exposes shot-range sliders that update calculator state and support Max: Any', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
@@ -656,13 +667,14 @@ test('renderRecommendationPanel exposes shot-range sliders that update calculato
       })
     ];
 
-    const container = renderPanelForTest({
+    const enemy = {
       name: 'Shot Slider Dummy',
       health: 500,
       zones: [
         makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
       ]
-    });
+    };
+    const container = renderPanelForTest(enemy);
 
     const shotsRow = getChipRowByLabel(container, 'Shots');
     const sliders = shotsRow
@@ -674,12 +686,92 @@ test('renderRecommendationPanel exposes shot-range sliders that update calculato
     assert.equal(sliders[0].value, '1');
     assert.equal(sliders[1].type, 'range');
     assert.equal(sliders[1].value, '3');
+    assert.equal(sliders[1].max, '11');
 
     sliders[0].value = '2';
     sliders[0].listeners.get('input')?.();
 
     assert.equal(calculatorState.recommendationMinShots, 2);
     assert.equal(calculatorState.recommendationMaxShots, 3);
+
+    sliders[1].value = '11';
+    sliders[1].listeners.get('input')?.();
+
+    assert.equal(calculatorState.recommendationMaxShots, RECOMMENDATION_MAX_SHOTS_ANY);
+
+    const refreshedContainer = renderPanelForTest(enemy);
+    const refreshedShotsRow = getChipRowByLabel(refreshedContainer, 'Shots');
+    const sliderLabels = collectElements(
+      refreshedShotsRow,
+      (element) => element.classList.contains('calc-recommend-shot-slider-label')
+    ).map((element) => element.textContent);
+
+    assert.ok(sliderLabels.includes('Max: Any'));
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel keeps high-shot targeted rows when max shots is Any', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    calculatorState.recommendationMinShots = 1;
+    calculatorState.recommendationMaxShots = 10;
+    weaponsState.groups = [
+      makeWeapon('One-Shot', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('One-Shot', 240, 2)]
+      }),
+      makeWeapon('Twelve-Shot', {
+        index: 1,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Twelve-Shot', 20, 2)]
+      }),
+      makeWeapon('Scythe', {
+        index: 2,
+        type: 'Primary',
+        sub: 'NRG',
+        rpm: null,
+        rows: [makeBeamAttackRow('Scythe Beam', 335, 2)]
+      })
+    ];
+
+    const enemy = {
+      name: 'Any Max Dummy',
+      health: 240,
+      zones: [
+        makeZone('Main', { health: 240, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    };
+    const getTargetedWeaponNames = (container) => {
+      const section = getRecommendationSection(container, 'Main targeted recommendations');
+      const table = collectElements(section, (element) => element.tagName === 'TABLE')[0];
+      return collectElements(table, (element) => element.tagName === 'TR')
+        .slice(1)
+        .map((row) => row.children[0]?.textContent || '');
+    };
+
+    assert.deepEqual(getTargetedWeaponNames(renderPanelForTest(enemy)), ['One-Shot']);
+
+    calculatorState.recommendationMaxShots = RECOMMENDATION_MAX_SHOTS_ANY;
+
+    assert.deepEqual(getTargetedWeaponNames(renderPanelForTest(enemy)), ['One-Shot', 'Twelve-Shot', 'Scythe']);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

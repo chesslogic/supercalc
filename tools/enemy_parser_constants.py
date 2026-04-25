@@ -150,6 +150,75 @@ ENEMY_UNIT_METADATA_BY_NAME: Dict[str, Dict[str, Any]] = {
     },
 }
 
+CURATED_PAYLOAD_OVERRIDES_BY_UNIT_NAME: Dict[str, Dict[str, Any]] = {
+    # Use the curated DiversDex anatomy here as an example of a per-unit payload
+    # override. This keeps the Filediver-derived canonical source selection while
+    # letting the checked-in export present a cleaner, tester-friendly layout.
+    'Brawler': {
+        'health': 125,
+        'damageable_zones': [
+            {
+                'AV': 0,
+                'Dur%': 0,
+                'ExTarget': 'Main',
+                'MainCap': True,
+                'ToMain%': 1,
+                'health': 125,
+                'zone_name': 'Main',
+            },
+            {
+                'AV': 0,
+                'Dur%': 0,
+                'ExTarget': 'Main',
+                'MainCap': False,
+                'ToMain%': 1,
+                'health': 'Main',
+                'zone_name': 'head',
+            },
+            {
+                'AV': 0,
+                'Dur%': 0,
+                'ExTarget': 'Main',
+                'IsFatal': True,
+                'MainCap': True,
+                'ToMain%': 1,
+                'health': 100,
+                'zone_name': 'chest',
+            },
+            {
+                'AV': 0,
+                'Dur%': 0,
+                'ExTarget': 'Main',
+                'IsFatal': True,
+                'MainCap': True,
+                'ToMain%': 1,
+                'health': 85,
+                'zone_name': 'left_arm',
+            },
+            {
+                'AV': 0,
+                'Dur%': 0,
+                'ExTarget': 'Main',
+                'MainCap': False,
+                'ToMain%': 0.5,
+                'health': 65,
+                'zone_name': 'right_arm',
+            },
+            {
+                'AV': 0,
+                'Dur%': 0,
+                'ExTarget': 'Main',
+                'IsFatal': True,
+                'MainCap': True,
+                'ToMain%': 0.65,
+                'health': 90,
+                'source_zone_count': 2,
+                'zone_name': 'legs',
+            },
+        ],
+    },
+}
+
 # These overrides prefer the raw imported zone_name/ThinHash plus occurrence
 # order within matching raw names. They can also fall back to the parser's
 # transformed zone signature plus occurrence order for legacy/manual entries.

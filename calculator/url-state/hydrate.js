@@ -9,9 +9,8 @@ import {
   setEnemyTableMode,
   setEngagementRangeMeters,
   setOverviewScope,
-  setRecommendationMaxShots,
-  setRecommendationMinShots,
   setRecommendationNoMainViaLimbs,
+  setRecommendationShotRange,
   setRecommendationWeaponFilterGroups,
   setRecommendationWeaponFilterMode,
   setRecommendationWeaponFilterRoles,
@@ -182,14 +181,12 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
       DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs
     )
   );
-  setRecommendationMinShots(
+  setRecommendationShotRange(
     params.has(URL_PARAM_KEYS.recommendationMinShots)
       ? Number(params.get(URL_PARAM_KEYS.recommendationMinShots))
-      : DEFAULT_CALCULATOR_URL_STATE.recommendationMinShots
-  );
-  setRecommendationMaxShots(
+      : DEFAULT_CALCULATOR_URL_STATE.recommendationMinShots,
     params.has(URL_PARAM_KEYS.recommendationMaxShots)
-      ? Number(params.get(URL_PARAM_KEYS.recommendationMaxShots))
+      ? params.get(URL_PARAM_KEYS.recommendationMaxShots)
       : DEFAULT_CALCULATOR_URL_STATE.recommendationMaxShots
   );
 

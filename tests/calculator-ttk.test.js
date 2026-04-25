@@ -164,6 +164,30 @@ test('calculateTtkSeconds returns zero for a one-cycle kill', () => {
   assert.equal(formatTtkSeconds(calculateTtkSeconds(1, 760)), '0.00s');
 });
 
+test('buildKillSummary uses beam cadence ticks for sustained-contact TTK', () => {
+  const summary = buildKillSummary({
+    zoneHealth: 5,
+    zoneCon: 0,
+    enemyMainHealth: 5,
+    totalDamagePerCycle: 335,
+    totalDamageToMainPerCycle: 335,
+    rpm: null,
+    cadenceModel: {
+      type: 'beam',
+      beamTicksPerSecond: 67
+    }
+  });
+
+  assert.equal(summary.hasRpm, true);
+  assert.equal(summary.usesBeamCadence, true);
+  assert.equal(summary.beamTicksPerSecond, 67);
+  assert.equal(summary.zoneShotsToKill, 1);
+  assert.equal(summary.mainShotsToKill, 1);
+  assert.equal(summary.zoneTtkSeconds, 1 / 67);
+  assert.equal(summary.mainTtkSeconds, 1 / 67);
+  assert.equal(formatTtkSeconds(summary.zoneTtkSeconds), '0.01s');
+});
+
 test('calculateTtkSeconds returns null when shots-to-kill is unavailable', () => {
   assert.equal(calculateTtkSeconds(null, 760), null);
 });
@@ -261,6 +285,37 @@ test('summarizeZoneDamage keeps shots but omits ttk without rpm', () => {
 
   assert.equal(summary.killSummary.zoneShotsToKill, 3);
   assert.equal(summary.killSummary.zoneTtkSeconds, null);
+});
+
+test('summarizeZoneDamage auto-detects beam cadence and exposes tick-based kills', () => {
+  const summary = summarizeZoneDamage({
+    zone: {
+      health: 25,
+      Con: 0,
+      AV: 1,
+      'Dur%': 0,
+      'ToMain%': 0,
+      ExTarget: 'Part',
+      ExMult: 1,
+      IsFatal: false
+    },
+    enemyMainHealth: 1000,
+    selectedAttacks: [{
+      'Atk Name': 'Beam',
+      'Atk Type': 'beam',
+      DMG: 335,
+      DUR: 0,
+      AP: 2
+    }],
+    rpm: null
+  });
+
+  assert.equal(summary.totalDamagePerCycle, 335);
+  assert.equal(summary.killSummary.usesBeamCadence, true);
+  assert.equal(summary.killSummary.beamTicksPerSecond, 67);
+  assert.equal(summary.killSummary.zoneShotsToKill, 5);
+  assert.equal(summary.killSummary.zoneTtkSeconds, 5 / 67);
+  assert.equal(formatTtkSeconds(summary.killSummary.zoneTtkSeconds), '0.07s');
 });
 
 test('calculateAttackAgainstZone floors per-packet damage before applying main passthrough', () => {
@@ -993,6 +1048,58 @@ test('zero-bleed Constitution fatal zones use combined health for displayed shot
   assert.equal(outcomeKind, 'fatal');
   assert.equal(getZoneDisplayedShotsToKill(outcomeKind, summary.killSummary), 4);
   assert.equal(getZoneDisplayedTtkSeconds(outcomeKind, summary.killSummary), 3);
+});
+
+test('main-health passthrough zones use main kill metrics without a separate zone health pool', () => {
+  const weapon = getWeaponProjectileAttackByName('Liberator Carbine');
+  const rpm = getWeaponRpmByName('Liberator Carbine');
+  const zone = {
+    zone_name: 'head',
+    health: 'Main',
+    AV: 0,
+    'Dur%': 0,
+    ExTarget: 'Main',
+    MainCap: 0,
+    'ToMain%': 1
+  };
+  const summary = summarizeZoneDamage({
+    zone,
+    enemyMainHealth: 125,
+    selectedAttacks: [weapon],
+    hitCounts: [1],
+    rpm
+  });
+  const mainSummary = summarizeZoneDamage({
+    zone: {
+      zone_name: 'Main',
+      health: 125,
+      AV: 0,
+      'Dur%': 0,
+      ExTarget: 'Main',
+      MainCap: 1,
+      'ToMain%': 1
+    },
+    enemyMainHealth: 125,
+    selectedAttacks: [weapon],
+    hitCounts: [1],
+    rpm
+  });
+  const outcomeKind = getZoneOutcomeKind({
+    zone,
+    totalDamagePerCycle: summary.totalDamagePerCycle,
+    totalDamageToMainPerCycle: summary.totalDamageToMainPerCycle,
+    killSummary: summary.killSummary
+  });
+
+  assert.equal(summary.zoneHealth, -1);
+  assert.equal(summary.killSummary.zoneShotsToKill, null);
+  assert.equal(summary.killSummary.mainShotsToKill, mainSummary.killSummary.mainShotsToKill);
+  assert.equal(outcomeKind, 'main');
+  assert.equal(getZoneDisplayedKillPath(outcomeKind, summary.killSummary), 'main');
+  assert.equal(
+    getZoneDisplayedShotsToKill(outcomeKind, summary.killSummary),
+    mainSummary.killSummary.mainShotsToKill
+  );
 });
 
 test('real Charger torso_inside uses main kill metrics for finisher weapons', () => {

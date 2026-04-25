@@ -1,6 +1,6 @@
 import { buildFocusedZoneComparisonRows } from '../compare-utils.js';
 import { recordRecommendationWork } from '../recommendation-work-distribution.js';
-import { calculateTtkSeconds } from '../summary.js';
+import { calculateCadencedTtkSeconds, calculateTtkSeconds } from '../summary.js';
 import { getZoneDisplayedKillPath } from '../zone-damage.js';
 import { getZoneRelationContext } from '../../enemies/data.js';
 import { FAST_TTK_THRESHOLD_SECONDS } from '../combat-constants.js';
@@ -118,11 +118,35 @@ function isCriticalRecommendation({
     && shotsToKill <= 2;
 }
 
+function getRecommendationCadenceModel(zoneSummary) {
+  return zoneSummary?.killSummary?.cadenceModel || null;
+}
+
+function usesBeamRecommendationCadence(zoneSummary) {
+  return zoneSummary?.killSummary?.usesBeamCadence === true
+    || String(getRecommendationCadenceModel(zoneSummary)?.type || '').trim().toLowerCase() === 'beam';
+}
+
+function getRecommendationBeamTicksPerSecond(zoneSummary) {
+  return toFiniteNumber(
+    zoneSummary?.killSummary?.beamTicksPerSecond
+      ?? getRecommendationCadenceModel(zoneSummary)?.beamTicksPerSecond
+  );
+}
+
+function suppressRecommendationMargin(zoneSummary) {
+  return usesBeamRecommendationCadence(zoneSummary);
+}
+
 function getRecommendationMarginInfo({
   zoneSummary,
   outcomeKind,
   shotsToKill
 }) {
+  if (suppressRecommendationMargin(zoneSummary)) {
+    return null;
+  }
+
   if (shotsToKill !== 1 || !['fatal', 'main', 'critical'].includes(outcomeKind)) {
     return null;
   }
@@ -151,6 +175,10 @@ function getRecommendationDisplayMarginInfo({
   outcomeKind,
   shotsToKill
 }) {
+  if (suppressRecommendationMargin(zoneSummary)) {
+    return null;
+  }
+
   if (
     shotsToKill === null
     || shotsToKill < 1
@@ -187,6 +215,10 @@ function getRecommendationNearMissInfo({
   outcomeKind,
   shotsToKill
 }) {
+  if (suppressRecommendationMargin(zoneSummary)) {
+    return null;
+  }
+
   if (
     shotsToKill === null
     || shotsToKill < 2
@@ -240,6 +272,10 @@ function buildZoneRecommendationCandidate({
   const decisiveOutcome = lethalOutcome || slotMetrics.outcomeKind === 'doomed';
   const criticalOutcome = slotMetrics.outcomeKind === 'critical';
   const qualifiesForFastTtk = decisiveOutcome || criticalOutcome;
+  const cadenceModel = getRecommendationCadenceModel(slotMetrics.zoneSummary);
+  const usesBeamCadence = usesBeamRecommendationCadence(slotMetrics.zoneSummary);
+  const beamTicksPerSecond = getRecommendationBeamTicksPerSecond(slotMetrics.zoneSummary);
+  const suppressesMargin = suppressRecommendationMargin(slotMetrics.zoneSummary);
   const criticalRecommendation = isCriticalRecommendation({
     outcomeKind: slotMetrics.outcomeKind,
     shotsToKill: slotMetrics.shotsToKill,
@@ -267,6 +303,10 @@ function buildZoneRecommendationCandidate({
     outcomeKind: slotMetrics.outcomeKind,
     shotsToKill: slotMetrics.shotsToKill,
     ttkSeconds: slotMetrics.ttkSeconds,
+    cadenceModel,
+    usesBeamCadence,
+    beamTicksPerSecond,
+    suppressesMargin,
     effectiveDistance: slotMetrics.effectiveDistance,
     rangeStatus,
     rangeQualified,
@@ -371,7 +411,12 @@ function buildSequenceRecommendationCandidate({
 
   const finalCandidate = stepCandidates[stepCandidates.length - 1];
   const shotsToKill = stepCandidates.reduce((sum, candidate) => sum + (candidate?.shotsToKill || 0), 0);
-  const ttkSeconds = calculateTtkSeconds(shotsToKill, toFiniteNumber(weapon?.rpm));
+  const cadenceModel = finalCandidate?.cadenceModel ?? getRecommendationCadenceModel(finalCandidate?.zoneSummary);
+  const usesBeamCadence = Boolean(finalCandidate?.usesBeamCadence);
+  const beamTicksPerSecond = finalCandidate?.beamTicksPerSecond ?? getRecommendationBeamTicksPerSecond(finalCandidate?.zoneSummary);
+  const ttkSeconds = usesBeamCadence
+    ? calculateCadencedTtkSeconds(shotsToKill, cadenceModel)
+    : calculateTtkSeconds(shotsToKill, toFiniteNumber(weapon?.rpm));
   const rangeStatus = stepCandidates.some((candidate) => candidate.rangeStatus === 'failed')
     ? 'failed'
     : (stepCandidates.every((candidate) => candidate.rangeStatus === 'qualified') ? 'qualified' : 'unknown');
@@ -401,6 +446,10 @@ function buildSequenceRecommendationCandidate({
     sequenceSteps: stepCandidates,
     shotsToKill,
     ttkSeconds,
+    cadenceModel,
+    usesBeamCadence,
+    beamTicksPerSecond,
+    suppressesMargin: usesBeamCadence,
     effectiveDistance: buildSequenceDistanceInfo(stepCandidates),
     rangeStatus,
     rangeQualified,

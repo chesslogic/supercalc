@@ -572,7 +572,7 @@
           "AV": 0,
           "Dur%": 0,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": true,
           "ToMain%": 1,
           "health": 125,
           "zone_name": "Main"
@@ -581,18 +581,17 @@
           "AV": 0,
           "Dur%": 0,
           "ExTarget": "Main",
-          "IsFatal": true,
-          "MainCap": 1,
+          "MainCap": false,
           "ToMain%": 1,
-          "health": 85,
-          "zone_name": "left_arm"
+          "health": "Main",
+          "zone_name": "head"
         },
         {
           "AV": 0,
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
-          "MainCap": 1,
+          "MainCap": true,
           "ToMain%": 1,
           "health": 100,
           "zone_name": "chest"
@@ -601,16 +600,17 @@
           "AV": 0,
           "Dur%": 0,
           "ExTarget": "Main",
-          "MainCap": 0,
-          "ToMain%": 0.5,
-          "health": 65,
+          "IsFatal": true,
+          "MainCap": true,
+          "ToMain%": 1,
+          "health": 85,
           "zone_name": "left_arm"
         },
         {
           "AV": 0,
           "Dur%": 0,
           "ExTarget": "Main",
-          "MainCap": 0,
+          "MainCap": false,
           "ToMain%": 0.5,
           "health": 65,
           "zone_name": "right_arm"
@@ -620,20 +620,11 @@
           "Dur%": 0,
           "ExTarget": "Main",
           "IsFatal": true,
-          "MainCap": 1,
+          "MainCap": true,
           "ToMain%": 0.65,
           "health": 90,
-          "zone_name": "leg_right"
-        },
-        {
-          "AV": 0,
-          "Dur%": 0,
-          "ExTarget": "Main",
-          "IsFatal": true,
-          "MainCap": 1,
-          "ToMain%": 0.65,
-          "health": 90,
-          "zone_name": "leg_left"
+          "source_zone_count": 2,
+          "zone_name": "legs"
         }
       ],
       "health": 125,
@@ -909,34 +900,34 @@
         }
       ],
       "health": 750,
+      "scope_tags": [
+        "medium"
+      ],
       "zone_relation_groups": [
         {
           "id": "left-arm",
           "label": "Left arm",
-          "zones": [
-            "shoulderplate_left",
-            "left_arm"
-          ],
           "mirror_group": "right-arm",
           "priority_target_zones": [
+            "left_arm"
+          ],
+          "zones": [
+            "shoulderplate_left",
             "left_arm"
           ]
         },
         {
           "id": "right-arm",
           "label": "Right arm",
-          "zones": [
-            "shoulderplate_right",
-            "right_arm"
-          ],
           "mirror_group": "left-arm",
           "priority_target_zones": [
             "right_arm"
+          ],
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
           ]
         }
-      ],
-      "scope_tags": [
-        "medium"
       ]
     },
     "Devastator": {
@@ -1078,34 +1069,34 @@
         }
       ],
       "health": 750,
+      "scope_tags": [
+        "medium"
+      ],
       "zone_relation_groups": [
         {
           "id": "left-arm",
           "label": "Left arm",
-          "zones": [
-            "shoulderplate_left",
-            "left_arm"
-          ],
           "mirror_group": "right-arm",
           "priority_target_zones": [
+            "left_arm"
+          ],
+          "zones": [
+            "shoulderplate_left",
             "left_arm"
           ]
         },
         {
           "id": "right-arm",
           "label": "Right arm",
-          "zones": [
-            "shoulderplate_right",
-            "right_arm"
-          ],
           "mirror_group": "left-arm",
           "priority_target_zones": [
             "right_arm"
+          ],
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
           ]
         }
-      ],
-      "scope_tags": [
-        "medium"
       ]
     },
     "Dropship": {
@@ -1587,9 +1578,6 @@
         }
       ],
       "health": 10000,
-      "scope_tags": [
-        "giant"
-      ],
       "inline_enemies": {
         "Factory Strider Belly Panels": {
           "damageable_zones": [
@@ -1614,7 +1602,10 @@
           "source_note": "Curated inline overlay for the exposed underside belly panels. Kept separate from the base filediver-derived Factory Strider row because the exported anatomy splits body rows by direction and exposure state.",
           "source_provenance": "wiki-measured"
         }
-      }
+      },
+      "scope_tags": [
+        "giant"
+      ]
     },
     "Factory Strider Gatling Gun": {
       "damageable_zones": [
@@ -1890,34 +1881,34 @@
         }
       ],
       "health": 750,
+      "scope_tags": [
+        "medium"
+      ],
       "zone_relation_groups": [
         {
           "id": "left-arm",
           "label": "Left arm",
-          "zones": [
-            "shoulderplate_left",
-            "left_arm"
-          ],
           "mirror_group": "right-arm",
           "priority_target_zones": [
+            "left_arm"
+          ],
+          "zones": [
+            "shoulderplate_left",
             "left_arm"
           ]
         },
         {
           "id": "right-arm",
           "label": "Right arm",
-          "zones": [
-            "shoulderplate_right",
-            "right_arm"
-          ],
           "mirror_group": "left-arm",
           "priority_target_zones": [
             "right_arm"
+          ],
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
           ]
         }
-      ],
-      "scope_tags": [
-        "medium"
       ]
     },
     "Heavy Fusion Cannon": {
@@ -2523,34 +2514,34 @@
         }
       ],
       "health": 750,
+      "scope_tags": [
+        "medium"
+      ],
       "zone_relation_groups": [
         {
           "id": "left-arm",
           "label": "Left arm",
-          "zones": [
-            "shoulderplate_left",
-            "left_arm"
-          ],
           "mirror_group": "right-arm",
           "priority_target_zones": [
+            "left_arm"
+          ],
+          "zones": [
+            "shoulderplate_left",
             "left_arm"
           ]
         },
         {
           "id": "right-arm",
           "label": "Right arm",
-          "zones": [
-            "shoulderplate_right",
-            "right_arm"
-          ],
           "mirror_group": "left-arm",
           "priority_target_zones": [
             "right_arm"
+          ],
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
           ]
         }
-      ],
-      "scope_tags": [
-        "medium"
       ]
     },
     "MG Raider": {
@@ -3202,34 +3193,34 @@
         }
       ],
       "health": 750,
+      "scope_tags": [
+        "medium"
+      ],
       "zone_relation_groups": [
         {
           "id": "left-arm",
           "label": "Left arm",
-          "zones": [
-            "shoulderplate_left",
-            "left_arm"
-          ],
           "mirror_group": "right-arm",
           "priority_target_zones": [
+            "left_arm"
+          ],
+          "zones": [
+            "shoulderplate_left",
             "left_arm"
           ]
         },
         {
           "id": "right-arm",
           "label": "Right arm",
-          "zones": [
-            "shoulderplate_right",
-            "right_arm"
-          ],
           "mirror_group": "left-arm",
           "priority_target_zones": [
             "right_arm"
+          ],
+          "zones": [
+            "shoulderplate_right",
+            "right_arm"
           ]
         }
-      ],
-      "scope_tags": [
-        "medium"
       ]
     },
     "Rocket Raider": {
@@ -5401,10 +5392,19 @@
         }
       ],
       "health": 3000,
+      "scope_tags": [
+        "giant"
+      ],
       "zone_relation_groups": [
         {
           "id": "left-leg",
           "label": "Left leg",
+          "mirror_group": "right-leg",
+          "priority_target_zones": [
+            "left_hip",
+            "left_upper_leg_internal",
+            "left_middle_leg_internal"
+          ],
           "zones": [
             "left_hip",
             "left_upper_leg_top",
@@ -5413,17 +5413,17 @@
             "left_lower_leg",
             "left_upper_leg_internal",
             "left_middle_leg_internal"
-          ],
-          "mirror_group": "right-leg",
-          "priority_target_zones": [
-            "left_hip",
-            "left_upper_leg_internal",
-            "left_middle_leg_internal"
           ]
         },
         {
           "id": "right-leg",
           "label": "Right leg",
+          "mirror_group": "left-leg",
+          "priority_target_zones": [
+            "right_hip",
+            "right_upper_leg_internal",
+            "right_middle_leg_internal"
+          ],
           "zones": [
             "right_hip",
             "right_upper_leg_top",
@@ -5432,17 +5432,16 @@
             "right_lower_leg",
             "right_upper_leg_internal",
             "right_middle_leg_internal"
-          ],
-          "mirror_group": "left-leg",
-          "priority_target_zones": [
-            "right_hip",
-            "right_upper_leg_internal",
-            "right_middle_leg_internal"
           ]
         },
         {
           "id": "rear-leg",
           "label": "Rear leg",
+          "priority_target_zones": [
+            "back_hip",
+            "back_upper_leg_internal",
+            "back_middle_leg_internal"
+          ],
           "zones": [
             "back_hip",
             "back_upper_leg_top",
@@ -5451,16 +5450,8 @@
             "back_lower_leg",
             "back_upper_leg_internal",
             "back_middle_leg_internal"
-          ],
-          "priority_target_zones": [
-            "back_hip",
-            "back_upper_leg_internal",
-            "back_middle_leg_internal"
           ]
         }
-      ],
-      "scope_tags": [
-        "giant"
       ]
     },
     "Leviathan": {

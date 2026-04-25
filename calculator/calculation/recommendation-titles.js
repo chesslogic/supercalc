@@ -6,12 +6,42 @@ import {
   RECOMMENDATION_MARGIN_THRESHOLD_PERCENT
 } from './recommendation-constants.js';
 
+function getRecommendationBeamTicksPerSecond(row) {
+  const ticksPerSecond = Number(row?.beamTicksPerSecond);
+  return Number.isFinite(ticksPerSecond) && ticksPerSecond > 0
+    ? Math.round(ticksPerSecond)
+    : null;
+}
+
+function usesBeamRecommendationCadence(row) {
+  return row?.usesBeamCadence === true;
+}
+
+function suppressesRecommendationMargin(row) {
+  return row?.suppressesMargin === true || usesBeamRecommendationCadence(row);
+}
+
+function getBeamRecommendationAssumptionLines(row) {
+  const beamTicksPerSecond = getRecommendationBeamTicksPerSecond(row);
+  return [
+    beamTicksPerSecond === null
+      ? 'Recommendation preview assumes sustained beam contact for this row.'
+      : `Recommendation preview assumes sustained beam contact for this row at ${beamTicksPerSecond} modeled damage ticks per second.`,
+    '"Shots" counts modeled beam ticks, not trigger pulls.'
+  ];
+}
+
 export function getRecommendationHitAssumptionLines(row) {
   const packageComponents = Array.isArray(row?.packageComponents)
     ? row.packageComponents.filter(Boolean)
     : [];
+  const beamAssumptionLines = usesBeamRecommendationCadence(row)
+    ? getBeamRecommendationAssumptionLines(row)
+    : null;
   if (packageComponents.length > 1) {
-    const lines = ['Recommendation preview assumes this combined package per firing cycle:'];
+    const lines = [usesBeamRecommendationCadence(row)
+      ? 'Recommendation preview assumes this combined package while the beam stays on target:'
+      : 'Recommendation preview assumes this combined package per firing cycle:'];
     packageComponents.forEach((component, index) => {
       const normalizedHitCount = Number.isFinite(component?.hitCount) && component.hitCount > 0
         ? Math.max(1, component.hitCount)
@@ -25,8 +55,16 @@ export function getRecommendationHitAssumptionLines(row) {
       lines.push(`Conservative auto-package excludes: ${row.excludedAttackNames.join(', ')}`);
     }
 
-    lines.push('"Shots" counts firing cycles, not individual impacts.');
+    if (beamAssumptionLines) {
+      lines.push(...beamAssumptionLines);
+    } else {
+      lines.push('"Shots" counts firing cycles, not individual impacts.');
+    }
     return lines;
+  }
+
+  if (beamAssumptionLines) {
+    return beamAssumptionLines;
   }
 
   const hitCount = packageComponents[0]?.hitCount ?? row?.hitCount;
@@ -39,6 +77,18 @@ export function getRecommendationHitAssumptionLines(row) {
       ? 'Recommendation preview assumes 1 hit per firing cycle for this row.'
       : `Recommendation preview assumes ${normalizedHitCount} hits per firing cycle for this row, so "Shots" counts firing cycles, not individual projectiles.`
   ];
+}
+
+function getRecommendationDamageTypeTitle(row) {
+  const damageTypeLabel = String(row?.damageTypeLabel || '').trim();
+  if (!damageTypeLabel) {
+    return '';
+  }
+
+  const damageTypeDetail = String(row?.damageTypeDetail || '').trim();
+  return damageTypeDetail && damageTypeDetail !== damageTypeLabel
+    ? `Damage type: ${damageTypeLabel} (${damageTypeDetail}).`
+    : `Damage type: ${damageTypeLabel}.`;
 }
 
 export function getRecommendationTargetTitle(row) {
@@ -63,25 +113,46 @@ export function getRecommendationTargetTitle(row) {
 export function getRecommendationAttackTitle(row) {
   const attackName = String(row?.attackName || 'Attack').trim() || 'Attack';
   const attackLabel = row?.isCombinedPackage ? 'Attack package' : 'Attack row';
-  return `${attackLabel}: ${attackName}\n${getRecommendationHitAssumptionLines(row).join('\n')}`;
+  return [
+    `${attackLabel}: ${attackName}`,
+    getRecommendationDamageTypeTitle(row),
+    ...getRecommendationHitAssumptionLines(row)
+  ].filter(Boolean).join('\n');
 }
 
 export function getRecommendationShotsTitle(row) {
   const shotsToKill = row?.shotsToKill;
   const lines = [
-    shotsToKill === null
-      ? 'Shots-to-kill is unavailable for this breakpoint.'
-      : `${shotsToKill} ${shotsToKill === 1 ? 'shot' : 'shots'} to reach the listed outcome.`
+    usesBeamRecommendationCadence(row)
+      ? (
+          shotsToKill === null
+            ? 'Beam tick count is unavailable for this breakpoint.'
+            : `${shotsToKill} ${shotsToKill === 1 ? 'beam tick' : 'beam ticks'} of sustained contact to reach the listed outcome.`
+        )
+      : (
+          shotsToKill === null
+            ? 'Shots-to-kill is unavailable for this breakpoint.'
+            : `${shotsToKill} ${shotsToKill === 1 ? 'shot' : 'shots'} to reach the listed outcome.`
+        )
   ];
   lines.push(...getRecommendationHitAssumptionLines(row));
   return lines.join('\n');
 }
 
 export function getRecommendationTtkTitle(row) {
+  const beamTicksPerSecond = getRecommendationBeamTicksPerSecond(row);
   const lines = [
-    row?.ttkSeconds === null
-      ? 'TTK unavailable without RPM.'
-      : `${formatTtkSeconds(row.ttkSeconds)} to reach the listed outcome at the weapon\'s RPM.`
+    usesBeamRecommendationCadence(row)
+      ? (
+          row?.ttkSeconds === null
+            ? 'TTK unavailable without a modeled beam cadence.'
+            : `${formatTtkSeconds(row.ttkSeconds)} to reach the listed outcome at the modeled beam cadence${beamTicksPerSecond === null ? '' : ` (${beamTicksPerSecond} damage ticks/sec)`}.`
+        )
+      : (
+          row?.ttkSeconds === null
+            ? 'TTK unavailable without RPM.'
+            : `${formatTtkSeconds(row.ttkSeconds)} to reach the listed outcome at the weapon\'s RPM.`
+        )
   ];
   lines.push(...getRecommendationHitAssumptionLines(row));
   return lines.join('\n');
@@ -102,6 +173,10 @@ export function getRecommendationRangeTitle(row) {
 }
 
 export function getRecommendationMarginLabel(row) {
+  if (suppressesRecommendationMargin(row)) {
+    return '—';
+  }
+
   if (row?.showNearMissHighlight && Number.isFinite(row?.nearMissDisplayPercent)) {
     return `${Math.max(0, Math.round(row.nearMissDisplayPercent))}%`;
   }
@@ -118,6 +193,10 @@ export function getRecommendationMarginLabel(row) {
 }
 
 export function getRecommendationMarginTitle(row) {
+  if (suppressesRecommendationMargin(row)) {
+    return 'Margin is hidden for beam rows because continuous-contact tick headroom is misleading.';
+  }
+
   if (row?.showNearMissHighlight && Number.isFinite(row?.nearMissDisplayPercent)) {
     return `Near miss: ${getRecommendationMarginLabel(row)}. The remaining health before the final shot is under half of one displayed shot, so this row nearly needed one fewer shot.`;
   }

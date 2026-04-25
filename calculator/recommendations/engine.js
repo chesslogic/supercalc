@@ -53,6 +53,7 @@ function buildAttackRecommendation({
   const filteredCandidates = hidePeripheralMainRoutes
     ? candidates.filter((candidate) => !candidate.isPeripheralMainRoute)
     : candidates;
+  const bestCandidate = filteredCandidates[0];
 
   const result = filteredCandidates.length === 0
     ? null
@@ -64,16 +65,20 @@ function buildAttackRecommendation({
       hitCounts: Array.isArray(attackPackage?.hitCounts) ? attackPackage.hitCounts : [attackPackage?.hitCount ?? 1],
       packageComponents: Array.isArray(attackPackage?.packageComponents) ? attackPackage.packageComponents : [],
       excludedAttackNames: Array.isArray(attackPackage?.excludedAttackNames) ? attackPackage.excludedAttackNames : [],
+      damageTypeFamilies: Array.isArray(attackPackage?.damageTypeFamilies) ? attackPackage.damageTypeFamilies : [],
+      damageTypeLabel: String(attackPackage?.damageTypeLabel || '').trim(),
+      damageTypeDetail: String(attackPackage?.damageTypeDetail || '').trim(),
+      isMixedDamageType: Boolean(attackPackage?.isMixedDamageType),
       isCombinedPackage: Boolean(attackPackage?.isCombinedPackage),
-      bestCandidate: filteredCandidates[0],
+      bestCandidate,
       candidates: filteredCandidates,
-      marginRatio: filteredCandidates[0]?.marginRatio ?? null,
-      marginPercent: filteredCandidates[0]?.marginPercent ?? null,
+      marginRatio: bestCandidate?.marginRatio ?? null,
+      marginPercent: bestCandidate?.marginPercent ?? null,
       qualifiesForMargin: filteredCandidates.some((candidate) => candidate.qualifiesForMargin),
-      displayMarginRatio: filteredCandidates[0]?.displayMarginRatio ?? null,
-      displayMarginPercent: filteredCandidates[0]?.displayMarginPercent ?? null,
-      nearMissRatio: filteredCandidates[0]?.nearMissRatio ?? null,
-      nearMissPercent: filteredCandidates[0]?.nearMissPercent ?? null,
+      displayMarginRatio: bestCandidate?.displayMarginRatio ?? null,
+      displayMarginPercent: bestCandidate?.displayMarginPercent ?? null,
+      nearMissRatio: bestCandidate?.nearMissRatio ?? null,
+      nearMissPercent: bestCandidate?.nearMissPercent ?? null,
       qualifiesForNearMiss: filteredCandidates.some((candidate) => candidate.qualifiesForNearMiss),
       hasSelectedZoneMatch: filteredCandidates.some((candidate) => candidate.selectedZoneMatch),
       penetratesAll: zoneRows.length > 0 && zoneRows.every((row) => row?.metrics?.bySlot?.A?.damagesZone),
@@ -82,7 +87,11 @@ function buildAttackRecommendation({
       hasTwoShotCritical: filteredCandidates.some((candidate) => candidate.isTwoShotCritical),
       hasCriticalRecommendation: filteredCandidates.some((candidate) => candidate.hasCriticalRecommendation),
       hasFastTtk: filteredCandidates.some((candidate) => candidate.hasFastTtk),
-      hasQualifiedPath: filteredCandidates.some((candidate) => candidate.rangeStatus === 'qualified')
+      hasQualifiedPath: filteredCandidates.some((candidate) => candidate.rangeStatus === 'qualified'),
+      cadenceModel: bestCandidate?.cadenceModel ?? null,
+      usesBeamCadence: Boolean(bestCandidate?.usesBeamCadence),
+      beamTicksPerSecond: bestCandidate?.beamTicksPerSecond ?? null,
+      suppressesMargin: Boolean(bestCandidate?.suppressesMargin)
     };
   recordRecommendationWork(instrumentation, {
     stage: analysisStage,
@@ -111,12 +120,20 @@ function buildWeaponRecommendationDisplayRow({
     hitCounts: bestAttackRecommendation.hitCounts,
     packageComponents: bestAttackRecommendation.packageComponents,
     excludedAttackNames: bestAttackRecommendation.excludedAttackNames,
+    damageTypeFamilies: bestAttackRecommendation.damageTypeFamilies,
+    damageTypeLabel: bestAttackRecommendation.damageTypeLabel,
+    damageTypeDetail: bestAttackRecommendation.damageTypeDetail,
+    isMixedDamageType: bestAttackRecommendation.isMixedDamageType,
     isCombinedPackage: bestAttackRecommendation.isCombinedPackage,
     bestZone: bestCandidate.zone,
     bestZoneName: bestCandidate.label || bestCandidate.zone?.zone_name || '',
     bestOutcomeKind: bestCandidate.outcomeKind,
     shotsToKill: bestCandidate.shotsToKill,
     ttkSeconds: bestCandidate.ttkSeconds,
+    cadenceModel: bestAttackRecommendation.cadenceModel ?? null,
+    usesBeamCadence: bestAttackRecommendation.usesBeamCadence,
+    beamTicksPerSecond: bestAttackRecommendation.beamTicksPerSecond,
+    suppressesMargin: bestAttackRecommendation.suppressesMargin,
     effectiveDistance: bestCandidate.effectiveDistance,
     rangeStatus: bestCandidate.rangeStatus,
     marginRatio: bestAttackRecommendation.marginRatio,
@@ -127,7 +144,8 @@ function buildWeaponRecommendationDisplayRow({
     nearMissRatio: bestAttackRecommendation.nearMissRatio,
     nearMissPercent: bestAttackRecommendation.nearMissPercent,
     qualifiesForNearMiss: bestAttackRecommendation.qualifiesForNearMiss,
-    nearMissDisplayPercent: !Number.isFinite(bestAttackRecommendation.marginPercent)
+    nearMissDisplayPercent: !bestAttackRecommendation.suppressesMargin
+      && !Number.isFinite(bestAttackRecommendation.marginPercent)
       && Number.isFinite(bestAttackRecommendation.nearMissPercent)
       ? bestAttackRecommendation.nearMissPercent
       : null,
@@ -316,7 +334,11 @@ function buildTargetRecommendationRows({
               hasTwoShotCritical: recommendation.candidates.some((candidate) => candidate.isTwoShotCritical),
               hasCriticalRecommendation: recommendation.candidates.some((candidate) => candidate.hasCriticalRecommendation),
               hasFastTtk: recommendation.candidates.some((candidate) => candidate.hasFastTtk),
-              hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified')
+              hasQualifiedPath: recommendation.candidates.some((candidate) => candidate.rangeStatus === 'qualified'),
+              cadenceModel: bestCandidate?.cadenceModel ?? null,
+              usesBeamCadence: Boolean(bestCandidate?.usesBeamCadence),
+              beamTicksPerSecond: bestCandidate?.beamTicksPerSecond ?? null,
+              suppressesMargin: Boolean(bestCandidate?.suppressesMargin)
             };
           })
           .sort((left, right) => compareTargetAttackRowRecommendations(left, right, {

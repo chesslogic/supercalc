@@ -269,6 +269,46 @@ test('parser emits scope tags and selector visibility metadata for curated units
   }
 });
 
+test('parser applies the curated Brawler payload override while preserving metadata', () => {
+  const parsed = parseEnemyUnitsFixture({
+    'content/fac_cyborgs/brawler/brawler': buildFixtureUnit('Brawler', [
+      { zone_name: 'Main', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 1, 'ToMain%': 1, health: 125 },
+      { zone_name: 'left_arm', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 85 },
+      { zone_name: 'chest', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 1, health: 100 },
+      { zone_name: 'left_arm', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 65 },
+      { zone_name: 'right_arm', AV: 0, 'Dur%': 0, ExTarget: 'Main', MainCap: 0, 'ToMain%': 0.5, health: 65 },
+      { zone_name: 'leg_right', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 0.65, health: 90 },
+      { zone_name: 'leg_left', AV: 0, 'Dur%': 0, ExTarget: 'Main', IsFatal: true, MainCap: 1, 'ToMain%': 0.65, health: 90 }
+    ])
+  });
+  const brawler = parsed.Automaton.Brawler;
+  assert.ok(brawler);
+  assert.equal(brawler.health, 125);
+  assert.deepEqual(brawler.scope_tags, ['chaff']);
+  assert.deepEqual(
+    brawler.damageable_zones.map((zone) => zone.zone_name),
+    ['Main', 'head', 'chest', 'left_arm', 'right_arm', 'legs']
+  );
+  assert.equal(
+    brawler.damageable_zones.filter((zone) => zone.zone_name === 'left_arm').length,
+    1
+  );
+
+  const head = brawler.damageable_zones.find((zone) => zone.zone_name === 'head');
+  const legs = brawler.damageable_zones.find((zone) => zone.zone_name === 'legs');
+  assert.ok(head);
+  assert.ok(legs);
+  assert.equal(head.health, 'Main');
+  assert.equal(head.ExTarget, 'Main');
+  assert.equal(head['ToMain%'], 1);
+  assert.equal(head.MainCap, false);
+  assert.ok(!Object.hasOwn(head, 'IsFatal'));
+  assert.equal(legs.health, 90);
+  assert.equal(legs['ToMain%'], 0.65);
+  assert.equal(legs.IsFatal, true);
+  assert.equal(legs.source_zone_count, 2);
+});
+
 test('parser prefers the unsuffixed base payload and reports differing same-name variants', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'supercalc-enemy-parser-'));
   const inputPath = join(tempDir, 'input.json');
@@ -938,6 +978,27 @@ test('checked-in enemydata keeps curated enemy zone names', () => {
   assert.ok(sporeChargerNames.includes('spore_flesh_6'));
 
   assert.ok(enemydata.Terminid.Impaler.damageable_zones.every((zone) => !Object.keys(zone).some((key) => key.startsWith('_'))));
+});
+
+test('checked-in enemydata keeps the curated Brawler anatomy override', () => {
+  const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
+  const brawler = enemydata.Automaton.Brawler;
+  const zoneNames = brawler.damageable_zones.map((zone) => zone.zone_name);
+  const head = brawler.damageable_zones.find((zone) => zone.zone_name === 'head');
+  const legs = brawler.damageable_zones.find((zone) => zone.zone_name === 'legs');
+
+  assert.deepEqual(zoneNames, ['Main', 'head', 'chest', 'left_arm', 'right_arm', 'legs']);
+  assert.equal(new Set(zoneNames).size, zoneNames.length);
+  assert.ok(head);
+  assert.ok(legs);
+  assert.equal(head.health, 'Main');
+  assert.equal(head.ExTarget, 'Main');
+  assert.equal(head['ToMain%'], 1);
+  assert.equal(head.MainCap, false);
+  assert.ok(!Object.hasOwn(head, 'IsFatal'));
+  assert.equal(legs.health, 90);
+  assert.equal(legs.IsFatal, true);
+  assert.equal(legs.source_zone_count, 2);
 });
 
 test('checked-in enemydata keeps curated enemy scope tags', () => {

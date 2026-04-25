@@ -59,12 +59,14 @@ import math
 import os
 import re
 import argparse
+from copy import deepcopy
 from typing import Union
 from collections import defaultdict, OrderedDict
 from typing import Any, Dict
 
 try:
     from enemy_parser_constants import (
+        CURATED_PAYLOAD_OVERRIDES_BY_UNIT_NAME,
         CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
         ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME,
         ENEMY_UNIT_METADATA_BY_NAME,
@@ -74,6 +76,7 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - support package-style imports
     from tools.enemy_parser_constants import (
+        CURATED_PAYLOAD_OVERRIDES_BY_UNIT_NAME,
         CURATED_ZONE_NAME_OVERRIDES_BY_UNIT_NAME,
         ENEMY_PREFERRED_SOURCE_KEYS_BY_UNIT_NAME,
         ENEMY_UNIT_METADATA_BY_NAME,
@@ -93,6 +96,12 @@ def get_preferred_source_keys_for_unit(unit_name: str) -> set[str]:
 
 def get_unit_metadata_for_unit(unit_name: str) -> Dict[str, Any]:
     return dict(ENEMY_UNIT_METADATA_BY_NAME.get(str(unit_name or ""), {}))
+
+def get_curated_payload_override_for_unit(unit_name: str) -> Dict[str, Any] | None:
+    override = CURATED_PAYLOAD_OVERRIDES_BY_UNIT_NAME.get(str(unit_name or ""))
+    if not isinstance(override, dict) or not override:
+        return None
+    return deepcopy(override)
 
 def normalize_raw_zone_name(value: Any) -> str:
     if value is None:
@@ -183,6 +192,15 @@ def apply_curated_zone_name_overrides(unit_name: str, zones: list[Dict[str, Any]
         if raw_zone_name:
             seen_raw_zone_names[raw_zone_name] += 1
         seen_signatures[signature] += 1
+
+def apply_curated_payload_override(unit_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    override = get_curated_payload_override_for_unit(unit_name)
+    if not override:
+        return payload
+
+    merged_payload = deepcopy(payload)
+    merged_payload.update(override)
+    return merged_payload
 
 def sanitize_string(s: str) -> str:
     if "^_^" in s:
@@ -608,6 +626,7 @@ def parse_enemy_units(src: dict) -> tuple[dict, dict]:
     for faction, units in per_faction_candidates.items():
         for unit_name, candidates in units.items():
             canonical_payload, unit_variant_report = resolve_unit_candidates(unit_name, candidates)
+            canonical_payload = apply_curated_payload_override(unit_name, canonical_payload)
             per_faction[faction][unit_name] = canonical_payload
             if unit_variant_report:
                 variant_report[faction][unit_name] = unit_variant_report
