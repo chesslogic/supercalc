@@ -2,6 +2,7 @@
 // Locks weapon + enemy selector setup/lifecycle contracts before shared dropdown extraction.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   calculatorState,
@@ -46,6 +47,19 @@ import { filterEnemiesByTargetTypes } from '../calculator/enemy-scope.js';
 
 function makeEnemy(name, faction, scopeTags = []) {
   return { name, faction, scopeTags };
+}
+
+const REAL_ENEMY_DATA = JSON.parse(
+  readFileSync(new URL('../enemies/enemydata.json', import.meta.url), 'utf8')
+);
+
+function makeRealEnemy(name, faction) {
+  const unitData = REAL_ENEMY_DATA?.[faction]?.[name];
+  if (!unitData) {
+    throw new Error(`Enemy not found in enemydata.json: ${faction} ${name}`);
+  }
+
+  return makeEnemy(name, faction, unitData.scope_tags || []);
 }
 
 function makeWeapon(overrides = {}) {
@@ -448,6 +462,43 @@ test('[pin] enemy dropdown target sort orders minus < base < plus within a targe
   assert.deepEqual(
     sortEnemyDropdownOptions(targetVariants, { sortMode: 'targets', sortDir: 'desc' }).map((enemy) => enemy.name),
     ['Giant+', 'Giant', 'Giant-', 'Medium+', 'Medium', 'Medium-', 'Chaff+', 'Chaff', 'Chaff-']
+  );
+});
+
+test('[pin] real enemydata reclassifies selected targets into conservative variant tiers', () => {
+  assert.deepEqual(makeRealEnemy('Scavenger', 'Terminid').scopeTags, ['chaff-']);
+
+  const automatons = [
+    makeRealEnemy('Heavy Devastator', 'Automaton'),
+    makeRealEnemy('Devastator', 'Automaton'),
+    makeRealEnemy('Trooper', 'Automaton'),
+    makeRealEnemy('Conflagration Devastator', 'Automaton'),
+    makeRealEnemy('Marauder', 'Automaton'),
+    makeRealEnemy('Rocket Devastator', 'Automaton')
+  ];
+
+  assert.deepEqual(
+    automatons.map((enemy) => [enemy.name, enemy.scopeTags[0]]),
+    [
+      ['Heavy Devastator', 'medium+'],
+      ['Devastator', 'medium'],
+      ['Trooper', 'chaff'],
+      ['Conflagration Devastator', 'medium+'],
+      ['Marauder', 'chaff+'],
+      ['Rocket Devastator', 'medium-']
+    ]
+  );
+
+  assert.deepEqual(
+    sortEnemyDropdownOptions(automatons, { sortMode: 'targets', sortDir: 'asc' }).map((enemy) => enemy.name),
+    [
+      'Trooper',
+      'Marauder',
+      'Rocket Devastator',
+      'Devastator',
+      'Conflagration Devastator',
+      'Heavy Devastator'
+    ]
   );
 });
 

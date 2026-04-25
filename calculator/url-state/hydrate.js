@@ -19,6 +19,7 @@ import {
   setSelectedAttackKeys,
   setSelectedEnemy,
   setSelectedEnemyTargetTypes,
+  setSelectedOverviewOutcomeKinds,
   setSelectedExplosiveZoneIndices,
   setSelectedWeapon,
   setSelectedZoneIndex,
@@ -105,6 +106,11 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
       : DEFAULT_CALCULATOR_URL_STATE.enemyTargetTypes
   );
   setDiffDisplayMode(params.get(URL_PARAM_KEYS.diffDisplayMode) || DEFAULT_CALCULATOR_URL_STATE.diffDisplayMode);
+  setSelectedOverviewOutcomeKinds(
+    params.has(URL_PARAM_KEYS.overviewOutcomeKinds)
+      ? parseJsonParam(params, URL_PARAM_KEYS.overviewOutcomeKinds).value
+      : DEFAULT_CALCULATOR_URL_STATE.overviewOutcomeKinds
+  );
   setEngagementRangeMeters(
     'A',
     params.get(URL_PARAM_KEYS.engagementRangeMetersA) ?? DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersA

@@ -10,6 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import './env-stubs.js';
+import { TestDocument } from './dom-stubs.js';
 
 import { enemyState } from '../enemies/data.js';
 import {
@@ -19,11 +20,16 @@ import {
   DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_ENEMY_TARGET_TYPES,
+  DEFAULT_OVERVIEW_OUTCOME_KINDS,
   DEFAULT_OVERVIEW_SCOPE,
   DEFAULT_WEAPON_SORT_MODE,
+  getOverviewOutcomeOptions,
   getOverviewScopeOptions,
   getSelectedEnemyTargetTypes,
+  getSelectedOverviewOutcomeKinds,
   setSelectedEnemyTargetTypes,
+  setSelectedOverviewOutcomeKinds,
+  toggleSelectedOverviewOutcomeKind,
   toggleSelectedEnemyTargetType
 } from '../calculator/data.js';
 import {
@@ -32,6 +38,7 @@ import {
   shouldShowEnemyControls,
   shouldShowEnemyScopeControls
 } from '../calculator/rendering.js';
+import { appendEnemyToolbarControl } from '../calculator/rendering/enemy-toolbar-controls.js';
 import {
   getEnemyDropdownSortModeOptions,
   normalizeEnemyDropdownSortDir,
@@ -218,6 +225,36 @@ test('enemy target type selection normalizes minus/base/plus ids back to broad f
   }
 });
 
+test('overview outcome selection uses shared labels and toggles independently', () => {
+  const previousOutcomeKinds = [...calculatorState.overviewOutcomeKinds];
+
+  try {
+    assert.deepEqual(DEFAULT_OVERVIEW_OUTCOME_KINDS, ['fatal', 'doomed', 'main', 'critical', 'limb', 'utility']);
+    assert.deepEqual(
+      getOverviewOutcomeOptions().map(({ id, label }) => [id, label]),
+      [
+        ['fatal', 'Kill'],
+        ['doomed', 'Doomed'],
+        ['main', 'Main'],
+        ['critical', 'Critical'],
+        ['limb', 'Limb'],
+        ['utility', 'Part']
+      ]
+    );
+
+    setSelectedOverviewOutcomeKinds(['Main', 'Kill', 'Part', 'Kill']);
+    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'main', 'utility']);
+
+    toggleSelectedOverviewOutcomeKind('Critical');
+    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'main', 'critical', 'utility']);
+
+    toggleSelectedOverviewOutcomeKind('Kill');
+    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['main', 'critical', 'utility']);
+  } finally {
+    calculatorState.overviewOutcomeKinds = previousOutcomeKinds;
+  }
+});
+
 // ========================================================================
 // Scope control visibility
 // ========================================================================
@@ -307,9 +344,51 @@ test('enemy controls place scope and targets above the enemy selector', () => {
     }),
     {
       beforeEnemySelector: ['scope', 'targets', 'sort'],
-      afterEnemySelector: ['view', 'grouping', 'diff']
+      afterEnemySelector: ['view', 'grouping', 'diff', 'outcomes']
     }
   );
+});
+
+test('overview outcomes toolbar control renders shared labels and toggles selection', () => {
+  const previousDocument = globalThis.document;
+  const previousOutcomeKinds = [...calculatorState.overviewOutcomeKinds];
+  const document = new TestDocument();
+  const toolbar = document.createElement('div');
+  let refreshCount = 0;
+
+  function renderControl() {
+    toolbar.innerHTML = '';
+    appendEnemyToolbarControl(toolbar, 'outcomes', {
+      onRefreshEnemyCalculationViews: handleRefresh
+    });
+  }
+
+  function handleRefresh() {
+    refreshCount += 1;
+    renderControl();
+  }
+
+  try {
+    globalThis.document = document;
+    setSelectedOverviewOutcomeKinds(DEFAULT_OVERVIEW_OUTCOME_KINDS);
+    renderControl();
+
+    assert.equal(toolbar.children[0].textContent, 'Outcomes:');
+    assert.deepEqual(
+      toolbar.children[1].children.map((button) => button.textContent),
+      getOverviewOutcomeOptions().map(({ label }) => label)
+    );
+    assert.equal(toolbar.children[1].children.every((button) => button.classList.contains('is-active')), true);
+
+    toolbar.children[1].children[2].dispatch('click');
+
+    assert.equal(refreshCount, 1);
+    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'doomed', 'critical', 'limb', 'utility']);
+    assert.equal(toolbar.children[1].children[2].classList.contains('is-active'), false);
+  } finally {
+    globalThis.document = previousDocument;
+    calculatorState.overviewOutcomeKinds = previousOutcomeKinds;
+  }
 });
 
 // ========================================================================

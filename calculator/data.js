@@ -28,6 +28,10 @@ import {
   normalizeRecommendationRangeMeters
 } from './recommendations.js';
 import {
+  getZoneOutcomeLabel,
+  OUTCOME_PRIORITY
+} from './outcome-kinds.js';
+import {
   getNextSortState,
   normalizeSortDirection
 } from '../sort-utils.js';
@@ -53,6 +57,20 @@ export const MAX_RECOMMENDATION_SHOTS = 10;
 export const RECOMMENDATION_MAX_SHOTS_ANY = 'any';
 export const DEFAULT_RECOMMENDATION_SORT_MODE = 'default';
 export const STRICT_MARGIN_RECOMMENDATION_SORT_MODE = 'strict-margin';
+const OVERVIEW_OUTCOME_KINDS = Object.entries(OUTCOME_PRIORITY)
+  .filter(([outcomeKind]) => outcomeKind !== 'none')
+  .sort(([, leftPriority], [, rightPriority]) => leftPriority - rightPriority)
+  .map(([outcomeKind]) => outcomeKind);
+const OVERVIEW_OUTCOME_KIND_LOOKUP = new Map(
+  OVERVIEW_OUTCOME_KINDS.flatMap((outcomeKind) => {
+    const outcomeLabel = String(getZoneOutcomeLabel(outcomeKind) ?? '').trim().toLowerCase();
+    return [
+      [outcomeKind, outcomeKind],
+      [outcomeLabel, outcomeKind]
+    ].filter(([value]) => value);
+  })
+);
+export const DEFAULT_OVERVIEW_OUTCOME_KINDS = [...OVERVIEW_OUTCOME_KINDS];
 
 function normalizeSlot(slot) {
   return slot === 'B' ? 'B' : 'A';
@@ -92,6 +110,20 @@ function normalizeRecommendationSortMode(sortMode) {
   return String(sortMode ?? '').trim().toLowerCase() === STRICT_MARGIN_RECOMMENDATION_SORT_MODE
     ? STRICT_MARGIN_RECOMMENDATION_SORT_MODE
     : DEFAULT_RECOMMENDATION_SORT_MODE;
+}
+
+function normalizeOverviewOutcomeKinds(outcomeKinds = DEFAULT_OVERVIEW_OUTCOME_KINDS) {
+  if (!Array.isArray(outcomeKinds)) {
+    return [...DEFAULT_OVERVIEW_OUTCOME_KINDS];
+  }
+
+  const selectedOutcomeKinds = new Set(
+    normalizeFilterValues(outcomeKinds)
+      .map((outcomeKind) => OVERVIEW_OUTCOME_KIND_LOOKUP.get(outcomeKind) || null)
+      .filter(Boolean)
+  );
+
+  return DEFAULT_OVERVIEW_OUTCOME_KINDS.filter((outcomeKind) => selectedOutcomeKinds.has(outcomeKind));
 }
 
 function clampRecommendationShotsValue(value, min, max) {
@@ -164,6 +196,7 @@ export const calculatorState = {
   overviewScope: DEFAULT_OVERVIEW_SCOPE,
   enemyTargetTypes: [...DEFAULT_ENEMY_TARGET_TYPES],
   diffDisplayMode: 'absolute',
+  overviewOutcomeKinds: [...DEFAULT_OVERVIEW_OUTCOME_KINDS],
   engagementRangeMeters: {
     A: DEFAULT_RECOMMENDATION_RANGE_METERS,
     B: DEFAULT_RECOMMENDATION_RANGE_METERS
@@ -250,6 +283,13 @@ export function getOverviewScopeOptions() {
 
 export function getOverviewScopeOptionGroupsForState() {
   return getOverviewScopeOptionGroups(getEnemyOptions());
+}
+
+export function getOverviewOutcomeOptions() {
+  return DEFAULT_OVERVIEW_OUTCOME_KINDS.map((outcomeKind) => ({
+    id: outcomeKind,
+    label: getZoneOutcomeLabel(outcomeKind) || outcomeKind
+  }));
 }
 
 export function getEnemyTargetTypeOptionsForState() {
@@ -346,6 +386,34 @@ export function toggleSelectedEnemyTargetType(targetTypeId) {
 export function setDiffDisplayMode(mode) {
   calculatorState.diffDisplayMode = mode === 'percent' ? 'percent' : 'absolute';
   notifyCalculatorStateChange();
+}
+
+export function getSelectedOverviewOutcomeKinds() {
+  return [...calculatorState.overviewOutcomeKinds];
+}
+
+export function setSelectedOverviewOutcomeKinds(outcomeKinds) {
+  calculatorState.overviewOutcomeKinds = normalizeOverviewOutcomeKinds(outcomeKinds);
+  notifyCalculatorStateChange();
+}
+
+export function toggleSelectedOverviewOutcomeKind(outcomeKind) {
+  const normalizedOutcomeKinds = normalizeOverviewOutcomeKinds([outcomeKind]);
+  if (normalizedOutcomeKinds.length === 0) {
+    return [...calculatorState.overviewOutcomeKinds];
+  }
+
+  const selectedOutcomeKinds = new Set(calculatorState.overviewOutcomeKinds);
+  const allSelected = normalizedOutcomeKinds.every((normalizedOutcomeKind) => (
+    selectedOutcomeKinds.has(normalizedOutcomeKind)
+  ));
+  const nextOutcomeKinds = allSelected
+    ? calculatorState.overviewOutcomeKinds.filter((value) => !normalizedOutcomeKinds.includes(value))
+    : [...calculatorState.overviewOutcomeKinds, ...normalizedOutcomeKinds];
+
+  calculatorState.overviewOutcomeKinds = normalizeOverviewOutcomeKinds(nextOutcomeKinds);
+  notifyCalculatorStateChange();
+  return [...calculatorState.overviewOutcomeKinds];
 }
 
 export function setRecommendationRangeMeters(value) {

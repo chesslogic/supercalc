@@ -34,6 +34,8 @@ const {
 const {
   calculatorState,
   RECOMMENDATION_MAX_SHOTS_ANY,
+  DEFAULT_OVERVIEW_OUTCOME_KINDS,
+  getSelectedOverviewOutcomeKinds,
   setAttackHitCounts,
   setCalculatorMode,
   setCalculatorStateChangeListener,
@@ -57,6 +59,7 @@ const {
   setSelectedAttackKeys,
   setSelectedEnemy,
   setSelectedEnemyTargetTypes,
+  setSelectedOverviewOutcomeKinds,
   setSelectedExplosiveZoneIndices,
   setSelectedWeapon,
   setSelectedZoneIndex,
@@ -161,6 +164,7 @@ function snapshotCalculatorState() {
     overviewScope: calculatorState.overviewScope,
     enemyTargetTypes: [...calculatorState.enemyTargetTypes],
     diffDisplayMode: calculatorState.diffDisplayMode,
+    overviewOutcomeKinds: [...calculatorState.overviewOutcomeKinds],
     recommendationRangeMeters: calculatorState.recommendationRangeMeters,
     engagementRangeMeters: { ...calculatorState.engagementRangeMeters },
     weaponA: calculatorState.weaponA,
@@ -198,6 +202,7 @@ function restoreCalculatorState(snapshot) {
   calculatorState.overviewScope = snapshot.overviewScope;
   calculatorState.enemyTargetTypes = [...snapshot.enemyTargetTypes];
   calculatorState.diffDisplayMode = snapshot.diffDisplayMode;
+  calculatorState.overviewOutcomeKinds = [...snapshot.overviewOutcomeKinds];
   calculatorState.engagementRangeMeters = { ...snapshot.engagementRangeMeters };
   calculatorState.weaponA = snapshot.weaponA;
   calculatorState.weaponB = snapshot.weaponB;
@@ -302,12 +307,14 @@ test('hydrateUrlState with empty search string restores defaults', { concurrency
   setCalculatorMode('single');
   setDiffDisplayMode('percent');
   setOverviewScope('automatons');
+  setSelectedOverviewOutcomeKinds(['main']);
 
   hydrateUrlState('');
 
   assert.equal(calculatorState.mode, 'compare');
   assert.equal(calculatorState.diffDisplayMode, 'absolute');
   assert.equal(calculatorState.overviewScope, 'all');
+  assert.deepEqual(calculatorState.overviewOutcomeKinds, DEFAULT_OVERVIEW_OUTCOME_KINDS);
 }));
 
 test('hydrateUrlState with no params resets enemy sort to defaults', { concurrency: false }, () => withStateFixture(() => {
@@ -623,6 +630,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setEnemyTableMode('stats');
   setOverviewScope('automatons');
   setDiffDisplayMode('percent');
+  setSelectedOverviewOutcomeKinds(['Part', 'Kill', 'Main']);
   setSelectedWeapon('A', breaker);
   setSelectedWeapon('B', railgun);
   const attackKey = getAttackRowKey(breaker.rows[1]);
@@ -659,6 +667,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   assert.equal(firstParams.get('csk'), 'health');
   assert.equal(firstParams.get('csd'), 'desc');
   assert.equal(firstParams.get('csg'), 'outcome');
+  assert.equal(firstParams.get('coo'), JSON.stringify(['fatal', 'main', 'utility']));
   assert.equal(firstParams.get('esk'), 'AV');
   assert.equal(firstParams.get('esd'), 'desc');
 
@@ -670,6 +679,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setEnemyTableMode('analysis');
   setOverviewScope('all');
   setDiffDisplayMode('absolute');
+  setSelectedOverviewOutcomeKinds(DEFAULT_OVERVIEW_OUTCOME_KINDS);
   setSelectedWeapon('A', null);
   setSelectedWeapon('B', null);
   setSelectedEnemy(null);
@@ -725,6 +735,7 @@ test('hydrateUrlState with only mode param leaves other fields at defaults', { c
   assert.equal(calculatorState.mode, 'single');
   assert.equal(calculatorState.diffDisplayMode, 'absolute');
   assert.equal(calculatorState.overviewScope, 'all');
+  assert.deepEqual(calculatorState.overviewOutcomeKinds, DEFAULT_OVERVIEW_OUTCOME_KINDS);
   assert.equal(calculatorState.enemyTableMode, 'analysis');
 }));
 
@@ -836,6 +847,34 @@ test('hydrateUrlState with missing enemy target types param uses defaults', { co
 }));
 
 // ===========================================================================
+// Overview outcome kinds
+// ===========================================================================
+
+test('encodeUrlState encodes non-default overview outcome kinds', { concurrency: false }, () => withStateFixture(() => {
+  setSelectedOverviewOutcomeKinds(['Part', 'Kill', 'Main']);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+
+  assert.equal(params.get('coo'), JSON.stringify(['fatal', 'main', 'utility']));
+}));
+
+test('hydrateUrlState restores overview outcome kinds in shared priority order', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    coo: JSON.stringify(['Part', 'fatal', 'Main'])
+  }));
+
+  assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'main', 'utility']);
+}));
+
+test('hydrateUrlState with missing overview outcome kinds param uses defaults', { concurrency: false }, () => withStateFixture(() => {
+  setSelectedOverviewOutcomeKinds(['critical']);
+
+  hydrateUrlState(new URLSearchParams({}));
+
+  assert.deepEqual(getSelectedOverviewOutcomeKinds(), DEFAULT_OVERVIEW_OUTCOME_KINDS);
+}));
+
+// ===========================================================================
 // buildUrlStateSnapshot structure
 // ===========================================================================
 
@@ -856,7 +895,7 @@ test('buildUrlStateSnapshot calculator section has all expected keys', { concurr
   const expectedKeys = [
     'mode', 'compareView', 'weaponSortMode', 'enemyDropdownSortMode',
     'enemyDropdownSortDir', 'enemyTableMode', 'overviewScope', 'enemyTargetTypes',
-    'diffDisplayMode', 'engagementRangeMetersA', 'engagementRangeMetersB',
+    'diffDisplayMode', 'overviewOutcomeKinds', 'engagementRangeMetersA', 'engagementRangeMetersB',
     'weaponA', 'weaponB', 'selectedEnemy', 'selectedZoneIndex',
     'selectedExplosiveZoneIndices', 'recommendationWeaponFilterMode',
     'recommendationWeaponFilterTypes', 'recommendationWeaponFilterSubs',

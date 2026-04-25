@@ -901,7 +901,7 @@
       ],
       "health": 750,
       "scope_tags": [
-        "medium"
+        "medium+"
       ],
       "zone_relation_groups": [
         {
@@ -1882,7 +1882,7 @@
       ],
       "health": 750,
       "scope_tags": [
-        "medium"
+        "medium+"
       ],
       "zone_relation_groups": [
         {
@@ -2691,7 +2691,7 @@
       ],
       "health": 125,
       "scope_tags": [
-        "chaff"
+        "chaff+"
       ]
     },
     "Pyro Trooper": {
@@ -3194,7 +3194,7 @@
       ],
       "health": 750,
       "scope_tags": [
-        "medium"
+        "medium-"
       ],
       "zone_relation_groups": [
         {
@@ -9953,7 +9953,7 @@
       ],
       "health": 80,
       "scope_tags": [
-        "chaff"
+        "chaff-"
       ]
     },
     "Shrieker": {

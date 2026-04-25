@@ -44,6 +44,7 @@ export function getEnemyControlSections({
   }
   if (overviewActive && enemyTableMode === 'analysis') {
     afterEnemySelector.push('diff');
+    afterEnemySelector.push('outcomes');
   }
 
   return {

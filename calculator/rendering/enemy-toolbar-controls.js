@@ -2,15 +2,18 @@ import {
   calculatorState,
   getEnemyDropdownSortModeOptionsForState,
   getEnemyTargetTypeOptionsForState,
+  getOverviewOutcomeOptions,
   getOverviewScopeOptionGroupsForState,
   getSelectedEnemyTargetTypes,
+  getSelectedOverviewOutcomeKinds,
   setDiffDisplayMode,
   setEnemyDropdownSortDir,
   setEnemyDropdownSortMode,
   setEnemyGroupMode,
   setEnemyTableMode,
   setOverviewScope,
-  toggleSelectedEnemyTargetType
+  toggleSelectedEnemyTargetType,
+  toggleSelectedOverviewOutcomeKind
 } from '../data.js';
 import {
   ensureEnemySortKeyVisible,
@@ -181,6 +184,18 @@ export function appendEnemyToolbarControl(toolbar, controlId, {
         (value) => calculatorState.diffDisplayMode === value,
         (value) => {
           setDiffDisplayMode(value);
+          onRefreshEnemyCalculationViews?.();
+        }
+      );
+      break;
+    case 'outcomes':
+      appendToolbarButtonGroup(
+        toolbar,
+        'Outcomes:',
+        getOverviewOutcomeOptions().map((option) => ({ value: option.id, label: option.label })),
+        (value) => getSelectedOverviewOutcomeKinds().includes(value),
+        (value) => {
+          toggleSelectedOverviewOutcomeKind(value);
           onRefreshEnemyCalculationViews?.();
         }
       );

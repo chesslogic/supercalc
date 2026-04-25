@@ -2,6 +2,7 @@ import {
   calculatorState,
   getEngagementRangeMeters,
   getSelectedEnemyTargetTypes,
+  getSelectedOverviewOutcomeKinds,
   getSelectedExplosiveZoneIndices,
   getWeaponForSlot
 } from '../data.js';
@@ -51,6 +52,7 @@ export function buildUrlStateSnapshot({
       overviewScope: calculatorState.overviewScope,
       enemyTargetTypes: [...getSelectedEnemyTargetTypes()],
       diffDisplayMode: calculatorState.diffDisplayMode,
+      overviewOutcomeKinds: [...getSelectedOverviewOutcomeKinds()],
       engagementRangeMetersA: getEngagementRangeMeters('A'),
       engagementRangeMetersB: getEngagementRangeMeters('B'),
       weaponA: getWeaponForSlot('A')?.name || null,
@@ -98,6 +100,7 @@ export function encodeUrlState({
   setParam(params, URL_PARAM_KEYS.overviewScope, calculator.overviewScope, DEFAULT_CALCULATOR_URL_STATE.overviewScope);
   setJsonParam(params, URL_PARAM_KEYS.enemyTargetTypes, calculator.enemyTargetTypes, DEFAULT_CALCULATOR_URL_STATE.enemyTargetTypes);
   setParam(params, URL_PARAM_KEYS.diffDisplayMode, calculator.diffDisplayMode, DEFAULT_CALCULATOR_URL_STATE.diffDisplayMode);
+  setJsonParam(params, URL_PARAM_KEYS.overviewOutcomeKinds, calculator.overviewOutcomeKinds, DEFAULT_CALCULATOR_URL_STATE.overviewOutcomeKinds);
   setParam(params, URL_PARAM_KEYS.engagementRangeMetersA, calculator.engagementRangeMetersA, DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersA);
   setParam(params, URL_PARAM_KEYS.engagementRangeMetersB, calculator.engagementRangeMetersB, DEFAULT_CALCULATOR_URL_STATE.engagementRangeMetersB);
   setParam(params, URL_PARAM_KEYS.weaponA, calculator.weaponA);
