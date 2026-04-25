@@ -815,6 +815,14 @@ test('hydrateUrlState restores non-default enemy target types', { concurrency: f
   assert.deepEqual(calculatorState.enemyTargetTypes, ['giant']);
 }));
 
+test('hydrateUrlState normalizes minus/base/plus enemy target ids to their broad bands', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    cett: JSON.stringify(['medium+', 'chaff-'])
+  }));
+
+  assert.deepEqual(calculatorState.enemyTargetTypes, ['medium', 'chaff']);
+}));
+
 test('hydrateUrlState with missing enemy target types param uses defaults', { concurrency: false }, () => withStateFixture(() => {
   setSelectedEnemyTargetTypes(['giant']);
 

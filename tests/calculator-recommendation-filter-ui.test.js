@@ -69,6 +69,22 @@ function renderPanelForBrowserLikeTest(enemy, options = {}) {
   }
 }
 
+function getShotRangeControls(container) {
+  const shotsRow = getChipRowByLabel(container, 'Shots');
+  return {
+    shotsRow,
+    sliders: shotsRow
+      ? collectElements(shotsRow, (element) => element.tagName === 'INPUT')
+      : [],
+    labels: shotsRow
+      ? collectElements(
+          shotsRow,
+          (element) => element.classList.contains('calc-recommend-shot-slider-label')
+        ).map((element) => element.textContent)
+      : []
+  };
+}
+
 test('renderRecommendationPanel surfaces the shared filter controls with targeted recommendations when a target is selected', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
@@ -676,10 +692,10 @@ test('renderRecommendationPanel exposes shot-range sliders that update calculato
     };
     const container = renderPanelForTest(enemy);
 
-    const shotsRow = getChipRowByLabel(container, 'Shots');
-    const sliders = shotsRow
-      ? collectElements(shotsRow, (element) => element.tagName === 'INPUT')
-      : [];
+    const {
+      sliders,
+      labels
+    } = getShotRangeControls(container);
 
     assert.equal(sliders.length, 2);
     assert.equal(sliders[0].type, 'range');
@@ -687,6 +703,7 @@ test('renderRecommendationPanel exposes shot-range sliders that update calculato
     assert.equal(sliders[1].type, 'range');
     assert.equal(sliders[1].value, '3');
     assert.equal(sliders[1].max, '11');
+    assert.deepEqual(labels, ['Min: 1', 'Max: 3']);
 
     sliders[0].value = '2';
     sliders[0].listeners.get('input')?.();
@@ -699,14 +716,75 @@ test('renderRecommendationPanel exposes shot-range sliders that update calculato
 
     assert.equal(calculatorState.recommendationMaxShots, RECOMMENDATION_MAX_SHOTS_ANY);
 
-    const refreshedContainer = renderPanelForTest(enemy);
-    const refreshedShotsRow = getChipRowByLabel(refreshedContainer, 'Shots');
-    const sliderLabels = collectElements(
-      refreshedShotsRow,
-      (element) => element.classList.contains('calc-recommend-shot-slider-label')
-    ).map((element) => element.textContent);
+    let refreshedContainer = renderPanelForTest(enemy);
+    let refreshedControls = getShotRangeControls(refreshedContainer);
 
-    assert.ok(sliderLabels.includes('Max: Any'));
+    assert.deepEqual(refreshedControls.labels, ['Min: 2', 'Max: Any']);
+
+    refreshedControls.sliders[0].value = '10';
+    refreshedControls.sliders[0].listeners.get('input')?.();
+
+    assert.equal(calculatorState.recommendationMinShots, 10);
+    assert.equal(calculatorState.recommendationMaxShots, RECOMMENDATION_MAX_SHOTS_ANY);
+
+    refreshedContainer = renderPanelForTest(enemy);
+    refreshedControls = getShotRangeControls(refreshedContainer);
+
+    assert.deepEqual(refreshedControls.labels, ['Min: 11', 'Max: Any']);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel uses friendly copy for exact finite shot ranges', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationMinShots = 1;
+    calculatorState.recommendationMaxShots = 3;
+    weaponsState.groups = [
+      makeWeapon('Exact Shot Dummy', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Exact Shot Dummy', 105, 2)]
+      })
+    ];
+
+    const enemy = {
+      name: 'Exact Shot Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    };
+
+    let controls = getShotRangeControls(renderPanelForTest(enemy));
+    controls.sliders[0].value = '3';
+    controls.sliders[0].listeners.get('input')?.();
+
+    assert.equal(calculatorState.recommendationMinShots, 3);
+    assert.equal(calculatorState.recommendationMaxShots, 3);
+    assert.deepEqual(getShotRangeControls(renderPanelForTest(enemy)).labels, ['Only 3 shots', 'Only 3 shots']);
+
+    controls = getShotRangeControls(renderPanelForTest(enemy));
+    controls.sliders[1].value = '1';
+    controls.sliders[1].listeners.get('input')?.();
+
+    assert.equal(calculatorState.recommendationMinShots, 1);
+    assert.equal(calculatorState.recommendationMaxShots, 1);
+    assert.deepEqual(getShotRangeControls(renderPanelForTest(enemy)).labels, ['Only 1 shot', 'Only 1 shot']);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;

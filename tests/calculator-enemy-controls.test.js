@@ -106,6 +106,39 @@ test('enemy target type options only include categories present in the dataset',
   );
 });
 
+test('enemy target type variants collapse into their broad filter bands', () => {
+  const enemies = [
+    { name: 'Scavenger-', faction: 'Terminid', scopeTags: ['chaff-'] },
+    { name: 'Scavenger', faction: 'Terminid', scopeTags: ['chaff'] },
+    { name: 'Scavenger+', faction: 'Terminid', scopeTags: ['chaff+'] },
+    { name: 'Warrior-', faction: 'Terminid', scopeTags: ['medium-'] },
+    { name: 'Warrior', faction: 'Terminid', scopeTags: ['medium'] },
+    { name: 'Warrior+', faction: 'Terminid', scopeTags: ['medium+'] },
+    { name: 'Bile Titan+', faction: 'Terminid', scopeTags: ['giant+'] }
+  ];
+
+  assert.deepEqual(
+    filterEnemiesByTargetTypes(enemies, ['chaff']).map((enemy) => enemy.name),
+    ['Scavenger-', 'Scavenger', 'Scavenger+']
+  );
+  assert.deepEqual(
+    filterEnemiesByTargetTypes(enemies, ['medium']).map((enemy) => enemy.name),
+    ['Warrior-', 'Warrior', 'Warrior+']
+  );
+  assert.deepEqual(
+    filterEnemiesByTargetTypes(enemies, ['giant']).map((enemy) => enemy.name),
+    ['Bile Titan+']
+  );
+  assert.deepEqual(
+    getEnemyTargetTypeOptions(enemies).map(({ id, label }) => [id, label]),
+    [
+      ['chaff', 'Chaff'],
+      ['medium', 'Medium'],
+      ['giant', 'Giants']
+    ]
+  );
+});
+
 // ========================================================================
 // Enemy dropdown sort modes (exact output + getEnemyDropdownSortModeOptions)
 // ========================================================================
@@ -169,6 +202,17 @@ test('enemy target type selection normalizes ids and toggles independently', () 
 
     toggleSelectedEnemyTargetType('unit');
     assert.deepEqual(getSelectedEnemyTargetTypes(), ['structure']);
+  } finally {
+    calculatorState.enemyTargetTypes = previousTargetTypes;
+  }
+});
+
+test('enemy target type selection normalizes minus/base/plus ids back to broad filter ids', () => {
+  const previousTargetTypes = [...calculatorState.enemyTargetTypes];
+
+  try {
+    setSelectedEnemyTargetTypes(['medium+', 'chaff-', 'giant', 'giant+']);
+    assert.deepEqual(getSelectedEnemyTargetTypes(), ['medium', 'chaff', 'giant']);
   } finally {
     calculatorState.enemyTargetTypes = previousTargetTypes;
   }

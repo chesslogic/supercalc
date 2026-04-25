@@ -141,6 +141,12 @@ export function bindSubChip(chip) {
   });
 }
 
+function appendChipChildren(targetEl, chipRow) {
+  Array.from(chipRow?.children || [])
+    .filter((child) => child?.classList?.contains('chip'))
+    .forEach((child) => targetEl.appendChild(child));
+}
+
 export function buildRoleFilters() {
   const el = globalThis.document?.getElementById('roleFilters');
   if (!el) return;
@@ -159,10 +165,7 @@ export function buildRoleFilters() {
     label: 'Role'
   });
 
-  // Append only the chip children (not the outer chiprow div) since el is the container
-  while (chipRow.children.length > 0) {
-    el.appendChild(chipRow.children[0]);
-  }
+  appendChipChildren(el, chipRow);
   applyFilters();
 }
 
@@ -209,8 +212,6 @@ export function buildSubFilters() {
     visibility: 'shared'
   });
 
-  while (chipRow.children.length > 0) {
-    el.appendChild(chipRow.children[0]);
-  }
+  appendChipChildren(el, chipRow);
   applyFilters();
 }

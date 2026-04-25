@@ -125,6 +125,36 @@ export const ENEMY_TARGET_TYPE_DEFINITIONS = [
   }
 ];
 
+const ENEMY_TARGET_TYPE_VARIANT_DEFINITIONS = [
+  {
+    id: 'minus',
+    suffix: '-',
+    sortRank: -1
+  },
+  {
+    id: 'base',
+    suffix: '',
+    sortRank: 0
+  },
+  {
+    id: 'plus',
+    suffix: '+',
+    sortRank: 1
+  }
+];
+
+const ENEMY_TARGET_TYPE_VARIANT_BY_SUFFIX = new Map(
+  ENEMY_TARGET_TYPE_VARIANT_DEFINITIONS.map((definition) => [definition.suffix, definition])
+);
+const ENEMY_TARGET_TYPE_VARIANT_WORD_SUFFIX_LOOKUP = new Map([
+  [normalizeText('minus'), '-'],
+  [normalizeText('base'), ''],
+  [normalizeText('plus'), '+']
+]);
+const ENEMY_TARGET_TYPE_BASE_DEFINITION_LOOKUP = new Map(
+  ENEMY_TARGET_TYPE_DEFINITIONS.map((definition) => [definition.id, definition])
+);
+
 const ENEMY_TARGET_TYPE_LOOKUP = new Map();
 ENEMY_TARGET_TYPE_DEFINITIONS.forEach((definition) => {
   ENEMY_TARGET_TYPE_LOOKUP.set(normalizeText(definition.id), definition.id);
@@ -137,6 +167,86 @@ const ENEMY_TARGET_TYPE_ALIAS_LOOKUP = new Map([
   [normalizeText('units'), UNIT_TARGET_TYPE_IDS]
 ]);
 
+function parseEnemyTargetTypeInput(targetTypeId) {
+  const normalizedTargetTypeId = normalizeText(targetTypeId);
+  if (!normalizedTargetTypeId) {
+    return null;
+  }
+
+  const compactTargetTypeId = normalizedTargetTypeId.replace(/\s*([+-])\s*$/, '$1');
+  let baseLookupKey = compactTargetTypeId;
+  let variantSuffix = '';
+
+  const wordVariantMatch = compactTargetTypeId.match(/^(.*?)(?:\s+(minus|base|plus))$/);
+  if (wordVariantMatch) {
+    baseLookupKey = wordVariantMatch[1].trim();
+    variantSuffix = ENEMY_TARGET_TYPE_VARIANT_WORD_SUFFIX_LOOKUP.get(normalizeText(wordVariantMatch[2])) || '';
+  } else {
+    const symbolVariantMatch = compactTargetTypeId.match(/^(.*?)([+-])$/);
+    if (symbolVariantMatch) {
+      baseLookupKey = symbolVariantMatch[1].trim();
+      variantSuffix = symbolVariantMatch[2];
+    } else {
+      baseLookupKey = compactTargetTypeId.trim();
+    }
+  }
+
+  const baseId = ENEMY_TARGET_TYPE_LOOKUP.get(baseLookupKey);
+  const baseDefinition = baseId ? ENEMY_TARGET_TYPE_BASE_DEFINITION_LOOKUP.get(baseId) : null;
+  if (!baseDefinition) {
+    return null;
+  }
+
+  return {
+    baseId,
+    baseDefinition,
+    variantSuffix: ENEMY_TARGET_TYPE_VARIANT_BY_SUFFIX.has(variantSuffix) ? variantSuffix : ''
+  };
+}
+
+function buildEnemyTargetTypeVariantDefinition(baseDefinition, variantSuffix = '') {
+  const variantDefinition = ENEMY_TARGET_TYPE_VARIANT_BY_SUFFIX.get(variantSuffix)
+    || ENEMY_TARGET_TYPE_VARIANT_BY_SUFFIX.get('');
+  return {
+    ...baseDefinition,
+    id: `${baseDefinition.id}${variantDefinition.suffix}`,
+    baseId: baseDefinition.id,
+    variantId: variantDefinition.id,
+    variantSuffix: variantDefinition.suffix,
+    variantSortRank: variantDefinition.sortRank,
+    requiredTag: `${baseDefinition.requiredTag}${variantDefinition.suffix}`,
+    label: `${baseDefinition.label}${variantDefinition.suffix}`,
+    summaryLabel: `${baseDefinition.summaryLabel}${variantDefinition.suffix}`,
+    badgeText: `${baseDefinition.badgeText}${variantDefinition.suffix}`
+  };
+}
+
+function getEnemyTargetTypeVariantDefinition(targetTypeId) {
+  const parsedTargetType = parseEnemyTargetTypeInput(targetTypeId);
+  if (!parsedTargetType) {
+    return null;
+  }
+
+  return buildEnemyTargetTypeVariantDefinition(
+    parsedTargetType.baseDefinition,
+    parsedTargetType.variantSuffix
+  );
+}
+
+function getEnemyTargetTypeDefinitionsForUnit(unit) {
+  const seenBaseIds = new Set();
+  return getEnemyUnitScopeTags(unit)
+    .map((scopeTag) => getEnemyTargetTypeVariantDefinition(scopeTag))
+    .filter((definition) => {
+      if (!definition || seenBaseIds.has(definition.baseId)) {
+        return false;
+      }
+
+      seenBaseIds.add(definition.baseId);
+      return true;
+    });
+}
+
 function expandEnemyTargetTypeIds(targetTypeId) {
   const normalizedTargetTypeId = normalizeText(targetTypeId);
   if (!normalizedTargetTypeId) {
@@ -148,8 +258,8 @@ function expandEnemyTargetTypeIds(targetTypeId) {
     return [...aliasedTargetTypeIds];
   }
 
-  const normalizedId = ENEMY_TARGET_TYPE_LOOKUP.get(normalizedTargetTypeId);
-  return normalizedId ? [normalizedId] : [];
+  const parsedTargetType = parseEnemyTargetTypeInput(normalizedTargetTypeId);
+  return parsedTargetType ? [parsedTargetType.baseId] : [];
 }
 
 export const DEFAULT_ENEMY_TARGET_TYPE_IDS = ENEMY_TARGET_TYPE_DEFINITIONS
@@ -389,10 +499,12 @@ export function getEnemyArmyRoleDefinitionForUnit(unit) {
 }
 
 export function getEnemyPrimaryTargetTypeDefinition(unit) {
-  const scopeTags = getEnemyUnitScopeTags(unit);
-  return ENEMY_TARGET_TYPE_DEFINITIONS.find((definition) => (
-    scopeTags.includes(definition.requiredTag)
-  )) || null;
+  const definitionByBaseId = new Map(
+    getEnemyTargetTypeDefinitionsForUnit(unit).map((definition) => [definition.baseId, definition])
+  );
+  return ENEMY_TARGET_TYPE_DEFINITIONS
+    .map((definition) => definitionByBaseId.get(definition.id))
+    .find(Boolean) || null;
 }
 
 export function matchesEnemyScope(unit, scope = 'all') {
@@ -451,7 +563,7 @@ export function getEnemyTargetTypeDefinition(targetTypeId = UNIT_TARGET_TYPE_IDS
     return null;
   }
 
-  return ENEMY_TARGET_TYPE_DEFINITIONS.find((definition) => definition.id === normalizedIds[0]) || null;
+  return ENEMY_TARGET_TYPE_BASE_DEFINITION_LOOKUP.get(normalizedIds[0]) || null;
 }
 
 export function matchesEnemyTargetType(unit, targetTypeId = 'unit') {
@@ -462,15 +574,17 @@ export function matchesEnemyTargetType(unit, targetTypeId = 'unit') {
     }
   }
 
-  const definition = typeof targetTypeId === 'string'
-    ? getEnemyTargetTypeDefinition(targetTypeId)
-    : targetTypeId;
+  const definitionId = typeof targetTypeId === 'string'
+    ? targetTypeId
+    : (targetTypeId?.baseId || targetTypeId?.id);
+  const definition = getEnemyTargetTypeDefinition(definitionId);
   if (!definition) {
     return false;
   }
 
-  const scopeTags = getEnemyUnitScopeTags(unit);
-  return scopeTags.includes(definition.requiredTag);
+  return getEnemyTargetTypeDefinitionsForUnit(unit).some((unitDefinition) => (
+    unitDefinition.baseId === definition.id
+  ));
 }
 
 export function filterEnemiesByTargetTypes(units = [], targetTypeIds = DEFAULT_ENEMY_TARGET_TYPE_IDS) {

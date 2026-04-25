@@ -62,7 +62,13 @@ function compareEnemyNames(left, right, {
 }
 
 function getEnemyTargetTypeRank(enemy) {
-  return ENEMY_TARGET_TYPE_ORDER.get(getEnemyPrimaryTargetTypeDefinition(enemy)?.id) ?? Number.MAX_SAFE_INTEGER;
+  const definition = getEnemyPrimaryTargetTypeDefinition(enemy);
+  const baseRank = ENEMY_TARGET_TYPE_ORDER.get(definition?.baseId || definition?.id);
+  if (baseRank == null) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  return (baseRank * 3) + ((definition?.variantSortRank ?? 0) + 1);
 }
 
 export function normalizeEnemyDropdownSortMode(sortMode = DEFAULT_ENEMY_DROPDOWN_SORT_MODE) {

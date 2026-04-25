@@ -329,6 +329,24 @@ test('[pin] enemy item model exposes target badge for known target types', () =>
   assert.equal(giantModel.targetBadge.text, 'G');
 });
 
+test('[pin] enemy item model exposes weak/base/strong target tier badges', () => {
+  const weakModel = getEnemyDropdownItemModel(makeEnemy('Scavenger', 'Terminid', ['chaff-']));
+  assert.deepEqual(weakModel.targetBadge, {
+    id: 'chaff-',
+    text: 'C-',
+    label: 'Chaff-'
+  });
+
+  const strongModel = getEnemyDropdownItemModel(makeEnemy('Warrior', 'Terminid', ['medium+']));
+  assert.deepEqual(strongModel.targetBadge, {
+    id: 'medium+',
+    text: 'M+',
+    label: 'Medium+'
+  });
+  assert.ok(strongModel.metaTitle.includes('Medium+'));
+  assert.ok(strongModel.searchText.includes('medium+'));
+});
+
 test('[pin] enemy item model includes searchText with name, faction, front, and target info', () => {
   const model = getEnemyDropdownItemModel(makeEnemy('Warrior', 'Terminid', ['medium']));
   assert.ok(model.searchText.includes('warrior'));
@@ -408,6 +426,29 @@ test('[pin] enemy dropdown target sort orders chaff < medium < elite < tank < gi
   assert.ok(names.indexOf('Warrior') < names.indexOf('Stalker'));
   assert.ok(names.indexOf('Stalker') < names.indexOf('Charger'));
   assert.ok(names.indexOf('Charger') < names.indexOf('Bile Titan'));
+});
+
+test('[pin] enemy dropdown target sort orders minus < base < plus within a target band', () => {
+  const targetVariants = [
+    makeEnemy('Chaff+', 'Terminid', ['chaff+']),
+    makeEnemy('Medium', 'Terminid', ['medium']),
+    makeEnemy('Medium-', 'Terminid', ['medium-']),
+    makeEnemy('Chaff', 'Terminid', ['chaff']),
+    makeEnemy('Giant-', 'Terminid', ['giant-']),
+    makeEnemy('Chaff-', 'Terminid', ['chaff-']),
+    makeEnemy('Medium+', 'Terminid', ['medium+']),
+    makeEnemy('Giant+', 'Terminid', ['giant+']),
+    makeEnemy('Giant', 'Terminid', ['giant'])
+  ];
+
+  assert.deepEqual(
+    sortEnemyDropdownOptions(targetVariants, { sortMode: 'targets', sortDir: 'asc' }).map((enemy) => enemy.name),
+    ['Chaff-', 'Chaff', 'Chaff+', 'Medium-', 'Medium', 'Medium+', 'Giant-', 'Giant', 'Giant+']
+  );
+  assert.deepEqual(
+    sortEnemyDropdownOptions(targetVariants, { sortMode: 'targets', sortDir: 'desc' }).map((enemy) => enemy.name),
+    ['Giant+', 'Giant', 'Giant-', 'Medium+', 'Medium', 'Medium-', 'Chaff+', 'Chaff', 'Chaff-']
+  );
 });
 
 test('[pin] enemy dropdown alphabetical sort orders by name within faction', () => {

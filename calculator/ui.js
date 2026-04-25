@@ -285,10 +285,11 @@ function buildEnemyDropdownItemElement(enemy) {
   }
 
   if (itemModel.targetBadge) {
+    const targetBadgeClassId = itemModel.targetBadge.id.replace(/[+-]$/, '');
     appendEnemyDropdownBadge(meta, {
       text: itemModel.targetBadge.text,
       title: buildEnemyBadgeTitle(itemModel.targetBadge.label, 'Target scale'),
-      classNames: ['enemy-dropdown-badge-target', `enemy-dropdown-badge-target-${itemModel.targetBadge.id}`]
+      classNames: ['enemy-dropdown-badge-target', `enemy-dropdown-badge-target-${targetBadgeClassId}`]
     });
   }
 
