@@ -229,13 +229,13 @@ test('overview outcome selection uses shared labels and toggles independently', 
   const previousOutcomeKinds = [...calculatorState.overviewOutcomeKinds];
 
   try {
-    assert.deepEqual(DEFAULT_OVERVIEW_OUTCOME_KINDS, ['fatal', 'doomed', 'main', 'critical', 'limb', 'utility']);
+    assert.deepEqual(DEFAULT_OVERVIEW_OUTCOME_KINDS, ['main', 'fatal', 'doomed', 'critical', 'limb', 'utility']);
     assert.deepEqual(
       getOverviewOutcomeOptions().map(({ id, label }) => [id, label]),
       [
+        ['main', 'Main'],
         ['fatal', 'Kill'],
         ['doomed', 'Doomed'],
-        ['main', 'Main'],
         ['critical', 'Critical'],
         ['limb', 'Limb'],
         ['utility', 'Part']
@@ -243,10 +243,10 @@ test('overview outcome selection uses shared labels and toggles independently', 
     );
 
     setSelectedOverviewOutcomeKinds(['Main', 'Kill', 'Part', 'Kill']);
-    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'main', 'utility']);
+    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['main', 'fatal', 'utility']);
 
     toggleSelectedOverviewOutcomeKind('Critical');
-    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'main', 'critical', 'utility']);
+    assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['main', 'fatal', 'critical', 'utility']);
 
     toggleSelectedOverviewOutcomeKind('Kill');
     assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['main', 'critical', 'utility']);
@@ -380,11 +380,11 @@ test('overview outcomes toolbar control renders shared labels and toggles select
     );
     assert.equal(toolbar.children[1].children.every((button) => button.classList.contains('is-active')), true);
 
-    toolbar.children[1].children[2].dispatch('click');
+    toolbar.children[1].children[0].dispatch('click');
 
     assert.equal(refreshCount, 1);
     assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'doomed', 'critical', 'limb', 'utility']);
-    assert.equal(toolbar.children[1].children[2].classList.contains('is-active'), false);
+    assert.equal(toolbar.children[1].children[0].classList.contains('is-active'), false);
   } finally {
     globalThis.document = previousDocument;
     calculatorState.overviewOutcomeKinds = previousOutcomeKinds;

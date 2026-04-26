@@ -29,7 +29,7 @@ import {
 } from './recommendations.js';
 import {
   getZoneOutcomeLabel,
-  OUTCOME_PRIORITY
+  COMPARE_OUTCOME_GROUP_ORDER
 } from './outcome-kinds.js';
 import {
   getNextSortState,
@@ -58,8 +58,8 @@ export const MAX_RECOMMENDATION_SHOTS = 10;
 export const RECOMMENDATION_MAX_SHOTS_ANY = 'any';
 export const DEFAULT_RECOMMENDATION_SORT_MODE = 'default';
 export const STRICT_MARGIN_RECOMMENDATION_SORT_MODE = 'strict-margin';
-const OVERVIEW_OUTCOME_KINDS = Object.entries(OUTCOME_PRIORITY)
-  .filter(([outcomeKind]) => outcomeKind !== 'none')
+const OVERVIEW_OUTCOME_KINDS = Object.entries(COMPARE_OUTCOME_GROUP_ORDER)
+  .filter(([outcomeKind]) => outcomeKind !== 'oneSided' && outcomeKind !== 'none')
   .sort(([, leftPriority], [, rightPriority]) => leftPriority - rightPriority)
   .map(([outcomeKind]) => outcomeKind);
 const OVERVIEW_OUTCOME_KIND_LOOKUP = new Map(

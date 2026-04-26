@@ -674,7 +674,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   assert.equal(firstParams.get('csk'), 'health');
   assert.equal(firstParams.get('csd'), 'desc');
   assert.equal(firstParams.get('csg'), 'outcome');
-  assert.equal(firstParams.get('coo'), JSON.stringify(['fatal', 'main', 'utility']));
+  assert.equal(firstParams.get('coo'), JSON.stringify(['main', 'fatal', 'utility']));
   assert.equal(firstParams.get('esk'), 'AV');
   assert.equal(firstParams.get('esd'), 'desc');
 
@@ -863,15 +863,15 @@ test('encodeUrlState encodes non-default overview outcome kinds', { concurrency:
 
   const params = encodeUrlState({ activeTab: 'calculator' });
 
-  assert.equal(params.get('coo'), JSON.stringify(['fatal', 'main', 'utility']));
+  assert.equal(params.get('coo'), JSON.stringify(['main', 'fatal', 'utility']));
 }));
 
-test('hydrateUrlState restores overview outcome kinds in shared priority order', { concurrency: false }, () => withStateFixture(() => {
+test('hydrateUrlState restores overview outcome kinds in compare outcome order', { concurrency: false }, () => withStateFixture(() => {
   hydrateUrlState(new URLSearchParams({
     coo: JSON.stringify(['Part', 'fatal', 'Main'])
   }));
 
-  assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['fatal', 'main', 'utility']);
+  assert.deepEqual(getSelectedOverviewOutcomeKinds(), ['main', 'fatal', 'utility']);
 }));
 
 test('hydrateUrlState with missing overview outcome kinds param uses defaults', { concurrency: false }, () => withStateFixture(() => {
