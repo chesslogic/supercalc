@@ -65,10 +65,52 @@ function isFiniteMetricValue(value) {
   return Number.isFinite(value);
 }
 
-function buildDiffMetric({ slotA, slotB, valueA, valueB }) {
+function createUnavailableDiffMetric(valueA, valueB) {
+  return {
+    kind: 'unavailable',
+    winner: null,
+    valueA,
+    valueB,
+    displayValue: null,
+    sortValue: null,
+    absoluteValue: null,
+    absoluteSortValue: null,
+    percentValue: null,
+    percentSortValue: null
+  };
+}
+
+function calculateStandardPercentDiff({ valueA, absoluteValue }) {
+  return valueA > 0 ? (absoluteValue / valueA) * 100 : null;
+}
+
+function calculateMarginPercentDiff({ valueA, valueB }) {
+  const fitRatioA = 1 + valueA;
+  const fitRatioB = 1 + valueB;
+  if (fitRatioA <= 0 || fitRatioB <= 0) {
+    return null;
+  }
+
+  return ((fitRatioB / fitRatioA) - 1) * 100;
+}
+
+function buildDiffMetric({
+  slotA,
+  slotB,
+  valueA,
+  valueB,
+  allowOneSided = true,
+  percentValueCalculator = calculateStandardPercentDiff
+}) {
   if (isFiniteMetricValue(valueA) && isFiniteMetricValue(valueB)) {
     const absoluteValue = valueB - valueA;
-    const percentValue = valueA > 0 ? (absoluteValue / valueA) * 100 : null;
+    const percentValue = percentValueCalculator({
+      slotA,
+      slotB,
+      valueA,
+      valueB,
+      absoluteValue
+    });
     return {
       kind: 'numeric',
       winner: absoluteValue < 0 ? 'B' : absoluteValue > 0 ? 'A' : null,
@@ -81,6 +123,10 @@ function buildDiffMetric({ slotA, slotB, valueA, valueB }) {
       percentValue,
       percentSortValue: percentValue
     };
+  }
+
+  if (!allowOneSided) {
+    return createUnavailableDiffMetric(valueA, valueB);
   }
 
   const slotABlocked = slotA?.selectedAttackCount > 0 && !slotA?.damagesZone;
@@ -116,18 +162,7 @@ function buildDiffMetric({ slotA, slotB, valueA, valueB }) {
     };
   }
 
-    return {
-      kind: 'unavailable',
-      winner: null,
-      valueA,
-      valueB,
-      displayValue: null,
-      sortValue: null,
-      absoluteValue: null,
-      absoluteSortValue: null,
-      percentValue: null,
-      percentSortValue: null
-  };
+  return createUnavailableDiffMetric(valueA, valueB);
 }
 
 export function getDiffSortValue(diffMetric, diffDisplayMode = 'absolute') {
@@ -381,7 +416,7 @@ function hasOneSidedDiff(metrics) {
 }
 
 function isDiffSortKey(sortKey) {
-  return sortKey === 'shotsDiff' || sortKey === 'ttkDiff';
+  return sortKey === 'shotsDiff' || sortKey === 'marginDiff' || sortKey === 'ttkDiff';
 }
 
 function getOneSidedDiffMetric(row, sortKey) {
@@ -570,6 +605,14 @@ export function buildZoneComparisonMetrics({
       A: slotA,
       B: slotB
     },
+    diffMargin: buildDiffMetric({
+      slotA,
+      slotB,
+      valueA: slotA.marginSortRatio,
+      valueB: slotB.marginSortRatio,
+      allowOneSided: false,
+      percentValueCalculator: calculateMarginPercentDiff
+    }),
     diffShots: buildDiffMetric({
       slotA,
       slotB,
@@ -825,6 +868,12 @@ function getOutcomeGroupKey(row, groupingSlot, mode, sortKey, groupMode) {
   return String(primaryGroup);
 }
 
+function getMarginDiffSortValue(diffMetric, diffDisplayMode = 'absolute') {
+  return diffMetric?.kind === 'numeric'
+    ? getDiffSortValue(diffMetric, diffDisplayMode)
+    : null;
+}
+
 export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
   switch (sortKey) {
     case 'faction':
@@ -875,6 +924,8 @@ export function getZoneSortValue(row, sortKey, diffDisplayMode = 'absolute') {
       return row.metrics?.bySlot?.A?.marginSortRatio ?? null;
     case 'marginB':
       return row.metrics?.bySlot?.B?.marginSortRatio ?? null;
+    case 'marginDiff':
+      return getMarginDiffSortValue(row.metrics?.diffMargin, diffDisplayMode);
     case 'ttkDiff':
       return getDiffSortValue(row.metrics?.diffTtkSeconds, diffDisplayMode);
     default:

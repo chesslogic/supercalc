@@ -90,6 +90,19 @@ function createMarginValueNode(slotMetrics) {
   return marginValue;
 }
 
+function formatMarginPointDiff(value) {
+  const roundedPoints = Math.round(value * 100);
+  if (roundedPoints > 0) {
+    return `+${roundedPoints} pts`;
+  }
+
+  if (roundedPoints < 0) {
+    return `${roundedPoints} pts`;
+  }
+
+  return '0 pts';
+}
+
 function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute') {
   const diffValue = createElement('span');
   diffValue.className = 'calc-derived-value calc-diff-value';
@@ -102,6 +115,12 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
   }
 
   if (displayMetric.kind === 'one-sided') {
+    if (valueType === 'margin') {
+      diffValue.textContent = '-';
+      diffValue.classList.add('muted');
+      return diffValue;
+    }
+
     diffValue.classList.add('calc-diff-special');
     diffValue.classList.add(displayMetric.winner === 'B' ? 'calc-diff-better' : 'calc-diff-worse');
     diffValue.textContent = `${displayMetric.winner} Only`;
@@ -109,9 +128,12 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
   }
 
   const value = displayMetric.value;
-  if (value < 0) {
+  const comparisonValue = valueType === 'margin' && diffDisplayMode !== 'percent'
+    ? Math.round(value * 100)
+    : value;
+  if (comparisonValue < 0) {
     diffValue.classList.add('calc-diff-better');
-  } else if (value > 0) {
+  } else if (comparisonValue > 0) {
     diffValue.classList.add('calc-diff-worse');
   } else {
     diffValue.classList.add('calc-diff-neutral');
@@ -119,6 +141,11 @@ function createDiffValueNode(diffMetric, valueType, diffDisplayMode = 'absolute'
 
   if (diffDisplayMode === 'percent') {
     diffValue.textContent = formatPercentDiff(value);
+    return diffValue;
+  }
+
+  if (valueType === 'margin') {
+    diffValue.textContent = formatMarginPointDiff(value);
     return diffValue;
   }
 

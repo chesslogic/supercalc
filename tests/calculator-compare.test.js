@@ -51,6 +51,7 @@ function makeSortRow(zoneIndex, zoneName, {
   ttkB = null,
   shotsB = null,
   marginB = null,
+  diffMargin = null,
   diffTtk = null,
   diffShots = null
 } = {}) {
@@ -76,6 +77,7 @@ function makeSortRow(zoneIndex, zoneName, {
           marginSortRatio: marginB
       }
       },
+      diffMargin: makeDiffMetric(diffMargin),
       diffTtkSeconds: makeDiffMetric(diffTtk),
       diffShots: makeDiffMetric(diffShots)
     }
@@ -239,6 +241,10 @@ test('buildZoneComparisonMetrics computes one-shot and multi-shot margin headroo
   assert.equal(metrics.bySlot.B.marginPercent, null);
   assert.equal(metrics.bySlot.B.displayMarginPercent, 33);
   assert.ok(Math.abs(metrics.bySlot.B.marginSortRatio - (1 / 3)) < 1e-9);
+
+  assert.equal(metrics.diffMargin.kind, 'numeric');
+  assert.ok(Math.abs(metrics.diffMargin.absoluteValue - ((1 / 3) - 0.05)) < 1e-9);
+  assert.ok(Math.abs(metrics.diffMargin.percentValue - ((((1 + (1 / 3)) / (1 + 0.05)) - 1) * 100)) < 1e-9);
 });
 
 test('buildZoneComparisonMetrics uses main-route health for displayed margin headroom', () => {
@@ -262,6 +268,38 @@ test('buildZoneComparisonMetrics uses main-route health for displayed margin hea
   assert.equal(metrics.bySlot.A.shotsToKill, 2);
   assert.equal(metrics.bySlot.A.displayMarginPercent, 33);
   assert.ok(Math.abs(metrics.bySlot.A.marginSortRatio - (1 / 3)) < 1e-9);
+});
+
+test('buildZoneComparisonMetrics keeps percent margin diff defined when A margin is zero', () => {
+  const metrics = buildZoneComparisonMetrics({
+    zone: {
+      health: 100,
+      Con: 0,
+      AV: 1,
+      'Dur%': 0,
+      'ToMain%': 0,
+      ExTarget: 'Part',
+      ExMult: 1,
+      IsFatal: true
+    },
+    enemyMainHealth: 1000,
+    weaponA: { rpm: 60 },
+    weaponB: { rpm: 60 },
+    selectedAttacksA: [makeAttackRow('A', 100)],
+    selectedAttacksB: [makeAttackRow('B', 150)]
+  });
+
+  assert.equal(metrics.bySlot.A.marginPercent, 0);
+  assert.equal(metrics.bySlot.A.marginSortRatio, 0);
+  assert.equal(metrics.bySlot.B.marginPercent, 50);
+  assert.equal(metrics.bySlot.B.marginSortRatio, 0.5);
+  assert.equal(metrics.diffMargin.kind, 'numeric');
+  assert.equal(metrics.diffMargin.absoluteValue, 0.5);
+  assert.equal(metrics.diffMargin.percentValue, 50);
+
+  const displayMetric = getDiffDisplayMetric(metrics.diffMargin, 'percent');
+  assert.equal(displayMetric.kind, 'numeric');
+  assert.equal(displayMetric.value, 50);
 });
 
 test('buildZoneComparisonMetrics keeps beam tick counts and suppresses beam margin headroom', () => {
@@ -443,6 +481,9 @@ test('buildZoneComparisonMetrics marks one-sided damage wins as infinite diff se
   assert.equal(metrics.diffTtkSeconds.winner, 'B');
   assert.equal(metrics.diffTtkSeconds.displayValue, 2);
   assert.equal(metrics.diffTtkSeconds.percentSortValue, Number.NEGATIVE_INFINITY);
+  assert.equal(metrics.diffMargin.kind, 'unavailable');
+  assert.equal(metrics.diffMargin.sortValue, null);
+  assert.equal(metrics.diffMargin.percentSortValue, null);
 });
 
 test('buildFocusedZoneComparisonRows evaluates each row as its own direct-hit scenario', () => {
@@ -708,6 +749,61 @@ test('sortEnemyZoneRows sorts diff columns numerically and keeps unavailable row
   assert.deepEqual(
     descending.map((row) => row.zone.zone_name),
     ['slower', 'faster', 'unavailable']
+  );
+});
+
+test('sortEnemyZoneRows honors diff display mode for margin diff sorting', () => {
+  const rows = [
+    makeSortRow(0, 'higher-fit-ratio-change', {
+      diffMargin: {
+        kind: 'numeric',
+        winner: 'A',
+        sortValue: 0.2,
+        absoluteValue: 0.2,
+        absoluteSortValue: 0.2,
+        percentValue: 20,
+        percentSortValue: 20,
+        displayValue: null
+      }
+    }),
+    makeSortRow(1, 'higher-point-delta', {
+      diffMargin: {
+        kind: 'numeric',
+        winner: 'A',
+        sortValue: 0.3,
+        absoluteValue: 0.3,
+        absoluteSortValue: 0.3,
+        percentValue: 15,
+        percentSortValue: 15,
+        displayValue: null
+      }
+    })
+  ];
+
+  const absoluteSorted = sortEnemyZoneRows(rows, {
+    mode: 'compare',
+    sortKey: 'marginDiff',
+    sortDir: 'asc',
+    groupMode: 'none',
+    diffDisplayMode: 'absolute',
+    pinMain: false
+  });
+  assert.deepEqual(
+    absoluteSorted.map((row) => row.zone.zone_name),
+    ['higher-fit-ratio-change', 'higher-point-delta']
+  );
+
+  const percentSorted = sortEnemyZoneRows(rows, {
+    mode: 'compare',
+    sortKey: 'marginDiff',
+    sortDir: 'asc',
+    groupMode: 'none',
+    diffDisplayMode: 'percent',
+    pinMain: false
+  });
+  assert.deepEqual(
+    percentSorted.map((row) => row.zone.zone_name),
+    ['higher-point-delta', 'higher-fit-ratio-change']
   );
 });
 

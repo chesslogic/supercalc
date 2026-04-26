@@ -507,6 +507,10 @@ export function buildFamilyMainPathMetrics(repMetrics, family, repZone = null) {
 
   return {
     bySlot: { A: familySlotA, B: familySlotB },
+    diffMargin: computeFamilyDiffMetric(
+      familySlotA?.marginSortRatio ?? null,
+      familySlotB?.marginSortRatio ?? null
+    ),
     diffShots: computeFamilyDiffMetric(
       familySlotA?.shotsToKill ?? null,
       familySlotB?.shotsToKill ?? null

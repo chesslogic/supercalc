@@ -67,7 +67,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     analysisColumns.map((column) => column.key),
-    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'marginDiff', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const statsColumns = getEnemyColumnsForState({
@@ -85,7 +85,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     overviewAnalysisColumns.map((column) => column.key),
-    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'marginDiff', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const scopedOverviewColumns = getOverviewColumnsForState({
@@ -94,7 +94,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     scopedOverviewColumns.map((column) => column.key),
-    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'marginDiff', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 });
 
@@ -148,6 +148,42 @@ test('margin metric cells render one-shot and multi-shot headroom titles', () =>
     });
     assert.equal(unavailableCell.textContent, '-');
     assert.match(unavailableCell.title, /margin unavailable/i);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+});
+
+test('margin diff metric cells show point deltas in absolute mode and fit-ratio changes in percent mode', () => {
+  const originalDocument = globalThis.document;
+
+  try {
+    globalThis.document = new TestDocument();
+
+    const metrics = {
+      diffMargin: {
+        kind: 'numeric',
+        winner: 'A',
+        valueA: 1,
+        valueB: 1.3,
+        displayValue: null,
+        sortValue: 0.3,
+        absoluteValue: 0.3,
+        absoluteSortValue: 0.3,
+        percentValue: 15,
+        percentSortValue: 15
+      }
+    };
+
+    const absoluteCell = buildMetricColumnCell('marginDiff', metrics);
+    assert.equal(absoluteCell.textContent, '+30 pts');
+    assert.match(absoluteCell.title, /percentage-point delta/i);
+
+    const percentCell = buildMetricColumnCell('marginDiff', metrics, {
+      diffDisplayMode: 'percent'
+    });
+    assert.equal(percentCell.textContent, '+15%');
+    assert.match(percentCell.title, /fit ratios/i);
+    assert.match(percentCell.title, /A Margin = 0% still works/i);
   } finally {
     globalThis.document = originalDocument;
   }

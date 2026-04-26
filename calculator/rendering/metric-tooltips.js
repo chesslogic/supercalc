@@ -28,6 +28,18 @@ function joinTooltipLines(...lines) {
   return lines.filter(Boolean).join('\n') || null;
 }
 
+function getMarginDiffUnavailableTitle(diffDisplayMode) {
+  return diffDisplayMode === 'percent'
+    ? 'Percent Margin Δ unavailable when either side is unavailable.'
+    : 'Margin Δ unavailable when either side is unavailable.';
+}
+
+function getMarginDiffTitle(diffDisplayMode) {
+  return diffDisplayMode === 'percent'
+    ? 'Percent Margin Δ = (((1 + marginRatioB) / (1 + marginRatioA)) - 1) × 100. This compares total fit ratios (1 + margin ratio), not percent-of-percent, so A Margin = 0% still works.'
+    : 'Margin Δ = Margin B - Margin A, shown as a percentage-point delta (pts).';
+}
+
 function buildBeamShotsTitle(slotMetrics) {
   const beamTicksPerSecond = getBeamTicksPerSecond(slotMetrics);
   const cadenceText = beamTicksPerSecond === null
@@ -74,7 +86,11 @@ export function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'abs
   }
 
   const displayMetric = getDiffDisplayMetric(diffMetric, diffDisplayMode);
-  if (displayMetric.kind === 'unavailable') {
+  if (displayMetric.kind === 'unavailable' || (valueType === 'margin' && displayMetric.kind === 'one-sided')) {
+    if (valueType === 'margin') {
+      return getMarginDiffUnavailableTitle(diffDisplayMode);
+    }
+
     if (diffDisplayMode === 'percent') {
       return 'Percent diff unavailable when either side is unavailable or A has no positive baseline';
     }
@@ -95,6 +111,10 @@ export function getDiffMetricTitle(diffMetric, valueType, diffDisplayMode = 'abs
     return diffDisplayMode === 'percent'
       ? 'Percent diff = ((B - A) / A) × 100. Continuous beam rows use beam ticks, not trigger pulls.'
       : 'Diff = B - A. Continuous beam rows use beam ticks, not trigger pulls.';
+  }
+
+  if (valueType === 'margin') {
+    return getMarginDiffTitle(diffDisplayMode);
   }
 
   return diffDisplayMode === 'percent'
