@@ -5,7 +5,9 @@
 //   1. Use explicit enemy.zoneRelationGroups when present.
 //   2. Fall back to purely statistical clustering for remaining zones using
 //      exact raw combat signature equivalence classes.
-//   3. Keep stable output order by representative zone index.
+//   3. For multi-member auto-groups, derive a shared non-directional label
+//      from member zone names when a clear common term exists.
+//   4. Keep stable output order by representative zone index.
 import { normalizeText } from './domain-utils.js';
 
 // Zone fields that determine raw combat behaviour (weapon penetration, damage,
@@ -38,6 +40,69 @@ function formatZoneDisplayName(zone, idx) {
 }
 
 const AUTO_MULTI_MEMBER_FAMILY_LABEL = 'Exact-stat group';
+const AUTO_LABEL_DIRECTIONAL_TOKENS = new Set([
+  'left', 'right', 'l', 'r',
+  'front', 'rear', 'back',
+  'upper', 'lower',
+  'top', 'bottom',
+  'mid', 'middle',
+  'inner', 'outer'
+]);
+const AUTO_LABEL_NONSPECIFIC_TOKENS = new Set([
+  'armor', 'armour',
+  'flesh',
+  'hitzone', 'zone',
+  'part',
+  'main',
+  'weak', 'weakpoint', 'weakspot'
+]);
+
+function tokenizeZoneName(zoneName) {
+  return normalizeText(zoneName).match(/[a-z0-9]+/g) ?? [];
+}
+
+function buildSharedAutoFamilyLabel(members) {
+  if (members.length <= 1) {
+    return null;
+  }
+
+  const sharedTokens = new Set();
+  let representativeTokens = [];
+
+  members.forEach((member, memberIndex) => {
+    const memberTokens = tokenizeZoneName(member?.zone?.zone_name)
+      .filter((token) => !AUTO_LABEL_DIRECTIONAL_TOKENS.has(token));
+    const uniqueTokens = [...new Set(memberTokens)];
+
+    if (memberIndex === 0) {
+      representativeTokens = uniqueTokens;
+      uniqueTokens.forEach((token) => sharedTokens.add(token));
+      return;
+    }
+
+    const memberTokenSet = new Set(uniqueTokens);
+    for (const token of [...sharedTokens]) {
+      if (!memberTokenSet.has(token)) {
+        sharedTokens.delete(token);
+      }
+    }
+  });
+
+  if (sharedTokens.size === 0) {
+    return null;
+  }
+
+  const orderedSharedTokens = representativeTokens.filter((token) => sharedTokens.has(token));
+  const firstMeaningfulIndex = orderedSharedTokens.findIndex(
+    (token) => !AUTO_LABEL_NONSPECIFIC_TOKENS.has(token)
+  );
+
+  if (firstMeaningfulIndex === -1) {
+    return null;
+  }
+
+  return orderedSharedTokens.slice(firstMeaningfulIndex).join(' ');
+}
 
 function buildAutoFamilyLabel(members) {
   if (members.length <= 1) {
@@ -45,7 +110,38 @@ function buildAutoFamilyLabel(members) {
     return formatZoneDisplayName(representative?.zone, representative?.idx);
   }
 
-  return AUTO_MULTI_MEMBER_FAMILY_LABEL;
+  return buildSharedAutoFamilyLabel(members) || AUTO_MULTI_MEMBER_FAMILY_LABEL;
+}
+
+function isHomogeneousZoneFamily(memberZones = []) {
+  return new Set(memberZones.map((zone) => getZoneCombatSignature(zone))).size <= 1;
+}
+
+function pickExplicitRepresentativeMember(group, memberEntriesInGroupOrder) {
+  if (memberEntriesInGroupOrder.length === 0) {
+    return null;
+  }
+
+  const memberEntryByZoneNameKey = new Map();
+  memberEntriesInGroupOrder.forEach((entry) => {
+    const zoneKey = normalizeText(entry?.zone?.zone_name);
+    if (zoneKey && !memberEntryByZoneNameKey.has(zoneKey)) {
+      memberEntryByZoneNameKey.set(zoneKey, entry);
+    }
+  });
+
+  const priorityTargetZoneNames = Array.isArray(group?.priorityTargetZoneNames)
+    ? group.priorityTargetZoneNames
+    : [];
+
+  for (const zoneName of priorityTargetZoneNames) {
+    const matchingEntry = memberEntryByZoneNameKey.get(normalizeText(zoneName));
+    if (matchingEntry) {
+      return matchingEntry;
+    }
+  }
+
+  return memberEntriesInGroupOrder[0];
 }
 
 /**
@@ -107,6 +203,7 @@ export function autoClusterZones(indexedZones) {
  *     summaryLabel: string,
  *     isExplicit: boolean,
  *     isSingleton: boolean,
+ *     isHomogeneous: boolean,
  *     groupId: string|null
  *   }>,
  *   zoneIndexToFamilyId: Map<number, string>
@@ -145,12 +242,17 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
     explicitGroups.forEach((group) => {
       const seen = new Set();
       const memberIndices = [];
+      const memberEntriesInGroupOrder = [];
 
       group.zoneNames.forEach((zoneName) => {
         const key = normalizeText(zoneName);
         const idx = zoneIndexByNameKey.get(key);
         if (idx !== undefined && !assignedZoneIndices.has(idx) && !seen.has(idx)) {
           seen.add(idx);
+          memberEntriesInGroupOrder.push({
+            idx,
+            zone: zoneByIndex.get(idx) ?? null
+          });
           memberIndices.push(idx);
         }
       });
@@ -166,10 +268,15 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
         zoneIndexToFamilyId.set(idx, familyId);
       });
 
-      const memberZones = memberIndices.map((idx) => zoneByIndex.get(idx) ?? null);
-      const representativeIndex = memberIndices[0];
-      const representativeZone = memberZones[0];
       const isSingleton = memberIndices.length === 1;
+      const memberZoneByIndex = new Map(memberEntriesInGroupOrder.map((entry) => [entry.idx, entry.zone]));
+      const memberZones = memberIndices.map((idx) => memberZoneByIndex.get(idx) ?? null);
+      const isHomogeneous = isHomogeneousZoneFamily(memberZones);
+      const representativeEntry = (!isSingleton && !isHomogeneous)
+        ? pickExplicitRepresentativeMember(group, memberEntriesInGroupOrder)
+        : (memberEntriesInGroupOrder.find((entry) => entry.idx === memberIndices[0]) || memberEntriesInGroupOrder[0] || null);
+      const representativeIndex = representativeEntry?.idx ?? memberIndices[0];
+      const representativeZone = representativeEntry?.zone ?? memberZones[0];
 
       families.push({
         familyId,
@@ -183,6 +290,7 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
           : `${group.label} (×${memberIndices.length})`,
         isExplicit: true,
         isSingleton,
+        isHomogeneous,
         groupId: group.id
       });
     });
@@ -222,12 +330,14 @@ export function buildEnemyZoneGroups(enemy, zoneRows = null) {
       summaryLabel,
       isExplicit: false,
       isSingleton,
+      isHomogeneous: true,
       groupId: null
     });
   }
 
-  // Sort by representative zone index for stable, index-preserving order.
-  families.sort((a, b) => a.representativeIndex - b.representativeIndex);
+  // Sort by the earliest member index so families stay anchored to the first
+  // displayed zone even when a later member is chosen as the representative.
+  families.sort((a, b) => a.memberIndices[0] - b.memberIndices[0]);
 
   return { families, zoneIndexToFamilyId };
 }

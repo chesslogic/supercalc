@@ -48,6 +48,48 @@ function makeEnemy({ zones = [], zoneRelationGroups = [], name = 'TestEnemy' } =
   return { name, zones, zoneRelationGroups };
 }
 
+function makeDevastatorLikeArmGroupSetup() {
+  const enemy = {
+    name: 'Devastator',
+    zones: [
+      makeZone({
+        zone_name: 'shoulderplate_left',
+        AV: 2,
+        health: 150,
+        'ToMain%': 0.25,
+        MainCap: true
+      }),
+      makeZone({
+        zone_name: 'left_arm',
+        AV: 1,
+        health: 260,
+        'ToMain%': 0.5,
+        MainCap: false
+      }),
+      makeZone({
+        zone_name: 'head',
+        AV: 1,
+        health: 110,
+        IsFatal: true
+      })
+    ],
+    zoneRelationGroups: [
+      {
+        id: 'left-arm',
+        label: 'Left arm',
+        zoneNames: ['shoulderplate_left', 'left_arm'],
+        mirrorGroupIds: [],
+        priorityTargetZoneNames: ['left_arm']
+      }
+    ]
+  };
+
+  return {
+    enemy,
+    sortedRows: enemy.zones.map((zone, zoneIndex) => makeRow(zone, zoneIndex))
+  };
+}
+
 /** Minimal sortedRow shape that renderGroupedEnemyRows expects. */
 function makeRow(zone, zoneIndex, overrides = {}) {
   return { zone, zoneIndex, metrics: null, groupStart: false, ...overrides };
@@ -183,7 +225,7 @@ test('summary row has data-family-id attribute', () => {
   assert.ok(summaryRow.dataset.familyId, 'summary row must have data-family-id');
 });
 
-test('summary row is collapsed by default (data-group-collapsed="true")', () => {
+test('exact-stat summary row is collapsed by default (data-group-collapsed="true")', () => {
   resetState();
   const zoneL = makeZone({ zone_name: 'left_arm', AV: 1, health: 300 });
   const zoneR = makeZone({ zone_name: 'right_arm', AV: 1, health: 300 });
@@ -209,8 +251,8 @@ test('summary row zone_name cell shows summaryLabel', () => {
   // The zone_name td is the first cell (no target columns in this test).
   const nameCell = getDirectChildren(summaryRow)[0];
   assert.ok(
-    nameCell.textContent.includes('Exact-stat group'),
-    `Expected summaryLabel to include "Exact-stat group", got: "${nameCell.textContent}"`
+    nameCell.textContent.includes('pauldron'),
+    `Expected summaryLabel to include "pauldron", got: "${nameCell.textContent}"`
   );
   assert.ok(
     nameCell.textContent.includes('×2'),
@@ -250,7 +292,7 @@ test('member rows have zone-group-member class', () => {
   assert.equal(memberRows.length, 2);
 });
 
-test('member rows are hidden by default (display:none)', () => {
+test('exact-stat member rows are hidden by default (display:none)', () => {
   resetState();
   const zoneL = makeZone({ zone_name: 'left_arm', AV: 1, health: 300 });
   const zoneR = makeZone({ zone_name: 'right_arm', AV: 1, health: 300 });
@@ -545,6 +587,66 @@ test('explicit groups produce summary rows with the group label', () => {
   assert.ok(leftLegSummary.classList.contains('zone-group-summary'));
   const nameCell = getDirectChildren(leftLegSummary)[0];
   assert.ok(nameCell.textContent.includes('Left leg'), `Expected "Left leg" in "${nameCell.textContent}"`);
+});
+
+test('mixed explicit groups start expanded by default', () => {
+  resetState();
+  const { enemy, sortedRows } = makeDevastatorLikeArmGroupSetup();
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const rows = [...getDirectChildren(tbody)];
+  const summaryRow = rows.find((tr) => tr.classList.contains('zone-group-summary'));
+  const memberRows = rows.filter((tr) => tr.classList.contains('zone-group-member'));
+
+  assert.ok(summaryRow, 'expected a summary row');
+  assert.equal(summaryRow.dataset.groupCollapsed, 'false');
+  memberRows.forEach((tr) => {
+    assert.notEqual(tr.style.display, 'none', 'mixed explicit member rows should be visible by default');
+  });
+});
+
+test('mixed explicit summary rows use the priority target member for displayed stats', () => {
+  resetState();
+  const { enemy, sortedRows } = makeDevastatorLikeArmGroupSetup();
+
+  const tbody = globalThis.document.createElement('tbody');
+  const rowEntries = renderGroupedEnemyRows(tbody, sortedRows, enemy, {
+    columns: FULL_COLUMNS,
+    hasProjectileTargets: false,
+    hasExplosiveTargets: false
+  });
+
+  const summaryRow = [...getDirectChildren(tbody)].find((tr) => tr.classList.contains('zone-group-summary'));
+  const summaryEntry = rowEntries.find(({ tr }) => tr === summaryRow);
+  const cells = getDirectChildren(summaryRow);
+
+  assert.equal(cells[1].textContent.trim(), '1');
+  assert.equal(summaryEntry.zoneIndex, 1);
+  assert.equal(summaryEntry.zone.zone_name, 'left_arm');
+});
+
+test('manual collapse of a mixed explicit group persists across re-render', () => {
+  resetState();
+  const { enemy, sortedRows } = makeDevastatorLikeArmGroupSetup();
+
+  const tbodyA = globalThis.document.createElement('tbody');
+  renderGroupedEnemyRows(tbodyA, sortedRows, enemy, { columns: MINIMAL_COLUMNS });
+  const summaryRowA = [...getDirectChildren(tbodyA)].find((tr) => tr.classList.contains('zone-group-summary'));
+  const toggleBtn = collectElements(getDirectChildren(summaryRowA)[0], (el) => el.tagName === 'BUTTON')[0];
+
+  toggleBtn.dispatch('click');
+
+  const tbodyB = globalThis.document.createElement('tbody');
+  renderGroupedEnemyRows(tbodyB, sortedRows, enemy, { columns: MINIMAL_COLUMNS });
+
+  const summaryRowB = [...getDirectChildren(tbodyB)].find((tr) => tr.classList.contains('zone-group-summary'));
+  const memberRowsB = [...getDirectChildren(tbodyB)].filter((tr) => tr.classList.contains('zone-group-member'));
+
+  assert.equal(summaryRowB.dataset.groupCollapsed, 'true');
+  memberRowsB.forEach((tr) => {
+    assert.equal(tr.style.display, 'none', 'manually collapsed mixed groups should stay collapsed');
+  });
 });
 
 test('explicit singleton groups render as plain rows', () => {
@@ -1361,7 +1463,7 @@ test('same-signature zones (arm_l / arm_r) produce a grouped summary row', () =>
   assert.equal(plainRows.length, 0, 'no plain rows expected when both zones belong to a group');
 });
 
-test('grouped summary row label uses a neutral exact-stat label for auto families', () => {
+test('grouped summary row label derives a shared term for auto families', () => {
   resetState();
   const base = {
     AV: 1, 'Dur%': 0, health: 200, Con: 0,
@@ -1377,12 +1479,41 @@ test('grouped summary row label uses a neutral exact-stat label for auto familie
   const summaryRow = [...getDirectChildren(tbody)].find((tr) => tr.classList.contains('zone-group-summary'));
   const nameCell = getDirectChildren(summaryRow)[0];
   assert.ok(
-    nameCell.textContent.includes('Exact-stat group'),
-    `Expected name cell to include "Exact-stat group", got: "${nameCell.textContent}"`
+    nameCell.textContent.includes('arm'),
+    `Expected name cell to include "arm", got: "${nameCell.textContent}"`
   );
   assert.ok(
     !nameCell.textContent.includes('arm l'),
     `Expected name cell to omit representative name "arm l", got: "${nameCell.textContent}"`
+  );
+  assert.ok(
+    !nameCell.textContent.includes('Exact-stat group'),
+    `Expected name cell to avoid the generic fallback label, got: "${nameCell.textContent}"`
+  );
+  assert.ok(
+    nameCell.textContent.includes('×2'),
+    `Expected summaryLabel to include "×2", got: "${nameCell.textContent}"`
+  );
+});
+
+test('grouped summary row falls back to the generic exact-stat label for unrelated names', () => {
+  resetState();
+  const base = {
+    AV: 1, 'Dur%': 0, health: 200, Con: 0,
+    ExMult: null, ExTarget: 'Main', 'ToMain%': 0.5, MainCap: 0, IsFatal: false
+  };
+  const zoneA = { zone_name: 'left_arm', ...base };
+  const zoneB = { zone_name: 'rear_exhaust', ...base };
+  const enemy = makeEnemy({ zones: [zoneA, zoneB] });
+  const sortedRows = [makeRow(zoneA, 0), makeRow(zoneB, 1)];
+
+  const { tbody } = renderIntoTbody(sortedRows, enemy);
+
+  const summaryRow = [...getDirectChildren(tbody)].find((tr) => tr.classList.contains('zone-group-summary'));
+  const nameCell = getDirectChildren(summaryRow)[0];
+  assert.ok(
+    nameCell.textContent.includes('Exact-stat group'),
+    `Expected name cell to include "Exact-stat group", got: "${nameCell.textContent}"`
   );
   assert.ok(
     nameCell.textContent.includes('×2'),
@@ -1578,7 +1709,7 @@ test('sortEnemyZoneRows + renderGroupedEnemyRows: exact-signature leg variants c
   assert.equal(summaryRows.length, 1, 'exact-signature leg variants must collapse into one summary row');
   assert.equal(memberRows.length, 4, 'all four exact-match legs should remain inspectable as members');
   const summaryText = getDirectChildren(summaryRows[0])[0].textContent;
-  assert.ok(summaryText.includes('Exact-stat group'));
+  assert.ok(summaryText.includes('leg'));
   assert.ok(summaryText.includes('×4'));
 });
 

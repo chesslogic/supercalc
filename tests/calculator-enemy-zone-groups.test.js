@@ -32,6 +32,42 @@ function makeEnemy({ zones = [], zoneRelationGroups = [] } = {}) {
   return { zones, zoneRelationGroups };
 }
 
+function makeDevastatorLikeArmGroupEnemy() {
+  return {
+    zones: [
+      makeZone({
+        zone_name: 'shoulderplate_left',
+        AV: 2,
+        health: 150,
+        'ToMain%': 0.25,
+        MainCap: true
+      }),
+      makeZone({
+        zone_name: 'left_arm',
+        AV: 1,
+        health: 260,
+        'ToMain%': 0.5,
+        MainCap: false
+      }),
+      makeZone({
+        zone_name: 'head',
+        AV: 1,
+        health: 110,
+        IsFatal: true
+      })
+    ],
+    zoneRelationGroups: [
+      {
+        id: 'left-arm',
+        label: 'Left arm',
+        zoneNames: ['shoulderplate_left', 'left_arm'],
+        mirrorGroupIds: [],
+        priorityTargetZoneNames: ['left_arm']
+      }
+    ]
+  };
+}
+
 // Focused regression fixture mirroring the current Bile Titan leg exact-stat classes.
 const BILE_TITAN_LEG_ARMOR_ZONE_NAMES = Object.freeze([
   'left_front_leg_armor',
@@ -228,6 +264,22 @@ test('auto-groups two zones with identical stats even when names differ', () => 
   assert.equal(family.summaryLabel, 'Exact-stat group (×2)');
 });
 
+test('auto-group label derives a shared non-directional term when names clearly match', () => {
+  const sharedStats = { AV: 1, 'Dur%': 0.5, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false };
+  const enemy = makeEnemy({
+    zones: [
+      { zone_name: 'front_left_leg', ...sharedStats },
+      { zone_name: 'back_right_leg', ...sharedStats },
+      { zone_name: 'front_right_leg', ...sharedStats }
+    ]
+  });
+  const { families } = buildEnemyZoneGroups(enemy);
+
+  assert.equal(families.length, 1);
+  assert.equal(families[0].label, 'leg');
+  assert.equal(families[0].summaryLabel, 'leg (×3)');
+});
+
 test('auto-groups all zones in the same exact combat-signature class even across unrelated names', () => {
   const sharedStats = { AV: 1, 'Dur%': 0.5, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false };
   const enemy = makeEnemy({
@@ -246,6 +298,21 @@ test('auto-groups all zones in the same exact combat-signature class even across
   assert.deepEqual(grouped.memberIndices, [0, 1, 2]);
   assert.equal(grouped.label, 'Exact-stat group');
   assert.equal(grouped.summaryLabel, 'Exact-stat group (×3)');
+});
+
+test('auto-group label falls back to the generic label when only a generic descriptor is shared', () => {
+  const sharedStats = { AV: 1, 'Dur%': 0.5, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 0.6, MainCap: 0, IsFatal: false };
+  const enemy = makeEnemy({
+    zones: [
+      { zone_name: 'left_head_armor', ...sharedStats },
+      { zone_name: 'right_leg_armor', ...sharedStats }
+    ]
+  });
+  const { families } = buildEnemyZoneGroups(enemy);
+
+  assert.equal(families.length, 1);
+  assert.equal(families[0].label, 'Exact-stat group');
+  assert.equal(families[0].summaryLabel, 'Exact-stat group (×2)');
 });
 
 test('does NOT auto-group zones with different stats even when names are similar', () => {
@@ -333,6 +400,25 @@ test('explicit groups cover some zones; remaining ungrouped zones go through aut
   assert.equal(zoneIndexToFamilyId.size, 4);
 });
 
+test('mixed explicit groups prefer a priority target representative member', () => {
+  const { families } = buildEnemyZoneGroups(makeDevastatorLikeArmGroupEnemy());
+
+  const leftArm = families.find((family) => family.groupId === 'left-arm');
+  assert.ok(leftArm, 'expected left-arm family');
+  assert.equal(leftArm.isExplicit, true);
+  assert.equal(leftArm.isSingleton, false);
+  assert.equal(leftArm.isHomogeneous, false);
+  assert.deepEqual(leftArm.memberIndices, [0, 1]);
+  assert.equal(leftArm.representativeIndex, 1);
+  assert.equal(leftArm.representativeZone.zone_name, 'left_arm');
+});
+
+test('mixed explicit groups stay anchored to their first member for family ordering', () => {
+  const { families } = buildEnemyZoneGroups(makeDevastatorLikeArmGroupEnemy());
+  assert.equal(families[0].groupId, 'left-arm');
+  assert.equal(families[1].memberIndices[0], 2);
+});
+
 test('auto-groups remaining ungrouped zones after explicit groups by signature only', () => {
   const base = { AV: 2, 'Dur%': 0.35, health: 200, Con: 0, ExMult: null, ExTarget: 'Part', 'ToMain%': 0.3, MainCap: 0, IsFatal: false };
   const enemy = {
@@ -360,7 +446,7 @@ test('auto-groups remaining ungrouped zones after explicit groups by signature o
 
 // ─── buildEnemyZoneGroups — stable ordering ────────────────────────────────────
 
-test('families are sorted by representative zone index', () => {
+test('auto families are sorted by representative zone index', () => {
   const base = { AV: 0, 'Dur%': 0, health: 200, Con: 0, ExMult: null, ExTarget: 'Main', 'ToMain%': 1, MainCap: 1, IsFatal: false };
   const enemy = makeEnemy({
     zones: [
@@ -420,6 +506,7 @@ test('every family carries the expected metadata shape', () => {
     assert.ok(typeof fam.summaryLabel === 'string' && fam.summaryLabel.length > 0, 'summaryLabel must be non-empty string');
     assert.ok(typeof fam.isExplicit === 'boolean', 'isExplicit must be boolean');
     assert.ok(typeof fam.isSingleton === 'boolean', 'isSingleton must be boolean');
+    assert.ok(typeof fam.isHomogeneous === 'boolean', 'isHomogeneous must be boolean');
     assert.ok(fam.groupId === null || typeof fam.groupId === 'string', 'groupId must be string or null');
   }
 });

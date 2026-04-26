@@ -1,9 +1,9 @@
 // calculator/rendering/grouped-enemy-rows.js
 // Renders zone rows for the focused enemy table with grouping/expand-collapse UI.
 //
-// Multi-member families are rendered as a collapsed summary row by default.
-// Clicking the toggle expands the family to show exact member rows.
-// Expanded state is persisted in a module-level Set so it survives re-renders.
+// Exact-stat multi-member families are rendered as a collapsed summary row by
+// default. Mixed-signature families start expanded so differing members are
+// visible immediately. User toggle choices are persisted across re-renders.
 //
 // When a multi-member family's zones transfer damage to Main (ToMain% > 0), a
 // secondary "Main via family" path row is inserted immediately after the summary
@@ -24,22 +24,26 @@ import { appendEnemyExplosionCell, appendEnemyProjectileCell } from './enemy-tar
 
 // ─── Expand/collapse persistence ─────────────────────────────────────────────
 
-const expandedFamilyIds = new Set();
+const expandedFamilyOverrides = new Map();
+const defaultExpandedFamilyStates = new Map();
 
 export function isGroupExpanded(familyId) {
-  return expandedFamilyIds.has(familyId);
+  if (expandedFamilyOverrides.has(familyId)) {
+    return expandedFamilyOverrides.get(familyId) === true;
+  }
+  return defaultExpandedFamilyStates.get(familyId) === true;
 }
 
 export function setGroupExpanded(familyId, expanded) {
-  if (expanded) {
-    expandedFamilyIds.add(familyId);
-  } else {
-    expandedFamilyIds.delete(familyId);
+  if (!familyId) {
+    return;
   }
+  expandedFamilyOverrides.set(familyId, expanded === true);
 }
 
 export function clearAllGroupExpansions() {
-  expandedFamilyIds.clear();
+  expandedFamilyOverrides.clear();
+  defaultExpandedFamilyStates.clear();
 }
 
 // ─── Row builders ─────────────────────────────────────────────────────────────
@@ -97,8 +101,24 @@ function isHomogeneousFamily(family) {
   if (!family || family.isSingleton) {
     return false;
   }
+  if (typeof family.isHomogeneous === 'boolean') {
+    return family.isHomogeneous;
+  }
   const signatures = new Set(family.memberZones.map((zone) => getZoneCombatSignature(zone)));
   return signatures.size === 1;
+}
+
+function shouldFamilyStartExpanded(family) {
+  return Boolean(family && !family.isSingleton && !isHomogeneousFamily(family));
+}
+
+function resolveGroupExpandedState(family) {
+  if (!family?.familyId) {
+    return false;
+  }
+
+  defaultExpandedFamilyStates.set(family.familyId, shouldFamilyStartExpanded(family));
+  return isGroupExpanded(family.familyId);
 }
 
 function getSelectedFamilyExplosiveIndices(family) {
@@ -591,8 +611,8 @@ function wireGroupToggle(summaryTr, familyId, memberTrs) {
 /**
  * Renders all zone rows into `tbody` with grouping applied.
  *
- * Multi-member families are collapsed by default; expanded when the toggle
- * is clicked (or when the family was previously expanded in this session).
+ * Exact-stat multi-member families are collapsed by default. Mixed-signature
+ * families start expanded, and any user toggle choice is preserved in-session.
  *
  * @returns {Array<{ tr: Element, zone: object, zoneIndex: number }>}
  *   Row entries suitable for `wireZoneRelationHighlights`.
@@ -646,7 +666,7 @@ export function renderGroupedEnemyRows(tbody, sortedRows, enemy, {
     if (renderedFamilies.has(fid)) continue;
     renderedFamilies.add(fid);
 
-    const isExpanded = isGroupExpanded(fid);
+    const isExpanded = resolveGroupExpandedState(family);
     const memberRows = familyMemberRows.get(fid) || [];
 
     // Prefer the representative's row for summary metrics; fall back to first.
