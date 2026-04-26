@@ -45,6 +45,7 @@ export function buildUrlStateSnapshot({
     calculator: {
       mode: calculatorState.mode,
       compareView: calculatorState.compareView,
+      compareHeaderLayout: calculatorState.compareHeaderLayout,
       weaponSortMode: calculatorState.weaponSortMode,
       enemyDropdownSortMode: calculatorState.enemyDropdownSortMode,
       enemyDropdownSortDir: calculatorState.enemyDropdownSortDir,
@@ -93,6 +94,7 @@ export function encodeUrlState({
 
   setParam(params, URL_PARAM_KEYS.calculatorMode, calculator.mode, DEFAULT_CALCULATOR_URL_STATE.mode);
   setParam(params, URL_PARAM_KEYS.compareView, calculator.compareView, DEFAULT_CALCULATOR_URL_STATE.compareView);
+  setParam(params, URL_PARAM_KEYS.compareHeaderLayout, calculator.compareHeaderLayout, DEFAULT_CALCULATOR_URL_STATE.compareHeaderLayout);
   setParam(params, URL_PARAM_KEYS.weaponSortMode, calculator.weaponSortMode, DEFAULT_CALCULATOR_URL_STATE.weaponSortMode);
   setParam(params, URL_PARAM_KEYS.enemyDropdownSortMode, calculator.enemyDropdownSortMode, DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortMode);
   setParam(params, URL_PARAM_KEYS.enemyDropdownSortDir, calculator.enemyDropdownSortDir, DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortDir);

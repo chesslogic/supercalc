@@ -32,17 +32,18 @@ const {
   applyEnemyFilterState
 } = enemyFiltersModule;
 const {
-  calculatorState,
-  RECOMMENDATION_MAX_SHOTS_ANY,
-  DEFAULT_OVERVIEW_OUTCOME_KINDS,
-  getSelectedOverviewOutcomeKinds,
-  setAttackHitCounts,
-  setCalculatorMode,
-  setCalculatorStateChangeListener,
-  setCompareView,
-  setDiffDisplayMode,
-  setEnemyDropdownSortDir,
-  setEnemyDropdownSortMode,
+    calculatorState,
+    RECOMMENDATION_MAX_SHOTS_ANY,
+    DEFAULT_OVERVIEW_OUTCOME_KINDS,
+    getSelectedOverviewOutcomeKinds,
+    setAttackHitCounts,
+    setCalculatorMode,
+    setCalculatorStateChangeListener,
+    setCompareHeaderLayout,
+    setCompareView,
+    setDiffDisplayMode,
+    setEnemyDropdownSortDir,
+    setEnemyDropdownSortMode,
   setEnemySortState,
   setEnemyTableMode,
   setEngagementRangeMeters,
@@ -157,6 +158,7 @@ function snapshotCalculatorState() {
   return {
     mode: calculatorState.mode,
     compareView: calculatorState.compareView,
+    compareHeaderLayout: calculatorState.compareHeaderLayout,
     weaponSortMode: calculatorState.weaponSortMode,
     enemyDropdownSortMode: calculatorState.enemyDropdownSortMode,
     enemyDropdownSortDir: calculatorState.enemyDropdownSortDir,
@@ -195,6 +197,7 @@ function snapshotCalculatorState() {
 function restoreCalculatorState(snapshot) {
   calculatorState.mode = snapshot.mode;
   calculatorState.compareView = snapshot.compareView;
+  calculatorState.compareHeaderLayout = snapshot.compareHeaderLayout;
   calculatorState.weaponSortMode = snapshot.weaponSortMode;
   calculatorState.enemyDropdownSortMode = snapshot.enemyDropdownSortMode;
   calculatorState.enemyDropdownSortDir = snapshot.enemyDropdownSortDir;
@@ -305,6 +308,7 @@ test('hydrateUrlState accepts all valid tab ids', { concurrency: false }, () => 
 
 test('hydrateUrlState with empty search string restores defaults', { concurrency: false }, () => withStateFixture(() => {
   setCalculatorMode('single');
+  setCompareHeaderLayout('slot');
   setDiffDisplayMode('percent');
   setOverviewScope('automatons');
   setSelectedOverviewOutcomeKinds(['main']);
@@ -312,6 +316,7 @@ test('hydrateUrlState with empty search string restores defaults', { concurrency
   hydrateUrlState('');
 
   assert.equal(calculatorState.mode, 'compare');
+  assert.equal(calculatorState.compareHeaderLayout, 'metric');
   assert.equal(calculatorState.diffDisplayMode, 'absolute');
   assert.equal(calculatorState.overviewScope, 'all');
   assert.deepEqual(calculatorState.overviewOutcomeKinds, DEFAULT_OVERVIEW_OUTCOME_KINDS);
@@ -628,6 +633,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setEnemyDropdownSortMode('alphabetical');
   setEnemyDropdownSortDir('desc');
   setEnemyTableMode('stats');
+  setCompareHeaderLayout('slot');
   setOverviewScope('automatons');
   setDiffDisplayMode('percent');
   setSelectedOverviewOutcomeKinds(['Part', 'Kill', 'Main']);
@@ -664,6 +670,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   const firstParams = encodeUrlState({ activeTab: 'weapons' });
   const firstParamString = firstParams.toString();
 
+  assert.equal(firstParams.get('chl'), 'slot');
   assert.equal(firstParams.get('csk'), 'health');
   assert.equal(firstParams.get('csd'), 'desc');
   assert.equal(firstParams.get('csg'), 'outcome');
@@ -677,6 +684,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setEnemyDropdownSortMode('targets');
   setEnemyDropdownSortDir('asc');
   setEnemyTableMode('analysis');
+  setCompareHeaderLayout('metric');
   setOverviewScope('all');
   setDiffDisplayMode('absolute');
   setSelectedOverviewOutcomeKinds(DEFAULT_OVERVIEW_OUTCOME_KINDS);
@@ -1135,10 +1143,30 @@ test('encodeUrlState omits default compare view', { concurrency: false }, () => 
   assert.equal(params.has('cv'), false);
 }));
 
+test('encodeUrlState omits default compare header layout', { concurrency: false }, () => withStateFixture(() => {
+  setCompareHeaderLayout('metric');
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.has('chl'), false);
+}));
+
+test('encodeUrlState includes non-default compare header layout', { concurrency: false }, () => withStateFixture(() => {
+  setCompareHeaderLayout('slot');
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.get('chl'), 'slot');
+}));
+
 test('encodeUrlState includes non-default compare view', { concurrency: false }, () => withStateFixture(() => {
   setCompareView('overview');
   const params = encodeUrlState({ activeTab: 'calculator' });
   assert.equal(params.get('cv'), 'overview');
+}));
+
+test('hydrateUrlState restores compare header layout from URL params', { concurrency: false }, () => withStateFixture(() => {
+  hydrateUrlState(new URLSearchParams({
+    chl: 'slot'
+  }));
+
+  assert.equal(calculatorState.compareHeaderLayout, 'slot');
 }));
 
 // ===========================================================================

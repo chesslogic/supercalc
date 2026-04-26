@@ -4,6 +4,7 @@ import {
   getEngagementRangeMeters,
   getSelectedAttacks,
   getWeaponForSlot,
+  toggleCompareHeaderLayout,
   toggleEnemySort
 } from '../data.js';
 import { buildFocusedZoneComparisonRows, sortEnemyZoneRows } from '../compare-utils.js';
@@ -12,6 +13,7 @@ import {
   getEnemyColumns,
   getFocusedTargetingModes
 } from './enemy-columns.js';
+import { renderEnemyTableHeader } from './enemy-table-header.js';
 import { renderGroupedEnemyRows } from './grouped-enemy-rows.js';
 import { wireZoneRelationHighlights } from './zone-relation-highlights.js';
 
@@ -35,49 +37,41 @@ export function renderFocusedEnemyTable(container, enemy, {
     hasExplosiveTargets
   } = getFocusedTargetingModes(selectedAttacksA, selectedAttacksB);
 
+  const columns = getEnemyColumns();
+  ensureEnemySortKeyVisible(columns);
   const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
+  const leadingColumns = [];
 
   if (hasProjectileTargets) {
-    const projectileTh = document.createElement('th');
-    projectileTh.textContent = 'Proj';
-    projectileTh.style.padding = '4px 10px';
-    projectileTh.style.textAlign = 'center';
-    projectileTh.style.borderBottom = '2px solid var(--border)';
-    projectileTh.style.color = 'var(--muted)';
-    projectileTh.style.width = '30px';
-    headerRow.appendChild(projectileTh);
+    leadingColumns.push({
+      label: 'Proj',
+      align: 'center',
+      width: '30px'
+    });
   }
 
   if (hasExplosiveTargets) {
-    const explosiveTh = document.createElement('th');
-    explosiveTh.textContent = 'AoE';
-    explosiveTh.style.padding = '4px 10px';
-    explosiveTh.style.textAlign = 'center';
-    explosiveTh.style.borderBottom = '2px solid var(--border)';
-    explosiveTh.style.color = 'var(--muted)';
-    explosiveTh.style.width = '30px';
-    headerRow.appendChild(explosiveTh);
+    leadingColumns.push({
+      label: 'AoE',
+      align: 'center',
+      width: '30px'
+    });
   }
 
-  const columns = getEnemyColumns();
-  ensureEnemySortKeyVisible(columns);
-  columns.forEach((column) => {
-    const th = document.createElement('th');
-    th.textContent = column.label;
-    th.title = column.title || '';
-    th.classList.add('sortable');
-    if (calculatorState.enemySort.key === column.key) {
-      th.classList.add(`sort-${calculatorState.enemySort.dir}`);
-    }
-    th.addEventListener('click', () => {
-      toggleEnemySort(column.key);
+  renderEnemyTableHeader(thead, {
+    leadingColumns,
+    columns,
+    sortState: calculatorState.enemySort,
+    compareHeaderLayout: calculatorState.compareHeaderLayout,
+    onSort: (sortKey) => {
+      toggleEnemySort(sortKey);
       onRenderEnemyDetails?.(enemy);
-    });
-    headerRow.appendChild(th);
+    },
+    onToggleCompareHeaderLayout: () => {
+      toggleCompareHeaderLayout();
+      onRenderEnemyDetails?.(enemy);
+    }
   });
-
-  thead.appendChild(headerRow);
   table.appendChild(thead);
 
   const zoneRows = buildFocusedZoneComparisonRows({

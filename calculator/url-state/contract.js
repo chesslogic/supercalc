@@ -1,5 +1,6 @@
 import {
   DEFAULT_COMPARE_VIEW,
+  DEFAULT_COMPARE_HEADER_LAYOUT,
   DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
   DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   DEFAULT_OVERVIEW_SCOPE,
@@ -19,6 +20,7 @@ export const URL_STATE_VERSION = '1';
 export const DEFAULT_CALCULATOR_URL_STATE = {
   mode: 'compare',
   compareView: DEFAULT_COMPARE_VIEW,
+  compareHeaderLayout: DEFAULT_COMPARE_HEADER_LAYOUT,
   weaponSortMode: DEFAULT_WEAPON_SORT_MODE,
   enemyDropdownSortMode: DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   enemyDropdownSortDir: DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
@@ -74,6 +76,7 @@ export const URL_PARAM_KEYS = {
   activeTab: 'tab',
   calculatorMode: 'cm',
   compareView: 'cv',
+  compareHeaderLayout: 'chl',
   weaponSortMode: 'cws',
   enemyDropdownSortMode: 'ceds',
   enemyDropdownSortDir: 'cedd',

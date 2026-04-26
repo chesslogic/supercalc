@@ -44,6 +44,7 @@ const DEFAULT_ENEMY_SORT = {
 };
 export const DEFAULT_CALCULATOR_MODE = 'compare';
 export const DEFAULT_COMPARE_VIEW = 'focused';
+export const DEFAULT_COMPARE_HEADER_LAYOUT = 'metric';
 export const DEFAULT_OVERVIEW_SCOPE = 'all';
 export const DEFAULT_ENEMY_TARGET_TYPES = [...DEFAULT_ENEMY_TARGET_TYPE_IDS];
 export { DEFAULT_WEAPON_SORT_MODE };
@@ -110,6 +111,12 @@ function normalizeRecommendationSortMode(sortMode) {
   return String(sortMode ?? '').trim().toLowerCase() === STRICT_MARGIN_RECOMMENDATION_SORT_MODE
     ? STRICT_MARGIN_RECOMMENDATION_SORT_MODE
     : DEFAULT_RECOMMENDATION_SORT_MODE;
+}
+
+export function normalizeCompareHeaderLayout(layout) {
+  return String(layout ?? '').trim().toLowerCase() === 'slot'
+    ? 'slot'
+    : DEFAULT_COMPARE_HEADER_LAYOUT;
 }
 
 function normalizeOverviewOutcomeKinds(outcomeKinds = DEFAULT_OVERVIEW_OUTCOME_KINDS) {
@@ -189,6 +196,7 @@ function notifyCalculatorStateChange() {
 export const calculatorState = {
   mode: DEFAULT_CALCULATOR_MODE,
   compareView: DEFAULT_COMPARE_VIEW,
+  compareHeaderLayout: DEFAULT_COMPARE_HEADER_LAYOUT,
   weaponSortMode: DEFAULT_WEAPON_SORT_MODE,
   enemyDropdownSortMode: DEFAULT_ENEMY_DROPDOWN_SORT_MODE,
   enemyDropdownSortDir: DEFAULT_ENEMY_DROPDOWN_SORT_DIR,
@@ -343,6 +351,20 @@ export function setEnemyDropdownSortDir(sortDir) {
 export function setCompareView(view) {
   calculatorState.compareView = view === 'overview' ? 'overview' : 'focused';
   notifyCalculatorStateChange();
+}
+
+export function setCompareHeaderLayout(layout) {
+  calculatorState.compareHeaderLayout = normalizeCompareHeaderLayout(layout);
+  notifyCalculatorStateChange();
+  return calculatorState.compareHeaderLayout;
+}
+
+export function toggleCompareHeaderLayout() {
+  calculatorState.compareHeaderLayout = calculatorState.compareHeaderLayout === 'slot'
+    ? DEFAULT_COMPARE_HEADER_LAYOUT
+    : 'slot';
+  notifyCalculatorStateChange();
+  return calculatorState.compareHeaderLayout;
 }
 
 export function setEnemyTableMode(mode) {

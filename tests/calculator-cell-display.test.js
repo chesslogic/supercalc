@@ -9,6 +9,7 @@ import { TestDocument } from './dom-stubs.js';
 
 import {
   calculatorState,
+  setCompareHeaderLayout,
   setEnemyTableMode
 } from '../calculator/data.js';
 import {
@@ -44,6 +45,14 @@ test('enemy table mode defaults to analysis and normalizes to supported values',
   assert.equal(calculatorState.enemyTableMode, 'analysis');
 });
 
+test('compare header layout defaults to metric and normalizes to supported values', () => {
+  setCompareHeaderLayout('slot');
+  assert.equal(calculatorState.compareHeaderLayout, 'slot');
+
+  setCompareHeaderLayout('unknown');
+  assert.equal(calculatorState.compareHeaderLayout, 'metric');
+});
+
 // ========================================================================
 // Enemy and overview column configuration
 // ========================================================================
@@ -67,7 +76,17 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     analysisColumns.map((column) => column.key),
-    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'marginDiff', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'shotsB', 'shotsDiff', 'rangeA', 'rangeB', 'marginA', 'marginB', 'marginDiff', 'ttkA', 'ttkB', 'ttkDiff']
+  );
+
+  const slotGroupedAnalysisColumns = getEnemyColumnsForState({
+    mode: 'compare',
+    enemyTableMode: 'analysis',
+    compareHeaderLayout: 'slot'
+  });
+  assert.deepEqual(
+    slotGroupedAnalysisColumns.map((column) => column.key),
+    ['zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'ttkA', 'shotsB', 'rangeB', 'marginB', 'ttkB', 'shotsDiff', 'marginDiff', 'ttkDiff']
   );
 
   const statsColumns = getEnemyColumnsForState({
@@ -85,7 +104,7 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     overviewAnalysisColumns.map((column) => column.key),
-    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'marginDiff', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['faction', 'enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'shotsB', 'shotsDiff', 'rangeA', 'rangeB', 'marginA', 'marginB', 'marginDiff', 'ttkA', 'ttkB', 'ttkDiff']
   );
 
   const scopedOverviewColumns = getOverviewColumnsForState({
@@ -94,7 +113,17 @@ test('compare mode still uses compact analysis columns and optional stats column
   });
   assert.deepEqual(
     scopedOverviewColumns.map((column) => column.key),
-    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'shotsB', 'rangeB', 'marginB', 'marginDiff', 'shotsDiff', 'ttkA', 'ttkB', 'ttkDiff']
+    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'shotsB', 'shotsDiff', 'rangeA', 'rangeB', 'marginA', 'marginB', 'marginDiff', 'ttkA', 'ttkB', 'ttkDiff']
+  );
+
+  const slotGroupedOverviewColumns = getOverviewColumnsForState({
+    enemyTableMode: 'analysis',
+    overviewScope: 'appropriators',
+    compareHeaderLayout: 'slot'
+  });
+  assert.deepEqual(
+    slotGroupedOverviewColumns.map((column) => column.key),
+    ['enemy', 'zone_name', 'AV', 'Dur%', 'ToMain%', 'ExMult', 'shotsA', 'rangeA', 'marginA', 'ttkA', 'shotsB', 'rangeB', 'marginB', 'ttkB', 'shotsDiff', 'marginDiff', 'ttkDiff']
   );
 });
 

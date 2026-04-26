@@ -747,8 +747,38 @@ tbody tr:hover {
 }
 
 /* Calculator tables inherit same styling as main tables */
+.calculator-table{
+  --calc-table-header-row-height: 26px;
+}
 .calculator-table thead th{
   position:sticky; top:0; background:#202020; z-index:2; text-align:left; font-size:12px; letter-spacing:.3px; color:var(--muted); border-bottom:2px solid var(--border); padding:4px 10px; user-select:none; white-space:nowrap
+}
+.calculator-table thead tr.calc-compare-header-group-row th{
+  top:0;
+  z-index:4;
+  background:#1b1b1b;
+}
+.calculator-table thead tr.calc-compare-header-detail-row th{
+  top:var(--calc-table-header-row-height);
+  z-index:3;
+  text-align:center;
+}
+.calculator-table thead th.calc-compare-header-spanning{
+  top:0;
+  z-index:5;
+  vertical-align:bottom;
+}
+.calculator-table thead th.calc-compare-header-group{
+  text-align:center;
+  font-size:11px;
+  letter-spacing:.4px;
+}
+.calculator-table thead th.calc-compare-header-group.is-toggle{
+  cursor:pointer;
+}
+.calculator-table thead th.calc-compare-header-group.is-toggle:hover{
+  background:#242424;
+  color:var(--text);
 }
 .calculator-table tbody td{padding:4px 10px; border-bottom:1px solid var(--border)}
 .calculator-table tbody tr:hover{background:rgba(255,255,255,.03)}

@@ -1,6 +1,7 @@
 import {
   setAttackHitCounts,
   setCalculatorMode,
+  setCompareHeaderLayout,
   setCompareView,
   setDiffDisplayMode,
   setEnemyDropdownSortDir,
@@ -95,6 +96,9 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
   }, { render: false });
 
   setCalculatorMode(params.get(URL_PARAM_KEYS.calculatorMode) || DEFAULT_CALCULATOR_URL_STATE.mode);
+  setCompareHeaderLayout(
+    params.get(URL_PARAM_KEYS.compareHeaderLayout) || DEFAULT_CALCULATOR_URL_STATE.compareHeaderLayout
+  );
   setWeaponSortMode(params.get(URL_PARAM_KEYS.weaponSortMode) || DEFAULT_CALCULATOR_URL_STATE.weaponSortMode);
   setEnemyDropdownSortMode(params.get(URL_PARAM_KEYS.enemyDropdownSortMode) || DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortMode);
   setEnemyDropdownSortDir(params.get(URL_PARAM_KEYS.enemyDropdownSortDir) || DEFAULT_CALCULATOR_URL_STATE.enemyDropdownSortDir);

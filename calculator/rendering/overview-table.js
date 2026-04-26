@@ -7,10 +7,12 @@ import {
   getSelectedEnemyTargetTypes,
   getSelectedOverviewOutcomeKinds,
   getWeaponForSlot,
+  toggleCompareHeaderLayout,
   toggleEnemySort
 } from '../data.js';
 import { buildOverviewRows, sortEnemyZoneRows } from '../compare-utils.js';
 import { buildMetricColumnCell } from './metric-cells.js';
+import { renderEnemyTableHeader } from './enemy-table-header.js';
 import { createPlaceholder } from './shared.js';
 import { formatOverviewBaseCell } from './enemy-base-cells.js';
 import { ensureEnemySortKeyVisible, getOverviewColumns } from './enemy-columns.js';
@@ -23,27 +25,22 @@ export function renderOverviewDetails(container, {
   table.style.borderCollapse = 'collapse';
   table.className = 'calculator-table';
 
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
   const columns = getOverviewColumns();
   ensureEnemySortKeyVisible(columns);
-
-  columns.forEach((column) => {
-    const th = document.createElement('th');
-    th.textContent = column.label;
-    th.title = column.title || '';
-    th.classList.add('sortable');
-    if (calculatorState.enemySort.key === column.key) {
-      th.classList.add(`sort-${calculatorState.enemySort.dir}`);
-    }
-    th.addEventListener('click', () => {
-      toggleEnemySort(column.key);
+  const thead = document.createElement('thead');
+  renderEnemyTableHeader(thead, {
+    columns,
+    sortState: calculatorState.enemySort,
+    compareHeaderLayout: calculatorState.compareHeaderLayout,
+    onSort: (sortKey) => {
+      toggleEnemySort(sortKey);
       onRenderEnemyDetails?.();
-    });
-    headerRow.appendChild(th);
+    },
+    onToggleCompareHeaderLayout: () => {
+      toggleCompareHeaderLayout();
+      onRenderEnemyDetails?.();
+    }
   });
-
-  thead.appendChild(headerRow);
   table.appendChild(thead);
 
   const weaponA = getWeaponForSlot('A');

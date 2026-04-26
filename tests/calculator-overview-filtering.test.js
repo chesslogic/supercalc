@@ -20,6 +20,7 @@ function snapshotCalculatorState() {
     enemyTargetTypes: [...calculatorState.enemyTargetTypes],
     overviewOutcomeKinds: [...calculatorState.overviewOutcomeKinds],
     diffDisplayMode: calculatorState.diffDisplayMode,
+    compareHeaderLayout: calculatorState.compareHeaderLayout,
     enemyTableMode: calculatorState.enemyTableMode,
     enemySort: { ...calculatorState.enemySort },
     weaponA: calculatorState.weaponA,
@@ -40,6 +41,7 @@ function restoreCalculatorState(snapshot) {
   calculatorState.enemyTargetTypes = [...snapshot.enemyTargetTypes];
   calculatorState.overviewOutcomeKinds = [...snapshot.overviewOutcomeKinds];
   calculatorState.diffDisplayMode = snapshot.diffDisplayMode;
+  calculatorState.compareHeaderLayout = snapshot.compareHeaderLayout;
   calculatorState.enemyTableMode = snapshot.enemyTableMode;
   calculatorState.enemySort = { ...snapshot.enemySort };
   calculatorState.weaponA = snapshot.weaponA;
@@ -68,6 +70,7 @@ function withOverviewFixture(callback) {
     calculatorState.enemyTargetTypes = [...DEFAULT_ENEMY_TARGET_TYPES];
     calculatorState.overviewOutcomeKinds = [...DEFAULT_OVERVIEW_OUTCOME_KINDS];
     calculatorState.diffDisplayMode = 'absolute';
+    calculatorState.compareHeaderLayout = 'metric';
     calculatorState.enemyTableMode = 'analysis';
     calculatorState.enemySort = {
       key: 'zone_name',
@@ -109,8 +112,8 @@ test('overview table and hall of fame use the same filtered overview row set', (
   const detailsContainer = new TestElement('div');
   renderOverviewDetails(detailsContainer);
 
-  const rowTexts = collectElements(detailsContainer, (element) => element.tagName === 'TR')
-    .slice(1)
+  const overviewBody = collectElements(detailsContainer, (element) => element.tagName === 'TBODY')[0];
+  const rowTexts = (overviewBody?.children || [])
     .map((element) => element.textContent);
   assert.equal(rowTexts.length, 1);
   assert.match(rowTexts[0], /Overview Dummy/);

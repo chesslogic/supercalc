@@ -1,4 +1,8 @@
-import { calculatorState } from '../data.js';
+import {
+  calculatorState,
+  DEFAULT_COMPARE_HEADER_LAYOUT,
+  normalizeCompareHeaderLayout
+} from '../data.js';
 import { EFFECTIVE_DISTANCE_TOOLTIP } from '../effective-distance.js';
 import { isAllEnemyScope } from '../enemy-scope.js';
 import { EXPLOSIVE_DISPLAY_COLUMN_LABEL } from '../explosive-display.js';
@@ -29,18 +33,47 @@ const ENEMY_SINGLE_ANALYSIS_METRIC_COLUMNS = [
 ];
 const ENEMY_MARGIN_COLUMN_TITLE = 'Extra displayed damage above the per-shot breakpoint for the current kill path. One-shot rows show direct overkill; multi-shot rows show per-shot headroom for the displayed shot count.';
 const ENEMY_MARGIN_DIFF_COLUMN_TITLE = 'B minus A Margin. Absolute mode shows percentage-point delta; Overview percent mode shows fit-ratio change.';
-const ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS = [
-  { key: 'shotsA', label: 'A Shots' },
-  { key: 'rangeA', label: 'A Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
-  { key: 'marginA', label: 'A Margin', title: ENEMY_MARGIN_COLUMN_TITLE },
-  { key: 'shotsB', label: 'B Shots' },
-  { key: 'rangeB', label: 'B Range', title: EFFECTIVE_DISTANCE_TOOLTIP },
-  { key: 'marginB', label: 'B Margin', title: ENEMY_MARGIN_COLUMN_TITLE },
-  { key: 'marginDiff', label: 'Margin Δ', title: ENEMY_MARGIN_DIFF_COLUMN_TITLE },
-  { key: 'shotsDiff', label: 'Diff Shots' },
-  { key: 'ttkA', label: 'A TTK' },
-  { key: 'ttkB', label: 'B TTK' },
-  { key: 'ttkDiff', label: 'Diff TTK' }
+const COMPARE_HEADER_SLOT_LABELS = {
+  A: 'A',
+  B: 'B',
+  Diff: 'Diff'
+};
+const ENEMY_COMPARE_ANALYSIS_METRIC_GROUPS = [
+  {
+    key: 'shots',
+    label: 'Shots',
+    columns: [
+      { key: 'shotsA', slotKey: 'A' },
+      { key: 'shotsB', slotKey: 'B' },
+      { key: 'shotsDiff', slotKey: 'Diff' }
+    ]
+  },
+  {
+    key: 'range',
+    label: 'Range',
+    columns: [
+      { key: 'rangeA', slotKey: 'A', title: EFFECTIVE_DISTANCE_TOOLTIP },
+      { key: 'rangeB', slotKey: 'B', title: EFFECTIVE_DISTANCE_TOOLTIP }
+    ]
+  },
+  {
+    key: 'margin',
+    label: 'Margin',
+    columns: [
+      { key: 'marginA', slotKey: 'A', title: ENEMY_MARGIN_COLUMN_TITLE },
+      { key: 'marginB', slotKey: 'B', title: ENEMY_MARGIN_COLUMN_TITLE },
+      { key: 'marginDiff', slotKey: 'Diff', title: ENEMY_MARGIN_DIFF_COLUMN_TITLE }
+    ]
+  },
+  {
+    key: 'ttk',
+    label: 'TTK',
+    columns: [
+      { key: 'ttkA', slotKey: 'A' },
+      { key: 'ttkB', slotKey: 'B' },
+      { key: 'ttkDiff', slotKey: 'Diff' }
+    ]
+  }
 ];
 
 export const METRIC_COLUMN_CONFIG = {
@@ -60,6 +93,48 @@ export const METRIC_COLUMN_CONFIG = {
   ttkDiff: { kind: 'diff', metricKey: 'diffTtkSeconds', valueType: 'ttk' }
 };
 
+function createCompareMetricColumn(column, {
+  groupKey,
+  groupLabel,
+  detailLabel
+}) {
+  return {
+    key: column.key,
+    label: detailLabel,
+    title: column.title,
+    compareHeaderGroupKey: groupKey,
+    compareHeaderGroupLabel: groupLabel
+  };
+}
+
+function buildCompareAnalysisMetricColumns(compareHeaderLayout = DEFAULT_COMPARE_HEADER_LAYOUT) {
+  const normalizedLayout = normalizeCompareHeaderLayout(compareHeaderLayout);
+
+  if (normalizedLayout === 'slot') {
+    return Object.keys(COMPARE_HEADER_SLOT_LABELS).flatMap((slotKey) => (
+      ENEMY_COMPARE_ANALYSIS_METRIC_GROUPS.flatMap((group) => {
+        const column = group.columns.find((candidate) => candidate.slotKey === slotKey);
+        if (!column) {
+          return [];
+        }
+        return [createCompareMetricColumn(column, {
+          groupKey: slotKey,
+          groupLabel: COMPARE_HEADER_SLOT_LABELS[slotKey],
+          detailLabel: group.label
+        })];
+      })
+    ));
+  }
+
+  return ENEMY_COMPARE_ANALYSIS_METRIC_GROUPS.flatMap((group) => (
+    group.columns.map((column) => createCompareMetricColumn(column, {
+      groupKey: group.key,
+      groupLabel: group.label,
+      detailLabel: COMPARE_HEADER_SLOT_LABELS[column.slotKey]
+    }))
+  ));
+}
+
 export function getEnemyBaseColumnsForState({
   mode = 'single',
   enemyTableMode = 'analysis'
@@ -75,7 +150,8 @@ export function getEnemyBaseColumnsForState({
 
 export function getEnemyColumnsForState({
   mode = 'single',
-  enemyTableMode = 'analysis'
+  enemyTableMode = 'analysis',
+  compareHeaderLayout = calculatorState.compareHeaderLayout
 } = {}) {
   const baseColumns = getEnemyBaseColumnsForState({ mode, enemyTableMode });
 
@@ -92,13 +168,14 @@ export function getEnemyColumnsForState({
 
   return [
     ...baseColumns,
-    ...ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS
+    ...buildCompareAnalysisMetricColumns(compareHeaderLayout)
   ];
 }
 
 export function getOverviewColumnsForState({
   enemyTableMode = 'analysis',
-  overviewScope = 'all'
+  overviewScope = 'all',
+  compareHeaderLayout = calculatorState.compareHeaderLayout
 } = {}) {
   const baseColumns = [
     ...(isAllEnemyScope(overviewScope)
@@ -117,7 +194,7 @@ export function getOverviewColumnsForState({
 
   return [
     ...baseColumns,
-    ...ENEMY_COMPARE_ANALYSIS_METRIC_COLUMNS
+    ...buildCompareAnalysisMetricColumns(compareHeaderLayout)
   ];
 }
 
