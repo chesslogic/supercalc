@@ -7,6 +7,7 @@ import {
   buildHallOfFameEntries,
   buildOverviewRows,
   buildZoneComparisonMetrics,
+  filterOverviewRowsByOutcomeKinds,
   getDiffDisplayMetric,
   getAttackRowKey,
   getDefaultSelectedAttackKeys,
@@ -658,6 +659,25 @@ test('buildOverviewRows filters overview rows by selected enemy target types', (
   assert.deepEqual(
     giantRows.map((row) => `${row.faction}:${row.enemyName}:${row.zone.zone_name}`),
     ['Terminids:Bile Titan:Main']
+  );
+});
+
+test('filterOverviewRowsByOutcomeKinds keeps rows when either compare slot matches a selected outcome', () => {
+  const rows = [
+    makeSortRow(0, 'main-only', { outcomeKindA: 'main', outcomeKindB: 'main' }),
+    makeSortRow(1, 'critical-a', { outcomeKindA: 'critical', outcomeKindB: null }),
+    makeSortRow(2, 'limb-b', { outcomeKindA: null, outcomeKindB: 'limb' }),
+    makeSortRow(3, 'utility-a', { outcomeKindA: 'utility', outcomeKindB: null }),
+    makeSortRow(4, 'none', { outcomeKindA: null, outcomeKindB: null })
+  ];
+
+  assert.deepEqual(
+    filterOverviewRowsByOutcomeKinds(rows, ['critical', 'limb']).map((row) => row.zone.zone_name),
+    ['critical-a', 'limb-b']
+  );
+  assert.deepEqual(
+    filterOverviewRowsByOutcomeKinds(rows, []).map((row) => row.zone.zone_name),
+    []
   );
 });
 

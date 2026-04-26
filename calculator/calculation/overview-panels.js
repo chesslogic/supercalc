@@ -4,6 +4,7 @@ import {
   getEnemyOptions,
   getSelectedAttacks,
   getSelectedEnemyTargetTypes,
+  getSelectedOverviewOutcomeKinds,
   getWeaponForSlot
 } from '../data.js';
 import { buildHallOfFameEntries, buildOverviewRows } from '../compare-utils.js';
@@ -117,7 +118,7 @@ function renderHallOfFamePanel(container, slot, weaponName, entries) {
   if (entries.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.className = 'muted';
-    emptyState.textContent = 'No overall wins are available for the current attacks and scope';
+    emptyState.textContent = 'No overall wins are available for the current attacks, scope, target, and outcome filters';
     body.appendChild(emptyState);
     container.appendChild(panel);
     return;
@@ -137,6 +138,7 @@ export function renderOverviewCalculation(container) {
     units: getEnemyOptions(),
     scope: calculatorState.overviewScope,
     targetTypes: getSelectedEnemyTargetTypes(),
+    outcomeKinds: getSelectedOverviewOutcomeKinds(),
     weaponA,
     weaponB,
     selectedAttacksA,

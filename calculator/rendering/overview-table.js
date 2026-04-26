@@ -5,6 +5,7 @@ import {
   getEngagementRangeMeters,
   getSelectedAttacks,
   getSelectedEnemyTargetTypes,
+  getSelectedOverviewOutcomeKinds,
   getWeaponForSlot,
   toggleEnemySort
 } from '../data.js';
@@ -56,6 +57,7 @@ export function renderOverviewDetails(container, {
     units: getEnemyOptions(),
     scope: calculatorState.overviewScope,
     targetTypes: getSelectedEnemyTargetTypes(),
+    outcomeKinds: getSelectedOverviewOutcomeKinds(),
     weaponA,
     weaponB,
     selectedAttacksA,
@@ -67,7 +69,7 @@ export function renderOverviewDetails(container, {
   });
 
   if (overviewRows.length === 0) {
-    createPlaceholder(container, 'No overview rows are available for the current scope and target filters');
+    createPlaceholder(container, 'No overview rows match the current scope, target, and outcome filters');
     return;
   }
 

@@ -27,6 +27,35 @@ import {
 } from './outcome-kinds.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
+export const OVERVIEW_OUTCOME_KINDS = ['fatal', 'doomed', 'main', 'critical', 'limb', 'utility'];
+
+export function normalizeOverviewOutcomeKinds(outcomeKinds = OVERVIEW_OUTCOME_KINDS) {
+  const allowedOutcomeKinds = new Set(OVERVIEW_OUTCOME_KINDS);
+  const rawOutcomeKinds = Array.isArray(outcomeKinds)
+    ? outcomeKinds
+    : OVERVIEW_OUTCOME_KINDS;
+
+  return [...new Set(
+    rawOutcomeKinds
+      .map((outcomeKind) => normalizeText(outcomeKind))
+      .filter((outcomeKind) => allowedOutcomeKinds.has(outcomeKind))
+  )];
+}
+
+function matchesOverviewRowOutcomeKinds(row, selectedOutcomeKinds) {
+  return ['A', 'B'].some((slot) => selectedOutcomeKinds.has(row?.metrics?.bySlot?.[slot]?.outcomeKind));
+}
+
+export function filterOverviewRowsByOutcomeKinds(rows = [], outcomeKinds = OVERVIEW_OUTCOME_KINDS) {
+  const selectedOutcomeKinds = new Set(normalizeOverviewOutcomeKinds(outcomeKinds));
+  if (selectedOutcomeKinds.size === 0) {
+    return [];
+  }
+
+  return (Array.isArray(rows) ? rows : []).filter((row) => (
+    matchesOverviewRowOutcomeKinds(row, selectedOutcomeKinds)
+  ));
+}
 
 function getPinnedZoneOrderValue(row) {
   return normalizeText(row?.zone?.zone_name) === 'main' ? 0 : 1;
@@ -599,6 +628,7 @@ export function buildOverviewRows({
   units = [],
   scope = 'all',
   targetTypes,
+  outcomeKinds = OVERVIEW_OUTCOME_KINDS,
   weaponA,
   weaponB,
   selectedAttacksA = [],
@@ -608,7 +638,7 @@ export function buildOverviewRows({
   distanceMetersA = 0,
   distanceMetersB = 0
 }) {
-  return filterEnemiesByTargetTypes(filterEnemiesByScope(units, scope), targetTypes)
+  const rows = filterEnemiesByTargetTypes(filterEnemiesByScope(units, scope), targetTypes)
     .flatMap((unit) => {
       const enemyMainHealth = toFiniteNumber(unit?.health) ?? 0;
       const frontLabel = getEnemyUnitFrontLabel(unit);
@@ -634,6 +664,8 @@ export function buildOverviewRows({
         })
       }));
     });
+
+  return filterOverviewRowsByOutcomeKinds(rows, outcomeKinds);
 }
 
 function isLethalHallOfFameRow(row) {
