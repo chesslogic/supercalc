@@ -92,7 +92,7 @@ Primary,SPC,special,VG-70,Variable,750,projectile,VG-70_P (Volley x7),595,161,2,
 Primary,SPC,special,VG-70,Variable,750,projectile,VG-70_P (Total x49),4165,1127,2,10,10,4,
 Secondary,CQC,special,CQC-19,Stun Lance,,melee,CQC-19_M,165,83,3,10,35,30,Stun Large
 Secondary,CQC,special,CQC-2,Saber,,melee,CQC-2_M,188,98,3,10,25,30,
-Secondary,CQC,special,CQC-30,Stun Baton,,melee,CQC-30_M,75,38,3,10,35,30,Stun Large
+Secondary,CQC,special,CQC-30,Stun Baton,,melee,CQC-30_M,120,60,3,10,35,30,Stun Large
 Secondary,CQC,special,CQC-42,Machete,,melee,CQC-42_M,300,150,3,10,30,10,
 Secondary,CQC,special,CQC-5,Combat Hatchet,,melee,CQC-5_M,240,120,3,10,25,30,
 Secondary,CQC,special,CQC-73,Entrenchment Tool,,melee,CQC-73_M,165,83,3,10,25,30,
@@ -152,7 +152,7 @@ Stratagem,EMP,explosive,A/AC-8,AUTOCANNON SENTRY,160,explosion,40mm APHE CANNON_
 Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,projectile,EMS MORTAR SHELL_P,0,0,4,10,30,10,
 Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,explosion,EMS MORTAR SHELL_P_E,0,0,6,30,50,0,Stun Medium
 Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,explosion,EMS MORTAR SHELL_P_IE,150,150,3,30,30,20,
-Stratagem,EMP,energy,A/FLAM-40,FLAME SENTRY,,spray,SWP_FLAME SENTRY_S,2,2,4,10,5,5,Fire
+Stratagem,EMP,energy,A/FLAM-40,FLAME SENTRY,,spray,SWP_FLAME SENTRY_S,3,3,4,10,5,5,Fire
 Stratagem,EMP,explosive,A/GM-17,GAS MORTAR SENTRY,80,projectile,GAS MORTAR SHELL_P,20,2,0,10,30,10,
 Stratagem,EMP,explosive,A/GM-17,GAS MORTAR SENTRY,80,explosion,GAS MORTAR SHELL_P_IE,0,0,6,30,10,20,Gas • Gas_Confusion
 Stratagem,EMP,explosive,E/GL-21,GRENADIER BATTLEMENT,160,projectile,40mm HE GRENADE_P,0,0,4,10,30,10,

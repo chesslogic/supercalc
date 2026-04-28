@@ -607,8 +607,8 @@ test('checked-in stratagem wiki pass includes adopted sentry and deployable rows
         Role: 'energy',
         Name: 'FLAME SENTRY',
         RPM: '',
-        DMG: '2',
-        DUR: '2',
+        DMG: '3',
+        DUR: '3',
         AP: '4',
         DF: '10',
         ST: '5',
@@ -971,4 +971,18 @@ test('checked-in selectable RPM weapons use their highest RPM setting', () => {
     rows.find((row) => row.Code === 'MG-206' && row.Name === 'Heavy Machine Gun')?.RPM,
     '750'
   );
+});
+
+test('patch 1.006.202 – CQC-30 Stun Baton and Flame Sentry regression', () => {
+  const rows = loadCheckedInWeaponRows();
+
+  const stunBaton = rows.find((row) => row['Atk Name'] === 'CQC-30_M');
+  assert.ok(stunBaton, 'Stun Baton row should exist');
+  assert.equal(stunBaton.DMG, '120', 'CQC-30 Stun Baton DMG buffed to 120 in patch 1.006.202');
+  assert.equal(stunBaton.DUR, '60', 'CQC-30 Stun Baton DUR buffed to 60 in patch 1.006.202');
+
+  const flameSentry = rows.find((row) => row['Atk Name'] === 'SWP_FLAME SENTRY_S');
+  assert.ok(flameSentry, 'Flame Sentry spray row should exist');
+  assert.equal(flameSentry.DMG, '3', 'Flame Sentry DMG buffed to 3 in patch 1.006.202');
+  assert.equal(flameSentry.DUR, '3', 'Flame Sentry DUR buffed to 3 in patch 1.006.202');
 });

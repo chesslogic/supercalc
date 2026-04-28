@@ -1830,6 +1830,15 @@
           "zone_name": "left_arm"
         },
         {
+          "AV": 4,
+          "Dur%": 0.7,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 0,
+          "health": 800,
+          "zone_name": "shield"
+        },
+        {
           "AV": 1,
           "Dur%": 0,
           "ExTarget": "Main",
@@ -1894,7 +1903,8 @@
           ],
           "zones": [
             "shoulderplate_left",
-            "left_arm"
+            "left_arm",
+            "shield"
           ]
         },
         {
@@ -3911,7 +3921,7 @@
           "zone_name": "leg_right"
         },
         {
-          "AV": 4,
+          "AV": 3,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -8255,16 +8265,16 @@
     "Hive Guard": {
       "damageable_zones": [
         {
-          "AV": 2,
+          "AV": 1,
           "Dur%": 0.3,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 500,
+          "health": 375,
           "zone_name": "Main"
         },
         {
-          "AV": 3,
+          "AV": 4,
           "Con": 200,
           "ConRate": 75,
           "Dur%": 0.35,
@@ -8294,7 +8304,7 @@
           "zone_name": "hitzone_r_rear_leg"
         },
         {
-          "AV": 1,
+          "AV": 4,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8303,7 +8313,7 @@
           "zone_name": "hitzone_r_front_leg"
         },
         {
-          "AV": 1,
+          "AV": 4,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8312,7 +8322,7 @@
           "zone_name": "hitzone_l_front_leg"
         },
         {
-          "AV": 3,
+          "AV": 1,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8321,7 +8331,7 @@
           "zone_name": "r_claw"
         },
         {
-          "AV": 3,
+          "AV": 1,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8330,7 +8340,7 @@
           "zone_name": "l_claw"
         }
       ],
-      "health": 500,
+      "health": 375,
       "scope_tags": [
         "medium"
       ]
