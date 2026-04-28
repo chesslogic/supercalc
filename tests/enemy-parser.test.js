@@ -1053,3 +1053,69 @@ test('checked-in enemydata keeps the higher-difficulty Hunter and Warrior health
   assert.equal(warriorZoneHealthByName.l_claw, 100);
   assert.equal(warriorZoneHealthByName.r_claw, 100);
 });
+
+test('checked-in enemydata pins the tracked 1.006.202 enemy-side bespoke stats', () => {
+  const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
+  const hiveGuard = enemydata.Terminid['Hive Guard'];
+  const hiveGuardZoneByName = Object.fromEntries(
+    hiveGuard.damageable_zones.map((zone) => [zone.zone_name, zone])
+  );
+  const heavyDevastator = enemydata.Automaton['Heavy Devastator'];
+  const heavyDevastatorZoneByName = Object.fromEntries(
+    heavyDevastator.damageable_zones.map((zone) => [zone.zone_name, zone])
+  );
+  const heavyDevastatorLeftArmGroup = heavyDevastator.zone_relation_groups.find((group) => group.id === 'left-arm');
+  const warStriderZoneByName = Object.fromEntries(
+    enemydata.Automaton['War Strider'].damageable_zones.map((zone) => [zone.zone_name, zone])
+  );
+  const lightningSpire = enemydata.Illuminate['Lightning Spire'];
+  const lightningSpireMain = lightningSpire.damageable_zones.find((zone) => zone.zone_name === 'Main');
+
+  assert.equal(hiveGuard.health, 375);
+  assert.equal(hiveGuardZoneByName.Main.health, 375);
+  assert.equal(hiveGuardZoneByName.Main.AV, 1);
+  assert.equal(hiveGuardZoneByName.face.AV, 4);
+  assert.equal(hiveGuardZoneByName.hitzone_l_front_leg.AV, 4);
+  assert.equal(hiveGuardZoneByName.hitzone_r_front_leg.AV, 4);
+  assert.equal(hiveGuardZoneByName.l_claw.AV, 1);
+  assert.equal(hiveGuardZoneByName.r_claw.AV, 1);
+
+  assert.deepEqual(
+    heavyDevastatorZoneByName.shield,
+    {
+      AV: 4,
+      'Dur%': 0.7,
+      ExTarget: 'Main',
+      MainCap: 1,
+      'ToMain%': 0,
+      health: 800,
+      zone_name: 'shield'
+    }
+  );
+  assert.ok(heavyDevastatorLeftArmGroup);
+  assert.deepEqual(heavyDevastatorLeftArmGroup.zones, ['shoulderplate_left', 'left_arm', 'shield']);
+
+  assert.equal(warStriderZoneByName.leg_left_hip.AV, 3);
+  assert.equal(warStriderZoneByName.leg_right_hip.AV, 3);
+
+  for (const tankName of ['Annihilator Tank', 'Barrager Tank', 'Shredder Tank']) {
+    const tank = enemydata.Automaton[tankName];
+    const tankZoneByName = Object.fromEntries(
+      tank.damageable_zones.map((zone) => [zone.zone_name, zone])
+    );
+
+    assert.equal(tank.health, 4000, tankName);
+    assert.equal(tankZoneByName.Main.health, 4000, `${tankName} Main`);
+    assert.equal(tankZoneByName.damagezone_back.health, 1500, `${tankName} back vent health`);
+    assert.equal(tankZoneByName.damagezone_back.AV, 4, `${tankName} back vent armor`);
+    assert.equal(tankZoneByName.right_tracks['Dur%'], 0.8, `${tankName} right tracks durable resistance`);
+    assert.equal(tankZoneByName.right_tracks.MainCap, 0, `${tankName} right tracks overflow cap`);
+    assert.equal(tankZoneByName.left_tracks['Dur%'], 0.8, `${tankName} left tracks durable resistance`);
+    assert.equal(tankZoneByName.left_tracks.MainCap, 0, `${tankName} left tracks overflow cap`);
+  }
+
+  assert.equal(lightningSpire.health, 200);
+  assert.ok(lightningSpireMain);
+  assert.equal(lightningSpireMain.health, 200);
+  assert.equal(lightningSpireMain.AV, 2);
+});

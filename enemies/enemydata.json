@@ -180,7 +180,7 @@
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 3000,
+          "health": 4000,
           "zone_name": "Main"
         },
         {
@@ -214,36 +214,36 @@
           "zone_name": "damagezone_left"
         },
         {
-          "AV": 3,
+          "AV": 4,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1.5,
-          "health": 750,
+          "health": 1500,
           "zone_name": "damagezone_back"
         },
         {
           "AV": 3,
-          "Dur%": 1,
+          "Dur%": 0.8,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": 0,
           "ToMain%": 1,
           "health": 750,
           "zone_name": "right_tracks"
         },
         {
           "AV": 3,
-          "Dur%": 1,
+          "Dur%": 0.8,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": 0,
           "ToMain%": 1,
           "health": 750,
           "zone_name": "left_tracks"
         }
       ],
-      "health": 3000,
+      "health": 4000,
       "scope_tags": [
         "tank"
       ]
@@ -385,7 +385,7 @@
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 3000,
+          "health": 4000,
           "zone_name": "Main"
         },
         {
@@ -419,36 +419,36 @@
           "zone_name": "damagezone_left"
         },
         {
-          "AV": 3,
+          "AV": 4,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1.5,
-          "health": 750,
+          "health": 1500,
           "zone_name": "damagezone_back"
         },
         {
           "AV": 3,
-          "Dur%": 1,
+          "Dur%": 0.8,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": 0,
           "ToMain%": 1,
           "health": 750,
           "zone_name": "right_tracks"
         },
         {
           "AV": 3,
-          "Dur%": 1,
+          "Dur%": 0.8,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": 0,
           "ToMain%": 1,
           "health": 750,
           "zone_name": "left_tracks"
         }
       ],
-      "health": 3000,
+      "health": 4000,
       "scope_tags": [
         "tank"
       ]
@@ -3449,7 +3449,7 @@
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 3000,
+          "health": 4000,
           "zone_name": "Main"
         },
         {
@@ -3483,36 +3483,36 @@
           "zone_name": "damagezone_left"
         },
         {
-          "AV": 3,
+          "AV": 4,
           "Dur%": 1,
           "ExMult": 0.5,
           "ExTarget": "Part",
           "IsFatal": true,
           "MainCap": 0,
           "ToMain%": 1.5,
-          "health": 750,
+          "health": 1500,
           "zone_name": "damagezone_back"
         },
         {
           "AV": 3,
-          "Dur%": 1,
+          "Dur%": 0.8,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": 0,
           "ToMain%": 1,
           "health": 750,
           "zone_name": "right_tracks"
         },
         {
           "AV": 3,
-          "Dur%": 1,
+          "Dur%": 0.8,
           "ExTarget": "Main",
-          "MainCap": 1,
+          "MainCap": 0,
           "ToMain%": 1,
           "health": 750,
           "zone_name": "left_tracks"
         }
       ],
-      "health": 3000,
+      "health": 4000,
       "scope_tags": [
         "tank"
       ]
@@ -3882,7 +3882,7 @@
           "zone_name": "leg_left"
         },
         {
-          "AV": 4,
+          "AV": 3,
           "Dur%": 0.8,
           "ExTarget": "Main",
           "IsFatal": true,
@@ -5623,16 +5623,16 @@
     "Lightning Spire": {
       "damageable_zones": [
         {
-          "AV": 0,
+          "AV": 2,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 500,
+          "health": 200,
           "zone_name": "Main"
         }
       ],
-      "health": 500,
+      "health": 200,
       "scope_tags": [
         "structure"
       ]
