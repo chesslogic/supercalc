@@ -1119,3 +1119,24 @@ test('checked-in enemydata pins the tracked 1.006.202 enemy-side bespoke stats',
   assert.equal(lightningSpireMain.health, 200);
   assert.equal(lightningSpireMain.AV, 2);
 });
+
+test('checked-in enemydata exposes the manual Spore Burst Bile Titan variant', () => {
+  const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
+  const bileTitan = enemydata.Terminid['Bile Titan'];
+  const bileTitanZoneByName = Object.fromEntries(
+    bileTitan.damageable_zones.map((zone) => [zone.zone_name, zone])
+  );
+  const sporeBurstBileTitan = enemydata.Terminid['Spore Burst Bile Titan'];
+  const sporeBurstZoneByName = Object.fromEntries(
+    sporeBurstBileTitan.damageable_zones.map((zone) => [zone.zone_name, zone])
+  );
+
+  assert.ok(sporeBurstBileTitan);
+  assert.deepEqual(sporeBurstBileTitan.scope_tags, ['giant']);
+  assert.equal(sporeBurstBileTitan.health, 7000);
+  assert.equal(sporeBurstZoneByName.Main.health, 7000);
+  assert.equal(sporeBurstZoneByName.head.health, 2500);
+  assert.equal(bileTitan.health, 6500);
+  assert.equal(bileTitanZoneByName.Main.health, 6500);
+  assert.equal(bileTitanZoneByName.head.health, 1500);
+});

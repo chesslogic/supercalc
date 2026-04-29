@@ -292,7 +292,7 @@ const ENEMY_SCOPE_DEFINITIONS = [
     frontId: 'terminids',
     label: 'Spore Burst Strain',
     summaryLabel: 'Spore Burst Strain',
-    includeNames: ['Spore Burst Hunter', 'Spore Burst Scavenger', 'Spore Burst Warrior']
+    includeNames: ['Spore Burst Bile Titan', 'Spore Burst Hunter', 'Spore Burst Scavenger', 'Spore Burst Warrior']
   },
   {
     id: 'predator-strain',

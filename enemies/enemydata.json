@@ -10048,6 +10048,295 @@
         "objective"
       ]
     },
+    "Spore Burst Bile Titan": {
+      "damageable_zones": [
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 7000,
+          "zone_name": "Main"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_front_leg_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_front_leg_end_top_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_front_leg_end_bottom_armor"
+        },
+        {
+          "AV": 4,
+          "Con": 1500,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 2000,
+          "zone_name": "left_front_leg_flesh"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_front_leg_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_front_leg_end_top_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_front_leg_end_bottom_armor"
+        },
+        {
+          "AV": 4,
+          "Con": 2000,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 2000,
+          "zone_name": "right_front_leg_flesh"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_back_leg_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_back_leg_end_top_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_back_leg_end_bottom_armor"
+        },
+        {
+          "AV": 4,
+          "Con": 2000,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 2000,
+          "zone_name": "left_back_leg_flesh"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_back_leg_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_back_leg_end_top_armor"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_back_leg_end_bottom_armor"
+        },
+        {
+          "AV": 4,
+          "Con": 2000,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 2000,
+          "zone_name": "right_back_leg_flesh"
+        },
+        {
+          "AV": 4,
+          "Dur%": 0.95,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 2500,
+          "zone_name": "head"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1500,
+          "zone_name": "torso_left"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1500,
+          "zone_name": "torso_right"
+        },
+        {
+          "AV": 4,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 3500,
+          "zone_name": "butt_lower"
+        },
+        {
+          "AV": 4,
+          "Dur%": 0,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "left_arm"
+        },
+        {
+          "AV": 4,
+          "Dur%": 0,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 0,
+          "ToMain%": 1,
+          "health": 1000,
+          "zone_name": "right_arm"
+        },
+        {
+          "AV": 2,
+          "Dur%": 0.8,
+          "ExMult": 1,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 0,
+          "ToMain%": 0.6,
+          "health": 4000,
+          "zone_name": "inner_body"
+        },
+        {
+          "AV": 0,
+          "Dur%": 0.7,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": -1,
+          "zone_name": "inner_torso"
+        },
+        {
+          "AV": 0,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 750,
+          "zone_name": "abdomen_outer_flesh"
+        },
+        {
+          "AV": 0,
+          "Dur%": 1,
+          "ExMult": 0.5,
+          "ExTarget": "Part",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 750,
+          "zone_name": "tail_outer_flesh"
+        }
+      ],
+      "health": 7000,
+      "scope_tags": [
+        "giant"
+      ]
+    },
     "Spore Burst Hunter": {
       "damageable_zones": [
         {

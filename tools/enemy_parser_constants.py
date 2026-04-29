@@ -95,6 +95,7 @@ ENEMY_SCOPE_TAG_GROUPS: Dict[str, tuple[str, ...]] = {
     ),
     'giant': (
         'Bile Titan',
+        'Spore Burst Bile Titan',
         'Dragonroach',
         'Factory Strider',
         'Harvester',

@@ -398,17 +398,17 @@ test('overview outcomes toolbar control renders shared labels and toggles select
 test('scope options keep the three base fronts in gameplay order before extras', () => {
   const previousUnits = enemyState.units;
 
-  try {
-    enemyState.units = [
-      { name: 'Predator Hunter', faction: 'Terminid' },
-      { name: 'Rupture Charger', faction: 'Terminid' },
-      { name: 'Spore Burst Scavenger', faction: 'Terminid' },
-      { name: 'Agitator', faction: 'Automaton' },
-      { name: 'Hulk Firebomber', faction: 'Automaton' },
-      { name: 'Overseer', faction: 'Illuminate' },
-      { name: 'Fleshmob', faction: 'Illuminate' },
-      { name: 'Gatekeeper', faction: 'Illuminate' }
-    ];
+    try {
+      enemyState.units = [
+        { name: 'Predator Hunter', faction: 'Terminid' },
+        { name: 'Rupture Charger', faction: 'Terminid' },
+        { name: 'Spore Burst Bile Titan', faction: 'Terminid' },
+        { name: 'Agitator', faction: 'Automaton' },
+        { name: 'Hulk Firebomber', faction: 'Automaton' },
+        { name: 'Overseer', faction: 'Illuminate' },
+        { name: 'Fleshmob', faction: 'Illuminate' },
+        { name: 'Gatekeeper', faction: 'Illuminate' }
+      ];
     assert.deepEqual(getOverviewScopeOptions().map(({ id, label }) => [id, label]), [
       ['all', 'All enemies'],
       ['terminids', 'All Terminids'],
