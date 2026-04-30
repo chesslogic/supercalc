@@ -55,10 +55,27 @@ function createRecommendationFlag(value, label = 'Yes', title = '', inactiveLabe
   return flag;
 }
 
-export function appendRecommendationTableRow(tbody, row, usingFallbackRows = false) {
+export function appendRecommendationTableRow(tbody, row, usingFallbackRows = false, {
+  marginBandKey = '',
+  marginBandLabel = '',
+  marginBandDescription = ''
+} = {}) {
   const tableRow = document.createElement('tr');
+  if (marginBandLabel) {
+    tableRow.classList.add('calc-recommend-band-start');
+    tableRow.classList.add(`is-${marginBandKey || 'overkill'}`);
+    tableRow.dataset.marginBandKey = marginBandKey || 'overkill';
+    tableRow.dataset.marginBandLabel = marginBandLabel;
+    tableRow.dataset.marginBandDescription = marginBandDescription;
+  }
 
-  appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
+  const weaponCell = appendRecommendationCell(tableRow, row.weapon.name, '', row.weapon.name);
+  if (marginBandLabel) {
+    weaponCell.classList.add('calc-recommend-band-start-cell');
+    weaponCell.dataset.marginBandLabel = marginBandLabel;
+    weaponCell.dataset.marginBandKey = marginBandKey || 'overkill';
+    weaponCell.dataset.marginBandDescription = marginBandDescription;
+  }
   const attackCell = appendRecommendationCell(
     tableRow,
     row.attackName,

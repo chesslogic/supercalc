@@ -51,6 +51,7 @@ export { DEFAULT_WEAPON_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_DIR };
 export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'include';
+export const DEFAULT_RECOMMENDATION_HIDE_ORDNANCE = true;
 export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
 export const DEFAULT_RECOMMENDATION_MIN_SHOTS = 1;
 export const DEFAULT_RECOMMENDATION_MAX_SHOTS = 3;
@@ -219,6 +220,7 @@ export const calculatorState = {
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
   recommendationWeaponFilterRoles: [],
+  recommendationHideOrdnance: DEFAULT_RECOMMENDATION_HIDE_ORDNANCE,
   recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
   recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
@@ -717,6 +719,18 @@ export function setRecommendationNoMainViaLimbs(enabled) {
   calculatorState.recommendationNoMainViaLimbs = enabled !== false;
   notifyCalculatorStateChange();
   return calculatorState.recommendationNoMainViaLimbs;
+}
+
+export function setRecommendationHideOrdnance(enabled) {
+  calculatorState.recommendationHideOrdnance = enabled !== false;
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationHideOrdnance;
+}
+
+export function toggleRecommendationHideOrdnance() {
+  calculatorState.recommendationHideOrdnance = !calculatorState.recommendationHideOrdnance;
+  notifyCalculatorStateChange();
+  return calculatorState.recommendationHideOrdnance;
 }
 
 export function toggleRecommendationNoMainViaLimbs() {

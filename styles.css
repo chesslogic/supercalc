@@ -1547,6 +1547,53 @@ tbody tr:hover {
   word-break:break-word;
 }
 
+.calc-recommend-table tbody tr.calc-recommend-band-start td{
+  border-top:2px solid rgba(139, 148, 158, 0.28);
+}
+
+.calc-recommend-table tbody tr.calc-recommend-band-start:first-child td{
+  border-top-color:var(--border);
+}
+
+.calc-recommend-table tbody tr.calc-recommend-band-start.is-tight td{
+  border-top-color:rgba(63, 113, 44, 0.55);
+}
+
+.calc-recommend-table tbody tr.calc-recommend-band-start.is-under-100 td{
+  border-top-color:rgba(255, 220, 0, 0.4);
+}
+
+.calc-recommend-table tbody tr.calc-recommend-band-start.is-overkill td{
+  border-top-color:rgba(255, 154, 60, 0.45);
+}
+
+.calc-recommend-table tbody td.calc-recommend-band-start-cell{
+  padding-top:8px;
+}
+
+.calc-recommend-table tbody td.calc-recommend-band-start-cell::before{
+  content:attr(data-margin-band-label);
+  display:block;
+  margin-bottom:4px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.calc-recommend-table tbody td.calc-recommend-band-start-cell[data-margin-band-key="tight"]::before{
+  color:var(--accent-2);
+}
+
+.calc-recommend-table tbody td.calc-recommend-band-start-cell[data-margin-band-key="under-100"]::before{
+  color:var(--accent);
+}
+
+.calc-recommend-table tbody td.calc-recommend-band-start-cell[data-margin-band-key="overkill"]::before{
+  color:var(--orange);
+}
+
 @media (min-width: 1400px){
   .calc-recommend-attack-cell{
     max-width:36ch;

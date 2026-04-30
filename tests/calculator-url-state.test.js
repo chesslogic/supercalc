@@ -32,22 +32,23 @@ const {
   applyEnemyFilterState
 } = enemyFiltersModule;
 const {
-    calculatorState,
-    RECOMMENDATION_MAX_SHOTS_ANY,
-    DEFAULT_OVERVIEW_OUTCOME_KINDS,
-    getSelectedOverviewOutcomeKinds,
-    setAttackHitCounts,
-    setCalculatorMode,
-    setCalculatorStateChangeListener,
-    setCompareHeaderLayout,
-    setCompareView,
-    setDiffDisplayMode,
-    setEnemyDropdownSortDir,
-    setEnemyDropdownSortMode,
+  calculatorState,
+  RECOMMENDATION_MAX_SHOTS_ANY,
+  DEFAULT_OVERVIEW_OUTCOME_KINDS,
+  getSelectedOverviewOutcomeKinds,
+  setAttackHitCounts,
+  setCalculatorMode,
+  setCalculatorStateChangeListener,
+  setCompareHeaderLayout,
+  setCompareView,
+  setDiffDisplayMode,
+  setEnemyDropdownSortDir,
+  setEnemyDropdownSortMode,
   setEnemySortState,
   setEnemyTableMode,
   setEngagementRangeMeters,
   setOverviewScope,
+  setRecommendationHideOrdnance,
   setRecommendationNoMainViaLimbs,
   setRecommendationMinShots,
   setRecommendationMaxShots,
@@ -179,6 +180,7 @@ function snapshotCalculatorState() {
     recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
     recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
     recommendationWeaponFilterRoles: [...calculatorState.recommendationWeaponFilterRoles],
+    recommendationHideOrdnance: calculatorState.recommendationHideOrdnance,
     recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
     recommendationMinShots: calculatorState.recommendationMinShots,
     recommendationMaxShots: calculatorState.recommendationMaxShots,
@@ -217,6 +219,7 @@ function restoreCalculatorState(snapshot) {
   calculatorState.recommendationWeaponFilterSubs = [...snapshot.recommendationWeaponFilterSubs];
   calculatorState.recommendationWeaponFilterGroups = [...snapshot.recommendationWeaponFilterGroups];
   calculatorState.recommendationWeaponFilterRoles = [...snapshot.recommendationWeaponFilterRoles];
+  calculatorState.recommendationHideOrdnance = snapshot.recommendationHideOrdnance;
   calculatorState.recommendationNoMainViaLimbs = snapshot.recommendationNoMainViaLimbs;
   calculatorState.recommendationMinShots = snapshot.recommendationMinShots;
   calculatorState.recommendationMaxShots = snapshot.recommendationMaxShots;
@@ -822,6 +825,26 @@ test('encodeUrlState and hydrateUrlState round-trip the no-main-via-limbs prefer
   assert.equal(calculatorState.recommendationNoMainViaLimbs, false);
 }));
 
+test('encodeUrlState and hydrateUrlState round-trip the hide-ordnance preference', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationHideOrdnance(false);
+
+  const params = encodeUrlState({ activeTab: 'calculator' });
+  assert.equal(params.get('crho'), 'false');
+
+  setRecommendationHideOrdnance(true);
+  hydrateUrlState(params);
+
+  assert.equal(calculatorState.recommendationHideOrdnance, false);
+}));
+
+test('hydrateUrlState resets the hide-ordnance preference to default when param absent', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationHideOrdnance(false);
+
+  hydrateUrlState(new URLSearchParams({}));
+
+  assert.equal(calculatorState.recommendationHideOrdnance, true);
+}));
+
 // ===========================================================================
 // Enemy target types
 // ===========================================================================
@@ -905,12 +928,13 @@ test('buildUrlStateSnapshot calculator section has all expected keys', { concurr
     'enemyDropdownSortDir', 'enemyTableMode', 'overviewScope', 'enemyTargetTypes',
     'diffDisplayMode', 'overviewOutcomeKinds', 'engagementRangeMetersA', 'engagementRangeMetersB',
     'weaponA', 'weaponB', 'selectedEnemy', 'selectedZoneIndex',
-    'selectedExplosiveZoneIndices', 'recommendationWeaponFilterMode',
-    'recommendationWeaponFilterTypes', 'recommendationWeaponFilterSubs',
-    'recommendationWeaponFilterGroups', 'recommendationWeaponFilterRoles',
-    'recommendationNoMainViaLimbs',
-    'recommendationMinShots', 'recommendationMaxShots',
-    'selectedAttackKeysA', 'selectedAttackKeysB',
+     'selectedExplosiveZoneIndices', 'recommendationWeaponFilterMode',
+     'recommendationWeaponFilterTypes', 'recommendationWeaponFilterSubs',
+     'recommendationWeaponFilterGroups', 'recommendationWeaponFilterRoles',
+     'recommendationHideOrdnance',
+     'recommendationNoMainViaLimbs',
+     'recommendationMinShots', 'recommendationMaxShots',
+     'selectedAttackKeysA', 'selectedAttackKeysB',
     'attackHitCountsA', 'attackHitCountsB', 'enemySort'
   ];
 

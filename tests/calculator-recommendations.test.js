@@ -7,6 +7,10 @@ import {
   buildWeaponRecommendationRows,
   normalizeRecommendationRangeMeters
 } from '../calculator/recommendations.js';
+import {
+  getRecommendationMarginBand,
+  groupRecommendationRowsByMarginBand
+} from '../calculator/recommendations/shared.js';
 import { getEnemyTacticalInfoChips, getEnemyWeakspotBundles } from '../calculator/tactical-data.js';
 import {
   calculateMaxDistanceForDamageFloor,
@@ -1279,6 +1283,48 @@ test('buildWeaponRecommendationRows keeps nearMissDisplayPercent null for long m
   assert.equal(rows[0].displayMarginPercent, 18, 'display margin should still be available for longer multi-shot rows');
   assert.equal(rows[0].nearMissPercent, null, 'no near miss for long spray');
   assert.equal(rows[0].nearMissDisplayPercent, null, 'nearMissDisplayPercent must remain null for long sprays');
+});
+
+test('groupRecommendationRowsByMarginBand prefers tight fits and leaves suppressed Margin rows for last', () => {
+  const rows = [
+    {
+      weapon: { name: 'Heavy One-Shot' },
+      marginRatio: 1.5,
+      displayMarginRatio: 1.5,
+      suppressesMargin: false
+    },
+    {
+      weapon: { name: 'Tight Multi-Shot' },
+      marginRatio: null,
+      displayMarginRatio: 0.3,
+      suppressesMargin: false
+    },
+    {
+      weapon: { name: 'Comfortable Multi-Shot' },
+      marginRatio: null,
+      displayMarginRatio: 0.6,
+      suppressesMargin: false
+    },
+    {
+      weapon: { name: 'Beam Sweep' },
+      marginRatio: null,
+      displayMarginRatio: null,
+      suppressesMargin: true
+    }
+  ];
+
+  assert.equal(getRecommendationMarginBand(rows[0]), 'overkill');
+  assert.equal(getRecommendationMarginBand(rows[1]), 'tight');
+  assert.equal(getRecommendationMarginBand(rows[2]), 'under-100');
+  assert.equal(getRecommendationMarginBand(rows[3]), 'overkill');
+
+  const grouped = groupRecommendationRowsByMarginBand(rows);
+
+  assert.deepEqual(grouped.map((band) => band.key), ['tight', 'under-100', 'overkill']);
+  assert.deepEqual(
+    grouped.flatMap((band) => band.rows.map((row) => row.weapon.name)),
+    ['Tight Multi-Shot', 'Comfortable Multi-Shot', 'Heavy One-Shot', 'Beam Sweep']
+  );
 });
 
 // ===========================================================================

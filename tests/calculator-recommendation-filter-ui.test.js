@@ -1,7 +1,7 @@
 // Filter UI tests: verifies chip ordering, chip toggle state, shot-range
-// sliders (including Max: Any), pagination controls, the
-// no-main-via-limbs preference chip, the browser-like children collection
-// compatibility, and role chip data attributes.
+// sliders (including Max: Any), pagination controls, the recommendation
+// preference chips, the browser-like children collection compatibility, and
+// role chip data attributes.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -83,6 +83,28 @@ function getShotRangeControls(container) {
         ).map((element) => element.textContent)
       : []
   };
+}
+
+function getRecommendationTableRows(section) {
+  const table = collectElements(section, (element) => element.tagName === 'TABLE')[0];
+  return table
+    ? collectElements(table, (element) => element.tagName === 'TR').slice(1)
+    : [];
+}
+
+function getRenderedRecommendationWeaponNames(section) {
+  return getRecommendationTableRows(section)
+    .map((row) => collectElements(row, (element) => element.tagName === 'TD')[0]?.textContent);
+}
+
+function getRecommendationMarginBandStarts(section) {
+  return getRecommendationTableRows(section)
+    .filter((row) => row.classList.contains('calc-recommend-band-start'))
+    .map((row) => ({
+      key: row.dataset.marginBandKey || '',
+      label: row.dataset.marginBandLabel || '',
+      weapon: collectElements(row, (element) => element.tagName === 'TD')[0]?.textContent || ''
+    }));
 }
 
 test('renderRecommendationPanel surfaces the shared filter controls with targeted recommendations when a target is selected', () => {
@@ -468,11 +490,13 @@ test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousHideOrdnance = calculatorState.recommendationHideOrdnance;
   const previousNoMainViaLimbs = calculatorState.recommendationNoMainViaLimbs;
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationHideOrdnance = false;
     calculatorState.recommendationNoMainViaLimbs = true;
     weaponsState.groups = [
       makeWeapon('Liberator', {
@@ -509,7 +533,58 @@ test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationHideOrdnance = previousHideOrdnance;
     calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel exposes a hide-ordnance preference chip that toggles calculator state', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousHideOrdnance = calculatorState.recommendationHideOrdnance;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationHideOrdnance = true;
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Ordnance Preference Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const preferenceRow = getChipRowByLabel(container, 'Preference');
+    const preferenceChip = preferenceRow
+      ? collectElements(preferenceRow, (element) => element.tagName === 'BUTTON')
+        .find((button) => button.textContent === 'Hide ordnance')
+      : null;
+
+    assert.ok(preferenceChip);
+    assert.ok(preferenceChip.classList.contains('active'));
+    assert.match(preferenceChip.title, /unreliable projectile placement/i);
+    assert.equal(typeof preferenceChip.listeners.get('click'), 'function');
+
+    preferenceChip.listeners.get('click')();
+
+    assert.equal(calculatorState.recommendationHideOrdnance, false);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationHideOrdnance = previousHideOrdnance;
     weaponsState.groups = previousGroups;
   }
 });
@@ -526,13 +601,6 @@ test('renderRecommendationPanel Margin header toggles strict-margin sorting and 
     zones: [
       makeZone('Main', { health: 300, isFatal: true, av: 1, toMainPercent: 1 })
     ]
-  };
-  const getRenderedWeaponNames = (section) => {
-    const table = collectElements(section, (element) => element.tagName === 'TABLE')[0];
-    const rows = table
-      ? collectElements(table, (element) => element.tagName === 'TR').slice(1)
-      : [];
-    return rows.map((row) => collectElements(row, (element) => element.tagName === 'TD')[0]?.textContent);
   };
 
   try {
@@ -562,7 +630,7 @@ test('renderRecommendationPanel Margin header toggles strict-margin sorting and 
     ))[0];
 
     assert.ok(marginButton);
-    assert.deepEqual(getRenderedWeaponNames(targetedSection), ['Support One-Shot', 'Primary Three-Shot']);
+    assert.deepEqual(getRenderedRecommendationWeaponNames(targetedSection), ['Support One-Shot', 'Primary Three-Shot']);
     assert.ok(!marginButton.classList.contains('is-active'));
     assert.match(marginButton.title, /sort recommendations by the strictest Margin first/i);
 
@@ -581,7 +649,7 @@ test('renderRecommendationPanel Margin header toggles strict-margin sorting and 
       element.tagName === 'BUTTON' && element.classList.contains('calc-recommend-sort-button')
     ))[0];
 
-    assert.deepEqual(getRenderedWeaponNames(strictTargetedSection), ['Primary Three-Shot', 'Support One-Shot']);
+    assert.deepEqual(getRenderedRecommendationWeaponNames(strictTargetedSection), ['Primary Three-Shot', 'Support One-Shot']);
     assert.ok(strictMarginButton.classList.contains('is-active'));
     assert.match(strictMarginButton.title, /strict Margin sorting is active/i);
 
@@ -609,13 +677,6 @@ test('renderRecommendationPanel keeps overall strict-margin ordering ascending f
     zones: [
       makeZone('Main', { health: 300, isFatal: true, av: 1, toMainPercent: 1 })
     ]
-  };
-  const getRenderedWeaponNames = (section) => {
-    const table = collectElements(section, (element) => element.tagName === 'TABLE')[0];
-    const rows = table
-      ? collectElements(table, (element) => element.tagName === 'TR').slice(1)
-      : [];
-    return rows.map((row) => collectElements(row, (element) => element.tagName === 'TD')[0]?.textContent);
   };
 
   try {
@@ -650,8 +711,138 @@ test('renderRecommendationPanel keeps overall strict-margin ordering ascending f
 
     assert.ok(overallSection);
     assert.deepEqual(
-      getRenderedWeaponNames(overallSection).slice(0, 4),
+      getRenderedRecommendationWeaponNames(overallSection).slice(0, 4),
       ['Three 3%', 'Two 5%', 'Three 40%', 'Two 60%']
+    );
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationSortMode = previousSortMode;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel groups targeted and overall recommendations into margin bands', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousSortMode = calculatorState.recommendationSortMode;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 0;
+    calculatorState.recommendationSortMode = 'default';
+    weaponsState.groups = [
+      makeWeapon('Heavy One-Shot', {
+        index: 0,
+        rows: [makeAttackRow('Heavy One-Shot', 500, 2)]
+      }),
+      makeWeapon('Tight Two-Shot', {
+        index: 1,
+        rows: [makeAttackRow('Tight Two-Shot', 105, 2)]
+      }),
+      makeWeapon('Roomy Two-Shot', {
+        index: 2,
+        rows: [makeAttackRow('Roomy Two-Shot', 160, 2)]
+      })
+    ];
+
+    const enemy = {
+      name: 'Margin Band Dummy',
+      health: 200,
+      zones: [
+        makeZone('Main', { health: 200, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    };
+    const container = renderPanelForTest(enemy);
+    const targetedSection = getRecommendationSection(container, 'Main targeted recommendations');
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+    const expectedOrder = ['Tight Two-Shot', 'Roomy Two-Shot', 'Heavy One-Shot'];
+    const expectedBandStarts = [
+      { key: 'tight', label: 'Tight fits (+30% or less)', weapon: 'Tight Two-Shot' },
+      { key: 'under-100', label: 'Fits under +100%', weapon: 'Roomy Two-Shot' },
+      { key: 'overkill', label: 'Heavy overkill / hidden margin', weapon: 'Heavy One-Shot' }
+    ];
+
+    assert.deepEqual(getRenderedRecommendationWeaponNames(targetedSection), expectedOrder);
+    assert.deepEqual(getRenderedRecommendationWeaponNames(overallSection), expectedOrder);
+    assert.deepEqual(getRecommendationMarginBandStarts(targetedSection), expectedBandStarts);
+    assert.deepEqual(getRecommendationMarginBandStarts(overallSection), expectedBandStarts);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationSortMode = previousSortMode;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel groups related routes into the same margin bands', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousSortMode = calculatorState.recommendationSortMode;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = 1;
+    calculatorState.recommendationSortMode = 'default';
+    weaponsState.groups = [
+      makeWeapon('Heavy Route', {
+        index: 0,
+        rpm: 60,
+        rows: [makeAttackRow('Heavy Route', 250, 4)]
+      }),
+      makeWeapon('Tight Route', {
+        index: 1,
+        rpm: 60,
+        rows: [makeAttackRow('Tight Route', 55, 4)]
+      }),
+      makeWeapon('Roomy Route', {
+        index: 2,
+        rpm: 60,
+        rows: [makeAttackRow('Roomy Route', 90, 4)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Related Margin Dummy',
+      health: 600,
+      zoneRelationGroups: [
+        {
+          id: 'left-arm',
+          label: 'Left arm',
+          zoneNames: ['shoulderplate_left', 'left_arm'],
+          mirrorGroupIds: ['right-arm'],
+          priorityTargetZoneNames: ['left_arm']
+        },
+        {
+          id: 'right-arm',
+          label: 'Right arm',
+          zoneNames: ['shoulderplate_right', 'right_arm'],
+          mirrorGroupIds: ['left-arm'],
+          priorityTargetZoneNames: ['right_arm']
+        }
+      ],
+      zones: [
+        makeZone('head', { health: 220, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('shoulderplate_left', { health: 150, av: 4, toMainPercent: 0 }),
+        makeZone('left_arm', { health: 100, isFatal: true, av: 1, toMainPercent: 1 }),
+        makeZone('right_arm', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+    const relatedSection = getRecommendationSection(container, 'shoulderplate_left related routes');
+
+    assert.deepEqual(
+      getRenderedRecommendationWeaponNames(relatedSection),
+      ['Tight Route', 'Roomy Route', 'Heavy Route']
+    );
+    assert.deepEqual(
+      getRecommendationMarginBandStarts(relatedSection),
+      [
+        { key: 'tight', label: 'Tight fits (+30% or less)', weapon: 'Tight Route' },
+        { key: 'under-100', label: 'Fits under +100%', weapon: 'Roomy Route' },
+        { key: 'overkill', label: 'Heavy overkill / hidden margin', weapon: 'Heavy Route' }
+      ]
     );
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;

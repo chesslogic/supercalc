@@ -10,6 +10,26 @@ export const RECOMMENDATION_IMPLICIT_REPEAT_HITS = 2;
 export const RECOMMENDATION_NEAR_MISS_MAX_SHOTS = 3;
 export const RECOMMENDATION_PERIPHERAL_MAIN_TOMAIN_THRESHOLD = 0.5;
 export const DEFAULT_RECOMMENDATION_SORT_MODE = 'default';
+export const RECOMMENDATION_TIGHT_FIT_RATIO_THRESHOLD = 0.3;
+export const RECOMMENDATION_COMFORTABLE_FIT_RATIO_THRESHOLD = 1;
+
+export const RECOMMENDATION_MARGIN_BAND_DEFINITIONS = [
+  {
+    key: 'tight',
+    label: `Tight fits (+${Math.round(RECOMMENDATION_TIGHT_FIT_RATIO_THRESHOLD * 100)}% or less)`,
+    description: `Rows whose one-shot margin or displayed multi-shot fit stays within +${Math.round(RECOMMENDATION_TIGHT_FIT_RATIO_THRESHOLD * 100)}% extra damage.`
+  },
+  {
+    key: 'under-100',
+    label: `Fits under +${Math.round(RECOMMENDATION_COMFORTABLE_FIT_RATIO_THRESHOLD * 100)}%`,
+    description: `Rows whose one-shot margin or displayed multi-shot fit stays under +${Math.round(RECOMMENDATION_COMFORTABLE_FIT_RATIO_THRESHOLD * 100)}% extra damage but miss the tight-fit band.`
+  },
+  {
+    key: 'overkill',
+    label: 'Heavy overkill / hidden margin',
+    description: 'Rows with +100% or more extra damage, suppressed Margin display, or no finite fit ratio.'
+  }
+];
 
 export const RANGE_STATUS_ORDER = {
   qualified: 0,
@@ -81,6 +101,44 @@ export function getRecommendationFitRatio(recommendation) {
   }
 
   return recommendation?.displayMarginRatio ?? null;
+}
+
+export function getRecommendationMarginBand(recommendation) {
+  if (recommendation?.suppressesMargin) {
+    return 'overkill';
+  }
+
+  const fitRatio = getRecommendationFitRatio(recommendation);
+  if (!Number.isFinite(fitRatio)) {
+    return 'overkill';
+  }
+
+  if (fitRatio <= RECOMMENDATION_TIGHT_FIT_RATIO_THRESHOLD) {
+    return 'tight';
+  }
+
+  return fitRatio < RECOMMENDATION_COMFORTABLE_FIT_RATIO_THRESHOLD
+    ? 'under-100'
+    : 'overkill';
+}
+
+export function groupRecommendationRowsByMarginBand(rows = []) {
+  const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  const groupedRows = new Map(
+    RECOMMENDATION_MARGIN_BAND_DEFINITIONS.map((band) => [band.key, []])
+  );
+
+  sourceRows.forEach((row) => {
+    const bandKey = getRecommendationMarginBand(row);
+    groupedRows.get(bandKey)?.push(row);
+  });
+
+  return RECOMMENDATION_MARGIN_BAND_DEFINITIONS
+    .map((band) => ({
+      ...band,
+      rows: groupedRows.get(band.key) || []
+    }))
+    .filter((band) => band.rows.length > 0);
 }
 
 export function compareRecommendationFit(left, right) {

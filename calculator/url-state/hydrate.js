@@ -10,6 +10,7 @@ import {
   setEnemyTableMode,
   setEngagementRangeMeters,
   setOverviewScope,
+  setRecommendationHideOrdnance,
   setRecommendationNoMainViaLimbs,
   setRecommendationShotRange,
   setRecommendationWeaponFilterGroups,
@@ -184,6 +185,12 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
     params.has(URL_PARAM_KEYS.recommendationWeaponFilterRoles)
       ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles).value, { lowercase: true })
       : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterRoles
+  );
+  setRecommendationHideOrdnance(
+    normalizeBooleanParam(
+      params.get(URL_PARAM_KEYS.recommendationHideOrdnance),
+      DEFAULT_CALCULATOR_URL_STATE.recommendationHideOrdnance
+    )
   );
   setRecommendationNoMainViaLimbs(
     normalizeBooleanParam(

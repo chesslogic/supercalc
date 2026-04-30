@@ -2,6 +2,7 @@ import {
   DEFAULT_RECOMMENDATION_SORT_MODE,
   STRICT_MARGIN_RECOMMENDATION_SORT_MODE
 } from '../data.js';
+import { groupRecommendationRowsByMarginBand } from '../recommendations/shared.js';
 import { RECOMMENDATION_HEADER_DEFINITIONS } from './recommendation-constants.js';
 import { appendRecommendationTableRow } from './recommendation-row.js';
 
@@ -11,19 +12,45 @@ function getRecommendationMarginSortTitle(sortMode = DEFAULT_RECOMMENDATION_SORT
     : 'Click to sort recommendations by the strictest Margin first. Beam rows skip Margin headroom because continuous-contact tick headroom is suppressed. Click again to return to the default recommendation ranking.';
 }
 
+function buildRecommendationDisplayEntries(rows = [], {
+  showMarginBands = true
+} = {}) {
+  const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  if (!showMarginBands) {
+    return sourceRows.map((row) => ({ row }));
+  }
+
+  return groupRecommendationRowsByMarginBand(sourceRows).flatMap((band) => (
+    band.rows.map((row, index) => ({
+      row,
+      marginBandKey: band.key,
+      marginBandLabel: index === 0 ? band.label : '',
+      marginBandDescription: index === 0 ? band.description : ''
+    }))
+  ));
+}
+
+function appendRecommendationDisplayEntry(tbody, entry, usingFallbackRows = false) {
+  if (!entry?.row) {
+    return;
+  }
+
+  appendRecommendationTableRow(tbody, entry.row, usingFallbackRows, entry);
+}
+
 function renderRecommendationTable({
   body,
-  rows,
+  displayEntries,
   usingFallbackRows = false,
   visibleCount = null,
   headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS,
   sortMode = DEFAULT_RECOMMENDATION_SORT_MODE,
   onToggleMarginSort = null
 }) {
-  const sourceRows = Array.isArray(rows) ? rows : [];
+  const sourceEntries = Array.isArray(displayEntries) ? displayEntries : [];
   const normalizedVisibleCount = Number.isFinite(visibleCount)
     ? Math.max(0, Math.trunc(visibleCount))
-    : sourceRows.length;
+    : sourceEntries.length;
   const tableWrap = document.createElement('div');
   tableWrap.className = 'calc-recommend-table-wrap';
 
@@ -68,8 +95,8 @@ function renderRecommendationTable({
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  sourceRows.slice(0, normalizedVisibleCount).forEach((row) => {
-    appendRecommendationTableRow(tbody, row, usingFallbackRows);
+  sourceEntries.slice(0, normalizedVisibleCount).forEach((entry) => {
+    appendRecommendationDisplayEntry(tbody, entry, usingFallbackRows);
   });
 
   table.appendChild(tbody);
@@ -78,7 +105,7 @@ function renderRecommendationTable({
 
   return {
     tbody,
-    renderedCount: Math.min(normalizedVisibleCount, sourceRows.length)
+    renderedCount: Math.min(normalizedVisibleCount, sourceEntries.length)
   };
 }
 
@@ -112,7 +139,8 @@ export function renderRecommendationSubsection({
   displayStep = null,
   headerDefinitions = RECOMMENDATION_HEADER_DEFINITIONS,
   sortMode = DEFAULT_RECOMMENDATION_SORT_MODE,
-  onToggleMarginSort = null
+  onToggleMarginSort = null,
+  showMarginBands = true
 }) {
   const section = document.createElement('section');
   section.className = 'calc-recommend-section';
@@ -136,15 +164,18 @@ export function renderRecommendationSubsection({
     section.appendChild(controls);
   }
 
-  const sourceRows = Array.isArray(rows) ? rows : [];
+  const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  const displayEntries = buildRecommendationDisplayEntries(sourceRows, {
+    showMarginBands
+  });
   const normalizedDisplayStep = Number.isFinite(displayStep)
     ? Math.max(1, Math.trunc(displayStep))
     : 0;
   const initialVisibleCount = normalizedDisplayStep > 0
-    ? Math.min(sourceRows.length, normalizedDisplayStep)
-    : sourceRows.length;
+    ? Math.min(displayEntries.length, normalizedDisplayStep)
+    : displayEntries.length;
 
-  if (sourceRows.length === 0) {
+  if (displayEntries.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.className = 'muted';
     emptyState.textContent = emptyStateText;
@@ -183,9 +214,9 @@ export function renderRecommendationSubsection({
       moreButton.type = 'button';
       moreButton.className = 'button calc-recommend-more-button';
       moreButton.addEventListener('click', () => {
-        const nextCount = Math.min(sourceRows.length, renderedCount + normalizedDisplayStep);
-        sourceRows.slice(renderedCount, nextCount).forEach((row) => {
-          appendRecommendationTableRow(tbody, row, usingFallbackRows);
+        const nextCount = Math.min(displayEntries.length, renderedCount + normalizedDisplayStep);
+        displayEntries.slice(renderedCount, nextCount).forEach((entry) => {
+          appendRecommendationDisplayEntry(tbody, entry, usingFallbackRows);
         });
         renderedCount = nextCount;
         updatePaginationControls();
@@ -196,7 +227,7 @@ export function renderRecommendationSubsection({
 
     const tableRender = renderRecommendationTable({
       body: section,
-      rows: sourceRows,
+      displayEntries,
       usingFallbackRows,
       visibleCount: initialVisibleCount,
       headerDefinitions,

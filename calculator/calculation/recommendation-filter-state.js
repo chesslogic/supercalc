@@ -71,7 +71,20 @@ export function hasActiveRecommendationWeaponFilters() {
     || calculatorState.recommendationWeaponFilterRoles.length > 0;
 }
 
+function shouldHideRecommendationWeaponByPreference(weapon) {
+  return calculatorState.recommendationHideOrdnance
+    && getWeaponRoleId(weapon) === 'ordnance';
+}
+
+function hasOrdnanceRecommendationWeapons(weapons = []) {
+  return (Array.isArray(weapons) ? weapons : []).some((weapon) => getWeaponRoleId(weapon) === 'ordnance');
+}
+
 function doesWeaponMatchRecommendationFilters(weapon) {
+  if (shouldHideRecommendationWeaponByPreference(weapon)) {
+    return false;
+  }
+
   const hasTypeFilters = calculatorState.recommendationWeaponFilterTypes.length > 0;
   const hasSubFilters = calculatorState.recommendationWeaponFilterSubs.length > 0;
   const hasGroupFilters = calculatorState.recommendationWeaponFilterGroups.length > 0;
@@ -106,34 +119,41 @@ export function getFilteredRecommendationWeapons(weapons = []) {
   return (Array.isArray(weapons) ? weapons : []).filter((weapon) => doesWeaponMatchRecommendationFilters(weapon));
 }
 
-export function getRecommendationWeaponFilterSummaryText() {
-  if (!hasActiveRecommendationWeaponFilters()) {
-    return '';
+export function getRecommendationWeaponFilterSummaryText(weapons = []) {
+  const summaryParts = [];
+
+  if (hasActiveRecommendationWeaponFilters()) {
+    const typeLabels = calculatorState.recommendationWeaponFilterTypes
+      .map((type) => getRecommendationFilterChipLabel(type, 'type'))
+      .filter(Boolean);
+    const groupLabels = calculatorState.recommendationWeaponFilterGroups
+      .map((groupId) => RECOMMENDATION_FEATURE_GROUPS.find((group) => group.id === groupId)?.label)
+      .filter(Boolean);
+    const roleLabels = calculatorState.recommendationWeaponFilterRoles
+      .map((roleId) => getWeaponRoleLabel(roleId))
+      .filter(Boolean);
+    const subLabels = calculatorState.recommendationWeaponFilterSubs
+      .map((sub) => getWeaponSubLabel(sub))
+      .filter(Boolean);
+    const clauses = [
+      typeLabels.length > 0 ? `Type: ${typeLabels.join(' or ')}` : '',
+      roleLabels.length > 0 ? `Role: ${roleLabels.join(' or ')}` : '',
+      groupLabels.length > 0 ? `Feature: ${groupLabels.join(' or ')}` : '',
+      subLabels.length > 0 ? `Sub: ${subLabels.join(' or ')}` : ''
+    ].filter(Boolean);
+
+    if (clauses.length > 0) {
+      summaryParts.push(
+        calculatorState.recommendationWeaponFilterMode === 'include'
+          ? ` Weapon filters: showing only matches for ${clauses.join(' and ')}.`
+          : ` Weapon filters: hiding matches for ${clauses.join(' and ')}.`
+      );
+    }
   }
 
-  const typeLabels = calculatorState.recommendationWeaponFilterTypes
-    .map((type) => getRecommendationFilterChipLabel(type, 'type'))
-    .filter(Boolean);
-  const groupLabels = calculatorState.recommendationWeaponFilterGroups
-    .map((groupId) => RECOMMENDATION_FEATURE_GROUPS.find((group) => group.id === groupId)?.label)
-    .filter(Boolean);
-  const roleLabels = calculatorState.recommendationWeaponFilterRoles
-    .map((roleId) => getWeaponRoleLabel(roleId))
-    .filter(Boolean);
-  const subLabels = calculatorState.recommendationWeaponFilterSubs
-    .map((sub) => getWeaponSubLabel(sub))
-    .filter(Boolean);
-  const clauses = [
-    typeLabels.length > 0 ? `Type: ${typeLabels.join(' or ')}` : '',
-    roleLabels.length > 0 ? `Role: ${roleLabels.join(' or ')}` : '',
-    groupLabels.length > 0 ? `Feature: ${groupLabels.join(' or ')}` : '',
-    subLabels.length > 0 ? `Sub: ${subLabels.join(' or ')}` : ''
-  ].filter(Boolean);
-  if (clauses.length === 0) {
-    return '';
+  if (calculatorState.recommendationHideOrdnance && hasOrdnanceRecommendationWeapons(weapons)) {
+    summaryParts.push(' Preference: hiding ordnance recommendations by default.');
   }
 
-  return calculatorState.recommendationWeaponFilterMode === 'include'
-    ? ` Weapon filters: showing only matches for ${clauses.join(' and ')}.`
-    : ` Weapon filters: hiding matches for ${clauses.join(' and ')}.`;
+  return summaryParts.join('');
 }

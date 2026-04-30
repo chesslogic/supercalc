@@ -221,7 +221,7 @@ export function renderRecommendationPanel(container, enemy, {
     : { rows: [], supplementedCoreTypes: [] };
   const initialOverallRows = displayRows.slice(0, RECOMMENDATION_DISPLAY_LIMIT);
   const hasActiveWeaponFilters = hasActiveRecommendationWeaponFilters();
-  const sharedRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText();
+  const sharedRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText(weaponsState.groups);
   const sharedRecommendationFilterControls = renderRecommendationWeaponFilterControls(weaponsState.groups, {
     onRefresh
   });
@@ -318,7 +318,8 @@ export function renderRecommendationPanel(container, enemy, {
       summaryText: `Close misses where the final shot would overkill by more than the remaining health before that shot (${recommendationRangeSummary}). Limited to ${RECOMMENDATION_NEAR_MISS_MAX_SHOTS}-shot rows so long automatic strings stay out.`,
       rows: nearMissRows,
       displayStep: NEAR_MISS_RECOMMENDATION_DISPLAY_LIMIT,
-      headerDefinitions: NEAR_MISS_HEADER_DEFINITIONS
+      headerDefinitions: NEAR_MISS_HEADER_DEFINITIONS,
+      showMarginBands: false
     });
   }
   panel.appendChild(body);
