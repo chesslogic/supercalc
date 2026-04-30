@@ -10,7 +10,6 @@ import {
   setRecommendationMaxShots,
   setRecommendationWeaponFilterMode,
   setSelectedZoneIndex,
-  toggleRecommendationHideOrdnance,
   toggleRecommendationNoMainViaLimbs,
   toggleRecommendationWeaponFilterGroup,
   toggleRecommendationWeaponFilterRole,
@@ -242,13 +241,6 @@ export function renderRecommendationWeaponFilterControls(weapons = [], {
   wrapper.appendChild(createFilterChipRow({
     label: 'Preference',
     children: [
-      createRecommendationFilterChip({
-        label: 'Hide ordnance',
-        active: calculatorState.recommendationHideOrdnance,
-        title: 'Hide ordnance recommendations by default because many of their kills rely on unreliable projectile placement. Toggle this off to include ordnance again.',
-        onClick: () => toggleRecommendationHideOrdnance(),
-        onRefresh
-      }),
       createRecommendationFilterChip({
         label: 'No main via limbs',
         active: calculatorState.recommendationNoMainViaLimbs,

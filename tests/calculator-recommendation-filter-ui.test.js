@@ -1,6 +1,6 @@
 // Filter UI tests: verifies chip ordering, chip toggle state, shot-range
 // sliders (including Max: Any), pagination controls, the recommendation
-// preference chips, the browser-like children collection compatibility, and
+// preference chip, the browser-like children collection compatibility, and
 // role chip data attributes.
 
 import test from 'node:test';
@@ -23,6 +23,7 @@ import {
 
 const {
   calculatorState,
+  DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES,
   RECOMMENDATION_MAX_SHOTS_ANY
 } = await import('../calculator/data.js');
 const { renderRecommendationPanel } = await import('../calculator/calculation.js');
@@ -341,7 +342,7 @@ test('renderRecommendationPanel shows role chips in taxonomy order', () => {
     calculatorState.selectedZoneIndex = null;
     calculatorState.recommendationWeaponFilterMode = 'exclude';
     calculatorState.recommendationWeaponFilterTypes = [];
-    calculatorState.recommendationWeaponFilterRoles = [];
+    calculatorState.recommendationWeaponFilterRoles = [...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -446,7 +447,7 @@ test('renderRecommendationPanel handles browser-like role-row children collectio
     calculatorState.selectedZoneIndex = null;
     calculatorState.recommendationWeaponFilterMode = 'exclude';
     calculatorState.recommendationWeaponFilterTypes = [];
-    calculatorState.recommendationWeaponFilterRoles = [];
+    calculatorState.recommendationWeaponFilterRoles = [...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -490,13 +491,11 @@ test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
-  const previousHideOrdnance = calculatorState.recommendationHideOrdnance;
   const previousNoMainViaLimbs = calculatorState.recommendationNoMainViaLimbs;
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
-    calculatorState.recommendationHideOrdnance = false;
     calculatorState.recommendationNoMainViaLimbs = true;
     weaponsState.groups = [
       makeWeapon('Liberator', {
@@ -533,22 +532,21 @@ test('renderRecommendationPanel exposes a no-main-via-limbs preference chip that
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
-    calculatorState.recommendationHideOrdnance = previousHideOrdnance;
     calculatorState.recommendationNoMainViaLimbs = previousNoMainViaLimbs;
     weaponsState.groups = previousGroups;
   }
 });
 
-test('renderRecommendationPanel exposes a hide-ordnance preference chip that toggles calculator state', () => {
+test('renderRecommendationPanel defaults role chips to all non-ordnance roles and hides Clear', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
-  const previousHideOrdnance = calculatorState.recommendationHideOrdnance;
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
-    calculatorState.recommendationHideOrdnance = true;
+    calculatorState.recommendationWeaponFilterRoles = [...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -556,35 +554,116 @@ test('renderRecommendationPanel exposes a hide-ordnance preference chip that tog
         sub: 'AR',
         rpm: 60,
         rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Guard Dog', {
+        index: 1,
+        type: 'Stratagem',
+        sub: 'BCK',
+        rpm: 60,
+        rows: [makeAttackRow('Guard Dog Burst', 80, 2)]
+      }),
+      makeWeapon('Orbital Precision Strike', {
+        index: 2,
+        type: 'Stratagem',
+        sub: 'ORB',
+        rpm: 60,
+        rows: [makeAttackRow('Orbital Strike', 500, 6)]
       })
     ];
 
     const container = renderPanelForTest({
-      name: 'Ordnance Preference Dummy',
+      name: 'Default Role Selection Dummy',
       health: 500,
       zones: [
         makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
       ]
     });
 
-    const preferenceRow = getChipRowByLabel(container, 'Preference');
-    const preferenceChip = preferenceRow
-      ? collectElements(preferenceRow, (element) => element.tagName === 'BUTTON')
-        .find((button) => button.textContent === 'Hide ordnance')
-      : null;
+    const roleRow = getChipRowByLabel(container, 'Role');
+    const roleChips = (roleRow?.children || []).filter((child) => child.tagName === 'BUTTON');
+    const activeRoles = roleChips
+      .filter((chip) => chip.classList.contains('active'))
+      .map((chip) => chip.dataset.role);
+    const modeRow = getChipRowByLabel(container, 'Weapon filters');
+    const clearChip = (modeRow?.children || [])
+      .find((child) => child.tagName === 'BUTTON' && child.textContent === 'Clear');
 
-    assert.ok(preferenceChip);
-    assert.ok(preferenceChip.classList.contains('active'));
-    assert.match(preferenceChip.title, /unreliable projectile placement/i);
-    assert.equal(typeof preferenceChip.listeners.get('click'), 'function');
-
-    preferenceChip.listeners.get('click')();
-
-    assert.equal(calculatorState.recommendationHideOrdnance, false);
+    assert.deepEqual(activeRoles, ['automatic', 'special']);
+    assert.equal(roleChips.find((chip) => chip.dataset.role === 'ordnance')?.classList.contains('active'), false);
+    assert.equal(clearChip, undefined);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
-    calculatorState.recommendationHideOrdnance = previousHideOrdnance;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel Clear restores blank recommendation role defaults', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationWeaponFilterMode = 'exclude';
+    calculatorState.recommendationWeaponFilterRoles = [
+      ...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES,
+      'ordnance'
+    ];
+    weaponsState.groups = [
+      makeWeapon('Liberator', {
+        index: 0,
+        type: 'Primary',
+        sub: 'AR',
+        rpm: 60,
+        rows: [makeAttackRow('Liberator Burst', 105, 2)]
+      }),
+      makeWeapon('Guard Dog', {
+        index: 1,
+        type: 'Stratagem',
+        sub: 'BCK',
+        rpm: 60,
+        rows: [makeAttackRow('Guard Dog Burst', 80, 2)]
+      }),
+      makeWeapon('Orbital Precision Strike', {
+        index: 2,
+        type: 'Stratagem',
+        sub: 'ORB',
+        rpm: 60,
+        rows: [makeAttackRow('Orbital Strike', 500, 6)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Role Clear Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const modeRow = getChipRowByLabel(container, 'Weapon filters');
+    const clearChip = (modeRow?.children || [])
+      .find((child) => child.tagName === 'BUTTON' && child.textContent === 'Clear');
+
+    assert.equal(typeof clearChip?.listeners.get('click'), 'function');
+
+    clearChip.listeners.get('click')();
+
+    assert.equal(calculatorState.recommendationWeaponFilterMode, 'include');
+    assert.deepEqual(
+      calculatorState.recommendationWeaponFilterRoles,
+      [...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES]
+    );
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationWeaponFilterMode = previousFilterMode;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
     weaponsState.groups = previousGroups;
   }
 });

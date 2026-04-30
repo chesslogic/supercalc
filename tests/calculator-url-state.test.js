@@ -33,6 +33,7 @@ const {
 } = enemyFiltersModule;
 const {
   calculatorState,
+  DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES,
   RECOMMENDATION_MAX_SHOTS_ANY,
   DEFAULT_OVERVIEW_OUTCOME_KINDS,
   getSelectedOverviewOutcomeKinds,
@@ -48,7 +49,6 @@ const {
   setEnemyTableMode,
   setEngagementRangeMeters,
   setOverviewScope,
-  setRecommendationHideOrdnance,
   setRecommendationNoMainViaLimbs,
   setRecommendationMinShots,
   setRecommendationMaxShots,
@@ -180,7 +180,6 @@ function snapshotCalculatorState() {
     recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
     recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
     recommendationWeaponFilterRoles: [...calculatorState.recommendationWeaponFilterRoles],
-    recommendationHideOrdnance: calculatorState.recommendationHideOrdnance,
     recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
     recommendationMinShots: calculatorState.recommendationMinShots,
     recommendationMaxShots: calculatorState.recommendationMaxShots,
@@ -219,7 +218,6 @@ function restoreCalculatorState(snapshot) {
   calculatorState.recommendationWeaponFilterSubs = [...snapshot.recommendationWeaponFilterSubs];
   calculatorState.recommendationWeaponFilterGroups = [...snapshot.recommendationWeaponFilterGroups];
   calculatorState.recommendationWeaponFilterRoles = [...snapshot.recommendationWeaponFilterRoles];
-  calculatorState.recommendationHideOrdnance = snapshot.recommendationHideOrdnance;
   calculatorState.recommendationNoMainViaLimbs = snapshot.recommendationNoMainViaLimbs;
   calculatorState.recommendationMinShots = snapshot.recommendationMinShots;
   calculatorState.recommendationMaxShots = snapshot.recommendationMaxShots;
@@ -700,7 +698,7 @@ test('encode-hydrate-encode produces identical URL params', { concurrency: false
   setRecommendationWeaponFilterTypes([]);
   setRecommendationWeaponFilterSubs([]);
   setRecommendationWeaponFilterGroups([]);
-  setRecommendationWeaponFilterRoles([]);
+  setRecommendationWeaponFilterRoles([...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES]);
   setEnemySortState({ key: 'zone_name', dir: 'asc', groupMode: 'none' });
   setEngagementRangeMeters('A', 30);
   setEngagementRangeMeters('B', 30);
@@ -825,24 +823,29 @@ test('encodeUrlState and hydrateUrlState round-trip the no-main-via-limbs prefer
   assert.equal(calculatorState.recommendationNoMainViaLimbs, false);
 }));
 
-test('encodeUrlState and hydrateUrlState round-trip the hide-ordnance preference', { concurrency: false }, () => withStateFixture(() => {
-  setRecommendationHideOrdnance(false);
+test('encodeUrlState and hydrateUrlState round-trip sparse recommendation role overrides', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationWeaponFilterRoles([
+    ...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES.filter((roleId) => roleId !== 'automatic'),
+    'ordnance'
+  ]);
 
   const params = encodeUrlState({ activeTab: 'calculator' });
-  assert.equal(params.get('crho'), 'false');
+  assert.deepEqual(JSON.parse(params.get('crfr')), {
+    automatic: 0,
+    ordnance: 1
+  });
 
-  setRecommendationHideOrdnance(true);
+  setRecommendationWeaponFilterRoles([...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES]);
   hydrateUrlState(params);
 
-  assert.equal(calculatorState.recommendationHideOrdnance, false);
-}));
-
-test('hydrateUrlState resets the hide-ordnance preference to default when param absent', { concurrency: false }, () => withStateFixture(() => {
-  setRecommendationHideOrdnance(false);
-
-  hydrateUrlState(new URLSearchParams({}));
-
-  assert.equal(calculatorState.recommendationHideOrdnance, true);
+  assert.deepEqual(calculatorState.recommendationWeaponFilterRoles, [
+    'precision',
+    'explosive',
+    'shotgun',
+    'special',
+    'ordnance',
+    'energy'
+  ]);
 }));
 
 // ===========================================================================
@@ -931,10 +934,9 @@ test('buildUrlStateSnapshot calculator section has all expected keys', { concurr
      'selectedExplosiveZoneIndices', 'recommendationWeaponFilterMode',
      'recommendationWeaponFilterTypes', 'recommendationWeaponFilterSubs',
      'recommendationWeaponFilterGroups', 'recommendationWeaponFilterRoles',
-     'recommendationHideOrdnance',
      'recommendationNoMainViaLimbs',
-     'recommendationMinShots', 'recommendationMaxShots',
-     'selectedAttackKeysA', 'selectedAttackKeysB',
+      'recommendationMinShots', 'recommendationMaxShots',
+      'selectedAttackKeysA', 'selectedAttackKeysB',
     'attackHitCountsA', 'attackHitCountsB', 'enemySort'
   ];
 
@@ -1448,24 +1450,37 @@ test('hydrateUrlState resets weapon active roles to default when param absent', 
 // Recommendation role filter round-trip
 // ===========================================================================
 
-test('encodeUrlState omits default recommendation role filter (empty)', { concurrency: false }, () => withStateFixture(() => {
-  setRecommendationWeaponFilterRoles([]);
+test('encodeUrlState omits default recommendation role filter overrides', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationWeaponFilterRoles([...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES]);
   const params = encodeUrlState({ activeTab: 'calculator' });
-  assert.equal(params.has('crfr'), false, 'default empty roles should not be encoded');
+  assert.equal(params.has('crfr'), false, 'default role overrides should not be encoded');
 }));
 
-test('encodeUrlState encodes non-default recommendation role filter', { concurrency: false }, () => withStateFixture(() => {
-  setRecommendationWeaponFilterRoles(['automatic', 'explosive']);
+test('encodeUrlState encodes sparse recommendation role overrides', { concurrency: false }, () => withStateFixture(() => {
+  setRecommendationWeaponFilterRoles([
+    ...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES.filter((roleId) => roleId !== 'automatic'),
+    'ordnance'
+  ]);
   const params = encodeUrlState({ activeTab: 'calculator' });
-  assert.deepEqual(JSON.parse(params.get('crfr')), ['automatic', 'explosive']);
+  assert.deepEqual(JSON.parse(params.get('crfr')), {
+    automatic: 0,
+    ordnance: 1
+  });
 }));
 
 test('hydrateUrlState restores recommendation role filter', { concurrency: false }, () => withStateFixture(() => {
   hydrateUrlState(new URLSearchParams({
-    crfr: JSON.stringify(['precision', 'ordnance'])
+    crfr: JSON.stringify({ precision: 0, ordnance: 1 })
   }));
 
-  assert.deepEqual(calculatorState.recommendationWeaponFilterRoles, ['precision', 'ordnance']);
+  assert.deepEqual(calculatorState.recommendationWeaponFilterRoles, [
+    'automatic',
+    'explosive',
+    'shotgun',
+    'special',
+    'ordnance',
+    'energy'
+  ]);
 }));
 
 test('hydrateUrlState resets recommendation role filter to default when param absent', { concurrency: false }, () => withStateFixture(() => {
@@ -1473,5 +1488,8 @@ test('hydrateUrlState resets recommendation role filter to default when param ab
 
   hydrateUrlState(new URLSearchParams({}));
 
-  assert.deepEqual(calculatorState.recommendationWeaponFilterRoles, []);
+  assert.deepEqual(
+    calculatorState.recommendationWeaponFilterRoles,
+    [...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES]
+  );
 }));

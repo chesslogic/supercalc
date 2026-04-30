@@ -28,6 +28,11 @@ import {
   normalizeRecommendationRangeMeters
 } from './recommendations.js';
 import {
+  DEFAULT_RECOMMENDATION_ROLE_SELECTION,
+  getDefaultRecommendationRoleSelection,
+  normalizeRecommendationRoleSelection
+} from './recommendation-role-selection.js';
+import {
   getZoneOutcomeLabel,
   COMPARE_OUTCOME_GROUP_ORDER
 } from './outcome-kinds.js';
@@ -51,7 +56,7 @@ export { DEFAULT_WEAPON_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_MODE };
 export { DEFAULT_ENEMY_DROPDOWN_SORT_DIR };
 export const DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE = 'include';
-export const DEFAULT_RECOMMENDATION_HIDE_ORDNANCE = true;
+export { DEFAULT_RECOMMENDATION_ROLE_SELECTION as DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES };
 export const DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS = true;
 export const DEFAULT_RECOMMENDATION_MIN_SHOTS = 1;
 export const DEFAULT_RECOMMENDATION_MAX_SHOTS = 3;
@@ -219,8 +224,7 @@ export const calculatorState = {
   recommendationWeaponFilterTypes: [],
   recommendationWeaponFilterSubs: [],
   recommendationWeaponFilterGroups: [],
-  recommendationWeaponFilterRoles: [],
-  recommendationHideOrdnance: DEFAULT_RECOMMENDATION_HIDE_ORDNANCE,
+  recommendationWeaponFilterRoles: getDefaultRecommendationRoleSelection(),
   recommendationNoMainViaLimbs: DEFAULT_RECOMMENDATION_NO_MAIN_VIA_LIMBS,
   recommendationMinShots: DEFAULT_RECOMMENDATION_MIN_SHOTS,
   recommendationMaxShots: DEFAULT_RECOMMENDATION_MAX_SHOTS,
@@ -670,10 +674,11 @@ export function toggleRecommendationWeaponFilterSub(sub) {
 }
 
 export function clearRecommendationWeaponFilters() {
+  calculatorState.recommendationWeaponFilterMode = DEFAULT_RECOMMENDATION_WEAPON_FILTER_MODE;
   calculatorState.recommendationWeaponFilterTypes = [];
   calculatorState.recommendationWeaponFilterSubs = [];
   calculatorState.recommendationWeaponFilterGroups = [];
-  calculatorState.recommendationWeaponFilterRoles = [];
+  calculatorState.recommendationWeaponFilterRoles = getDefaultRecommendationRoleSelection();
   notifyCalculatorStateChange();
 }
 
@@ -696,21 +701,23 @@ export function toggleRecommendationWeaponFilterGroup(groupId) {
   return [...calculatorState.recommendationWeaponFilterGroups];
 }
 
-export function setRecommendationWeaponFilterRoles(roles = []) {
-  calculatorState.recommendationWeaponFilterRoles = normalizeFilterValues(roles);
+export function setRecommendationWeaponFilterRoles(roles = getDefaultRecommendationRoleSelection()) {
+  calculatorState.recommendationWeaponFilterRoles = normalizeRecommendationRoleSelection(roles);
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterRoles];
 }
 
 export function toggleRecommendationWeaponFilterRole(roleId) {
-  const normalizedRoleId = normalizeFilterValues([roleId])[0];
+  const normalizedRoleId = normalizeRecommendationRoleSelection([roleId])[0];
   if (!normalizedRoleId) {
     return [...calculatorState.recommendationWeaponFilterRoles];
   }
 
-  calculatorState.recommendationWeaponFilterRoles = calculatorState.recommendationWeaponFilterRoles.includes(normalizedRoleId)
-    ? calculatorState.recommendationWeaponFilterRoles.filter((value) => value !== normalizedRoleId)
-    : [...calculatorState.recommendationWeaponFilterRoles, normalizedRoleId];
+  calculatorState.recommendationWeaponFilterRoles = normalizeRecommendationRoleSelection(
+    calculatorState.recommendationWeaponFilterRoles.includes(normalizedRoleId)
+      ? calculatorState.recommendationWeaponFilterRoles.filter((value) => value !== normalizedRoleId)
+      : [...calculatorState.recommendationWeaponFilterRoles, normalizedRoleId]
+  );
   notifyCalculatorStateChange();
   return [...calculatorState.recommendationWeaponFilterRoles];
 }
@@ -719,18 +726,6 @@ export function setRecommendationNoMainViaLimbs(enabled) {
   calculatorState.recommendationNoMainViaLimbs = enabled !== false;
   notifyCalculatorStateChange();
   return calculatorState.recommendationNoMainViaLimbs;
-}
-
-export function setRecommendationHideOrdnance(enabled) {
-  calculatorState.recommendationHideOrdnance = enabled !== false;
-  notifyCalculatorStateChange();
-  return calculatorState.recommendationHideOrdnance;
-}
-
-export function toggleRecommendationHideOrdnance() {
-  calculatorState.recommendationHideOrdnance = !calculatorState.recommendationHideOrdnance;
-  notifyCalculatorStateChange();
-  return calculatorState.recommendationHideOrdnance;
 }
 
 export function toggleRecommendationNoMainViaLimbs() {

@@ -10,7 +10,6 @@ import {
   setEnemyTableMode,
   setEngagementRangeMeters,
   setOverviewScope,
-  setRecommendationHideOrdnance,
   setRecommendationNoMainViaLimbs,
   setRecommendationShotRange,
   setRecommendationWeaponFilterGroups,
@@ -44,6 +43,7 @@ import {
   normalizeAttackHitCountValue,
   normalizeAttackSelectionValue
 } from './attack-selection-codec.js';
+import { getRecommendationRoleSelectionFromOverrides } from '../recommendation-role-selection.js';
 import {
   normalizeArrayOfStrings,
   normalizeBooleanParam,
@@ -183,14 +183,10 @@ export function hydrateUrlState(search = globalThis.location?.search || '') {
   );
   setRecommendationWeaponFilterRoles(
     params.has(URL_PARAM_KEYS.recommendationWeaponFilterRoles)
-      ? normalizeArrayOfStrings(parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles).value, { lowercase: true })
+      ? getRecommendationRoleSelectionFromOverrides(
+          parseJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles).value
+        )
       : DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterRoles
-  );
-  setRecommendationHideOrdnance(
-    normalizeBooleanParam(
-      params.get(URL_PARAM_KEYS.recommendationHideOrdnance),
-      DEFAULT_CALCULATOR_URL_STATE.recommendationHideOrdnance
-    )
   );
   setRecommendationNoMainViaLimbs(
     normalizeBooleanParam(

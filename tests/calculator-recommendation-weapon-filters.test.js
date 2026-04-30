@@ -18,7 +18,10 @@ import {
   getRecommendationSection
 } from './fixtures/tooltip-dom-stubs.js';
 
-const { calculatorState } = await import('../calculator/data.js');
+const {
+  calculatorState,
+  DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES
+} = await import('../calculator/data.js');
 const { renderRecommendationPanel } = await import('../calculator/calculation.js');
 const { state: weaponsState } = await import('../weapons/data.js');
 
@@ -105,16 +108,16 @@ test('renderRecommendationPanel excludes filtered weapon families from overall r
   }
 });
 
-test('renderRecommendationPanel hides ordnance recommendations by default until the preference is disabled', () => {
+test('renderRecommendationPanel uses the blank role defaults to hide ordnance while keeping non-ordnance stratagems', () => {
   const previousRangeFloor = calculatorState.recommendationRangeMeters;
   const previousGroups = weaponsState.groups;
   const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
-  const previousHideOrdnance = calculatorState.recommendationHideOrdnance;
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
     calculatorState.selectedZoneIndex = null;
-    calculatorState.recommendationHideOrdnance = true;
+    calculatorState.recommendationWeaponFilterRoles = [...DEFAULT_RECOMMENDATION_WEAPON_FILTER_ROLES];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -123,12 +126,12 @@ test('renderRecommendationPanel hides ordnance recommendations by default until 
         rpm: 60,
         rows: [makeAttackRow('Liberator Burst', 105, 2)]
       }),
-      makeWeapon('Recoilless Rifle', {
+      makeWeapon('Guard Dog', {
         index: 1,
-        type: 'Support',
-        sub: 'RL',
+        type: 'Stratagem',
+        sub: 'BCK',
         rpm: 60,
-        rows: [makeAttackRow('Recoilless Shell', 300, 5)]
+        rows: [makeAttackRow('Guard Dog Burst', 125, 2)]
       }),
       makeWeapon('Orbital Precision Strike', {
         index: 2,
@@ -151,27 +154,12 @@ test('renderRecommendationPanel hides ordnance recommendations by default until 
     const hiddenRows = collectElements(hiddenTables[0], (element) => element.tagName === 'TR').slice(1);
     const hiddenWeaponNames = hiddenRows.map((row) => row.children[0]?.textContent || '');
 
-    assert.deepEqual(hiddenWeaponNames, ['Liberator']);
-    assert.match(hiddenSummary?.textContent || '', /preference: hiding ordnance recommendations by default/i);
-
-    calculatorState.recommendationHideOrdnance = false;
-
-    const shownContainer = renderPanelForTest({
-      name: 'Default Ordnance Filter Dummy',
-      health: 500,
-      zones: [
-        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
-      ]
-    });
-    const shownTables = collectElements(shownContainer, (element) => element.tagName === 'TABLE');
-    const shownRows = collectElements(shownTables[0], (element) => element.tagName === 'TR').slice(1);
-    const shownWeaponNames = shownRows.map((row) => row.children[0]?.textContent || '');
-
-    assert.deepEqual([...shownWeaponNames].sort(), ['Liberator', 'Orbital Precision Strike', 'Recoilless Rifle'].sort());
+    assert.deepEqual([...hiddenWeaponNames].sort(), ['Guard Dog', 'Liberator'].sort());
+    assert.doesNotMatch(hiddenSummary?.textContent || '', /weapon filters:/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
-    calculatorState.recommendationHideOrdnance = previousHideOrdnance;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
     weaponsState.groups = previousGroups;
   }
 });
@@ -383,7 +371,7 @@ test('renderRecommendationPanel filters overall recommendations by feature group
   const previousFilterMode = calculatorState.recommendationWeaponFilterMode;
   const previousFilterTypes = [...calculatorState.recommendationWeaponFilterTypes];
   const previousFilterGroups = [...calculatorState.recommendationWeaponFilterGroups];
-  const previousHideOrdnance = calculatorState.recommendationHideOrdnance;
+  const previousFilterRoles = [...calculatorState.recommendationWeaponFilterRoles];
 
   try {
     calculatorState.recommendationRangeMeters = 0;
@@ -391,7 +379,7 @@ test('renderRecommendationPanel filters overall recommendations by feature group
     calculatorState.recommendationWeaponFilterMode = 'include';
     calculatorState.recommendationWeaponFilterTypes = [];
     calculatorState.recommendationWeaponFilterGroups = ['ordnance'];
-    calculatorState.recommendationHideOrdnance = false;
+    calculatorState.recommendationWeaponFilterRoles = ['ordnance'];
     weaponsState.groups = [
       makeWeapon('Liberator', {
         index: 0,
@@ -431,14 +419,14 @@ test('renderRecommendationPanel filters overall recommendations by feature group
 
     assert.deepEqual([...weaponNames].sort(), ['Orbital Precision Strike', 'Recoilless Rifle'].sort());
     assert.equal(weaponNames.includes('Liberator'), false);
-    assert.match(summary?.textContent || '', /weapon filters: showing only matches for feature: ordnance/i);
+    assert.match(summary?.textContent || '', /feature: ordnance/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
     calculatorState.recommendationWeaponFilterMode = previousFilterMode;
     calculatorState.recommendationWeaponFilterTypes = previousFilterTypes;
     calculatorState.recommendationWeaponFilterGroups = previousFilterGroups;
-    calculatorState.recommendationHideOrdnance = previousHideOrdnance;
+    calculatorState.recommendationWeaponFilterRoles = previousFilterRoles;
     weaponsState.groups = previousGroups;
   }
 });

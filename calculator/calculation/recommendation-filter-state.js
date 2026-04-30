@@ -1,4 +1,5 @@
 import { calculatorState } from '../data.js';
+import { hasCustomRecommendationRoleSelection } from '../recommendation-role-selection.js';
 import {
   RECOMMENDATION_CORE_TYPE_ORDER,
   RECOMMENDATION_FEATURE_GROUPS,
@@ -64,31 +65,33 @@ export function getAvailableRecommendationWeaponFeatureGroups(weapons = []) {
   return RECOMMENDATION_FEATURE_GROUPS.filter((group) => presentGroupIds.has(group.id));
 }
 
+function hasActiveRecommendationRoleFilters() {
+  return hasCustomRecommendationRoleSelection(calculatorState.recommendationWeaponFilterRoles);
+}
+
 export function hasActiveRecommendationWeaponFilters() {
   return calculatorState.recommendationWeaponFilterTypes.length > 0
     || calculatorState.recommendationWeaponFilterSubs.length > 0
     || calculatorState.recommendationWeaponFilterGroups.length > 0
-    || calculatorState.recommendationWeaponFilterRoles.length > 0;
+    || hasActiveRecommendationRoleFilters();
 }
 
-function shouldHideRecommendationWeaponByPreference(weapon) {
-  return calculatorState.recommendationHideOrdnance
-    && getWeaponRoleId(weapon) === 'ordnance';
-}
-
-function hasOrdnanceRecommendationWeapons(weapons = []) {
-  return (Array.isArray(weapons) ? weapons : []).some((weapon) => getWeaponRoleId(weapon) === 'ordnance');
+function doesWeaponMatchImplicitRecommendationRoleSelection(weapon) {
+  const roleId = getWeaponRoleId(weapon);
+  return !roleId || calculatorState.recommendationWeaponFilterRoles.includes(roleId);
 }
 
 function doesWeaponMatchRecommendationFilters(weapon) {
-  if (shouldHideRecommendationWeaponByPreference(weapon)) {
-    return false;
-  }
-
+  const roleId = getWeaponRoleId(weapon);
   const hasTypeFilters = calculatorState.recommendationWeaponFilterTypes.length > 0;
   const hasSubFilters = calculatorState.recommendationWeaponFilterSubs.length > 0;
   const hasGroupFilters = calculatorState.recommendationWeaponFilterGroups.length > 0;
-  const hasRoleFilters = calculatorState.recommendationWeaponFilterRoles.length > 0;
+  const hasRoleFilters = hasActiveRecommendationRoleFilters();
+
+  if (!hasRoleFilters && !doesWeaponMatchImplicitRecommendationRoleSelection(weapon)) {
+    return false;
+  }
+
   if (!hasTypeFilters && !hasSubFilters && !hasGroupFilters && !hasRoleFilters) {
     return true;
   }
@@ -100,9 +103,7 @@ function doesWeaponMatchRecommendationFilters(weapon) {
   const matchesGroup = hasGroupFilters && calculatorState.recommendationWeaponFilterGroups.includes(
     getWeaponRecommendationFeatureGroupId(weapon)
   );
-  const matchesRole = hasRoleFilters && calculatorState.recommendationWeaponFilterRoles.includes(
-    getWeaponRoleId(weapon)
-  );
+  const matchesRole = hasRoleFilters && calculatorState.recommendationWeaponFilterRoles.includes(roleId);
   const matchesAllActiveFilters = [
     !hasTypeFilters || matchesType,
     !hasSubFilters || matchesSub,
@@ -119,8 +120,9 @@ export function getFilteredRecommendationWeapons(weapons = []) {
   return (Array.isArray(weapons) ? weapons : []).filter((weapon) => doesWeaponMatchRecommendationFilters(weapon));
 }
 
-export function getRecommendationWeaponFilterSummaryText(weapons = []) {
+export function getRecommendationWeaponFilterSummaryText() {
   const summaryParts = [];
+  const hasRoleFilters = hasActiveRecommendationRoleFilters();
 
   if (hasActiveRecommendationWeaponFilters()) {
     const typeLabels = calculatorState.recommendationWeaponFilterTypes
@@ -137,7 +139,7 @@ export function getRecommendationWeaponFilterSummaryText(weapons = []) {
       .filter(Boolean);
     const clauses = [
       typeLabels.length > 0 ? `Type: ${typeLabels.join(' or ')}` : '',
-      roleLabels.length > 0 ? `Role: ${roleLabels.join(' or ')}` : '',
+      hasRoleFilters ? (roleLabels.length > 0 ? `Role: ${roleLabels.join(' or ')}` : 'Role: none') : '',
       groupLabels.length > 0 ? `Feature: ${groupLabels.join(' or ')}` : '',
       subLabels.length > 0 ? `Sub: ${subLabels.join(' or ')}` : ''
     ].filter(Boolean);
@@ -149,10 +151,6 @@ export function getRecommendationWeaponFilterSummaryText(weapons = []) {
           : ` Weapon filters: hiding matches for ${clauses.join(' and ')}.`
       );
     }
-  }
-
-  if (calculatorState.recommendationHideOrdnance && hasOrdnanceRecommendationWeapons(weapons)) {
-    summaryParts.push(' Preference: hiding ordnance recommendations by default.');
   }
 
   return summaryParts.join('');

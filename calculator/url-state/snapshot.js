@@ -21,6 +21,7 @@ import {
   getEncodedSelectedAttackValue,
   hasSelectedExplosiveAttacks
 } from './attack-selection-codec.js';
+import { getRecommendationRoleSelectionOverrides } from '../recommendation-role-selection.js';
 import { setJsonParam, setParam } from './param-codecs.js';
 
 export function getActiveAppTabId() {
@@ -68,7 +69,6 @@ export function buildUrlStateSnapshot({
       recommendationWeaponFilterSubs: [...calculatorState.recommendationWeaponFilterSubs],
       recommendationWeaponFilterGroups: [...calculatorState.recommendationWeaponFilterGroups],
       recommendationWeaponFilterRoles: [...calculatorState.recommendationWeaponFilterRoles],
-      recommendationHideOrdnance: calculatorState.recommendationHideOrdnance,
       recommendationNoMainViaLimbs: calculatorState.recommendationNoMainViaLimbs,
       recommendationMinShots: calculatorState.recommendationMinShots,
       recommendationMaxShots: calculatorState.recommendationMaxShots,
@@ -115,8 +115,12 @@ export function encodeUrlState({
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterTypes, calculator.recommendationWeaponFilterTypes, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterTypes);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterSubs, calculator.recommendationWeaponFilterSubs, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterSubs);
   setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterGroups, calculator.recommendationWeaponFilterGroups, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterGroups);
-  setJsonParam(params, URL_PARAM_KEYS.recommendationWeaponFilterRoles, calculator.recommendationWeaponFilterRoles, DEFAULT_CALCULATOR_URL_STATE.recommendationWeaponFilterRoles);
-  setParam(params, URL_PARAM_KEYS.recommendationHideOrdnance, calculator.recommendationHideOrdnance, DEFAULT_CALCULATOR_URL_STATE.recommendationHideOrdnance);
+  setJsonParam(
+    params,
+    URL_PARAM_KEYS.recommendationWeaponFilterRoles,
+    getRecommendationRoleSelectionOverrides(calculator.recommendationWeaponFilterRoles),
+    {}
+  );
   setParam(params, URL_PARAM_KEYS.recommendationNoMainViaLimbs, calculator.recommendationNoMainViaLimbs, DEFAULT_CALCULATOR_URL_STATE.recommendationNoMainViaLimbs);
   setParam(params, URL_PARAM_KEYS.recommendationMinShots, calculator.recommendationMinShots, DEFAULT_CALCULATOR_URL_STATE.recommendationMinShots);
   setParam(params, URL_PARAM_KEYS.recommendationMaxShots, calculator.recommendationMaxShots, DEFAULT_CALCULATOR_URL_STATE.recommendationMaxShots);
