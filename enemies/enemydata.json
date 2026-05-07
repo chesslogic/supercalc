@@ -8265,16 +8265,16 @@
     "Hive Guard": {
       "damageable_zones": [
         {
-          "AV": 1,
+          "AV": 2,
           "Dur%": 0.3,
           "ExTarget": "Part",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 375,
+          "health": 500,
           "zone_name": "Main"
         },
         {
-          "AV": 4,
+          "AV": 3,
           "Con": 200,
           "ConRate": 75,
           "Dur%": 0.35,
@@ -8304,7 +8304,7 @@
           "zone_name": "hitzone_r_rear_leg"
         },
         {
-          "AV": 4,
+          "AV": 3,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8313,7 +8313,7 @@
           "zone_name": "hitzone_r_front_leg"
         },
         {
-          "AV": 4,
+          "AV": 3,
           "Dur%": 0,
           "ExTarget": "Main",
           "MainCap": 0,
@@ -8340,7 +8340,7 @@
           "zone_name": "l_claw"
         }
       ],
-      "health": 375,
+      "health": 500,
       "scope_tags": [
         "medium"
       ]

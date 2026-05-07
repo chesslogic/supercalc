@@ -418,31 +418,39 @@ Additional branch curation applied after review:
 
 Hive Guard curation note
 ------------------------
-The updated upstream-derived data did show a real `Hive Guard` change.
+Patch 6.2.1 briefly shipped a bad `Hive Guard` anatomy state with the leg and
+claw armor values crossed. The release follow-up confirmed the intended stat
+revert.
 
 Curated interpretation applied to `enemies\enemydata.json`:
 
+- main body restored:
+  - `health 500`
+  - `AV 2`
+- head restored:
+  - `health 250`
+  - `AV 3`
 - rear legs unchanged:
   - `health 125`
   - `AV 1`
   - `ToMain% 0.35`
-- front legs reduced:
-  - `health 125`
-  - `AV 1`
-  - `ToMain% 0.45`
-- claws increased:
+- front legs restored:
   - `health 125`
   - `AV 3`
   - `ToMain% 0.45`
+- claws restored:
+  - `health 100`
+  - `AV 1`
+  - `ToMain% 0.25`
 
 Why this was curated manually:
 
-- the generated upstream output used opaque hash names for the new `AV 1 /
-  ToMain 0.45` pair
-- the raw generated `r_claw` / `l_claw` zones now carry the old front-leg stat
-  profile
-- preserving readable front-leg labels in the checked-in file is more useful
-  than checking in the raw hashed names verbatim
+- the current sidecar inputs still reflect the brief swapped leg/claw armor
+  state
+- `enemies\enemydata.json` is the gameplay-facing dataset, so it should track
+  the released in-game fix immediately
+- keeping the checked-in curation note here makes the manual override explicit
+  until the upstream comparison inputs catch up
 
 
 Other remaining diffs worth watching

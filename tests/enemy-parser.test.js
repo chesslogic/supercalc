@@ -1054,7 +1054,7 @@ test('checked-in enemydata keeps the higher-difficulty Hunter and Warrior health
   assert.equal(warriorZoneHealthByName.r_claw, 100);
 });
 
-test('checked-in enemydata pins the tracked 1.006.202 enemy-side bespoke stats', () => {
+test('checked-in enemydata pins tracked enemy-side bespoke stats', () => {
   const enemydata = JSON.parse(readFileSync(ENEMYDATA_PATH, 'utf8'));
   const hiveGuard = enemydata.Terminid['Hive Guard'];
   const hiveGuardZoneByName = Object.fromEntries(
@@ -1071,12 +1071,12 @@ test('checked-in enemydata pins the tracked 1.006.202 enemy-side bespoke stats',
   const lightningSpire = enemydata.Illuminate['Lightning Spire'];
   const lightningSpireMain = lightningSpire.damageable_zones.find((zone) => zone.zone_name === 'Main');
 
-  assert.equal(hiveGuard.health, 375);
-  assert.equal(hiveGuardZoneByName.Main.health, 375);
-  assert.equal(hiveGuardZoneByName.Main.AV, 1);
-  assert.equal(hiveGuardZoneByName.face.AV, 4);
-  assert.equal(hiveGuardZoneByName.hitzone_l_front_leg.AV, 4);
-  assert.equal(hiveGuardZoneByName.hitzone_r_front_leg.AV, 4);
+  assert.equal(hiveGuard.health, 500);
+  assert.equal(hiveGuardZoneByName.Main.health, 500);
+  assert.equal(hiveGuardZoneByName.Main.AV, 2);
+  assert.equal(hiveGuardZoneByName.face.AV, 3);
+  assert.equal(hiveGuardZoneByName.hitzone_l_front_leg.AV, 3);
+  assert.equal(hiveGuardZoneByName.hitzone_r_front_leg.AV, 3);
   assert.equal(hiveGuardZoneByName.l_claw.AV, 1);
   assert.equal(hiveGuardZoneByName.r_claw.AV, 1);
 

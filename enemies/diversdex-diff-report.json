@@ -800,8 +800,7 @@
                   "health": 90
                 },
                 "zone_names": [
-                  "leg_left",
-                  "leg_right"
+                  "legs"
                 ]
               },
               {
@@ -835,7 +834,7 @@
                 ]
               },
               {
-                "count_delta": 2,
+                "count_delta": 1,
                 "signature": {
                   "AV": 0,
                   "Dur%": 0,
@@ -845,8 +844,21 @@
                   "health": 65
                 },
                 "zone_names": [
-                  "left_arm",
                   "right_arm"
+                ]
+              },
+              {
+                "count_delta": 1,
+                "signature": {
+                  "AV": 0,
+                  "Dur%": 0,
+                  "ExTarget": "Main",
+                  "MainCap": false,
+                  "ToMain%": 1,
+                  "health": "Main"
+                },
+                "zone_names": [
+                  "head"
                 ]
               },
               {
@@ -1273,7 +1285,7 @@
           "metadata_field_changes": {
             "scope_tags": {
               "left": [
-                "medium"
+                "medium+"
               ],
               "right": null
             },
@@ -2782,7 +2794,7 @@
           "metadata_field_changes": {
             "scope_tags": {
               "left": [
-                "medium"
+                "medium+"
               ],
               "right": null
             },
@@ -2797,7 +2809,8 @@
                   ],
                   "zones": [
                     "shoulderplate_left",
-                    "left_arm"
+                    "left_arm",
+                    "shield"
                   ]
                 },
                 {
@@ -2971,7 +2984,7 @@
                 ]
               }
             ],
-            "left_zone_weight": 14,
+            "left_zone_weight": 15,
             "removed_zone_groups": [
               {
                 "count_delta": 2,
@@ -3120,6 +3133,20 @@
                 },
                 "zone_names": [
                   "chest"
+                ]
+              },
+              {
+                "count_delta": 1,
+                "signature": {
+                  "AV": 4,
+                  "Dur%": 0.7,
+                  "ExTarget": "Main",
+                  "MainCap": true,
+                  "ToMain%": 0,
+                  "health": 800
+                },
+                "zone_names": [
+                  "shield"
                 ]
               }
             ],
@@ -3705,7 +3732,7 @@
           "metadata_field_changes": {
             "scope_tags": {
               "left": [
-                "chaff"
+                "chaff+"
               ],
               "right": null
             }
@@ -4498,7 +4525,7 @@
           "metadata_field_changes": {
             "scope_tags": {
               "left": [
-                "medium"
+                "medium-"
               ],
               "right": null
             },
@@ -5577,6 +5604,22 @@
               {
                 "count_delta": 2,
                 "signature": {
+                  "AV": 3,
+                  "Dur%": 0.8,
+                  "ExTarget": "Main",
+                  "IsFatal": true,
+                  "MainCap": true,
+                  "ToMain%": 0.5,
+                  "health": 750
+                },
+                "zone_names": [
+                  "leg_left_hip",
+                  "leg_right_hip"
+                ]
+              },
+              {
+                "count_delta": 2,
+                "signature": {
                   "AV": 4,
                   "Dur%": 0.7,
                   "ExTarget": "Main",
@@ -5635,22 +5678,6 @@
                 "zone_names": [
                   "leg_left",
                   "leg_right"
-                ]
-              },
-              {
-                "count_delta": 2,
-                "signature": {
-                  "AV": 4,
-                  "Dur%": 0.8,
-                  "ExTarget": "Main",
-                  "IsFatal": true,
-                  "MainCap": true,
-                  "ToMain%": 0.5,
-                  "health": 750
-                },
-                "zone_names": [
-                  "leg_left_hip",
-                  "leg_right_hip"
                 ]
               },
               {
@@ -7869,7 +7896,7 @@
               "right": "Static tesla type defenses often found at Illuminate Encampments and Illuminate exclusive Objectives."
             },
             "health": {
-              "left": 500,
+              "left": 200,
               "right": null
             },
             "scope_tags": {
@@ -7898,10 +7925,10 @@
               {
                 "count_delta": 1,
                 "signature": {
-                  "AV": 0,
+                  "AV": 2,
                   "Dur%": 0,
                   "MainCap": false,
-                  "health": 500
+                  "health": 200
                 },
                 "zone_names": [
                   "Main"
@@ -11414,12 +11441,12 @@
                   "Dur%": 0,
                   "ExTarget": "Main",
                   "MainCap": false,
-                  "ToMain%": 0.35,
-                  "health": 125
+                  "ToMain%": 0.25,
+                  "health": 100
                 },
                 "zone_names": [
-                  "hitzone_l_rear_leg",
-                  "hitzone_r_rear_leg"
+                  "l_claw",
+                  "r_claw"
                 ]
               },
               {
@@ -11429,12 +11456,12 @@
                   "Dur%": 0,
                   "ExTarget": "Main",
                   "MainCap": false,
-                  "ToMain%": 0.45,
+                  "ToMain%": 0.35,
                   "health": 125
                 },
                 "zone_names": [
-                  "hitzone_l_front_leg",
-                  "hitzone_r_front_leg"
+                  "hitzone_l_rear_leg",
+                  "hitzone_r_rear_leg"
                 ]
               },
               {
@@ -11474,12 +11501,12 @@
                   "Dur%": 0,
                   "ExTarget": "Main",
                   "MainCap": false,
-                  "ToMain%": 0.25,
-                  "health": 100
+                  "ToMain%": 0.45,
+                  "health": 125
                 },
                 "zone_names": [
-                  "l_claw",
-                  "r_claw"
+                  "hitzone_l_front_leg",
+                  "hitzone_r_front_leg"
                 ]
               }
             ],
@@ -14055,7 +14082,7 @@
             },
             "scope_tags": {
               "left": [
-                "chaff"
+                "chaff-"
               ],
               "right": null
             }
@@ -15612,6 +15639,7 @@
         }
       },
       "left_only_units": [
+        "Spore Burst Bile Titan",
         "Spore Lung"
       ],
       "right_only_units": [
@@ -15626,8 +15654,8 @@
       ],
       "summary": {
         "changed_unit_count": 30,
-        "left_only_unit_count": 1,
-        "left_unit_count": 31,
+        "left_only_unit_count": 2,
+        "left_unit_count": 32,
         "overlapping_unit_count": 30,
         "right_only_unit_count": 8,
         "right_unit_count": 38
@@ -15639,8 +15667,8 @@
   "summary": {
     "changed_top_level_unit_count": 67,
     "left_nested_profile_count": 1,
-    "left_only_top_level_unit_count": 25,
-    "left_top_level_unit_count": 92,
+    "left_only_top_level_unit_count": 26,
+    "left_top_level_unit_count": 93,
     "overlapping_top_level_unit_count": 67,
     "right_nested_profile_count": 24,
     "right_only_top_level_unit_count": 37,
