@@ -49,8 +49,8 @@ Primary,EXP,explosive,R-36,Eruptor,32,projectile,SHRAPNEL_P x30,110,35,3,10,10,2
 Primary,GL,explosive,AR/GL-21,One-Two (UBGL),650,projectile,40mm HEAT GRENADE_P,250,250,3,30,40,10,
 Primary,GL,explosive,AR/GL-21,One-Two (UBGL),650,explosion,40mm HEAT GRENADE_P_IE,400,400,3,30,25,30,
 Primary,NRG,shotgun,ARC-12,Blitzer,45,arc,ARC-12 BLITZER_A,50,35,3,10,30,25,Stun Small
-Primary,NRG,explosive,PLAS-101,Purifier,1000,projectile,LARGE PLASMA BOLT_P,200,100,3,10,20,10,
-Primary,NRG,explosive,PLAS-101,Purifier,1000,explosion,LARGE PLASMA BOLT_P_IE,300,300,3,10,35,30,
+Primary,NRG,explosive,PLAS-101,Purifier,60,projectile,LARGE PLASMA BOLT_P,200,100,3,10,20,10,
+Primary,NRG,explosive,PLAS-101,Purifier,60,explosion,LARGE PLASMA BOLT_P_IE,300,300,3,10,35,30,
 Primary,EXP,explosive,SG-8P,Punisher Plasma,80,projectile,LARGE PLASMA BOLT_P3,0,0,2,10,20,10,
 Primary,EXP,explosive,SG-8P,Punisher Plasma,80,explosion,LARGE PLASMA BOLT_P3_IE,225,225,3,10,35,30,
 Primary,NRG,energy,LAS-5,Scythe,,beam,LAS-5 SCYTHE_B,350,70,2,10,0,0,Fire
