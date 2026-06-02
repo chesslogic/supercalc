@@ -19,6 +19,17 @@ export { DURABLE_RATIO_HEADER };
 
 export function isNumber(v){ return v !== null && v !== '' && !isNaN(Number(v)); }
 
+function hasPositiveNumericValue(row, key) {
+  if (!key) return false;
+  const value = Number(row?.[key]);
+  return Number.isFinite(value) && value > 0;
+}
+
+function hasPositiveMeaningfulDamage(row) {
+  return hasPositiveNumericValue(row, state.keys.dmgKey)
+    || hasPositiveNumericValue(row, state.keys.durKey);
+}
+
 export function guessNumericColumn(key){
   if (key === DURABLE_RATIO_HEADER) {
     return true;
@@ -41,7 +52,10 @@ export function groupSortValue(group, key, numeric){
     return ratios.length ? Math.max(...ratios) : Number.NEGATIVE_INFINITY;
   }
   if (numeric) {
-    const vals = group.rows.map(r => Number(r[key])).filter(n => !isNaN(n));
+    const rows = state.keys.apKey && key === state.keys.apKey
+      ? group.rows.filter(hasPositiveMeaningfulDamage)
+      : group.rows;
+    const vals = rows.map(r => Number(r[key])).filter(n => !isNaN(n));
     return vals.length ? Math.max(...vals) : Number.NEGATIVE_INFINITY;
   } else {
     for (const r of group.rows) { const v = r[key]; if (v !== null && v !== undefined && v !== '') return String(v); }
@@ -305,4 +319,3 @@ export function applyFilters(){
   state.filterActive = true;
   sortAndRenderBody();
 }
-

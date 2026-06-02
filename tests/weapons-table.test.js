@@ -316,3 +316,43 @@ test('renderTable treats zero-damage projectile companions as pure explosive for
 
   assert.deepEqual(weaponNames, ['Punisher Plasma', 'Machine Gun', 'Liberator']);
 }));
+
+test('renderTable ignores zero-damage attack rows when sorting by AP', () => withTableFixture(({ tbody }) => {
+  const row = (Name, DMG, DUR, AP, attackName) => ({
+    Type: 'Primary',
+    Sub: 'Test',
+    Code: Name,
+    Name,
+    RPM: 100,
+    'Atk Type': 'Projectile',
+    'Atk Name': attackName,
+    DMG,
+    DUR,
+    AP,
+    DF: 10,
+    ST: 10,
+    PF: 10
+  });
+
+  ingestHeadersAndRows(
+    ['Type', 'Sub', 'Code', 'Name', 'RPM', 'Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'],
+    [
+      row('Companion Launcher', 0, 0, 5, 'Companion Primer'),
+      row('Companion Launcher', 100, 100, 2, 'Companion Blast'),
+      row('Armor Piercer', 90, 22, 3, 'Armor Piercer Burst'),
+      row('Dual Mode Cannon', 80, 40, 2, 'Dual Mode Shell'),
+      row('Dual Mode Cannon', 40, 40, 4, 'Dual Mode Burst')
+    ]
+  );
+  state.sortKey = 'AP';
+  state.sortDir = 'desc';
+
+  renderTable();
+
+  const dataRows = collectElements(tbody, (element) => element.tagName === 'TR');
+  const weaponNames = dataRows
+    .map((row) => row.children[4]?.textContent || '')
+    .filter(Boolean);
+
+  assert.deepEqual(weaponNames, ['Dual Mode Cannon', 'Armor Piercer', 'Companion Launcher']);
+}));
