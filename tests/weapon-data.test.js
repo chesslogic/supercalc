@@ -59,6 +59,23 @@ function findWeaponRow(rows, { code, attackType, attackName }) {
   ));
 }
 
+function findNamedWeaponRow(rows, { code, name, attackType, attackName }) {
+  return rows.find((row) => (
+    row.Code === code
+    && row.Name === name
+    && row['Atk Type'] === attackType
+    && row['Atk Name'] === attackName
+  ));
+}
+
+function assertWeaponRowFields(row, fields, label) {
+  assert.ok(row, `${label} row should exist`);
+
+  for (const [field, expected] of Object.entries(fields)) {
+    assert.equal(row[field], expected, `${label} ${field}`);
+  }
+}
+
 test('ingestMatrix strips a UTF-8 BOM from the first header cell', () => {
   ingestMatrix([
     ['\uFEFFType', 'Name', 'RPM', 'Atk Type', 'DMG', 'DUR', 'AP'],
@@ -985,4 +1002,379 @@ test('patch 1.006.202 – CQC-30 Stun Baton and Flame Sentry regression', () => 
   assert.ok(flameSentry, 'Flame Sentry spray row should exist');
   assert.equal(flameSentry.DMG, '3', 'Flame Sentry DMG buffed to 3 in patch 1.006.202');
   assert.equal(flameSentry.DUR, '3', 'Flame Sentry DUR buffed to 3 in patch 1.006.202');
+});
+
+test('patch 1.006.300 adds Exo Experts, Supply FRV, and new weapon rows', () => {
+  const rows = loadCheckedInWeaponRows();
+  const expectedRows = [
+    {
+      code: 'SMG-203',
+      name: 'Gallant',
+      attackType: 'projectile',
+      attackName: '9x20mm HIGH VELOCITY_P',
+      fields: {
+        Type: 'Primary',
+        Sub: 'SMG',
+        Role: 'automatic',
+        RPM: '1380',
+        DMG: '65',
+        DUR: '13',
+        AP: '3',
+        DF: '10',
+        ST: '10',
+        PF: '4',
+        Status: ''
+      }
+    },
+    {
+      code: 'P-33',
+      name: 'Missile Pistol',
+      attackType: 'projectile',
+      attackName: 'Guided_P',
+      fields: {
+        Type: 'Secondary',
+        Sub: 'SPC',
+        Role: 'explosive',
+        RPM: '60',
+        DMG: '1000',
+        DUR: '1000',
+        AP: '5',
+        DF: '30',
+        ST: '40',
+        PF: '25',
+        Status: ''
+      }
+    },
+    {
+      code: 'P-33',
+      name: 'Missile Pistol',
+      attackType: 'projectile',
+      attackName: 'Non-Guided_P',
+      fields: {
+        Type: 'Secondary',
+        Sub: 'SPC',
+        Role: 'explosive',
+        RPM: '60',
+        DMG: '1000',
+        DUR: '1000',
+        AP: '5',
+        DF: '30',
+        ST: '40',
+        PF: '25',
+        Status: ''
+      }
+    },
+    {
+      code: 'P-33',
+      name: 'Missile Pistol',
+      attackType: 'explosion',
+      attackName: 'Guided_P_IE',
+      fields: {
+        Type: 'Secondary',
+        Sub: 'SPC',
+        Role: 'explosive',
+        RPM: '60',
+        DMG: '300',
+        DUR: '300',
+        AP: '3',
+        DF: '30',
+        ST: '40',
+        PF: '40',
+        Status: ''
+      }
+    },
+    {
+      code: 'M-103',
+      name: 'SUPPLY FRV',
+      attackType: 'projectile',
+      attackName: '5.5x50mm PENETRATOR_P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'VHL',
+        Role: 'automatic',
+        RPM: '640',
+        DMG: '65',
+        DUR: '15',
+        AP: '3',
+        DF: '10',
+        ST: '10',
+        PF: '10',
+        Status: ''
+      }
+    },
+    {
+      code: 'EXO-51',
+      name: 'Lumberer Exosuit (Flamethrower)',
+      attackType: 'spray',
+      attackName: 'LUMBERER FLAMETHROWER_S',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'VHL',
+        Role: 'energy',
+        RPM: '',
+        DMG: '3',
+        DUR: '3',
+        AP: '4',
+        DF: '10',
+        ST: '5',
+        PF: '5',
+        Status: 'Fire'
+      }
+    },
+    {
+      code: 'EXO-51',
+      name: 'Lumberer Exosuit (AT Cannon)',
+      attackType: 'projectile',
+      attackName: '75mm HEAT GRENADE_P1',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'VHL',
+        Role: 'explosive',
+        RPM: '30',
+        DMG: '1300',
+        DUR: '1300',
+        AP: '6',
+        DF: '30',
+        ST: '50',
+        PF: '25',
+        Status: ''
+      }
+    },
+    {
+      code: 'EXO-51',
+      name: 'Lumberer Exosuit (AT Cannon)',
+      attackType: 'explosion',
+      attackName: '75mm HEAT GRENADE_P1_IE',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'VHL',
+        Role: 'explosive',
+        RPM: '30',
+        DMG: '150',
+        DUR: '150',
+        AP: '3',
+        DF: '30',
+        ST: '60',
+        PF: '40',
+        Status: ''
+      }
+    },
+    {
+      code: 'EXO-55',
+      name: 'Breakthrough Exosuit (Scattergun)',
+      attackType: 'projectile',
+      attackName: 'P',
+      fields: {
+        Type: 'Stratagem',
+        Sub: 'VHL',
+        Role: 'shotgun',
+        RPM: '180',
+        DMG: '90',
+        DUR: '30',
+        AP: '4',
+        DF: '20',
+        ST: '40',
+        PF: '30',
+        Status: ''
+      }
+    },
+    {
+      code: 'MGX-42',
+      name: 'Bullet Storm',
+      attackType: 'projectile',
+      attackName: 'MGX-42_P',
+      fields: {
+        Type: 'Support',
+        Sub: 'MG',
+        Role: 'automatic',
+        RPM: '1300',
+        DMG: '100',
+        DUR: '25',
+        AP: '2',
+        DF: '10',
+        ST: '20',
+        PF: '10',
+        Status: ''
+      }
+    }
+  ];
+
+  for (const expectedRow of expectedRows) {
+    const row = findNamedWeaponRow(rows, expectedRow);
+    assertWeaponRowFields(
+      row,
+      expectedRow.fields,
+      `${expectedRow.code} ${expectedRow.name} ${expectedRow.attackName}`
+    );
+  }
+});
+
+test('patch 1.006.300 updates eagle, orbital, and Speargun rows', () => {
+  const rows = loadCheckedInWeaponRows();
+  const expectedRows = [
+    {
+      code: '-',
+      name: 'EAGLE 110MM ROCKET PODS',
+      attackType: 'explosion',
+      attackName: '110mm STANDARD ROCKET_P_IE',
+      fields: {
+        DMG: '300',
+        DUR: '300',
+        AP: '4',
+        DF: '30',
+        ST: '30',
+        PF: '10'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL 120MM HE BARRAGE',
+      attackType: 'projectile',
+      attackName: '120mm HE CANNON ROUND_P1',
+      fields: {
+        DMG: '3500',
+        DUR: '3500',
+        AP: '7',
+        DF: '50',
+        ST: '20',
+        PF: '20'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL 120MM HE BARRAGE',
+      attackType: 'explosion',
+      attackName: '120mm HE CANNON ROUND_P1_IE',
+      fields: {
+        DMG: '1200',
+        DUR: '1200',
+        AP: '5',
+        DF: '50',
+        ST: '70',
+        PF: '40'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL PRECISION STRIKE',
+      attackType: 'projectile',
+      attackName: '380mm HE CANNON ROUND_P',
+      fields: {
+        DMG: '4000',
+        DUR: '4000',
+        AP: '8',
+        DF: '50',
+        ST: '50',
+        PF: '20'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL PRECISION STRIKE',
+      attackType: 'explosion',
+      attackName: '380mm HE CANNON ROUND_P_IE',
+      fields: {
+        DMG: '1500',
+        DUR: '1500',
+        AP: '6',
+        DF: '50',
+        ST: '70',
+        PF: '60'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL 380MM HE BARRAGE',
+      attackType: 'projectile',
+      attackName: '380mm HE CANNON ROUND_P1',
+      fields: {
+        DMG: '4000',
+        DUR: '4000',
+        AP: '8',
+        DF: '50',
+        ST: '50',
+        PF: '20'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL 380MM HE BARRAGE',
+      attackType: 'explosion',
+      attackName: '380mm HE CANNON ROUND_P1_IE',
+      fields: {
+        DMG: '1500',
+        DUR: '1500',
+        AP: '6',
+        DF: '50',
+        ST: '70',
+        PF: '60'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL WALKING BARRAGE',
+      attackType: 'projectile',
+      attackName: '380mm HE CANNON ROUND_P1',
+      fields: {
+        DMG: '4000',
+        DUR: '4000',
+        AP: '8',
+        DF: '50',
+        ST: '50',
+        PF: '20'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL WALKING BARRAGE',
+      attackType: 'explosion',
+      attackName: '380mm HE CANNON ROUND_P1_IE',
+      fields: {
+        DMG: '1500',
+        DUR: '1500',
+        AP: '6',
+        DF: '50',
+        ST: '70',
+        PF: '60'
+      }
+    },
+    {
+      code: '-',
+      name: 'ORBITAL RAILCANNON STRIKE',
+      attackType: 'projectile',
+      attackName: 'RAIL CANNON ROUND_P',
+      fields: {
+        DMG: '10000',
+        DUR: '10000',
+        AP: '7',
+        DF: '50',
+        ST: '60',
+        PF: '35'
+      }
+    },
+    {
+      code: 'S-11',
+      name: 'Speargun',
+      attackType: 'projectile',
+      attackName: 'S-11_P',
+      fields: {
+        DMG: '650',
+        DUR: '275',
+        AP: '5',
+        DF: '30',
+        ST: '80',
+        PF: '35',
+        Status: ''
+      }
+    }
+  ];
+
+  for (const expectedRow of expectedRows) {
+    const row = findNamedWeaponRow(rows, expectedRow);
+    assertWeaponRowFields(
+      row,
+      expectedRow.fields,
+      `${expectedRow.name} ${expectedRow.attackName}`
+    );
+  }
 });

@@ -1068,6 +1068,10 @@ test('checked-in enemydata pins tracked enemy-side bespoke stats', () => {
   const warStriderZoneByName = Object.fromEntries(
     enemydata.Automaton['War Strider'].damageable_zones.map((zone) => [zone.zone_name, zone])
   );
+  const voxEngine = enemydata.Automaton['Vox Engine'];
+  const voxEngineZoneByName = Object.fromEntries(
+    voxEngine.damageable_zones.map((zone) => [zone.zone_name, zone])
+  );
   const lightningSpire = enemydata.Illuminate['Lightning Spire'];
   const lightningSpireMain = lightningSpire.damageable_zones.find((zone) => zone.zone_name === 'Main');
 
@@ -1113,6 +1117,10 @@ test('checked-in enemydata pins tracked enemy-side bespoke stats', () => {
     assert.equal(tankZoneByName.left_tracks['Dur%'], 0.8, `${tankName} left tracks durable resistance`);
     assert.equal(tankZoneByName.left_tracks.MainCap, 0, `${tankName} left tracks overflow cap`);
   }
+
+  assert.equal(voxEngine.health, 9000);
+  assert.equal(voxEngineZoneByName.Main.health, 9000);
+  assert.equal(voxEngineZoneByName.Main.AV, 5);
 
   assert.equal(lightningSpire.health, 200);
   assert.ok(lightningSpireMain);

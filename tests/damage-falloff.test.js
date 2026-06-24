@@ -63,6 +63,10 @@ function loadObservedFalloffCsvText() {
   return readFileSync(new URL('../weapons/falloff.csv', import.meta.url), 'utf8');
 }
 
+function findObservedFalloffRow(rows, weaponLabel) {
+  return rows.find((row) => row.Weapon === weaponLabel);
+}
+
 function toPercentFraction(value) {
   const normalized = String(value || '').trim();
   if (!normalized) {
@@ -157,6 +161,64 @@ test('resolveBallisticFalloffProfileForWeapon matches common weapon selections a
     name: 'Purifier'
   });
   assert.equal(purifier.status, 'ambiguous');
+});
+
+test('resolveBallisticFalloffProfileForWeapon resolves patch 1.006.300 ballistic additions', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(loadObservedFalloffCsvText());
+
+  const expectedProfiles = [
+    [{ code: 'SMG-203', name: 'Gallant' }, 'SMG-203 Gallant'],
+    [{ code: 'MGX-42', name: 'Bullet Storm' }, 'MGX-42 Bullet Storm'],
+    [{ code: 'M-103', name: 'SUPPLY FRV' }, 'M-103 Supply FRV'],
+    [{ code: 'EXO-51', name: 'Lumberer Exosuit (AT Cannon)' }, 'EXO-51 Lumberer AT Cannon'],
+    [{ code: 'EXO-55', name: 'Breakthrough Exosuit (Scattergun)' }, 'EXO-55 Breakthrough Scattergun']
+  ];
+
+  for (const [weapon, expectedLabel] of expectedProfiles) {
+    const resolution = resolveBallisticFalloffProfileForWeapon(weapon);
+    assert.equal(resolution.status, 'available');
+    assert.equal(resolution.profile?.weaponLabel, expectedLabel);
+  }
+});
+
+test('patch 1.006.300 falloff rows adopt the higher-precision observed artifact values', () => {
+  const rows = loadObservedFalloffRows();
+  const gallant = findObservedFalloffRow(rows, 'SMG-203 Gallant');
+  const breakthrough = findObservedFalloffRow(rows, 'EXO-55 Breakthrough Scattergun');
+  const bulletStorm = findObservedFalloffRow(rows, 'MGX-42 Bullet Storm');
+
+  assert.ok(gallant);
+  assert.equal(gallant['5m'], '5.40%');
+  assert.equal(gallant['15m'], '14.10%');
+  assert.equal(gallant['25m'], '21.60%');
+  assert.equal(gallant['50m'], '36.90%');
+  assert.equal(gallant['75m'], '47.20%');
+  assert.equal(gallant['100m'], '55.00%');
+  assert.equal(gallant['150m'], '64.80%');
+  assert.equal(gallant['200m'], '69.70%');
+
+  assert.ok(breakthrough);
+  assert.equal(breakthrough['5m'], '6.50%');
+  assert.equal(breakthrough['15m'], '18.80%');
+  assert.equal(breakthrough['25m'], '28.40%');
+  assert.equal(breakthrough['50m'], '46.30%');
+  assert.equal(breakthrough['75m'], '57.20%');
+  assert.equal(breakthrough['100m'], '63.90%');
+  assert.equal(breakthrough['150m'], '70.70%');
+  assert.equal(breakthrough['200m'], '73.30%');
+
+  assert.ok(bulletStorm);
+  assert.equal(bulletStorm.Mass, '4.5');
+  assert.equal(bulletStorm['2m'], '1.49%');
+  assert.equal(bulletStorm['5m'], '3.90%');
+  assert.equal(bulletStorm['15m'], '10.90%');
+  assert.equal(bulletStorm['25m'], '16.90%');
+  assert.equal(bulletStorm['50m'], '30.10%');
+  assert.equal(bulletStorm['75m'], '40.60%');
+  assert.equal(bulletStorm['100m'], '48.40%');
+  assert.equal(bulletStorm['150m'], '58.90%');
+  assert.equal(bulletStorm['200m'], '65.40%');
 });
 
 test('resolveBallisticFalloffProfileForWeapon keeps excluded launchers out of the general model', () => {

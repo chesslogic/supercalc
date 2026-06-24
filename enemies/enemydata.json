@@ -3603,7 +3603,7 @@
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,
-          "health": 11000,
+          "health": 9000,
           "zone_name": "Main"
         },
         {
@@ -3854,7 +3854,7 @@
           "zone_name": "tracks"
         }
       ],
-      "health": 11000,
+      "health": 9000,
       "scope_tags": [
         "giant"
       ]

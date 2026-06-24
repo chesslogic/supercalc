@@ -453,6 +453,29 @@ Why this was curated manually:
   until the upstream comparison inputs catch up
 
 
+Vox Engine curation note
+------------------------
+Patch `1.006.300` lowered `Vox Engine` top-level / `Main` health from `11000`
+to `9000` and separately reworked the Macro-Culverin cannon turrets.
+
+Curated interpretation applied to `enemies\enemydata.json`:
+
+- synced the released top-level HP nerf immediately:
+  - `health 9000`
+  - `Main.health 9000`
+- left the existing part layout otherwise unchanged for now
+
+Why this was curated manually:
+
+- the checked-in Vox shape predates the patch and does not currently expose a
+  distinct cannon-turret zone
+- the sidecar snapshot still reflects the old `11000` top-level HP and
+  pre-nerf cannon stats
+- syncing the released Main HP change now keeps the gameplay-facing dataset
+  correct without inventing a partial cannon-turret mapping that the current
+  checked-in shape cannot represent safely
+
+
 Other remaining diffs worth watching
 ------------------------------------
 The latest upstream report still contains many `stat_changed_units`, but not all
