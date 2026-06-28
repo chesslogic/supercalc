@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
 const SCRIPT_PATH = fileURLToPath(new URL('../tools/ingest_wikigg_attacks.py', import.meta.url));
+const RULES_SCRIPT_PATH = fileURLToPath(new URL('../tools/weapon_refresh_rules.py', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SCRATCH_ROOT = join(REPO_ROOT, 'tests', '.scratch');
 
@@ -19,6 +20,15 @@ function createScratchDir(prefix) {
 
 function runTool(args) {
   const result = spawnSync(PYTHON, [SCRIPT_PATH, ...args], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8'
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  return result;
+}
+
+function runRulesTool(args) {
+  const result = spawnSync(PYTHON, [RULES_SCRIPT_PATH, ...args], {
     cwd: REPO_ROOT,
     encoding: 'utf8'
   });
@@ -311,6 +321,231 @@ test('ingest_wikigg_attacks resolves local stratagem, companion, and status fixt
     assert.ok(hmgSummary);
     assert.equal(hmgSummary.status, 'unresolved');
     assert.equal(hmgSummary.csv_row_count, 1);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('ingest_wikigg_attacks applies refresh rule aliases and status rewrites in report mode', () => {
+  const tempDir = createScratchDir('wikigg-refresh-rules');
+  const stratagemsPath = join(tempDir, 'stratagems.json');
+  const statusPath = join(tempDir, 'status.json');
+  const csvPath = join(tempDir, 'weapondata.csv');
+  const rulesPath = join(tempDir, 'weapon-refresh-rules.json');
+  const outputPath = join(tempDir, 'output.json');
+
+  const stratagemsFixture = {
+    damage: {
+      WIKI_P_dm: {
+        dmg: 10,
+        dmg2: 5,
+        ap1: 3,
+        ap2: 3,
+        ap3: 0,
+        ap4: 0,
+        demo: 1,
+        stun: 2,
+        push: 3,
+        element_name: 'fire',
+        Status_Name_1: 'Fire_Var1',
+        Status_Value_1: 1
+      }
+    },
+    projectile: {
+      WIKI_P: {
+        damage_id: 'WIKI_P_dm',
+        name: 'Wiki projectile'
+      }
+    },
+    stratagems: {
+      'TEST EXO': {
+        name: 'TEST EXO',
+        id: 'EXO-T',
+        attacks: [
+          {
+            type: 'projectile',
+            name: 'WIKI_P',
+            parent: 'TEST EXO',
+            level: 1
+          }
+        ]
+      }
+    }
+  };
+
+  const statusFixture = {
+    damage: {},
+    status: {
+      Fire: {
+        strength: 1,
+        duration: 2,
+        name: 'Fire'
+      }
+    }
+  };
+
+  const csvFixture = [
+    'Type,Sub,Role,Code,Name,RPM,Atk Type,Atk Name,DMG,DUR,AP,DF,ST,PF,Status',
+    'Stratagem,VHL,explosive,EXO-T,Mounted Test (Cannon),,projectile,CSV_P,10,5,3,1,2,3,Fire'
+  ].join('\n');
+
+  const rulesFixture = {
+    schema_version: 1,
+    exact_row_syncs: [
+      {
+        source: {
+          Code: 'EXO-T',
+          Name: 'TEST EXO',
+          'Atk Type': 'projectile',
+          'Atk Name': 'WIKI_P'
+        },
+        target: {
+          Code: 'EXO-T',
+          Name: 'Mounted Test (Cannon)',
+          'Atk Type': 'projectile',
+          'Atk Name': 'CSV_P'
+        }
+      }
+    ],
+    attack_name_aliases: {
+      WIKI_P: ['CSV_P']
+    },
+    entity_name_aliases: {
+      'TEST EXO': ['Mounted Test (Cannon)']
+    },
+    status_rewrites: {
+      Fire_Var1: 'Fire'
+    },
+    falloff_name_aliases: {},
+    code_aliases: {},
+    falloff_exclusions: []
+  };
+
+  try {
+    writeFileSync(stratagemsPath, JSON.stringify(stratagemsFixture, null, 2));
+    writeFileSync(statusPath, JSON.stringify(statusFixture, null, 2));
+    writeFileSync(csvPath, `${csvFixture}\n`);
+    writeFileSync(rulesPath, JSON.stringify(rulesFixture, null, 2));
+
+    runTool([
+      '--offline',
+      '--stratagems-json',
+      stratagemsPath,
+      '--status-json',
+      statusPath,
+      '--csv',
+      csvPath,
+      '--rules',
+      rulesPath,
+      '--output',
+      outputPath
+    ]);
+
+    const report = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(report.metadata.weapon_refresh_rules.enabled, true);
+    assert.equal(report.coverage.summary.wiki_records_matched, 1);
+
+    const record = report.records[0];
+    assert.equal(record.comparison.match_kind, 'code+attack');
+    assert.deepEqual(record.comparison.csv_row_numbers, [2]);
+    assert.deepEqual(record.statuses.names, ['Fire']);
+    assert.deepEqual(record.statuses.original_names, ['Fire_Var1']);
+    assert.equal(record.csv_projection.Status, 'Fire');
+    assert.ok(record.comparison.rule_expanded_keys.attack_name_keys.includes('csvp'));
+    assert.equal(record.comparison.rule_expanded_keys.exact_row_syncs.length, 1);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('weapon refresh rules validation fails loudly for invalid rule files', () => {
+  const tempDir = createScratchDir('wikigg-refresh-invalid-rules');
+  const rulesPath = join(tempDir, 'weapon-refresh-rules.json');
+
+  try {
+    writeFileSync(rulesPath, JSON.stringify({ attack_name_aliases: ['not-an-object'] }, null, 2));
+    const result = spawnSync(PYTHON, [
+      RULES_SCRIPT_PATH,
+      '--rules',
+      rulesPath,
+      '--validate-only'
+    ], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8'
+    });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /attack_name_aliases/);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('weapon refresh rules preview falloff artifact row matches without rewriting falloff CSV', () => {
+  const tempDir = createScratchDir('wikigg-refresh-falloff');
+  const artifactPath = join(tempDir, 'falloff-artifact.csv');
+  const falloffPath = join(tempDir, 'falloff.csv');
+  const rulesPath = join(tempDir, 'weapon-refresh-rules.json');
+  const outputPath = join(tempDir, 'falloff-report.json');
+
+  const artifactFixture = [
+    ',,,,,,,,,,,,,',
+    ',Category,Weapon,Dmg,Dur,Cal.,Mass,Vel.,Drag,5m,Dmg,Dur',
+    ',Stratagem / Vehicle,Artifact Breakthrough,90,30,10,6,385,1.2,6.50%,84.2,27.9',
+    ',Stratagem / Vehicle,Ambiguous Artifact,90,30,10,6,385,1.2,6.50%,84.2,27.9',
+    ',Stratagem / Vehicle,Missing Artifact,90,30,10,6,385,1.2,6.50%,84.2,27.9',
+    ',Stratagem / Vehicle,Excluded Artifact,90,30,10,6,385,1.2,6.50%,84.2,27.9'
+  ].join('\n');
+  const falloffFixture = [
+    'Category,Weapon,Caliber,Mass,Velocity,Drag,Note,2m,5m',
+    'Stratagem / Vehicle,EXO-55 Breakthrough Scattergun,10,6,385,1.2,,2.73%,6.40%',
+    'Stratagem / Vehicle,Ambiguous One,10,6,385,1.2,,2.73%,6.40%',
+    'Stratagem / Vehicle,Ambiguous Two,10,6,385,1.2,,2.73%,6.40%'
+  ].join('\n');
+  const rulesFixture = {
+    schema_version: 1,
+    falloff_name_aliases: {
+      'Artifact Breakthrough': ['EXO-55 Breakthrough Scattergun'],
+      'Ambiguous Artifact': ['Ambiguous One', 'Ambiguous Two']
+    },
+    falloff_exclusions: ['Excluded Artifact'],
+    attack_name_aliases: {},
+    entity_name_aliases: {},
+    code_aliases: {},
+    status_rewrites: {}
+  };
+
+  try {
+    writeFileSync(artifactPath, `${artifactFixture}\n`);
+    writeFileSync(falloffPath, `${falloffFixture}\n`);
+    writeFileSync(rulesPath, JSON.stringify(rulesFixture, null, 2));
+
+    runRulesTool([
+      '--rules',
+      rulesPath,
+      '--falloff-artifact',
+      artifactPath,
+      '--falloff-csv',
+      falloffPath,
+      '--output',
+      outputPath
+    ]);
+
+    const report = JSON.parse(readFileSync(outputPath, 'utf8'));
+    assert.equal(report.metadata.mode, 'report-only');
+    assert.equal(report.falloff.summary.matched, 1);
+    assert.equal(report.falloff.summary.missing, 1);
+    assert.equal(report.falloff.summary.ambiguous, 1);
+    assert.equal(report.falloff.summary.excluded, 1);
+    assert.equal(report.falloff.matched[0].current_weapon, 'EXO-55 Breakthrough Scattergun');
+    assert.deepEqual(report.falloff.matched[0].field_differences['5m'], {
+      artifact: '6.50%',
+      current: '6.40%'
+    });
+    assert.equal(report.falloff.missing[0].artifact_weapon, 'Missing Artifact');
+    assert.deepEqual(report.falloff.ambiguous[0].candidate_weapons, ['Ambiguous One', 'Ambiguous Two']);
+    assert.equal(report.falloff.excluded[0].artifact_weapon, 'Excluded Artifact');
+    assert.equal(readFileSync(falloffPath, 'utf8'), `${falloffFixture}\n`);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

@@ -10,6 +10,12 @@ const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
 const SCRIPT_PATH = fileURLToPath(new URL('../tools/build_wikigg_validation_reports.py', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SCRATCH_ROOT = join(REPO_ROOT, 'tests', '.scratch');
+const REVIEW_QUEUE_BUCKET_ORDER = [
+  'safe_sync',
+  'curated_review',
+  'source_gap',
+  'blocked'
+];
 
 function createScratchDir(prefix) {
   const dir = join(SCRATCH_ROOT, `${prefix}-${randomUUID()}`);
@@ -35,6 +41,38 @@ function buildZone(zone_name, overrides = {}) {
     health: 100,
     ...overrides
   };
+}
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => canonicalJson(item)).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => (
+      `${JSON.stringify(key)}:${canonicalJson(value[key])}`
+    )).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function assertReviewQueueConsistent(queue, domain) {
+  assert.equal(queue.domain, domain);
+  assert.deepEqual(queue.bucket_order, REVIEW_QUEUE_BUCKET_ORDER);
+
+  let total = 0;
+  for (const bucket of REVIEW_QUEUE_BUCKET_ORDER) {
+    const items = queue.buckets[bucket];
+    assert.ok(Array.isArray(items), `${bucket} should be an array`);
+    assert.equal(queue.summary.buckets[bucket], items.length);
+    const serializedItems = items.map((item) => canonicalJson(item));
+    assert.deepEqual(
+      serializedItems,
+      [...serializedItems].sort(),
+      `${bucket} review items should be emitted deterministically`
+    );
+    total += items.length;
+  }
+  assert.equal(queue.summary.total, total);
 }
 
 test('build_wikigg_validation_reports classifies enemy and attack discrepancies into machine-readable buckets', () => {
@@ -344,6 +382,14 @@ test('build_wikigg_validation_reports classifies enemy and attack discrepancies 
     assert.equal(scoutWalker.zone_group_count_differences[0].current_weighted_count, 1);
     assert.equal(scoutWalker.zone_group_count_differences[0].wiki_weighted_count, 2);
     assert.equal(scoutWalker.zone_name_differences.length, 2);
+    assertReviewQueueConsistent(enemyReport.review_queue, 'enemy-anatomy');
+    assert.deepEqual(enemyReport.summary.review_queue_counts, enemyReport.review_queue.summary.buckets);
+    assert.ok(enemyReport.review_queue.buckets.curated_review.some(
+      (entry) => entry.item_type === 'enemy-unit-difference' && entry.unit_name === 'Scout Walker'
+    ));
+    assert.ok(enemyReport.review_queue.buckets.source_gap.some(
+      (entry) => entry.item_type === 'enemy-missing-from-wiki' && entry.unit_name === 'Missing In Wiki'
+    ));
 
     const attackReport = JSON.parse(readFileSync(join(outputDir, 'stratagem-attack-validation.json'), 'utf8'));
     assert.equal(attackReport.summary.wiki_record_count, 4);
@@ -384,12 +430,249 @@ test('build_wikigg_validation_reports classifies enemy and attack discrepancies 
     assert.equal(unresolvedEntity.name, 'UNRESOLVED EMP');
     assert.equal(unresolvedEntity.status, 'unresolved');
     assert.deepEqual(unresolvedEntity.csv_row_numbers, [5]);
+    assertReviewQueueConsistent(attackReport.review_queue, 'stratagem-attacks');
+    assert.deepEqual(attackReport.summary.review_queue_counts, attackReport.review_queue.summary.buckets);
+    assert.ok(attackReport.review_queue.buckets.safe_sync.some(
+      (entry) => entry.item_type === 'weapon-exact-match' && entry.record_id === 'MD-6::explosion::MINE_E'
+    ));
+    assert.ok(attackReport.review_queue.buckets.curated_review.some(
+      (entry) => entry.item_type === 'weapon-projection-difference' && entry.record_id === 'A/FLAM-40::spray::FLAME_S'
+    ));
+    assert.ok(attackReport.review_queue.buckets.source_gap.some(
+      (entry) => entry.item_type === 'weapon-unresolved-reference' && entry.entity_name === 'UNRESOLVED EMP'
+    ));
+    assert.ok(attackReport.review_queue.buckets.blocked.some(
+      (entry) => entry.item_type === 'weapon-wiki-record-missing-from-csv' && entry.record_id === 'ZZ-1::beam::NEW_S'
+    ));
+    assert.equal(attackReport.review_queue.rule_context.falloff_report_only.preview_tool, 'tools\\weapon_refresh_rules.py');
 
     const indexReport = JSON.parse(readFileSync(join(outputDir, 'index.json'), 'utf8'));
     assert.ok(indexReport.reports.enemy_anatomy);
     assert.ok(indexReport.reports.stratagem_attacks);
     assert.equal(indexReport.reports.enemy_anatomy.summary.units_with_any_difference_count, 1);
     assert.equal(indexReport.reports.stratagem_attacks.summary.possible_naming_only_mismatch_count, 1);
+    assert.deepEqual(indexReport.reports.enemy_anatomy.review_queue, enemyReport.review_queue.summary);
+    assert.deepEqual(indexReport.reports.stratagem_attacks.review_queue, attackReport.review_queue.summary);
+    assert.deepEqual(indexReport.review_queue.reports.enemy_anatomy, enemyReport.review_queue.summary);
+    assert.deepEqual(indexReport.review_queue.reports.stratagem_attacks, attackReport.review_queue.summary);
+    assert.equal(
+      indexReport.review_queue.total,
+      enemyReport.review_queue.summary.total + attackReport.review_queue.summary.total
+    );
+    assert.ok(indexReport.review_queue.buckets.source_gap > 0);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('build_wikigg_validation_reports uses enemy refresh rules for known source-lag review buckets', () => {
+  const tempDir = createScratchDir('wikigg-validation-enemy-rules');
+  const enemyCurrentPath = join(tempDir, 'enemydata.json');
+  const enemySidecarPath = join(tempDir, 'wikigg-enemy-sidecar.json');
+  const outputDir = join(tempDir, 'reports');
+
+  try {
+    writeFileSync(enemyCurrentPath, JSON.stringify({
+      Automaton: {
+        'Vox Engine': {
+          health: 9000,
+          damageable_zones: [
+            buildZone('Main', { source_zone_name: 'Main', AV: 5, ExTarget: 'Main', MainCap: true, 'ToMain%': 1, health: 9000 })
+          ]
+        }
+      },
+      Terminid: {
+        'Hive Guard': {
+          health: 500,
+          damageable_zones: [
+            buildZone('Main', { source_zone_name: 'Main', AV: 2, ExTarget: 'Part', MainCap: true, 'ToMain%': 1, health: 500 }),
+            buildZone('claws', { source_zone_name: 'claws', AV: 1, 'ToMain%': 0.25, health: 100 }),
+            buildZone('front_legs', { source_zone_name: 'front_legs', AV: 3, 'ToMain%': 0.45, health: 125 })
+          ]
+        }
+      }
+    }, null, 2));
+    writeFileSync(enemySidecarPath, JSON.stringify({
+      __schema_version: 1,
+      Automaton: {
+        'Vox Engine': {
+          health: 11000,
+          source_profile_name: 'Vox Engine',
+          damageable_zones: [
+            buildZone('Main', { source_zone_name: 'Main', AV: 5, ExTarget: 'Main', MainCap: true, 'ToMain%': 1, health: 11000 })
+          ]
+        }
+      },
+      Terminid: {
+        'Hive Guard': {
+          health: 500,
+          source_profile_name: 'Hive Guard',
+          damageable_zones: [
+            buildZone('Main', { source_zone_name: 'Main', AV: 2, ExTarget: 'Part', MainCap: true, 'ToMain%': 1, health: 500 }),
+            buildZone('claws', { source_zone_name: 'claws', AV: 3, 'ToMain%': 0.45, health: 125 }),
+            buildZone('front_legs', { source_zone_name: 'front_legs', AV: 1, 'ToMain%': 0.45, health: 125 })
+          ]
+        }
+      }
+    }, null, 2));
+
+    const result = runTool([
+      '--enemy-current',
+      enemyCurrentPath,
+      '--enemy-sidecar',
+      enemySidecarPath,
+      '--skip-attacks',
+      '--output-dir',
+      outputDir
+    ]);
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    const enemyReport = JSON.parse(readFileSync(join(outputDir, 'enemy-anatomy-validation.json'), 'utf8'));
+    assert.equal(enemyReport.summary.refresh_rule_classification_counts.known_source_lag >= 2, true);
+    assert.ok(enemyReport.review_queue.buckets.source_gap.some(
+      (entry) => entry.unit_name === 'Hive Guard' &&
+        entry.field === 'damageable_zones[zone_name=claws].AV' &&
+        entry.classification === 'known_source_lag'
+    ));
+    assert.ok(enemyReport.review_queue.buckets.source_gap.some(
+      (entry) => entry.unit_name === 'Vox Engine' &&
+        entry.field === 'health' &&
+        entry.classification === 'known_source_lag'
+    ));
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('build_wikigg_validation_reports uses weapon refresh rules for exact syncs, aliases, and status rewrites', () => {
+  const tempDir = createScratchDir('wikigg-validation-weapon-rules');
+  const attackCsvPath = join(tempDir, 'weapondata.csv');
+  const attackIngestPath = join(tempDir, 'wikigg-attacks.json');
+  const rulesPath = join(tempDir, 'weapon-refresh-rules.json');
+  const outputDir = join(tempDir, 'reports');
+
+  try {
+    writeFileSync(attackCsvPath, [
+      'Type,Sub,Role,Code,Name,RPM,Atk Type,Atk Name,DMG,DUR,AP,DF,ST,PF,Status',
+      'Stratagem,VHL,explosive,EXO-T,Mounted Test (Cannon),,projectile,CSV_P,10,5,3,1,2,3,Fire',
+      'Stratagem,VHL,explosive,AL-1,Alias Target,,projectile,CSV_ALIAS,3,3,1,0,0,0,Fire'
+    ].join('\n') + '\n');
+    writeFileSync(attackIngestPath, JSON.stringify({
+      metadata: { tool: 'fixture' },
+      records: [
+        {
+          record_id: 'EXO-T::projectile::WIKI_P',
+          entity: { name: 'TEST EXO', id: 'EXO-T', resolved_ids: ['EXO-T'] },
+          attack: { type: 'projectile', name: 'WIKI_P' },
+          statuses: {
+            rewrite_actions: [{ from: 'Fire_Var1', to: ['Fire'], action: 'replace' }]
+          },
+          csv_projection: {
+            Type: 'Stratagem',
+            Code: 'EXO-T',
+            Name: 'TEST EXO',
+            RPM: null,
+            'Atk Type': 'projectile',
+            'Atk Name': 'WIKI_P',
+            DMG: 10,
+            DUR: 5,
+            AP: 3,
+            DF: 1,
+            ST: 2,
+            PF: 3,
+            Status: 'Fire'
+          }
+        },
+        {
+          record_id: 'AL-1::projectile::WIKI_ALIAS',
+          entity: { name: 'Alias Source', id: 'AL-1', resolved_ids: ['AL-1'] },
+          attack: { type: 'projectile', name: 'WIKI_ALIAS' },
+          csv_projection: {
+            Type: 'Stratagem',
+            Code: 'AL-1',
+            Name: 'Alias Source',
+            RPM: null,
+            'Atk Type': 'projectile',
+            'Atk Name': 'WIKI_ALIAS',
+            DMG: 3,
+            DUR: 3,
+            AP: 1,
+            DF: 0,
+            ST: 0,
+            PF: 0,
+            Status: 'Fire'
+          }
+        }
+      ],
+      coverage: {
+        by_stratagem: [
+          { name: 'TEST EXO', id: 'EXO-T', resolved_ids: ['EXO-T'] },
+          { name: 'Alias Source', id: 'AL-1', resolved_ids: ['AL-1'] }
+        ]
+      },
+      unresolved_references: [],
+      unresolved_entities: []
+    }, null, 2));
+    writeFileSync(rulesPath, JSON.stringify({
+      schema_version: 1,
+      exact_row_syncs: [
+        {
+          source: { Code: 'EXO-T', Name: 'TEST EXO', 'Atk Type': 'projectile', 'Atk Name': 'WIKI_P' },
+          target: { Code: 'EXO-T', Name: 'Mounted Test (Cannon)', 'Atk Type': 'projectile', 'Atk Name': 'CSV_P' }
+        }
+      ],
+      attack_name_aliases: {
+        WIKI_P: ['CSV_P'],
+        WIKI_ALIAS: ['CSV_ALIAS']
+      },
+      entity_name_aliases: {
+        'TEST EXO': ['Mounted Test (Cannon)'],
+        'Alias Source': ['Alias Target']
+      },
+      code_aliases: {},
+      falloff_name_aliases: {
+        'Observed Falloff Name': ['CSV Falloff Name']
+      },
+      falloff_exclusions: ['Report Only Launcher'],
+      status_rewrites: {
+        Fire_Var1: 'Fire'
+      },
+      review_required: ['Fixture manual review note'],
+      manual_grouping: ['Fixture mounted row grouping']
+    }, null, 2));
+
+    const result = runTool([
+      '--skip-enemy',
+      '--attack-csv',
+      attackCsvPath,
+      '--attack-ingest',
+      attackIngestPath,
+      '--rules',
+      rulesPath,
+      '--output-dir',
+      outputDir
+    ]);
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    const attackReport = JSON.parse(readFileSync(join(outputDir, 'stratagem-attack-validation.json'), 'utf8'));
+    assert.ok(attackReport.review_queue.buckets.safe_sync.some(
+      (entry) => entry.item_type === 'weapon-exact-row-sync' &&
+        entry.record_id === 'EXO-T::projectile::WIKI_P' &&
+        entry.rule_match_details.exact_row_syncs.length === 1
+    ));
+    assert.ok(attackReport.review_queue.buckets.safe_sync.some(
+      (entry) => entry.item_type === 'weapon-status-rewrite' &&
+        entry.record_id === 'EXO-T::projectile::WIKI_P'
+    ));
+    assert.ok(attackReport.review_queue.buckets.curated_review.some(
+      (entry) => entry.item_type === 'weapon-alias-driven-match' &&
+        entry.record_id === 'AL-1::projectile::WIKI_ALIAS' &&
+        entry.rule_match_details.alias_fields.includes('attack_name')
+    ));
+    assert.equal(attackReport.review_queue.rule_context.falloff_report_only.alias_count, 1);
+    assert.ok(attackReport.review_queue.buckets.blocked.some(
+      (entry) => entry.item_type === 'weapon-manual-grouping-rules'
+    ));
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

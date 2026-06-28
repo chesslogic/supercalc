@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "description": "Report-first weapon refresh aliases, status cleanup rules, and review buckets. These rules help classify patch reports; they are not an auto-writer for runtime CSV data.",
+  "exact_row_syncs": [
+    {
+      "source": {
+        "Code": "EXO-55",
+        "Name": "EXO-55 BREAKTHROUGH EXOSUIT",
+        "Atk Type": "projectile",
+        "Atk Name": "EXO-55 BREAKTHROUGH SCATTERGUN_P"
+      },
+      "target": {
+        "Code": "EXO-55",
+        "Name": "Breakthrough Exosuit (Scattergun)",
+        "Atk Type": "projectile",
+        "Atk Name": "P"
+      },
+      "reason": "Wiki source names the mounted scattergun attack, while the reviewed CSV row keeps the runtime attack label P."
+    },
+    {
+      "source": {
+        "Code": "EXO-51",
+        "Name": "EXO-51 LUMBERER EXOSUIT",
+        "Atk Type": "projectile",
+        "Atk Name": "75mm HEAT GRENADE_P"
+      },
+      "target": {
+        "Code": "EXO-51",
+        "Name": "Lumberer Exosuit (AT Cannon)",
+        "Atk Type": "projectile",
+        "Atk Name": "75mm HEAT GRENADE_P1"
+      },
+      "reason": "The Lumberer AT cannon row has a reviewed mount-specific name and P1 attack suffix."
+    }
+  ],
+  "attack_name_aliases": {
+    "30mm APHE CANNON_P": [
+      "30mm APHE CANNON P"
+    ],
+    "30mm APHE CANNON_P_IE": [
+      "30mm APHE CANNON P IE"
+    ],
+    "75mm HEAT GRENADE_P": [
+      "75mm HEAT GRENADE_P1"
+    ],
+    "75mm HEAT GRENADE_P_IE": [
+      "75mm HEAT GRENADE_P1_IE"
+    ],
+    "MISSILE EXOSUIT_P": [
+      "Missile Exosuit"
+    ],
+    "MISSILE EXOSUIT_P_IE": [
+      "Missile Exosuit"
+    ],
+    "EXO-55 BREAKTHROUGH SCATTERGUN_P": [
+      "P"
+    ],
+    "BREAKTHROUGH SCATTERGUN_P": [
+      "P"
+    ]
+  },
+  "entity_name_aliases": {
+    "EXO-45 PATRIOT EXOSUIT": [
+      "Patriot Exosuit (MG)",
+      "Patriot Exosuit (Missile)"
+    ],
+    "EXO-49 EMANCIPATOR EXOSUIT": [
+      "Emancipator Exosuit (AC)"
+    ],
+    "EXO-51 LUMBERER EXOSUIT": [
+      "Lumberer Exosuit (Flamethrower)",
+      "Lumberer Exosuit (AT Cannon)"
+    ],
+    "EXO-55 BREAKTHROUGH EXOSUIT": [
+      "Breakthrough Exosuit (Scattergun)"
+    ],
+    "HMG EMPLACEMENT": [
+      "HMG Emplacement"
+    ],
+    "SUPPLY FRV": [
+      "Supply FRV"
+    ]
+  },
+  "code_aliases": {
+    "AR|GL-21": [
+      "AR/GL-21"
+    ]
+  },
+  "falloff_name_aliases": {
+    "AR|GL-21 One-Two": [
+      "AR/GL-21 One-Two (AR)",
+      "One-Two (AR)"
+    ],
+    "EXO-45 Patriot machine gun": [
+      "Patriot Exosuit (MG)",
+      "EXO-45 Patriot Exosuit (MG)"
+    ],
+    "EXO-49 Emancipator Autocannon": [
+      "Emancipator Exosuit (AC)",
+      "EXO-49 Emancipator Exosuit (AC)"
+    ],
+    "EXO-51 Lumberer AT Cannon": [
+      "Lumberer Exosuit (AT Cannon)",
+      "EXO-51 Lumberer Exosuit (AT Cannon)"
+    ],
+    "EXO-55 Breakthrough Scattergun": [
+      "Breakthrough Exosuit (Scattergun)",
+      "EXO-55 Breakthrough Exosuit (Scattergun)"
+    ],
+    "M-103 Supply FRV": [
+      "SUPPLY FRV",
+      "M-103 SUPPLY FRV"
+    ]
+  },
+  "falloff_exclusions": [
+    "GP-20 Ultimatum (read the note)",
+    "EAT-411 Leveller"
+  ],
+  "status_rewrites": {
+    "Fire_Var1": "Fire",
+    "Fire_Var2": "Fire",
+    "Burning": "Fire",
+    "None": null
+  },
+  "review_required": [
+    "Mounted, exosuit, and vehicle rows should stay report-first because a single wiki entity can map to several CSV rows by mount or attack.",
+    "Status removals should be manually reviewed unless they are blank/None cleanup.",
+    "Falloff artifact imports may use observed precision, but the preview report must be reviewed before weapons\\falloff.csv changes."
+  ],
+  "manual_grouping": [
+    "EXO-45 Patriot Exosuit splits machine gun and missile rows under the same code.",
+    "EXO-49 Emancipator Exosuit groups autocannon projectile and explosion rows.",
+    "EXO-51 Lumberer Exosuit splits flamethrower and AT cannon mounted rows.",
+    "EXO-55 Breakthrough Exosuit maps the scattergun projectile row whose source attack name can collapse to P."
+  ]
+}

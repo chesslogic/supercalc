@@ -1,0 +1,91 @@
+{
+  "description": "Review-first rules for classifying enemy refresh diffs without auto-modifying enemies\\enemydata.json.",
+  "version": 1,
+  "rules": {
+    "Automaton": {
+      "Vox Engine": {
+        "preferred_source_keys": [
+          "enemydata-curated",
+          "filediver-generated",
+          "wikigg-enemy-anatomy-sidecar"
+        ],
+        "safe_sync_fields": [
+          "health",
+          "damageable_zones[zone_name=Main].health"
+        ],
+        "locked_fields": [
+          "damageable_zones",
+          "child_profiles",
+          "inline_enemies"
+        ],
+        "known_source_lag": [
+          {
+            "field": "health",
+            "source_value": 11000,
+            "curated_value": 9000,
+            "reason": "Patch 1.006.300 lowered Vox Engine top-level health to 9000 while some sidecar inputs still report 11000."
+          },
+          {
+            "field": "damageable_zones[zone_name=Main].health",
+            "source_value": 11000,
+            "curated_value": 9000,
+            "reason": "Patch 1.006.300 lowered Vox Engine Main health to 9000 while some sidecar inputs still report 11000."
+          }
+        ],
+        "manual_review_notes": [
+          "The 9000 top-level/Main health nerf is identity-stable and safe to sync when a trusted source catches up.",
+          "Do not auto-apply Macro-Culverin cannon turret stats until the checked-in curated shape has explicit cannon zones.",
+          "Treat anatomy shape additions, grouped cannon zones, and zone remaps as manual-review changes."
+        ]
+      }
+    },
+    "Terminid": {
+      "Hive Guard": {
+        "preferred_source_keys": [
+          "enemydata-curated",
+          "wikigg-enemy-anatomy-sidecar",
+          "filediver-generated"
+        ],
+        "safe_sync_fields": [
+          "health",
+          "damageable_zones[zone_name=Main].health"
+        ],
+        "locked_fields": [
+          "damageable_zones",
+          "child_profiles",
+          "inline_enemies"
+        ],
+        "known_source_lag": [
+          {
+            "field": "damageable_zones[zone_name=claws].health",
+            "source_value": 125,
+            "curated_value": 100,
+            "reason": "Patch 6.2.1 source lag can still reflect the brief bad Hive Guard claw/front-leg anatomy state."
+          },
+          {
+            "field": "damageable_zones[zone_name=claws].AV",
+            "source_value": 3,
+            "curated_value": 1,
+            "reason": "Patch 6.2.1 source lag can still show claw armor crossed with front-leg armor."
+          },
+          {
+            "field": "damageable_zones[zone_name=claws].ToMain%",
+            "source_value": 0.45,
+            "curated_value": 0.25,
+            "reason": "Patch 6.2.1 source lag can still reflect the brief bad Hive Guard claw/front-leg anatomy state."
+          },
+          {
+            "field": "damageable_zones[zone_name=front_legs].AV",
+            "source_value": 1,
+            "curated_value": 3,
+            "reason": "Patch 6.2.1 source lag can still show front-leg armor crossed with claw armor."
+          }
+        ],
+        "manual_review_notes": [
+          "Keep the curated released Hive Guard values until upstream anatomy sources catch up.",
+          "Do not auto-apply grouped anatomy or zone-shape changes for Hive Guard; review them against the patch curation note."
+        ]
+      }
+    }
+  }
+}

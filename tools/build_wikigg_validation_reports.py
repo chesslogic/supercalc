@@ -28,6 +28,17 @@ try:
         normalize_code_key,
         normalize_name_key,
     )
+    from enemy_refresh_rules import (
+        DEFAULT_RULES_PATH as DEFAULT_ENEMY_RULES_PATH,
+        classify_unit_refresh_changes,
+        get_unit_refresh_rule,
+        load_enemy_refresh_rules,
+    )
+    from weapon_refresh_rules import (
+        DEFAULT_RULES_PATH as DEFAULT_WEAPON_RULES_PATH,
+        WeaponRefreshRules,
+        load_weapon_refresh_rules,
+    )
 except ModuleNotFoundError:  # pragma: no cover - fallback for package-style imports
     from tools.ingest_wikigg_attacks import (
         build_csv_indexes,
@@ -38,6 +49,17 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for package-style imp
         normalize_attack_name_key,
         normalize_code_key,
         normalize_name_key,
+    )
+    from tools.enemy_refresh_rules import (
+        DEFAULT_RULES_PATH as DEFAULT_ENEMY_RULES_PATH,
+        classify_unit_refresh_changes,
+        get_unit_refresh_rule,
+        load_enemy_refresh_rules,
+    )
+    from tools.weapon_refresh_rules import (
+        DEFAULT_RULES_PATH as DEFAULT_WEAPON_RULES_PATH,
+        WeaponRefreshRules,
+        load_weapon_refresh_rules,
     )
 
 
@@ -78,6 +100,7 @@ ATTACK_ENTITY_STATUS_ORDER = [
     "no-attack-data",
     "empty",
 ]
+REVIEW_QUEUE_BUCKETS = ("safe_sync", "curated_review", "source_gap", "blocked")
 
 
 def current_timestamp() -> str:
@@ -138,6 +161,80 @@ def compact_entity_ref(summary: Dict[str, Any]) -> Dict[str, Any]:
         "matched_csv_row_count": summary["matched_csv_row_count"],
         "unresolved_reference_count": summary["unresolved_reference_count"],
     }
+
+
+def create_review_queue(domain: str) -> Dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "domain": domain,
+        "bucket_order": list(REVIEW_QUEUE_BUCKETS),
+        "description": (
+            "Report-first review buckets. safe_sync entries are narrow candidates "
+            "for reviewed syncing; curated_review requires human judgement; "
+            "source_gap points at missing/stale upstream data; blocked must not be "
+            "auto-applied."
+        ),
+        "buckets": {bucket: [] for bucket in REVIEW_QUEUE_BUCKETS},
+        "summary": {
+            "total": 0,
+            "buckets": {bucket: 0 for bucket in REVIEW_QUEUE_BUCKETS},
+        },
+    }
+
+
+def add_review_queue_item(queue: Dict[str, Any], bucket: str, item: Dict[str, Any]) -> None:
+    if bucket not in REVIEW_QUEUE_BUCKETS:
+        raise ValueError(f"Unknown review queue bucket: {bucket}")
+    clean_item = {
+        key: canonicalize_value(value, sort_list_values=True)
+        for key, value in item.items()
+        if value not in (None, [], {})
+    }
+    queue["buckets"][bucket].append(clean_item)
+
+
+def finalize_review_queue(queue: Dict[str, Any]) -> Dict[str, Any]:
+    total = 0
+    for bucket in REVIEW_QUEUE_BUCKETS:
+        items = queue["buckets"][bucket]
+        items.sort(key=lambda item: json.dumps(item, sort_keys=True, ensure_ascii=False, default=str))
+        queue["summary"]["buckets"][bucket] = len(items)
+        total += len(items)
+    queue["summary"]["total"] = total
+    return queue
+
+
+def review_queue_summary(queue: Mapping[str, Any] | None) -> Dict[str, Any]:
+    if not queue:
+        return {
+            "total": 0,
+            "buckets": {bucket: 0 for bucket in REVIEW_QUEUE_BUCKETS},
+        }
+    summary = queue.get("summary") or {}
+    buckets = summary.get("buckets") or {}
+    return {
+        "total": int(summary.get("total") or 0),
+        "buckets": {
+            bucket: int(buckets.get(bucket) or 0)
+            for bucket in REVIEW_QUEUE_BUCKETS
+        },
+    }
+
+
+def aggregate_review_queue_summaries(reports: Mapping[str, Any]) -> Dict[str, Any]:
+    aggregate = {
+        "total": 0,
+        "buckets": {bucket: 0 for bucket in REVIEW_QUEUE_BUCKETS},
+        "reports": {},
+    }
+    for report_name in sorted(reports):
+        report = reports[report_name] or {}
+        summary = review_queue_summary(report.get("review_queue"))
+        aggregate["reports"][report_name] = summary
+        aggregate["total"] += summary["total"]
+        for bucket in REVIEW_QUEUE_BUCKETS:
+            aggregate["buckets"][bucket] += summary["buckets"][bucket]
+    return aggregate
 
 
 def canonicalize_value(value: Any, *, sort_list_values: bool = False) -> Any:
@@ -531,6 +628,42 @@ def build_enemy_unit_difference(
     return difference if categories else {}
 
 
+def enemy_refresh_classification_bucket(classification: str) -> str:
+    if classification == "safe_sync":
+        return "safe_sync"
+    if classification == "known_source_lag":
+        return "source_gap"
+    if classification == "locked":
+        return "blocked"
+    return "curated_review"
+
+
+def add_enemy_refresh_queue_entries(
+    review_queue: Dict[str, Any],
+    *,
+    faction: str,
+    unit_name: str,
+    refresh_classification: Dict[str, Any],
+) -> None:
+    for change in refresh_classification.get("field_changes") or []:
+        if not isinstance(change, dict):
+            continue
+        classification = str(change.get("classification") or "manual_review")
+        bucket = enemy_refresh_classification_bucket(classification)
+        item = {
+            "item_type": "enemy-field-change",
+            "faction": faction,
+            "unit_name": unit_name,
+            "field": change.get("field"),
+            "classification": classification,
+            "rule_field": change.get("rule_field"),
+            "reason": change.get("reason"),
+            "current": change.get("current"),
+            "wiki": change.get("generated"),
+        }
+        add_review_queue_item(review_queue, bucket, item)
+
+
 def filter_enemy_factions(data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     factions: Dict[str, Dict[str, Any]] = OrderedDict()
     for key, value in data.items():
@@ -551,9 +684,12 @@ def build_enemy_validation_report(
     wiki_sidecar: Dict[str, Any],
     current_path: Path,
     wiki_path: Path,
+    refresh_rules: Dict[str, Any] | None = None,
+    refresh_rules_path: Path | None = None,
 ) -> Dict[str, Any]:
     current_factions = filter_enemy_factions(current_data)
     wiki_factions = filter_enemy_factions(wiki_sidecar)
+    review_queue = create_review_queue("enemy-anatomy")
 
     category_refs: Dict[str, list[Dict[str, str]]] = {
         "missing_from_wiki": [],
@@ -575,6 +711,8 @@ def build_enemy_validation_report(
     zone_group_count_difference_count = 0
     overlapping_unit_count = 0
     units_with_any_difference_count = 0
+    refresh_rule_matched_unit_count = 0
+    refresh_rule_classification_counts: Counter[str] = Counter()
 
     factions_report: Dict[str, Any] = OrderedDict()
 
@@ -604,12 +742,51 @@ def build_enemy_validation_report(
                         "payload": wiki_unit,
                     },
                 }
+                add_review_queue_item(
+                    review_queue,
+                    "curated_review",
+                    {
+                        "item_type": "enemy-payload-shape-mismatch",
+                        "faction": faction,
+                        "unit_name": unit_name,
+                        "reason": "Current and wiki payloads have different JSON shapes.",
+                    },
+                )
                 units_with_any_difference_count += 1
                 continue
 
             difference = build_enemy_unit_difference(current_unit, wiki_unit)
             if not difference:
                 continue
+
+            refresh_rule = get_unit_refresh_rule(refresh_rules, faction, unit_name)
+            refresh_classification = classify_unit_refresh_changes(
+                current_unit,
+                wiki_unit,
+                refresh_rule,
+            )
+            if refresh_classification:
+                difference["refresh_rule_classification"] = refresh_classification
+                refresh_rule_matched_unit_count += 1
+                refresh_rule_classification_counts.update(refresh_classification["summary"])
+                add_enemy_refresh_queue_entries(
+                    review_queue,
+                    faction=faction,
+                    unit_name=unit_name,
+                    refresh_classification=refresh_classification,
+                )
+            else:
+                add_review_queue_item(
+                    review_queue,
+                    "curated_review",
+                    {
+                        "item_type": "enemy-unit-difference",
+                        "faction": faction,
+                        "unit_name": unit_name,
+                        "categories": difference.get("categories"),
+                        "reason": "No refresh rule classified this unit difference.",
+                    },
+                )
 
             unit_differences[unit_name] = difference
             units_with_any_difference_count += 1
@@ -638,8 +815,28 @@ def build_enemy_validation_report(
 
         for unit_name in missing_from_wiki:
             category_refs["missing_from_wiki"].append(compact_unit_ref(faction, unit_name))
+            add_review_queue_item(
+                review_queue,
+                "source_gap",
+                {
+                    "item_type": "enemy-missing-from-wiki",
+                    "faction": faction,
+                    "unit_name": unit_name,
+                    "reason": "Checked-in enemydata has no matching wiki sidecar unit.",
+                },
+            )
         for unit_name in missing_from_enemydata:
             category_refs["missing_from_enemydata"].append(compact_unit_ref(faction, unit_name))
+            add_review_queue_item(
+                review_queue,
+                "curated_review",
+                {
+                    "item_type": "enemy-missing-from-enemydata",
+                    "faction": faction,
+                    "unit_name": unit_name,
+                    "reason": "Wiki sidecar has a unit that is not in checked-in enemydata.",
+                },
+            )
 
         if missing_from_wiki or missing_from_enemydata or unit_differences:
             factions_report[faction] = {
@@ -659,6 +856,8 @@ def build_enemy_validation_report(
             if unit_differences:
                 factions_report[faction]["units"] = unit_differences
 
+    review_queue = finalize_review_queue(review_queue)
+
     return {
         "metadata": {
             "tool": r"tools\build_wikigg_validation_reports.py",
@@ -672,6 +871,11 @@ def build_enemy_validation_report(
                 key: value
                 for key, value in wiki_sidecar.items()
                 if str(key).startswith("__")
+            },
+            "enemy_refresh_rules": {
+                "enabled": bool(refresh_rules),
+                "path": str(refresh_rules_path or DEFAULT_ENEMY_RULES_PATH) if refresh_rules else None,
+                "mode": "report-only",
             },
         },
         "summary": {
@@ -696,9 +900,15 @@ def build_enemy_validation_report(
                 category_refs["units_with_zone_group_count_differences"]
             ),
             "zone_group_count_difference_count": zone_group_count_difference_count,
+            "refresh_rule_matched_unit_count": refresh_rule_matched_unit_count,
+            "refresh_rule_classification_counts": dict(
+                sorted(refresh_rule_classification_counts.items())
+            ),
+            "review_queue_counts": review_queue["summary"]["buckets"],
         },
         "categories": category_refs,
         "factions": factions_report,
+        "review_queue": review_queue,
     }
 
 
@@ -912,14 +1122,100 @@ def build_attack_entity_universe(
     return list(entities.values())
 
 
+def weapon_rule_context(rules: WeaponRefreshRules | None) -> Dict[str, Any]:
+    if not rules:
+        return {
+            "enabled": False,
+            "mode": "report-only",
+        }
+    return {
+        "enabled": True,
+        "path": str(rules.source_path) if rules.source_path else None,
+        "mode": "report-only",
+        "review_required": list(rules.review_required),
+        "manual_grouping": list(rules.manual_grouping),
+        "falloff_report_only": {
+            "alias_count": len(rules.falloff_name_aliases),
+            "exclusions": list(rules.falloff_exclusions),
+            "preview_tool": r"tools\weapon_refresh_rules.py",
+        },
+    }
+
+
+def build_rule_match_details(record: Mapping[str, Any], comparison: Mapping[str, Any]) -> Dict[str, Any]:
+    expanded = comparison.get("rule_expanded_keys") or {}
+    projection = record.get("csv_projection") or {}
+    if not expanded:
+        return {
+            "exact_row_syncs": [],
+            "alias_fields": [],
+        }
+
+    expected_keys = {
+        "code_keys": [normalize_code_key(projection.get("Code"))],
+        "name_keys": [normalize_name_key(projection.get("Name"))],
+        "attack_type_keys": [str(projection.get("Atk Type") or "").strip().lower()],
+        "attack_name_keys": [normalize_attack_name_key(projection.get("Atk Name"))],
+    }
+    alias_fields = []
+    for key, raw_values in expected_keys.items():
+        expected = {value for value in raw_values if value}
+        actual = {
+            str(value)
+            for value in (expanded.get(key) or [])
+            if str(value)
+        }
+        if actual - expected:
+            alias_fields.append(key.removesuffix("_keys"))
+
+    return {
+        "exact_row_syncs": expanded.get("exact_row_syncs") or [],
+        "alias_fields": sorted(alias_fields),
+    }
+
+
+def add_weapon_rule_context_queue_items(
+    review_queue: Dict[str, Any],
+    rules: WeaponRefreshRules | None,
+) -> None:
+    if not rules:
+        return
+    if rules.falloff_name_aliases or rules.falloff_exclusions:
+        add_review_queue_item(
+            review_queue,
+            "curated_review",
+            {
+                "item_type": "falloff-report-only",
+                "reason": "Falloff refresh rules require the separate report-only preview before editing falloff CSV data.",
+                "alias_count": len(rules.falloff_name_aliases),
+                "exclusions": rules.falloff_exclusions,
+                "preview_tool": r"tools\weapon_refresh_rules.py",
+            },
+        )
+    if rules.manual_grouping:
+        add_review_queue_item(
+            review_queue,
+            "blocked",
+            {
+                "item_type": "weapon-manual-grouping-rules",
+                "reason": "Manual grouping rules describe rows that must not be blindly auto-synced.",
+                "notes": rules.manual_grouping,
+            },
+        )
+
+
 def build_attack_validation_report(
     *,
     ingest_report: Dict[str, Any],
     ingest_path: Path,
     csv_path: Path,
+    rules: WeaponRefreshRules | None = None,
 ) -> Dict[str, Any]:
     csv_indexes = build_csv_indexes(load_csv_rows(csv_path))
     rows_by_line = {row.line_number: row for row in csv_indexes["rows"]}
+    review_queue = create_review_queue("stratagem-attacks")
+    review_queue["rule_context"] = weapon_rule_context(rules)
+    add_weapon_rule_context_queue_items(review_queue, rules)
     records = [
         record
         for record in (ingest_report.get("records") or [])
@@ -940,7 +1236,7 @@ def build_attack_validation_report(
         record_id = str(record.get("record_id") or "").strip()
         if not record_id:
             continue
-        comparison = compare_record_to_csv(record, csv_indexes)
+        comparison = compare_record_to_csv(record, csv_indexes, rules)
         comparisons[record_id] = comparison
         matched_line_numbers.update(comparison["csv_row_numbers"])
 
@@ -978,6 +1274,23 @@ def build_attack_validation_report(
             "csv_row_numbers": comparison.get("csv_row_numbers", []),
             "candidate_row_numbers": comparison.get("candidate_row_numbers", []),
         }
+        rule_match_details = build_rule_match_details(record, comparison)
+        status_rewrite_actions = [
+            action
+            for action in (record.get("statuses", {}) or {}).get("rewrite_actions", [])
+            if isinstance(action, dict)
+        ]
+        if status_rewrite_actions:
+            add_review_queue_item(
+                review_queue,
+                "safe_sync",
+                {
+                    **base_record,
+                    "item_type": "weapon-status-rewrite",
+                    "reason": "Weapon refresh rules rewrote source status names in the report projection.",
+                    "status_rewrite_actions": status_rewrite_actions,
+                },
+            )
 
         if comparison.get("matched"):
             matched_records.append(base_record)
@@ -998,18 +1311,80 @@ def build_attack_validation_report(
                     }
                 )
             if row_differences and len(row_differences) == len(comparison.get("csv_row_numbers", [])):
+                field_difference_fields = sorted(
+                    {
+                        field
+                        for row_difference in row_differences
+                        for field in row_difference["field_mismatches"]
+                    }
+                )
                 records_with_projection_differences.append(
                     {
                         **base_record,
-                        "field_difference_fields": sorted(
-                            {
-                                field
-                                for row_difference in row_differences
-                                for field in row_difference["field_mismatches"]
-                            }
-                        ),
+                        "field_difference_fields": field_difference_fields,
                         "matched_rows": row_differences,
                     }
+                )
+                review_bucket = "curated_review"
+                review_item_type = "weapon-projection-difference"
+                review_reason = "Matched wiki attack projection differs from the checked-in CSV row."
+                if rule_match_details["exact_row_syncs"] and not (
+                    set(field_difference_fields) - ATTACK_IDENTIFIER_FIELDS
+                ):
+                    review_bucket = "safe_sync"
+                    review_item_type = "weapon-exact-row-sync"
+                    review_reason = (
+                        "Weapon refresh rules matched this wiki projection to an exact reviewed CSV target."
+                    )
+                elif rule_match_details["alias_fields"] and not (
+                    set(field_difference_fields) - ATTACK_IDENTIFIER_FIELDS
+                ):
+                    review_item_type = "weapon-alias-driven-match"
+                    review_reason = (
+                        "Weapon refresh aliases matched this row; review before applying source changes."
+                    )
+                add_review_queue_item(
+                    review_queue,
+                    review_bucket,
+                    {
+                        **base_record,
+                        "item_type": review_item_type,
+                        "reason": review_reason,
+                        "field_difference_fields": field_difference_fields,
+                        "rule_match_details": rule_match_details,
+                    },
+                )
+            elif rule_match_details["exact_row_syncs"]:
+                add_review_queue_item(
+                    review_queue,
+                    "safe_sync",
+                    {
+                        **base_record,
+                        "item_type": "weapon-exact-row-sync",
+                        "reason": "Weapon refresh rules matched this wiki projection to an exact reviewed CSV target.",
+                        "rule_match_details": rule_match_details,
+                    },
+                )
+            elif rule_match_details["alias_fields"]:
+                add_review_queue_item(
+                    review_queue,
+                    "curated_review",
+                    {
+                        **base_record,
+                        "item_type": "weapon-alias-driven-match",
+                        "reason": "Weapon refresh aliases matched this row; review before applying source changes.",
+                        "rule_match_details": rule_match_details,
+                    },
+                )
+            else:
+                add_review_queue_item(
+                    review_queue,
+                    "safe_sync",
+                    {
+                        **base_record,
+                        "item_type": "weapon-exact-match",
+                        "reason": "Wiki projection already matches the checked-in CSV row.",
+                    },
                 )
             continue
 
@@ -1043,6 +1418,31 @@ def build_attack_validation_report(
                     **base_record,
                     "naming_only_candidates": naming_candidates,
                 }
+            )
+            add_review_queue_item(
+                review_queue,
+                "curated_review",
+                {
+                    **base_record,
+                    "item_type": "weapon-possible-naming-only-mismatch",
+                    "reason": "A candidate CSV row differs only by identifier fields.",
+                    "candidate_line_numbers": [
+                        candidate["line_number"]
+                        for candidate in naming_candidates
+                    ],
+                    "rule_match_details": rule_match_details,
+                },
+            )
+        else:
+            add_review_queue_item(
+                review_queue,
+                "blocked" if not comparison.get("candidate_row_numbers") else "curated_review",
+                {
+                    **base_record,
+                    "item_type": "weapon-wiki-record-missing-from-csv",
+                    "reason": unmatched_entry["probable_reason"],
+                    "rule_match_details": rule_match_details,
+                },
             )
         wiki_records_missing_from_csv.append(unmatched_entry)
 
@@ -1082,6 +1482,7 @@ def build_attack_validation_report(
             entity_id=entity_id,
             resolved_ids=[str(value) for value in resolved_ids if value],
             csv_indexes=csv_indexes,
+            rules=rules,
         )
         matched_csv_rows = sorted(
             {
@@ -1172,6 +1573,21 @@ def build_attack_validation_report(
                 ),
             }
         )
+        add_review_queue_item(
+            review_queue,
+            "curated_review" if candidate_record_ids else "source_gap",
+            {
+                "item_type": "weapon-csv-row-missing-from-wiki",
+                "line_number": csv_row.line_number,
+                "candidate_record_ids": candidate_record_ids,
+                "reason": (
+                    "possible-naming-only-mismatch"
+                    if candidate_record_ids
+                    else "no-wiki-record"
+                ),
+                "row": csv_row.row,
+            },
+        )
 
     unresolved_references_by_reason: Dict[str, list[Dict[str, Any]]] = OrderedDict()
     for reason in sorted(
@@ -1185,6 +1601,21 @@ def build_attack_validation_report(
             for item in unresolved
             if str(item.get("reason") or "unknown") == reason
         ]
+        for item in unresolved_references_by_reason[reason]:
+            add_review_queue_item(
+                review_queue,
+                "source_gap",
+                {
+                    "item_type": "weapon-unresolved-reference",
+                    "entity_name": item.get("entity_name"),
+                    "entity_id": item.get("entity_id"),
+                    "ref_type": item.get("ref_type"),
+                    "ref_name": item.get("ref_name"),
+                    "reason": reason,
+                },
+            )
+
+    review_queue = finalize_review_queue(review_queue)
 
     return {
         "metadata": {
@@ -1194,6 +1625,11 @@ def build_attack_validation_report(
             "inputs": {
                 "attack_ingest_report_path": str(ingest_path),
                 "current_weapon_csv_path": str(csv_path),
+            },
+            "weapon_refresh_rules": {
+                "enabled": bool(rules),
+                "path": str(rules.source_path) if rules and rules.source_path else None,
+                "mode": "report-only",
             },
             "source_ingest_metadata": canonicalize_value(ingest_report.get("metadata") or {}),
         },
@@ -1213,6 +1649,7 @@ def build_attack_validation_report(
             },
             "unresolved_reference_count": len(unresolved),
             "unresolved_entity_count": len(unresolved_entities),
+            "review_queue_counts": review_queue["summary"]["buckets"],
         },
         "categories": {
             "matched_records": matched_records,
@@ -1225,6 +1662,7 @@ def build_attack_validation_report(
             "unresolved_entities": unresolved_entities,
         },
         "entities": entity_summaries,
+        "review_queue": review_queue,
     }
 
 
@@ -1254,6 +1692,26 @@ def parse_args() -> argparse.Namespace:
         "--attack-csv",
         default=str(DEFAULT_ATTACK_CSV_PATH),
         help="Path to the checked-in weapons\\weapondata.csv input.",
+    )
+    parser.add_argument(
+        "--rules",
+        default=str(DEFAULT_WEAPON_RULES_PATH),
+        help="Path to tools\\weapon-refresh-rules.json for report-only weapon refresh aliases.",
+    )
+    parser.add_argument(
+        "--no-rules",
+        action="store_true",
+        help="Disable weapon refresh rules for attack validation report classification.",
+    )
+    parser.add_argument(
+        "--enemy-rules",
+        default=str(DEFAULT_ENEMY_RULES_PATH),
+        help="Path to enemies\\enemy-refresh-rules.json for report-only enemy refresh classification.",
+    )
+    parser.add_argument(
+        "--no-enemy-rules",
+        action="store_true",
+        help="Disable enemy refresh rules for enemy validation report classification.",
     )
     parser.add_argument(
         "--output-dir",
@@ -1315,6 +1773,7 @@ def main() -> None:
         },
         "reports": {},
     }
+    generated_reports: Dict[str, Any] = {}
 
     if not args.skip_enemy:
         current_enemy_path = Path(args.enemy_current.strip()).resolve()
@@ -1323,18 +1782,32 @@ def main() -> None:
             raise SystemExit(f"Current enemy data file not found: {current_enemy_path}")
         if not enemy_sidecar_path.exists():
             raise SystemExit(f"Wiki enemy sidecar file not found: {enemy_sidecar_path}")
+        enemy_rules = None
+        enemy_rules_path = None
+        if not args.no_enemy_rules:
+            enemy_rules_path = Path(args.enemy_rules.strip()).resolve()
+            if not enemy_rules_path.exists():
+                raise SystemExit(f"Enemy refresh rules file not found: {enemy_rules_path}")
+            try:
+                enemy_rules = load_enemy_refresh_rules(enemy_rules_path)
+            except ValueError as error:
+                raise SystemExit(str(error)) from error
 
         enemy_report = build_enemy_validation_report(
             current_data=load_json(current_enemy_path),
             wiki_sidecar=load_json(enemy_sidecar_path),
             current_path=current_enemy_path,
             wiki_path=enemy_sidecar_path,
+            refresh_rules=enemy_rules,
+            refresh_rules_path=enemy_rules_path,
         )
         write_json(enemy_output_path, enemy_report)
         manifest["reports"]["enemy_anatomy"] = {
             "output_path": str(enemy_output_path),
             "summary": enemy_report["summary"],
+            "review_queue": review_queue_summary(enemy_report.get("review_queue")),
         }
+        generated_reports["enemy_anatomy"] = enemy_report
         print(
             "Enemy summary:",
             f"current={enemy_report['summary']['current_unit_count']}",
@@ -1352,17 +1825,24 @@ def main() -> None:
             raise SystemExit(f"Attack ingest report not found: {attack_ingest_path}")
         if not attack_csv_path.exists():
             raise SystemExit(f"Current weapon CSV file not found: {attack_csv_path}")
+        try:
+            rules = None if args.no_rules else load_weapon_refresh_rules(Path(args.rules).resolve(), required=True)
+        except ValueError as error:
+            raise SystemExit(str(error)) from error
 
         attack_report = build_attack_validation_report(
             ingest_report=load_json(attack_ingest_path),
             ingest_path=attack_ingest_path,
             csv_path=attack_csv_path,
+            rules=rules,
         )
         write_json(attack_output_path, attack_report)
         manifest["reports"]["stratagem_attacks"] = {
             "output_path": str(attack_output_path),
             "summary": attack_report["summary"],
+            "review_queue": review_queue_summary(attack_report.get("review_queue")),
         }
+        generated_reports["stratagem_attacks"] = attack_report
         print(
             "Attack summary:",
             f"records={attack_report['summary']['wiki_record_count']}",
@@ -1374,6 +1854,7 @@ def main() -> None:
         )
         print(f"Wrote attack report to {attack_output_path}")
 
+    manifest["review_queue"] = aggregate_review_queue_summaries(generated_reports)
     write_json(index_output_path, manifest)
     print(f"Wrote report index to {index_output_path}")
 

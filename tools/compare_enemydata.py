@@ -20,6 +20,21 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
+try:
+    from enemy_refresh_rules import (
+        DEFAULT_RULES_PATH,
+        classify_unit_refresh_changes,
+        get_unit_refresh_rule,
+        load_enemy_refresh_rules,
+    )
+except ImportError:  # pragma: no cover - supports package-style test imports
+    from tools.enemy_refresh_rules import (
+        DEFAULT_RULES_PATH,
+        classify_unit_refresh_changes,
+        get_unit_refresh_rule,
+        load_enemy_refresh_rules,
+    )
+
 
 HASH_NAME_RE = re.compile(r"^0x[0-9a-fA-F]+$")
 
@@ -236,6 +251,8 @@ def count_units(data: Dict[str, Any]) -> int:
 def compare_datasets(
     current: Dict[str, Any],
     generated: Dict[str, Any],
+    *,
+    refresh_rules: Dict[str, Any] | None = None,
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     normalized_generated = copy.deepcopy(generated)
     faction_report: Dict[str, Any] = {}
@@ -245,6 +262,8 @@ def compare_datasets(
     total_missing = 0
     total_stat_changed = 0
     total_name_changed = 0
+    total_refresh_rule_matches = 0
+    refresh_rule_classification_counts: Counter[str] = Counter()
 
     all_factions = sorted(set(current) | set(generated))
 
@@ -276,12 +295,23 @@ def compare_datasets(
 
             unit_diff = diff_unit(current_unit, aliased_unit)
             name_diff = diff_unit_zone_names(current_unit, aliased_unit)
+            refresh_rule = get_unit_refresh_rule(refresh_rules, faction, unit_name)
+            refresh_classification = classify_unit_refresh_changes(
+                current_unit,
+                aliased_unit,
+                refresh_rule,
+            )
+            if refresh_classification:
+                total_refresh_rule_matches += 1
+                refresh_rule_classification_counts.update(refresh_classification["summary"])
 
             if unit_diff:
                 if name_diff:
                     unit_diff["renamed_zone_groups"] = name_diff
                 if alias_count:
                     unit_diff["safe_aliases_applied"] = alias_count
+                if refresh_classification:
+                    unit_diff["refresh_rule_classification"] = refresh_classification
                 stat_changed_units[unit_name] = unit_diff
             elif name_diff:
                 name_only_units[unit_name] = {
@@ -289,6 +319,8 @@ def compare_datasets(
                 }
                 if alias_count:
                     name_only_units[unit_name]["safe_aliases_applied"] = alias_count
+                if refresh_classification:
+                    name_only_units[unit_name]["refresh_rule_classification"] = refresh_classification
 
         if added_units or missing_units or stat_changed_units or name_only_units:
             faction_report[faction] = {}
@@ -315,6 +347,10 @@ def compare_datasets(
             "stat_changed_unit_count": total_stat_changed,
             "name_changed_unit_count": total_name_changed,
             "safe_aliases_applied": total_aliases,
+            "refresh_rule_matched_unit_count": total_refresh_rule_matches,
+            "refresh_rule_classification_counts": dict(
+                sorted(refresh_rule_classification_counts.items())
+            ),
         },
         "factions": faction_report,
     }
@@ -347,6 +383,16 @@ def parse_args() -> argparse.Namespace:
         "--normalized-generated",
         help="Optional path to write a copy of the generated data with safe aliases applied.",
     )
+    parser.add_argument(
+        "--refresh-rules",
+        default=str(DEFAULT_RULES_PATH),
+        help=f"Path to enemy refresh rules JSON. Default: {DEFAULT_RULES_PATH}",
+    )
+    parser.add_argument(
+        "--no-refresh-rules",
+        action="store_true",
+        help="Disable enemy refresh rule loading and classification.",
+    )
     return parser.parse_args()
 
 
@@ -359,15 +405,21 @@ def main() -> None:
     normalized_output_path = (
         Path(args.normalized_generated.strip()) if args.normalized_generated else None
     )
+    refresh_rules_path = None if args.no_refresh_rules else Path(args.refresh_rules.strip())
 
     if not current_path.exists():
         raise SystemExit(f"Current enemy data file not found: {current_path}")
     if not generated_path.exists():
         raise SystemExit(f"Generated enemy data file not found: {generated_path}")
+    if refresh_rules_path is not None and not refresh_rules_path.exists():
+        raise SystemExit(f"Enemy refresh rules file not found: {refresh_rules_path}")
 
     current = load_json(current_path)
     generated = load_json(generated_path)
-    report, normalized_generated = compare_datasets(current, generated)
+    refresh_rules = load_enemy_refresh_rules(refresh_rules_path) if refresh_rules_path else None
+    report, normalized_generated = compare_datasets(current, generated, refresh_rules=refresh_rules)
+    if refresh_rules_path is not None:
+        report["refresh_rules_path"] = str(refresh_rules_path)
 
     if report_path is not None:
         ensure_parent_dir(report_path)

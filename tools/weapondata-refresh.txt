@@ -23,6 +23,13 @@ reviewed and committed alongside code changes.
 
 Refresh workflow
 ----------------
+For a report-first patch refresh manifest, run:
+
+       python .\tools\run_patch_refresh.py --run-id <patch-or-date>
+
+This writes review artifacts under `tools\artifacts\patch_refresh\...` and does
+not modify `weapons\weapondata.csv` or `enemies\enemydata.json`.
+
 1. Download the latest Google Sheets CSV export from:
 
        https://docs.google.com/spreadsheets/d/e/2PACX-1vTeLqZ5-maEmzrM6SUDMRXpHEhV0tQImiBdgMCil9lSA11IiY_nGdamE54W7DAiSXn1XuJljdF4P537/pub?gid=0&single=true&output=csv
@@ -39,9 +46,37 @@ Refresh workflow
        Set-Location C:\GitHub\supercalc
        python .\tools\merge_weapon_rpm_from_filediver.py --dump C:\temp\entity-component-settings.json --csv .\weapons\weapondata.csv
 
-5. Review unresolved rows and odd values.
+5. Before editing checked-in datasets, run the report-first weapon refresh
+   helpers with the checked-in override rules:
 
-6. Use wiki raw JSON only as a fallback/audit source for gaps that `filediver`
+       python .\tools\ingest_wikigg_attacks.py --output .\tools\issues\wikigg-stratagem-attacks.json
+       python .\tools\build_wikigg_validation_reports.py --skip-enemy
+
+   The ingest and validation reports load `tools\weapon-refresh-rules.json` by
+   default. That file is the machine-readable place for exact alias/status
+   cleanup knowledge that should affect report classification only:
+
+   - `attack_name_aliases` for source/CSV attack names, including x-count and
+     mounted-weapon naming differences.
+   - `entity_name_aliases` and `code_aliases` for vehicle, exosuit, mounted, or
+     renamed rows.
+   - `status_rewrites` for safe status spelling cleanup/removal in projections.
+   - `review_required` and `manual_grouping` for cases that must stay
+     human-reviewed instead of automatically written.
+
+   To preview observed falloff artifact rows against `weapons\falloff.csv`
+   without overwriting it:
+
+       python .\tools\weapon_refresh_rules.py --output .\tools\artifacts\falloff-refresh-preview.json
+
+   Use `--rules <path>` to test proposed rule changes and `--no-rules` on the
+   ingest/validation helpers when you need a raw baseline report.
+
+6. Review unresolved rows, alias-classified rows, status rewrites, falloff
+   preview differences, and other odd values. Only edit `weapons\weapondata.csv`
+   or `weapons\falloff.csv` after reviewing the report output.
+
+7. Use wiki raw JSON only as a fallback/audit source for gaps that `filediver`
    does not cover cleanly. The current best raw source is:
 
        https://helldivers.wiki.gg/wiki/Module:Decodedata-Weapons/data.json?action=raw
@@ -50,7 +85,7 @@ Refresh workflow
 
        python .\tools\merge_weapon_rpm_from_filediver.py --dump C:\temp\entity-component-settings.json --csv .\weapons\weapondata.csv --wiki-url https://helldivers.wiki.gg/wiki/Module:Decodedata-Weapons/data.json?action=raw
 
-7. Run tests before committing.
+8. Run tests before committing.
 
 
 RPM column notes

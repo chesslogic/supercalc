@@ -23,6 +23,19 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.request import Request, urlopen
 
+try:
+    from weapon_refresh_rules import (
+        DEFAULT_RULES_PATH,
+        WeaponRefreshRules,
+        load_weapon_refresh_rules,
+    )
+except ModuleNotFoundError:  # pragma: no cover - fallback for package-style imports
+    from tools.weapon_refresh_rules import (
+        DEFAULT_RULES_PATH,
+        WeaponRefreshRules,
+        load_weapon_refresh_rules,
+    )
+
 
 DEFAULT_STRATAGEMS_URL = (
     "https://helldivers.wiki.gg/wiki/"
@@ -126,6 +139,19 @@ def parse_args() -> argparse.Namespace:
             "Disable default live companion fetches. Only explicitly provided JSON paths/URLs "
             "will be loaded."
         ),
+    )
+    parser.add_argument(
+        "--rules",
+        default=str(DEFAULT_RULES_PATH),
+        help=(
+            "Path to tools\\weapon-refresh-rules.json. Rules are used only for report "
+            "classification and CSV comparison aliases/status rewrites."
+        ),
+    )
+    parser.add_argument(
+        "--no-rules",
+        action="store_true",
+        help="Disable weapon refresh rules for this report run.",
     )
 
     stratagems_group = parser.add_mutually_exclusive_group()
@@ -275,6 +301,36 @@ def normalize_attack_name_key(value: Any) -> str:
     text = re.sub(r"guard\s*dog", "", str(value or ""), flags=re.IGNORECASE)
     key = compact_text(text)
     return re.sub(r"x\d+$", "", key)
+
+
+def expand_normalized_keys(
+    *,
+    rules: WeaponRefreshRules | None,
+    section: str,
+    value: Any,
+    normalizer: Any,
+) -> list[str]:
+    values = rules.values_with_aliases(section, value) if rules else [value]
+    return unique_list([normalizer(item) for item in values if normalizer(item)])
+
+
+def expand_many_normalized_keys(
+    *,
+    rules: WeaponRefreshRules | None,
+    section: str,
+    values: Iterable[Any],
+    normalizer: Any,
+) -> list[str]:
+    return unique_list(
+        key
+        for value in values
+        for key in expand_normalized_keys(
+            rules=rules,
+            section=section,
+            value=value,
+            normalizer=normalizer,
+        )
+    )
 
 
 def build_path_frame(
@@ -469,60 +525,112 @@ def entity_identity(name: str, entity_id: str | None) -> str:
 def compare_record_to_csv(
     record: dict[str, Any],
     csv_indexes: dict[str, Any],
+    rules: WeaponRefreshRules | None = None,
 ) -> dict[str, Any]:
     projection = record["csv_projection"]
-    code_key = normalize_code_key(projection.get("Code"))
-    name_key = normalize_name_key(projection.get("Name"))
-    attack_type_key = str(projection.get("Atk Type") or "").strip().lower()
-    attack_name_key = normalize_attack_name_key(projection.get("Atk Name"))
+    exact_row_syncs = rules.matching_exact_row_syncs(projection) if rules else []
+    exact_targets = [sync["target"] for sync in exact_row_syncs]
+    code_keys = expand_many_normalized_keys(
+        rules=rules,
+        section="code_aliases",
+        values=[projection.get("Code"), *[target.get("Code") for target in exact_targets]],
+        normalizer=normalize_code_key,
+    )
+    name_keys = expand_many_normalized_keys(
+        rules=rules,
+        section="entity_name_aliases",
+        values=[projection.get("Name"), *[target.get("Name") for target in exact_targets]],
+        normalizer=normalize_name_key,
+    )
+    attack_type_keys = unique_list(
+        [
+            str(value or "").strip().lower()
+            for value in [
+                projection.get("Atk Type"),
+                *[target.get("Atk Type") for target in exact_targets],
+            ]
+            if str(value or "").strip()
+        ]
+    )
+    attack_name_keys = expand_many_normalized_keys(
+        rules=rules,
+        section="attack_name_aliases",
+        values=[projection.get("Atk Name"), *[target.get("Atk Name") for target in exact_targets]],
+        normalizer=normalize_attack_name_key,
+    )
 
     matches: list[CsvRow] = []
     match_kind: str | None = None
 
-    if code_key:
-        matches = csv_indexes["by_code_attack"].get(
-            (code_key, attack_type_key, attack_name_key),
-            [],
-        )
+    for code_key in code_keys:
+        for attack_type_key in attack_type_keys:
+            for attack_name_key in attack_name_keys:
+                matches = csv_indexes["by_code_attack"].get(
+                    (code_key, attack_type_key, attack_name_key),
+                    [],
+                )
+                if matches:
+                    match_kind = "code+attack"
+                    break
+            if matches:
+                break
         if matches:
-            match_kind = "code+attack"
+            break
 
-    if not matches and name_key:
-        matches = csv_indexes["by_name_attack"].get(
-            (name_key, attack_type_key, attack_name_key),
-            [],
-        )
-        if matches:
-            match_kind = "name+attack"
+    if not matches:
+        for name_key in name_keys:
+            for attack_type_key in attack_type_keys:
+                for attack_name_key in attack_name_keys:
+                    matches = csv_indexes["by_name_attack"].get(
+                        (name_key, attack_type_key, attack_name_key),
+                        [],
+                    )
+                    if matches:
+                        match_kind = "name+attack"
+                        break
+                if matches:
+                    break
+            if matches:
+                break
 
     candidate_rows: list[CsvRow] = []
-    if code_key:
+    for code_key in code_keys:
         candidate_rows.extend(csv_indexes["by_code_any"].get(code_key, []))
-    if name_key:
+    for name_key in name_keys:
         candidate_rows.extend(csv_indexes["by_name_any"].get(name_key, []))
     candidate_rows = sorted(
         {row.line_number: row for row in candidate_rows}.values(),
         key=lambda row: row.line_number,
     )
 
+    alias_metadata = {
+        "code_keys": code_keys,
+        "name_keys": name_keys,
+        "attack_type_keys": attack_type_keys,
+        "attack_name_keys": attack_name_keys,
+        "exact_row_syncs": exact_row_syncs,
+    }
+
     return {
         "matched": bool(matches),
         "match_kind": match_kind,
         "csv_row_numbers": [row.line_number for row in matches],
         "candidate_row_numbers": [row.line_number for row in candidate_rows],
-        "comparison_code_key": code_key or None,
-        "comparison_name_key": name_key or None,
-        "comparison_attack_key": attack_name_key or None,
+        "comparison_code_key": code_keys[0] if code_keys else None,
+        "comparison_name_key": name_keys[0] if name_keys else None,
+        "comparison_attack_key": attack_name_keys[0] if attack_name_keys else None,
+        "rule_expanded_keys": alias_metadata if rules else None,
     }
 
 
 def attach_csv_comparison(
     records: list[dict[str, Any]],
     csv_indexes: dict[str, Any],
+    rules: WeaponRefreshRules | None = None,
 ) -> set[int]:
     matched_line_numbers: set[int] = set()
     for record in records:
-        comparison = compare_record_to_csv(record, csv_indexes)
+        comparison = compare_record_to_csv(record, csv_indexes, rules)
         record["comparison"] = comparison
         matched_line_numbers.update(comparison["csv_row_numbers"])
     return matched_line_numbers
@@ -662,6 +770,18 @@ def merge_record(existing: dict[str, Any], incoming: dict[str, Any]) -> None:
             *incoming["statuses"].get("details", []),
         ]
     )
+    existing["statuses"]["original_names"] = unique_list(
+        [
+            *existing["statuses"].get("original_names", []),
+            *incoming["statuses"].get("original_names", []),
+        ]
+    )
+    existing["statuses"]["rewrite_actions"] = unique_list(
+        [
+            *existing["statuses"].get("rewrite_actions", []),
+            *incoming["statuses"].get("rewrite_actions", []),
+        ]
+    )
     existing["csv_projection"]["Status"] = " • ".join(existing["statuses"]["names"])
 
     existing["provenance"]["paths"] = unique_list(
@@ -681,6 +801,7 @@ def merge_record(existing: dict[str, Any], incoming: dict[str, Any]) -> None:
 def normalize_stratagem_records(
     stratagems_module: LoadedModule,
     modules: list[LoadedModule],
+    rules: WeaponRefreshRules | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     registry = ModuleRegistry(modules)
     grouped_records: dict[str, dict[str, Any]] = {}
@@ -929,7 +1050,12 @@ def normalize_stratagem_records(
                     for entry in (damage_summary or {}).get("statuses", [])
                     if entry.get("name")
                 ]
-                status_names = unique_list([*damage_status_names, *immediate_status_names])
+                original_status_names = unique_list([*damage_status_names, *immediate_status_names])
+                if rules:
+                    status_names, status_rewrite_actions = rules.rewrite_status_names(original_status_names)
+                else:
+                    status_names = original_status_names
+                    status_rewrite_actions = []
                 status_details = resolve_status_details(status_names, registry)
                 status_frames = [
                     build_path_frame(
@@ -998,6 +1124,10 @@ def normalize_stratagem_records(
                     "statuses": {
                         "names": status_names,
                         "details": status_details,
+                        "original_names": original_status_names
+                        if original_status_names != status_names
+                        else [],
+                        "rewrite_actions": status_rewrite_actions,
                     },
                     "weapon_context": {
                         "resolved_weapon_names": unique_list(
@@ -1137,18 +1267,27 @@ def build_entity_csv_rows(
     entity_id: str | None,
     resolved_ids: list[str],
     csv_indexes: dict[str, Any],
+    rules: WeaponRefreshRules | None = None,
 ) -> list[CsvRow]:
     rows_by_line: dict[int, CsvRow] = {}
     for candidate_id in unique_list([entity_id, *resolved_ids]):
-        code_key = normalize_code_key(candidate_id)
-        if not code_key:
-            continue
-        for csv_row in csv_indexes["by_code_any"].get(code_key, []):
-            rows_by_line[csv_row.line_number] = csv_row
+        for code_key in expand_normalized_keys(
+            rules=rules,
+            section="code_aliases",
+            value=candidate_id,
+            normalizer=normalize_code_key,
+        ):
+            for csv_row in csv_indexes["by_code_any"].get(code_key, []):
+                rows_by_line[csv_row.line_number] = csv_row
 
-    name_key = normalize_name_key(entity_name)
-    for csv_row in csv_indexes["by_name_any"].get(name_key, []):
-        rows_by_line[csv_row.line_number] = csv_row
+    for name_key in expand_normalized_keys(
+        rules=rules,
+        section="entity_name_aliases",
+        value=entity_name,
+        normalizer=normalize_name_key,
+    ):
+        for csv_row in csv_indexes["by_name_any"].get(name_key, []):
+            rows_by_line[csv_row.line_number] = csv_row
 
     return sorted(rows_by_line.values(), key=lambda row: row.line_number)
 
@@ -1166,6 +1305,7 @@ def build_entity_summaries(
     records: list[dict[str, Any]],
     unresolved: list[dict[str, Any]],
     csv_indexes: dict[str, Any],
+    rules: WeaponRefreshRules | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     records_by_entity: dict[str, list[dict[str, Any]]] = defaultdict(list)
     unresolved_by_entity: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -1208,6 +1348,7 @@ def build_entity_summaries(
             entity_id=str(entity_obj.get("id") or "").strip() or None,
             resolved_ids=[value for value in resolved_ids if value],
             csv_indexes=csv_indexes,
+            rules=rules,
         )
         matched_csv_rows = sorted(
             {
@@ -1283,12 +1424,14 @@ def build_report(
     unresolved: list[dict[str, Any]],
     csv_indexes: dict[str, Any],
     matched_line_numbers: set[int],
+    rules: WeaponRefreshRules | None = None,
 ) -> dict[str, Any]:
     entity_summaries, unresolved_entities = build_entity_summaries(
         stratagems_module=stratagems_module,
         records=records,
         unresolved=unresolved,
         csv_indexes=csv_indexes,
+        rules=rules,
     )
     csv_unmatched_rows = [
         simplify_csv_row(csv_row)
@@ -1337,6 +1480,11 @@ def build_report(
                 "csv_path": str(csv_path),
                 "csv_type_filter": "Stratagem",
                 "excluded_stratagem_tags": ["SUPPORT WEAPON"],
+            },
+            "weapon_refresh_rules": {
+                "enabled": bool(rules),
+                "path": str(rules.source_path) if rules and rules.source_path else None,
+                "mode": "report-only",
             },
             "sources": {
                 module.label: {
@@ -1435,9 +1583,14 @@ def main() -> None:
         ],
     ]
 
+    try:
+        rules = None if args.no_rules else load_weapon_refresh_rules(Path(args.rules).resolve(), required=True)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
+
     csv_indexes = build_csv_indexes(load_csv_rows(csv_path))
-    records, unresolved = normalize_stratagem_records(stratagems_module, modules)
-    matched_line_numbers = attach_csv_comparison(records, csv_indexes)
+    records, unresolved = normalize_stratagem_records(stratagems_module, modules, rules)
+    matched_line_numbers = attach_csv_comparison(records, csv_indexes, rules)
     report = build_report(
         modules=modules,
         stratagems_module=stratagems_module,
@@ -1446,6 +1599,7 @@ def main() -> None:
         unresolved=unresolved,
         csv_indexes=csv_indexes,
         matched_line_numbers=matched_line_numbers,
+        rules=rules,
     )
 
     ensure_parent_dir(output_path)

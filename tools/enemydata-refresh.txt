@@ -212,6 +212,27 @@ The comparison helper:
 - reports name-only zone churn separately
 - carries forward existing readable zone names only when a generated hashed zone
   has a unique safe signature match
+- loads `enemies\enemy-refresh-rules.json` by default and adds
+  `refresh_rule_classification` blocks for units with review rules
+
+The refresh rules are intentionally report-first. They codify narrow
+`safe_sync_fields`, broad locked/manual-review fields, preferred source keys, and
+known source-lag filters without modifying `enemies\enemydata.json`.
+
+Use the classifications as review hints:
+
+- `safe_sync` means the field is identity-stable enough to consider applying
+  after source review, such as a top-level / `Main` HP change
+- `known_source_lag` means the generated/source value matches a documented stale
+  upstream state and should not overwrite the curated checked-in value
+- `locked` means the field or subtree is deliberately excluded from auto-sync,
+  usually because anatomy shape, grouped zones, or child profiles need review
+- `manual_review` means no rule matched, so the normal human review queue still
+  owns the decision
+
+Disable the rule layer for baseline comparisons with:
+
+    python .\tools\compare_enemydata.py --generated C:\temp\enemydata-from-filediver.json --no-refresh-rules
 
 
 What the 2026-03-17 investigation found
@@ -508,16 +529,30 @@ Specific answers from the investigation
 
 Recommended workflow for future refreshes
 -----------------------------------------
+Start with a report-first manifest:
+
+    python .\tools\run_patch_refresh.py --run-id <patch-or-date>
+
+The orchestrator records current source paths and writes validation artifacts
+under `tools\artifacts\patch_refresh\...`; it does not auto-apply changes to
+`enemies\enemydata.json` or `weapons\weapondata.csv`.
+
 1. Update `filediver` to latest GitHub HEAD
 2. Re-run the entity dump
 3. Run `tools\flatten_entity_component_settings.py`
 4. Run `tools\parser_faction_units.py`
-5. Run `tools\compare_enemydata.py`
-6. Manually review:
+5. Run `tools\compare_enemydata.py` with the default
+   `enemies\enemy-refresh-rules.json` rule layer
+6. Review `refresh_rule_classification` before editing the checked-in file:
+   - safe-sync fields may be applied only after confirming the source/key is the
+     intended one
+   - known source-lag fields should preserve the curated checked-in value
+   - locked fields stay manual-review only
+7. Manually review:
    - `Factory Strider Gatling Gun`
    - zero-bleed Constitution zones whose names or signatures changed during the refresh
    - any newly surfaced units
    - `stat_changed_units`
    - `name_only_units`
    - any zones whose generated names are still opaque hashes
-7. Only then update the checked-in file
+8. Only then update the checked-in file
