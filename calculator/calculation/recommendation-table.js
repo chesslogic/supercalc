@@ -13,20 +13,42 @@ function getRecommendationMarginSortTitle(sortMode = DEFAULT_RECOMMENDATION_SORT
 }
 
 function buildRecommendationDisplayEntries(rows = [], {
-  showMarginBands = true
+  showMarginBands = true,
+  segmentSize = 0
 } = {}) {
   const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
   if (!showMarginBands) {
     return sourceRows.map((row) => ({ row }));
   }
 
-  return groupRecommendationRowsByMarginBand(sourceRows).flatMap((band) => (
-    band.rows.map((row, index) => ({
-      row,
-      marginBandKey: band.key,
-      marginBandLabel: index === 0 ? band.label : '',
-      marginBandDescription: index === 0 ? band.description : ''
-    }))
+  // Band inside each pagination segment instead of across the whole list, so rows deliberately
+  // promoted into the visible window by core-type backfill or target diversity cannot be reordered
+  // past it by the band grouping.
+  const normalizedSegmentSize = Number.isFinite(segmentSize) && segmentSize > 0
+    ? Math.trunc(segmentSize)
+    : sourceRows.length;
+  const segments = [];
+  for (let index = 0; index < sourceRows.length; index += Math.max(1, normalizedSegmentSize)) {
+    segments.push(sourceRows.slice(index, index + normalizedSegmentSize));
+  }
+
+  // Segments are appended into one continuous tbody, so label a band only when it differs from the
+  // previously emitted row. That keeps a band that spans a segment boundary as a single labelled run
+  // instead of repeating its header on every revealed page.
+  let previousBandKey = '';
+  return segments.flatMap((segmentRows) => (
+    groupRecommendationRowsByMarginBand(segmentRows).flatMap((band) => (
+      band.rows.map((row) => {
+        const startsBand = band.key !== previousBandKey;
+        previousBandKey = band.key;
+        return {
+          row,
+          marginBandKey: band.key,
+          marginBandLabel: startsBand ? band.label : '',
+          marginBandDescription: startsBand ? band.description : ''
+        };
+      })
+    ))
   ));
 }
 
@@ -165,12 +187,13 @@ export function renderRecommendationSubsection({
   }
 
   const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
-  const displayEntries = buildRecommendationDisplayEntries(sourceRows, {
-    showMarginBands
-  });
   const normalizedDisplayStep = Number.isFinite(displayStep)
     ? Math.max(1, Math.trunc(displayStep))
     : 0;
+  const displayEntries = buildRecommendationDisplayEntries(sourceRows, {
+    showMarginBands,
+    segmentSize: normalizedDisplayStep
+  });
   const initialVisibleCount = normalizedDisplayStep > 0
     ? Math.min(displayEntries.length, normalizedDisplayStep)
     : displayEntries.length;
@@ -191,8 +214,8 @@ export function renderRecommendationSubsection({
         return;
       }
 
-      paginationStatus.textContent = getRecommendationVisibleCountText(renderedCount, sourceRows.length);
-      const remainingCount = sourceRows.length - renderedCount;
+      paginationStatus.textContent = getRecommendationVisibleCountText(renderedCount, displayEntries.length);
+      const remainingCount = displayEntries.length - renderedCount;
       if (remainingCount <= 0) {
         moreButton.classList.add('hidden');
         return;
@@ -202,7 +225,7 @@ export function renderRecommendationSubsection({
       moreButton.textContent = getRecommendationShowMoreButtonText(normalizedDisplayStep, remainingCount);
     };
 
-    if (normalizedDisplayStep > 0 && sourceRows.length > initialVisibleCount) {
+    if (normalizedDisplayStep > 0 && displayEntries.length > initialVisibleCount) {
       const pagination = document.createElement('div');
       pagination.className = 'calc-recommend-pagination';
 

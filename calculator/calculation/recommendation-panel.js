@@ -212,13 +212,13 @@ export function renderRecommendationPanel(container, enemy, {
   ));
   const {
     rows: displayRows,
-    supplementedCoreTypes
+    supplementedCoreTypes,
+    selectedRowCount
   } = recommendationRows.length > 0
-    ? buildOverallRecommendationDisplaySequence(
-        flaggedRows.length > 0 ? flaggedRows : recommendationRows,
-        RECOMMENDATION_DISPLAY_LIMIT
-      )
-    : { rows: [], supplementedCoreTypes: [] };
+    ? buildOverallRecommendationDisplaySequence(recommendationRows, RECOMMENDATION_DISPLAY_LIMIT, {
+        priorityRows: flaggedRows
+      })
+    : { rows: [], supplementedCoreTypes: [], selectedRowCount: 0 };
   const initialOverallRows = displayRows.slice(0, RECOMMENDATION_DISPLAY_LIMIT);
   const hasActiveWeaponFilters = hasActiveRecommendationWeaponFilters();
   const sharedRecommendationFilterSummaryText = getRecommendationWeaponFilterSummaryText(weaponsState.groups);
@@ -235,6 +235,7 @@ export function renderRecommendationPanel(container, enemy, {
     flaggedRows,
     supplementedCoreTypes,
     initialOverallRows,
+    selectedRowCount,
     recommendationRangeSummary,
     overallRecommendationFilterSummaryText: sharedRecommendationFilterSummaryText,
     hasActiveFilters: hasActiveWeaponFilters

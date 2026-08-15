@@ -1282,3 +1282,187 @@ test('renderRecommendationPanel role chips appear with data-role attributes', ()
     weaponsState.groups = previousGroups;
   }
 });
+
+test('buildOverallRecommendationDisplaySequence appends unflagged rows as a reachable tail behind the flagged seed', async () => {
+  const { buildOverallRecommendationDisplaySequence } = await import('../calculator/calculation/recommendation-display.js');
+  const makeRow = (name, qualifiesForMargin) => ({
+    weapon: { name, type: 'Primary' },
+    bestZone: { zone_name: 'head' },
+    qualifiesForMargin
+  });
+  const flaggedRows = ['Flag A', 'Flag B'].map((name) => makeRow(name, true));
+  const unflaggedRows = ['Plain A', 'Plain B', 'Plain C'].map((name) => makeRow(name, false));
+  const { rows, selectedRowCount } = buildOverallRecommendationDisplaySequence(
+    [...flaggedRows, ...unflaggedRows],
+    2,
+    { priorityRows: flaggedRows }
+  );
+
+  assert.equal(selectedRowCount, 2);
+  assert.deepEqual(
+    rows.map((row) => row.weapon.name),
+    ['Flag A', 'Flag B', 'Plain A', 'Plain B', 'Plain C']
+  );
+});
+
+test('renderRecommendationPanel keeps unflagged overall rows listed after the highlighted rows', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationMaxShots = RECOMMENDATION_MAX_SHOTS_ANY;
+    weaponsState.groups = [
+      makeWeapon('Sniper', {
+        index: 0,
+        rpm: 60,
+        rows: [makeAttackRow('Sniper Shot', 120, 4)]
+      }),
+      makeWeapon('Body Tapper', {
+        index: 1,
+        rpm: 60,
+        rows: [makeAttackRow('Body Tap', 50, 1)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Unflagged Tail Dummy',
+      health: 350,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 3, toMainPercent: 1 }),
+        makeZone('body', { health: 250, av: 1, toMainPercent: 0 })
+      ]
+    });
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+    const renderedNames = getRenderedRecommendationWeaponNames(overallSection);
+
+    assert.equal(renderedNames[0], 'Sniper');
+    assert.ok(
+      renderedNames.includes('Body Tapper'),
+      'Unflagged rows must stay reachable instead of being dropped from the sequence'
+    );
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel keeps core-type backfilled rows inside the initial visible window after margin banding', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousSortMode = calculatorState.recommendationSortMode;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationSortMode = 'default';
+    weaponsState.groups = [
+      ...Array.from({ length: 30 }, (_, index) => makeWeapon(`Primary Tight ${String(index + 1).padStart(2, '0')}`, {
+        index,
+        type: 'Primary',
+        rpm: 60,
+        rows: [makeAttackRow(`Primary Tight ${index + 1}`, 105, 2)]
+      })),
+      makeWeapon('Secondary Heavy A', {
+        index: 30,
+        type: 'Secondary',
+        sub: 'PST',
+        rpm: 60,
+        rows: [makeAttackRow('Secondary Heavy A', 900, 2)]
+      }),
+      makeWeapon('Secondary Heavy B', {
+        index: 31,
+        type: 'Secondary',
+        sub: 'PST',
+        rpm: 60,
+        rows: [makeAttackRow('Secondary Heavy B', 950, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Backfill Window Dummy',
+      health: 200,
+      zones: [
+        makeZone('Main', { health: 200, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+    const renderedNames = getRenderedRecommendationWeaponNames(overallSection);
+    const bandStarts = getRecommendationMarginBandStarts(overallSection);
+
+    assert.equal(renderedNames.length, 24);
+    assert.ok(
+      renderedNames.includes('Secondary Heavy A') && renderedNames.includes('Secondary Heavy B'),
+      'Core-type backfilled secondaries must survive margin banding inside the visible window'
+    );
+    assert.deepEqual(bandStarts.map((band) => band.key), ['tight', 'overkill']);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationSortMode = previousSortMode;
+    weaponsState.groups = previousGroups;
+  }
+});
+
+test('renderRecommendationPanel does not repeat a margin band header across a revealed segment', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousSortMode = calculatorState.recommendationSortMode;
+  const previousDocument = globalThis.document;
+  const previousNode = globalThis.Node;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationSortMode = 'default';
+    weaponsState.groups = Array.from({ length: 26 }, (_, index) => makeWeapon(`Overflow ${index + 1}`, {
+      index,
+      type: 'Primary',
+      rpm: 60,
+      rows: [makeAttackRow(`Overflow ${index + 1}`, 105 + index, 2)]
+    }));
+
+    globalThis.document = new TestDocument();
+    globalThis.Node = TestElement;
+
+    const container = new TestElement('div');
+    renderRecommendationPanel(container, {
+      name: 'Band Segment Dummy',
+      health: 500,
+      zones: [
+        makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const overallSection = getRecommendationSection(container, 'Overall recommendations');
+    const buttons = collectElements(overallSection, (element) => element.classList.contains('calc-recommend-more-button'));
+
+    assert.deepEqual(getRecommendationMarginBandStarts(overallSection).map((band) => band.key), ['tight']);
+
+    buttons[0]?.listeners.get('click')?.();
+
+    const revealedRows = getRenderedRecommendationWeaponNames(overallSection);
+    const revealedBandStarts = getRecommendationMarginBandStarts(overallSection);
+
+    assert.equal(revealedRows.length, 26);
+    assert.deepEqual(
+      revealedBandStarts.map((band) => band.key),
+      ['tight'],
+      'A band spanning a segment boundary must stay one labelled run instead of repeating its header'
+    );
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.Node = previousNode;
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationSortMode = previousSortMode;
+    weaponsState.groups = previousGroups;
+  }
+});

@@ -15,7 +15,7 @@ import {
 
 export function getRecommendationSummaryTitle(hasHighlightedRows) {
   return hasHighlightedRows
-    ? `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nRows without those highlights are hidden from this table.`
+    ? `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nRows without those highlights are ranked below them and stay reachable with show more.`
     : `${RECOMMENDATION_HIGHLIGHT_SUMMARY_TITLE}\nNothing matches right now, so the table falls back to the best-ranked row for each weapon.`;
 }
 

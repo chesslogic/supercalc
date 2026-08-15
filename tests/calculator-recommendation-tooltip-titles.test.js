@@ -100,7 +100,7 @@ test('renderRecommendationPanel adds explanatory titles to highlighted recommend
     assert.equal(outcomeBadge.title, 'Killing this part kills the enemy');
     assert.equal(flags[0].textContent, '+3%');
     assert.equal(flags[0].title, 'One-shot margin: +3%. Meets the Margin highlight at the current range floor (+25% or less extra damage).');
-    assert.match(summary.title, /Rows without those highlights are hidden from this table/i);
+    assert.match(summary.title, /Rows without those highlights are ranked below them and stay reachable with show more/i);
   } finally {
     calculatorState.recommendationRangeMeters = previousRangeFloor;
     weaponsState.groups = previousGroups;

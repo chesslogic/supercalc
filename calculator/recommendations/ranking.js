@@ -23,6 +23,16 @@ function getRecommendationPackageComponentCount(recommendation) {
   return Math.max(1, componentCount || 0);
 }
 
+// Weapon display rows carry the flag on their best attack recommendation instead of
+// exposing it directly, so both row shapes resolve through this helper.
+function hasQualifiedRangePath(recommendation) {
+  if (typeof recommendation?.hasQualifiedPath === 'boolean') {
+    return recommendation.hasQualifiedPath;
+  }
+
+  return Boolean(recommendation?.bestAttackRecommendation?.hasQualifiedPath);
+}
+
 function getTargetRecommendationDisplaySignature(recommendation) {
   const bestCandidate = recommendation?.bestCandidate;
   return JSON.stringify({
@@ -137,6 +147,11 @@ export function compareAttackRowRecommendations(left, right, {
     return comparison;
   }
 
+  comparison = compareBooleanDescending(hasQualifiedRangePath(left), hasQualifiedRangePath(right));
+  if (comparison !== 0) {
+    return comparison;
+  }
+
   comparison = compareAttackRecommendationPriority(left, right, normalizedSortMode);
   if (comparison !== 0) {
     return comparison;
@@ -145,11 +160,6 @@ export function compareAttackRowRecommendations(left, right, {
   comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate, {
     sortMode: normalizedSortMode
   });
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasQualifiedPath, right.hasQualifiedPath);
   if (comparison !== 0) {
     return comparison;
   }
@@ -182,6 +192,11 @@ export function compareWeaponRecommendationRows(left, right, {
 } = {}) {
   const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
   let comparison = compareBooleanDescending(left.selectedZoneMatch, right.selectedZoneMatch);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareBooleanDescending(hasQualifiedRangePath(left), hasQualifiedRangePath(right));
   if (comparison !== 0) {
     return comparison;
   }
@@ -220,7 +235,12 @@ export function compareTargetAttackRowRecommendations(left, right, {
   sortMode = 'default'
 } = {}) {
   const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
-  let comparison = compareAttackRecommendationPriority(left, right, normalizedSortMode);
+  let comparison = compareBooleanDescending(hasQualifiedRangePath(left), hasQualifiedRangePath(right));
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareAttackRecommendationPriority(left, right, normalizedSortMode);
   if (comparison !== 0) {
     return comparison;
   }
@@ -228,11 +248,6 @@ export function compareTargetAttackRowRecommendations(left, right, {
   comparison = compareZoneRecommendationCandidates(left.bestCandidate, right.bestCandidate, {
     sortMode: normalizedSortMode
   });
-  if (comparison !== 0) {
-    return comparison;
-  }
-
-  comparison = compareBooleanDescending(left.hasQualifiedPath, right.hasQualifiedPath);
   if (comparison !== 0) {
     return comparison;
   }
@@ -259,7 +274,12 @@ export function compareTargetWeaponRecommendationRows(left, right, {
   sortMode = 'default'
 } = {}) {
   const normalizedSortMode = normalizeRecommendationSortMode(sortMode);
-  let comparison = compareWeaponRecommendationPriority(left, right, normalizedSortMode);
+  let comparison = compareBooleanDescending(hasQualifiedRangePath(left), hasQualifiedRangePath(right));
+  if (comparison !== 0) {
+    return comparison;
+  }
+
+  comparison = compareWeaponRecommendationPriority(left, right, normalizedSortMode);
   if (comparison !== 0) {
     return comparison;
   }

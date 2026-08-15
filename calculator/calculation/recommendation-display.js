@@ -90,12 +90,18 @@ function buildOverallRecommendationDisplayRows(rows, limit = RECOMMENDATION_DISP
   };
 }
 
-export function buildOverallRecommendationDisplaySequence(rows, limit = RECOMMENDATION_DISPLAY_LIMIT) {
+// `priorityRows` seeds the first page (highlighted rows keep the top of the table), while every
+// remaining source row is appended as a tail so it stays reachable through the show-more control.
+export function buildOverallRecommendationDisplaySequence(rows, limit = RECOMMENDATION_DISPLAY_LIMIT, {
+  priorityRows = null
+} = {}) {
   const sourceRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+  const normalizedPriorityRows = Array.isArray(priorityRows) ? priorityRows.filter(Boolean) : [];
+  const seedRows = normalizedPriorityRows.length > 0 ? normalizedPriorityRows : sourceRows;
   const {
     rows: initialRows,
     supplementedCoreTypes
-  } = buildOverallRecommendationDisplayRows(sourceRows, limit);
+  } = buildOverallRecommendationDisplayRows(seedRows, limit);
   const selectedRowSet = new Set(initialRows);
 
   return {
@@ -103,6 +109,7 @@ export function buildOverallRecommendationDisplaySequence(rows, limit = RECOMMEN
       ...initialRows,
       ...sourceRows.filter((row) => !selectedRowSet.has(row))
     ],
-    supplementedCoreTypes
+    supplementedCoreTypes,
+    selectedRowCount: initialRows.length
   };
 }

@@ -218,6 +218,53 @@ test('buildWeaponRecommendationRows drops one-shot range-qualified flags when th
   assert.equal(beyondRangeRows[0].rangeStatus, 'failed');
 });
 
+test('buildWeaponRecommendationRows ranks a range-qualified row above a tighter range-failed row', () => {
+  resetBallisticFalloffProfiles();
+  ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
+
+  const enemy = {
+    name: 'Range Gate Dummy',
+    health: 500,
+    zones: [
+      makeZone('head', { health: 100, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Tight But Short', {
+      code: 'AR-23',
+      rows: [makeAttackRow('5.5x50mm FULL METAL JACKET_P', 105, 2)]
+    }),
+    makeWeapon('Loose But Long', {
+      code: 'R-63',
+      rows: [makeAttackRow('8x60mm FULL METAL JACKET_P', 160, 2)]
+    })
+  ];
+  const shortReachMeters = calculateMaxDistanceForDamageFloor(
+    105,
+    { caliber: 5.5, mass: 4.5, velocity: 900, drag: 0.3 },
+    100
+  );
+  const longReachMeters = calculateMaxDistanceForDamageFloor(
+    160,
+    { caliber: 8, mass: 8.5, velocity: 960, drag: 0.15 },
+    100
+  );
+  const rangeFloorMeters = Math.ceil(shortReachMeters) + 1;
+  assert.ok(rangeFloorMeters <= Math.floor(longReachMeters));
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters
+  });
+
+  assert.equal(rows[0].weapon.name, 'Loose But Long');
+  assert.equal(rows[0].rangeStatus, 'qualified');
+  assert.equal(rows[1].weapon.name, 'Tight But Short');
+  assert.equal(rows[1].rangeStatus, 'failed');
+  assert.ok(rows[1].marginRatio < rows[0].marginRatio);
+});
+
 test('buildWeaponRecommendationRows prefers shorter effective range when Margin rows otherwise tie', () => {
   resetBallisticFalloffProfiles();
   ingestBallisticFalloffCsvText(TEST_FALLOFF_CSV);
@@ -1543,4 +1590,79 @@ test('buildWeaponRecommendationRows strict-margin mode prioritizes headroom befo
   assert.equal(strictRows[0].shotsToKill, 3);
   assert.equal(strictRows[0].displayMarginPercent, 3);
   assert.equal(strictRows[1].marginPercent, 22);
+});
+
+test('buildWeaponRecommendationRows takes Margin qualification from the displayed candidate', () => {
+  const enemy = {
+    name: 'Mixed Margin Source Dummy',
+    health: 1000,
+    zones: [
+      makeZone('chest', { health: 100, isFatal: true, av: 1, toMainPercent: 1 }),
+      makeZone('head', { health: 60, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Picker', {
+      rows: [makeAttackRow('Picker', 105, 2)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bestZoneName, 'head', 'the selected zone stays the displayed candidate');
+  assert.equal(rows[0].marginPercent, 75);
+  assert.equal(
+    rows[0].qualifiesForMargin,
+    false,
+    'sort-facing qualification must match the Margin value shown in the row'
+  );
+  assert.equal(
+    rows[0].hasAnyQualifyingMarginPath,
+    true,
+    'the any-candidate qualification must stay available under its own field'
+  );
+
+  const chestCandidate = rows[0].bestAttackRecommendation.candidates
+    .find((candidate) => candidate.label === 'chest');
+  assert.ok(chestCandidate, 'the non-displayed qualifying candidate should still be present');
+  assert.equal(chestCandidate.qualifiesForMargin, true);
+});
+
+test('buildWeaponRecommendationRows takes near-miss qualification from the displayed candidate', () => {
+  const enemy = {
+    name: 'Mixed Near Miss Source Dummy',
+    health: 1000,
+    zones: [
+      makeZone('core', { health: 240, isFatal: true, av: 1, toMainPercent: 1 }),
+      makeZone('plate', { health: 260, isFatal: true, av: 1, toMainPercent: 1 })
+    ]
+  };
+  const weapons = [
+    makeWeapon('Heavy Pistol', {
+      index: 0,
+      type: 'Secondary',
+      sub: 'P',
+      rows: [makeAttackRow('Heavy Pistol', 100, 3)]
+    })
+  ];
+
+  const rows = buildWeaponRecommendationRows({
+    enemy,
+    weapons,
+    rangeFloorMeters: 0,
+    selectedZoneIndex: 1
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bestZoneName, 'plate');
+  assert.equal(rows[0].shotsToKill, 3);
+  assert.equal(rows[0].nearMissPercent, null);
+  assert.equal(rows[0].qualifiesForNearMiss, false);
+  assert.equal(rows[0].hasAnyQualifyingNearMissPath, true);
 });

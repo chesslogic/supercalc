@@ -593,6 +593,14 @@ export function compareZoneRecommendationCandidates(left, right, {
     return comparison;
   }
 
+  // A breakpoint that does not hold at the range floor is not a usable fit, so range
+  // qualification gates the margin comparison in every sort mode.
+  comparison = (RANGE_STATUS_ORDER[left.rangeStatus] ?? RANGE_STATUS_ORDER.failed)
+    - (RANGE_STATUS_ORDER[right.rangeStatus] ?? RANGE_STATUS_ORDER.failed);
+  if (comparison !== 0) {
+    return comparison;
+  }
+
   comparison = normalizedSortMode === 'strict-margin'
     ? compareRecommendationFit(left, right)
     : compareRecommendationMargins(left, right);
@@ -605,12 +613,6 @@ export function compareZoneRecommendationCandidates(left, right, {
     if (comparison !== 0) {
       return comparison;
     }
-  }
-
-  comparison = (RANGE_STATUS_ORDER[left.rangeStatus] ?? RANGE_STATUS_ORDER.failed)
-    - (RANGE_STATUS_ORDER[right.rangeStatus] ?? RANGE_STATUS_ORDER.failed);
-  if (comparison !== 0) {
-    return comparison;
   }
 
   comparison = getOutcomePriority(left.outcomeKind) - getOutcomePriority(right.outcomeKind);
