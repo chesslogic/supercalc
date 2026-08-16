@@ -49,6 +49,10 @@ const ILLUMINATE_APPROPRIATORS_EXCLUSIVE_UNIT_NAMES = [
   'Obtruder',
   'Veracitor'
 ];
+const ILLUMINATE_VOTE_SNATCHERS_EXCLUSIVE_UNIT_NAMES = [
+  'Crusher',
+  'Wretch'
+];
 const ILLUMINATE_ARMY_ROLE_DEFINITIONS = [
   {
     id: 'common',
@@ -63,6 +67,13 @@ const ILLUMINATE_ARMY_ROLE_DEFINITIONS = [
     text: 'E',
     label: 'Appropriators Exclusive',
     includeNames: ILLUMINATE_APPROPRIATORS_EXCLUSIVE_UNIT_NAMES
+  },
+  {
+    id: 'exclusive',
+    frontId: 'illuminate',
+    text: 'E',
+    label: 'Vote Snatchers Exclusive',
+    includeNames: ILLUMINATE_VOTE_SNATCHERS_EXCLUSIVE_UNIT_NAMES
   }
 ];
 
@@ -359,11 +370,13 @@ const ENEMY_SCOPE_DEFINITIONS = [
     summaryLabel: 'Mindless Masses',
     excludeNames: [
       'Crescent Overseer',
+      'Crusher',
       'Elevated Overseer',
       'Gatekeeper',
       'Obtruder',
       'Stingray',
-      'Veracitor'
+      'Veracitor',
+      'Wretch'
     ],
     iconSrc: 'assets/icons/subfactions/mindless-masses.svg'
   },
@@ -372,8 +385,16 @@ const ENEMY_SCOPE_DEFINITIONS = [
     frontId: 'illuminate',
     label: 'Appropriators',
     summaryLabel: 'Appropriators',
-    excludeNames: ['Crescent Overseer', 'Fleshmob', 'Stingray', 'Voteless'],
+    excludeNames: ['Crescent Overseer', 'Crusher', 'Fleshmob', 'Stingray', 'Voteless', 'Wretch'],
     iconSrc: 'assets/icons/subfactions/appropriators.svg'
+  },
+  {
+    id: 'vote-snatchers',
+    frontId: 'illuminate',
+    label: 'Vote Snatchers',
+    summaryLabel: 'Vote Snatchers',
+    includeNames: ILLUMINATE_VOTE_SNATCHERS_EXCLUSIVE_UNIT_NAMES,
+    iconSrc: 'assets/icons/subfactions/vote-snatchers.svg'
   }
 ];
 
@@ -407,7 +428,8 @@ ENEMY_SCOPE_DEFINITIONS.forEach((definition) => {
   ['Predator', 'predator-strain'],
   ['Predator Strain', 'predator-strain'],
   ['Mindless Masses', 'mindless-masses'],
-  ['Appropriators', 'appropriators']
+  ['Appropriators', 'appropriators'],
+  ['Vote Snatchers', 'vote-snatchers']
 ].forEach(([alias, id]) => addScopeAlias(alias, id));
 
 function matchesNameList(name, names = []) {

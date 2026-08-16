@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
@@ -277,4 +278,57 @@ test('wikigg enemy ingest parses tabbed anatomy states, grouped parts, constitut
   assert.equal(eye.MainCap, false);
   assert.equal(eye['ToMain%'], 1.2);
   assert.equal(eye.IsFatal, undefined);
+});
+
+test('checked-in Vote Snatchers data matches wiki anatomy sidecar and provenance', () => {
+  const enemydata = JSON.parse(
+    readFileSync(new URL('../enemies/enemydata.json', import.meta.url), 'utf8')
+  );
+  const sidecar = JSON.parse(
+    readFileSync(new URL('../enemies/wikigg-enemy-anatomy-sidecar.json', import.meta.url), 'utf8')
+  );
+  const voteSnatcherNames = Object.entries(sidecar.Illuminate)
+    .filter(([, unit]) => unit.source_provenance?.source_subfaction === 'Vote Snatchers')
+    .map(([name]) => name);
+
+  assert.deepEqual(voteSnatcherNames, ['Crusher', 'Wretch']);
+
+  const canonicalizeSidecarZone = ({ source_zone_name, ...zone }) => ({
+    ...zone,
+    MainCap: Number(zone.MainCap)
+  });
+
+  const wretch = enemydata.Illuminate.Wretch;
+  assert.equal(wretch.health, 450);
+  assert.deepEqual(wretch.scope_tags, ['medium']);
+  assert.equal(wretch.damageable_zones.find((zone) => zone.zone_name === 'head')?.IsFatal, undefined);
+  assert.equal(wretch.damageable_zones.find((zone) => zone.zone_name === 'claws')?.AV, 3);
+
+  const crusher = enemydata.Illuminate.Crusher;
+  assert.equal(crusher.health, 6000);
+  assert.deepEqual(crusher.scope_tags, ['tank']);
+  assert.equal(crusher.damageable_zones.find((zone) => zone.zone_name === 'helmet')?.AV, 4);
+  assert.equal(crusher.damageable_zones.find((zone) => zone.zone_name === 'helmet')?.['ToMain%'], 0);
+  assert.equal(crusher.damageable_zones.find((zone) => zone.zone_name === 'head')?.IsFatal, true);
+
+  for (const name of voteSnatcherNames) {
+    const canonical = enemydata.Illuminate[name];
+    const wiki = sidecar.Illuminate[name];
+
+    assert.equal(wiki.health, canonical.health);
+    assert.deepEqual(
+      wiki.damageable_zones.map(canonicalizeSidecarZone),
+      canonical.damageable_zones
+    );
+    assert.equal(wiki.source_provenance.source_subfaction, 'Vote Snatchers');
+    assert.equal(wiki.source_provenance.fetch_timestamp, sidecar.__generated_at);
+    assert.equal(wiki.source_provenance.status, 'ok');
+  }
+
+  assert.equal(
+    sidecar.__unit_count,
+    Object.entries(sidecar)
+      .filter(([key]) => !key.startsWith('__'))
+      .reduce((count, [, units]) => count + Object.keys(units).length, 0)
+  );
 });

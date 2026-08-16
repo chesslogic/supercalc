@@ -58,6 +58,7 @@ ENEMY_SCOPE_TAG_GROUPS: Dict[str, tuple[str, ...]] = {
         'Spore Burst Hunter',
         'Spore Burst Warrior',
         'Warrior',
+        'Wretch',
     ),
     'elite': (
         'Agitator',
@@ -79,6 +80,7 @@ ENEMY_SCOPE_TAG_GROUPS: Dict[str, tuple[str, ...]] = {
         'Barrager Tank',
         'Charger',
         'Charger Behemoth',
+        'Crusher',
         'Fleshmob',
         'Gatekeeper',
         'Hulk',

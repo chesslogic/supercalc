@@ -397,6 +397,18 @@ test('[pin] enemy item model assigns exclusive army role badge for Illuminate ex
   assert.equal(model.armyRoleBadge.text, 'E');
 });
 
+test('[pin] Vote Snatchers use canonical target tags, subgroup badges, and exclusive roles', () => {
+  const wretch = getEnemyDropdownItemModel(makeRealEnemy('Wretch', 'Illuminate'));
+  const crusher = getEnemyDropdownItemModel(makeRealEnemy('Crusher', 'Illuminate'));
+
+  assert.deepEqual(wretch.subgroupBadges.map((badge) => badge.id), ['vote-snatchers']);
+  assert.equal(wretch.targetBadge?.id, 'medium');
+  assert.equal(wretch.armyRoleBadge?.label, 'Vote Snatchers Exclusive');
+  assert.deepEqual(crusher.subgroupBadges.map((badge) => badge.id), ['vote-snatchers']);
+  assert.equal(crusher.targetBadge?.id, 'tank');
+  assert.equal(crusher.armyRoleBadge?.label, 'Vote Snatchers Exclusive');
+});
+
 test('[pin] enemy item model metaTitle joins front, subgroup, role, and target badges', () => {
   const model = getEnemyDropdownItemModel(makeEnemy('Overseer', 'Illuminate', ['medium']));
   assert.ok(model.metaTitle.includes('Illuminate'));
@@ -803,6 +815,29 @@ test('[pin] filterEnemiesByScope narrows to a single faction', () => {
   const result = filterEnemiesByScope(ENEMIES_MIXED, 'Terminids');
   assert.ok(result.every((e) => e.faction === 'Terminid'));
   assert.equal(result.length, ENEMIES_MIXED.filter((e) => e.faction === 'Terminid').length);
+});
+
+test('[pin] Vote Snatchers scope contains exactly Wretch and Crusher, without Watcher overlap', () => {
+  const illuminate = [
+    makeEnemy('Overseer', 'Illuminate', ['medium']),
+    makeEnemy('Gatekeeper', 'Illuminate', ['tank']),
+    makeRealEnemy('Wretch', 'Illuminate'),
+    makeRealEnemy('Crusher', 'Illuminate'),
+    makeEnemy('Watcher', 'Illuminate', ['chaff'])
+  ];
+  const watcher = getEnemyDropdownItemModel(illuminate.at(-1));
+
+  assert.deepEqual(
+    filterEnemiesByScope(illuminate, 'Vote Snatchers').map((enemy) => enemy.name),
+    ['Wretch', 'Crusher']
+  );
+  assert.deepEqual(
+    watcher.subgroupBadges.map((badge) => badge.id),
+    ['mindless-masses', 'appropriators']
+  );
+  assert.equal(watcher.armyRoleBadge?.label, 'Common Army');
+  assert.equal(filterEnemiesByScope(illuminate, 'Mindless Masses').some((enemy) => enemy.name === 'Wretch'), false);
+  assert.equal(filterEnemiesByScope(illuminate, 'Appropriators').some((enemy) => enemy.name === 'Crusher'), false);
 });
 
 test('[pin] filterEnemiesByTargetTypes with unit alias returns chaff+medium+elite+tank', () => {

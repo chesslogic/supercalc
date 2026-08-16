@@ -236,6 +236,8 @@ test('parser emits scope tags and selector visibility metadata for curated units
       'content/fac_cyborgs/reinforced_scout_strider/reinforced_scout_strider': buildFixtureUnit('Reinforced Scout Strider', 500),
       'content/fac_illuminate/defense/lightning_spire': buildFixtureUnit('Lightning Spire', 500),
       'content/fac_illuminate/units/obtruder': buildFixtureUnit('Obtruder', 400),
+      'content/fac_illuminate/vote_snatchers/wretch': buildFixtureUnit('Wretch', 450),
+      'content/fac_illuminate/vote_snatchers/crusher': buildFixtureUnit('Crusher', 6000),
       'content/fac_illuminate/giants/leviathan': buildFixtureUnit('Leviathan', 15000),
       'content/fac_illuminate/warp_ship/warp_ship': buildFixtureUnit('Warp Ship', 3500),
       'content/fac_illuminate/units/xenobite_ardent': buildFixtureUnit('Xenobite Ardent', 800)
@@ -260,6 +262,8 @@ test('parser emits scope tags and selector visibility metadata for curated units
     assert.deepEqual(parsed.Automaton['Reinforced Scout Strider'].scope_tags, ['medium']);
     assert.deepEqual(parsed.Illuminate['Lightning Spire'].scope_tags, ['structure']);
     assert.deepEqual(parsed.Illuminate.Obtruder.scope_tags, ['chaff']);
+    assert.deepEqual(parsed.Illuminate.Wretch.scope_tags, ['medium']);
+    assert.deepEqual(parsed.Illuminate.Crusher.scope_tags, ['tank']);
     assert.deepEqual(parsed.Illuminate.Leviathan.scope_tags, ['giant']);
     assert.deepEqual(parsed.Illuminate['Warp Ship'].scope_tags, ['objective']);
     assert.deepEqual(parsed.Illuminate['Xenobite Ardent'].scope_tags, ['tank']);

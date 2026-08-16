@@ -1,6 +1,6 @@
 {
   "__schema_version": 1,
-  "__generated_at": "2026-04-25T20:24:10Z",
+  "__generated_at": "2026-08-16T07:35:43Z",
   "__source_provenance": "wikigg-parse-api-wikitext",
   "__enumeration_strategy": "faction-overview-gallery-sections",
   "__anatomy_extraction": "parse-api-wikitext-anatomy-templates",
@@ -15564,10 +15564,330 @@
         },
         "status": "ok"
       }
+    },
+    "Crusher": {
+      "health": 6000,
+      "damageable_zones": [
+        {
+          "zone_name": "Main",
+          "source_zone_name": "Main",
+          "health": 6000,
+          "AV": 1,
+          "Dur%": 0.7,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "helmet",
+          "source_zone_name": "Helmet",
+          "health": 300,
+          "AV": 4,
+          "Dur%": 0,
+          "ToMain%": 0,
+          "MainCap": true,
+          "ExTarget": "Part",
+          "ExMult": 0.7
+        },
+        {
+          "zone_name": "head",
+          "source_zone_name": "Head",
+          "health": 300,
+          "AV": 1,
+          "Dur%": 0,
+          "ToMain%": 1,
+          "MainCap": true,
+          "IsFatal": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "torso",
+          "source_zone_name": "Torso",
+          "health": 6000,
+          "AV": 1,
+          "Dur%": 0.7,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "arms",
+          "source_zone_name": "Arms (2)",
+          "source_zone_count": 2,
+          "health": 2000,
+          "AV": 1,
+          "Dur%": 0.7,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Part",
+          "ExMult": 0.8
+        },
+        {
+          "zone_name": "pelvis",
+          "source_zone_name": "Pelvis",
+          "health": 4000,
+          "AV": 1,
+          "Dur%": 0.6,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "legs",
+          "source_zone_name": "Legs (2)",
+          "source_zone_count": 2,
+          "health": 4000,
+          "AV": 1,
+          "Dur%": 0.6,
+          "ToMain%": 1,
+          "MainCap": true,
+          "IsFatal": true,
+          "ExTarget": "Part",
+          "ExMult": 0.3
+        }
+      ],
+      "source_profile_name": "Crusher",
+      "source_provenance": {
+        "dataset": "wikigg-enemy-anatomy-sidecar",
+        "fetch_timestamp": "2026-08-16T07:35:43Z",
+        "source_page_title": "Crusher",
+        "source_page_url": "https://helldivers.wiki.gg/wiki/Crusher",
+        "source_parse_wikitext_url": "https://helldivers.wiki.gg/api.php?action=parse&page=Crusher&prop=wikitext&format=json",
+        "source_faction_page_title": "Illuminate",
+        "source_faction_page_url": "https://helldivers.wiki.gg/wiki/Illuminate",
+        "source_faction_parse_url": "https://helldivers.wiki.gg/api.php?action=parse&page=Illuminate&prop=text&format=json",
+        "enumeration_method": "faction-page-gallery",
+        "enumeration_section": "List of Illuminate Units",
+        "source_subfaction": "Vote Snatchers",
+        "anatomy_extraction_method": "parse-api-wikitext-templates",
+        "selected_anatomy_state": "default",
+        "anatomy_states": {
+          "default": {
+            "health": 6000,
+            "damageable_zones": [
+              {
+                "zone_name": "Main",
+                "source_zone_name": "Main",
+                "health": 6000,
+                "AV": 1,
+                "Dur%": 0.7,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "helmet",
+                "source_zone_name": "Helmet",
+                "health": 300,
+                "AV": 4,
+                "Dur%": 0,
+                "ToMain%": 0,
+                "MainCap": true,
+                "ExTarget": "Part",
+                "ExMult": 0.7
+              },
+              {
+                "zone_name": "head",
+                "source_zone_name": "Head",
+                "health": 300,
+                "AV": 1,
+                "Dur%": 0,
+                "ToMain%": 1,
+                "MainCap": true,
+                "IsFatal": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "torso",
+                "source_zone_name": "Torso",
+                "health": 6000,
+                "AV": 1,
+                "Dur%": 0.7,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "arms",
+                "source_zone_name": "Arms (2)",
+                "source_zone_count": 2,
+                "health": 2000,
+                "AV": 1,
+                "Dur%": 0.7,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Part",
+                "ExMult": 0.8
+              },
+              {
+                "zone_name": "pelvis",
+                "source_zone_name": "Pelvis",
+                "health": 4000,
+                "AV": 1,
+                "Dur%": 0.6,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "legs",
+                "source_zone_name": "Legs (2)",
+                "source_zone_count": 2,
+                "health": 4000,
+                "AV": 1,
+                "Dur%": 0.6,
+                "ToMain%": 1,
+                "MainCap": true,
+                "IsFatal": true,
+                "ExTarget": "Part",
+                "ExMult": 0.3
+              }
+            ]
+          }
+        },
+        "status": "ok"
+      }
+    },
+    "Wretch": {
+      "health": 450,
+      "damageable_zones": [
+        {
+          "zone_name": "Main",
+          "source_zone_name": "Main",
+          "health": 450,
+          "AV": 1,
+          "Dur%": 0,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main",
+          "ExMult": 0
+        },
+        {
+          "zone_name": "head",
+          "source_zone_name": "Head",
+          "health": 100,
+          "AV": 1,
+          "Dur%": 0,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "arms",
+          "source_zone_name": "Arms (4)",
+          "source_zone_count": 4,
+          "health": 50,
+          "AV": 1,
+          "Dur%": 0,
+          "ToMain%": 0.5,
+          "MainCap": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "claws",
+          "source_zone_name": "Claws (2)",
+          "source_zone_count": 2,
+          "health": 200,
+          "AV": 3,
+          "Dur%": 0,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main"
+        },
+        {
+          "zone_name": "legs",
+          "source_zone_name": "Legs (2)",
+          "source_zone_count": 2,
+          "health": 450,
+          "AV": 1,
+          "Dur%": 0,
+          "ToMain%": 1,
+          "MainCap": true,
+          "ExTarget": "Main"
+        }
+      ],
+      "source_profile_name": "Wretch",
+      "source_provenance": {
+        "dataset": "wikigg-enemy-anatomy-sidecar",
+        "fetch_timestamp": "2026-08-16T07:35:43Z",
+        "source_page_title": "Wretch",
+        "source_page_url": "https://helldivers.wiki.gg/wiki/Wretch",
+        "source_parse_wikitext_url": "https://helldivers.wiki.gg/api.php?action=parse&page=Wretch&prop=wikitext&format=json",
+        "source_faction_page_title": "Illuminate",
+        "source_faction_page_url": "https://helldivers.wiki.gg/wiki/Illuminate",
+        "source_faction_parse_url": "https://helldivers.wiki.gg/api.php?action=parse&page=Illuminate&prop=text&format=json",
+        "enumeration_method": "faction-page-gallery",
+        "enumeration_section": "List of Illuminate Units",
+        "source_subfaction": "Vote Snatchers",
+        "anatomy_extraction_method": "parse-api-wikitext-templates",
+        "selected_anatomy_state": "default",
+        "anatomy_states": {
+          "default": {
+            "health": 450,
+            "damageable_zones": [
+              {
+                "zone_name": "Main",
+                "source_zone_name": "Main",
+                "health": 450,
+                "AV": 1,
+                "Dur%": 0,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main",
+                "ExMult": 0
+              },
+              {
+                "zone_name": "head",
+                "source_zone_name": "Head",
+                "health": 100,
+                "AV": 1,
+                "Dur%": 0,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "arms",
+                "source_zone_name": "Arms (4)",
+                "source_zone_count": 4,
+                "health": 50,
+                "AV": 1,
+                "Dur%": 0,
+                "ToMain%": 0.5,
+                "MainCap": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "claws",
+                "source_zone_name": "Claws (2)",
+                "source_zone_count": 2,
+                "health": 200,
+                "AV": 3,
+                "Dur%": 0,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "legs",
+                "source_zone_name": "Legs (2)",
+                "source_zone_count": 2,
+                "health": 450,
+                "AV": 1,
+                "Dur%": 0,
+                "ToMain%": 1,
+                "MainCap": true,
+                "ExTarget": "Main"
+              }
+            ]
+          }
+        },
+        "status": "ok"
+      }
     }
   },
-  "__unit_count": 80,
-  "__scraped_unit_count": 80,
+  "__unit_count": 82,
+  "__scraped_unit_count": 82,
   "__missing_anatomy_unit_count": 0,
   "__warning_count": 0
 }

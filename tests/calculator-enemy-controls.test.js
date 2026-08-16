@@ -407,7 +407,9 @@ test('scope options keep the three base fronts in gameplay order before extras',
         { name: 'Hulk Firebomber', faction: 'Automaton' },
         { name: 'Overseer', faction: 'Illuminate' },
         { name: 'Fleshmob', faction: 'Illuminate' },
-        { name: 'Gatekeeper', faction: 'Illuminate' }
+        { name: 'Gatekeeper', faction: 'Illuminate' },
+        { name: 'Crusher', faction: 'Illuminate' },
+        { name: 'Wretch', faction: 'Illuminate' }
       ];
     assert.deepEqual(getOverviewScopeOptions().map(({ id, label }) => [id, label]), [
       ['all', 'All enemies'],
@@ -421,7 +423,8 @@ test('scope options keep the three base fronts in gameplay order before extras',
       ['illuminate', 'All Illuminate'],
       ['illuminate-common', 'Illuminate Common'],
       ['mindless-masses', 'Mindless Masses'],
-      ['appropriators', 'Appropriators']
+      ['appropriators', 'Appropriators'],
+      ['vote-snatchers', 'Vote Snatchers']
     ]);
   } finally {
     enemyState.units = previousUnits;
@@ -439,6 +442,7 @@ test('overview dropdown option uses a dedicated highlighted presentation', () =>
   assert.match(getEnemyOverviewOptionHtml('all'), /compare all matching enemies/i);
   assert.match(getEnemyOverviewOptionHtml('Appropriators'), /compare matching appropriators enemies/i);
   assert.match(getEnemyOverviewOptionHtml('Illuminate Common'), /compare matching illuminate common enemies/i);
+  assert.match(getEnemyOverviewOptionHtml('Vote Snatchers'), /compare matching vote snatchers enemies/i);
 });
 
 // ========================================================================
@@ -525,6 +529,29 @@ test('enemy dropdown item model can expose an Illuminate exclusive-role badge', 
     label: 'Tank'
   });
   assert.match(model.metaTitle, /Appropriators Exclusive/i);
+});
+
+test('enemy dropdown item model exposes Vote Snatchers as an exclusive Illuminate army', () => {
+  const model = getEnemyDropdownItemModel({
+    name: 'Wretch',
+    faction: 'Illuminate',
+    scopeTags: ['medium']
+  });
+
+  assert.equal(model.frontBadge.text, 'SQUID');
+  assert.deepEqual(model.subgroupBadges.map((badge) => badge.text), ['Vote Snatchers']);
+  assert.equal(model.subgroupBadges[0].iconSrc, 'assets/icons/subfactions/vote-snatchers.svg');
+  assert.equal(existsSync(new URL('../assets/icons/subfactions/vote-snatchers.svg', import.meta.url)), true);
+  assert.deepEqual(model.armyRoleBadge, {
+    id: 'exclusive',
+    text: 'E',
+    label: 'Vote Snatchers Exclusive'
+  });
+  assert.deepEqual(model.targetBadge, {
+    id: 'medium',
+    text: 'M',
+    label: 'Medium'
+  });
 });
 
 test('enemy dropdown item model falls back to text when a subgroup icon is unavailable', () => {

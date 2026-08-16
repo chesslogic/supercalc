@@ -4278,6 +4278,84 @@
         "elite"
       ]
     },
+    "Crusher": {
+      "damageable_zones": [
+        {
+          "AV": 1,
+          "Dur%": 0.7,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 6000,
+          "zone_name": "Main"
+        },
+        {
+          "AV": 4,
+          "Dur%": 0,
+          "ExMult": 0.7,
+          "ExTarget": "Part",
+          "MainCap": 1,
+          "ToMain%": 0,
+          "health": 300,
+          "zone_name": "helmet"
+        },
+        {
+          "AV": 1,
+          "Dur%": 0,
+          "ExTarget": "Main",
+          "IsFatal": true,
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 300,
+          "zone_name": "head"
+        },
+        {
+          "AV": 1,
+          "Dur%": 0.7,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 6000,
+          "zone_name": "torso"
+        },
+        {
+          "AV": 1,
+          "Dur%": 0.7,
+          "ExMult": 0.8,
+          "ExTarget": "Part",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 2000,
+          "zone_name": "arms",
+          "source_zone_count": 2
+        },
+        {
+          "AV": 1,
+          "Dur%": 0.6,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 4000,
+          "zone_name": "pelvis"
+        },
+        {
+          "AV": 1,
+          "Dur%": 0.6,
+          "ExMult": 0.3,
+          "ExTarget": "Part",
+          "IsFatal": true,
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 4000,
+          "zone_name": "legs",
+          "source_zone_count": 2
+        }
+      ],
+      "health": 6000,
+      "scope_tags": [
+        "tank"
+      ]
+    },
     "Elevated Overseer": {
       "damageable_zones": [
         {
@@ -6552,6 +6630,63 @@
       "health": 600,
       "scope_tags": [
         "chaff"
+      ]
+    },
+    "Wretch": {
+      "damageable_zones": [
+        {
+          "AV": 1,
+          "Dur%": 0,
+          "ExMult": 0,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 450,
+          "zone_name": "Main"
+        },
+        {
+          "AV": 1,
+          "Dur%": 0,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 100,
+          "zone_name": "head"
+        },
+        {
+          "AV": 1,
+          "Dur%": 0,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 0.5,
+          "health": 50,
+          "zone_name": "arms",
+          "source_zone_count": 4
+        },
+        {
+          "AV": 3,
+          "Dur%": 0,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 200,
+          "zone_name": "claws",
+          "source_zone_count": 2
+        },
+        {
+          "AV": 1,
+          "Dur%": 0,
+          "ExTarget": "Main",
+          "MainCap": 1,
+          "ToMain%": 1,
+          "health": 450,
+          "zone_name": "legs",
+          "source_zone_count": 2
+        }
+      ],
+      "health": 450,
+      "scope_tags": [
+        "medium"
       ]
     },
     "Xenobite Ardent": {
