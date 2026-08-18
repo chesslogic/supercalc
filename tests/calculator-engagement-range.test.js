@@ -18,6 +18,9 @@ import {
   findNearestEngagementRangeStop
 } from '../calculator/engagement-range.js';
 import {
+  getEngagementRangeWarningInfo
+} from '../calculator/engagement-range-warning.js';
+import {
   formatEngagementRangeDisplayValue,
   setupEngagementRangeControl
 } from '../calculator/ui.js';
@@ -218,6 +221,46 @@ test('weapon details keep zero-range DMG cells unchanged', () => {
     weaponA: weapon,
     rangeA: 0
   }), null);
+});
+
+test('weapon details enforce hard attack ranges without affecting generic beams', () => {
+  const meltagun = makeWeapon('Meltagun', {
+    type: 'Support',
+    sub: 'SPC',
+    role: 'energy',
+    code: '40-K',
+    rows: [{
+      ...makeAttackRow(7, 2600, 2600),
+      'Atk Type': 'beam',
+      'Atk Name': '40-K MELTAGUN_B'
+    }]
+  });
+  const laserCannon = makeWeapon('Laser Cannon', {
+    type: 'Support',
+    sub: 'CAN',
+    role: 'energy',
+    code: 'LAS-98',
+    rows: [{
+      ...makeAttackRow(4, 350, 200),
+      'Atk Type': 'beam',
+      'Atk Name': 'LAS-98 LASER CANNON_B'
+    }]
+  });
+
+  const getDisplay = (weapon) => getWeaponRangeAdjustedCellDisplay('DMG', {
+    displayRow: weapon.rows[0],
+    rowA: weapon.rows[0],
+    rowB: null
+  }, {
+    compareMode: false,
+    weaponA: weapon,
+    rangeA: 16
+  });
+
+  assert.equal(getDisplay(meltagun)?.text, '0');
+  assert.match(getDisplay(meltagun)?.title || '', /hard maximum range 15m/i);
+  assert.equal(getDisplay(laserCannon)?.text, '350');
+  assert.match(getDisplay(laserCannon)?.title || '', /falloff data is not loaded|no ballistic falloff profile/i);
 });
 
 // ========================================================================
@@ -492,6 +535,41 @@ test('engagement range control shows a practical max warning when exact range ed
     resetBallisticFalloffProfiles();
     globalThis.document = originalDocument;
     calculatorState.mode = originalMode;
+    calculatorState.weaponA = originalWeaponA;
+    calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
+    calculatorState.attackHitCounts.A = originalAttackHitCountsA;
+    calculatorState.engagementRangeMeters.A = originalRangeA;
+  }
+});
+
+test('engagement range warning reports Meltagun hard range only beyond 15m', () => {
+  const originalWeaponA = calculatorState.weaponA;
+  const originalSelectedAttackKeysA = [...calculatorState.selectedAttackKeys.A];
+  const originalAttackHitCountsA = { ...calculatorState.attackHitCounts.A };
+  const originalRangeA = calculatorState.engagementRangeMeters.A;
+
+  try {
+    setSelectedWeapon('A', makeWeapon('Meltagun', {
+      type: 'Support',
+      sub: 'SPC',
+      role: 'energy',
+      code: '40-K',
+      rows: [{
+        ...makeAttackRow(7, 2600, 2600),
+        'Atk Type': 'beam',
+        'Atk Name': '40-K MELTAGUN_B'
+      }]
+    }));
+
+    calculatorState.engagementRangeMeters.A = 15;
+    assert.equal(getEngagementRangeWarningInfo('A'), null);
+
+    calculatorState.engagementRangeMeters.A = 16;
+    const warningInfo = getEngagementRangeWarningInfo('A');
+    assert.equal(warningInfo?.text, 'Warning: hard max 15m');
+    assert.equal(warningInfo?.hardMaxMeters, 15);
+    assert.match(warningInfo?.title || '', /modeled damage is zero/i);
+  } finally {
     calculatorState.weaponA = originalWeaponA;
     calculatorState.selectedAttackKeys.A = originalSelectedAttackKeysA;
     calculatorState.attackHitCounts.A = originalAttackHitCountsA;

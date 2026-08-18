@@ -27,6 +27,7 @@ import {
 } from './outcome-kinds.js';
 
 const ATTACK_KEY_FIELDS = ['Atk Type', 'Atk Name', 'DMG', 'DUR', 'AP', 'DF', 'ST', 'PF'];
+const DEFAULT_ALL_ATTACK_ROW_WEAPON_CODES = new Set(['p/40-k']);
 export const OVERVIEW_OUTCOME_KINDS = ['fatal', 'doomed', 'main', 'critical', 'limb', 'utility'];
 
 export function normalizeOverviewOutcomeKinds(outcomeKinds = OVERVIEW_OUTCOME_KINDS) {
@@ -489,11 +490,18 @@ export function getAttackRowKey(row) {
 }
 
 export function getDefaultSelectedAttackKeys(weapon) {
-  if (!weapon?.rows || weapon.rows.length !== 1) {
+  if (!weapon?.rows || weapon.rows.length === 0) {
     return [];
   }
 
-  return [getAttackRowKey(weapon.rows[0])];
+  if (
+    weapon.rows.length === 1
+    || DEFAULT_ALL_ATTACK_ROW_WEAPON_CODES.has(normalizeText(weapon?.code))
+  ) {
+    return weapon.rows.map((row) => getAttackRowKey(row));
+  }
+
+  return [];
 }
 
 export function getPreferredZoneIndex(enemy) {

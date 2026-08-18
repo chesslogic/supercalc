@@ -1,4 +1,4 @@
-import { isExplosiveAttack } from '../attack-types.js';
+import { getAttackHardRangeMeters, isExplosiveAttack } from '../attack-types.js';
 import { formatDamageValue, roundDamagePacket } from '../damage-rounding.js';
 import { formatEngagementRangeMeters } from '../engagement-range.js';
 import {
@@ -73,6 +73,16 @@ function buildWeaponRangeSlotDisplay({
       displayText: baseText,
       title: `Weapon ${slot} ${headerLabel} at ${rangeText}: ${baseText} (base value)`,
       isAdjusted: false
+    };
+  }
+
+  const hardRangeMeters = getAttackHardRangeMeters(row);
+  if (hardRangeMeters !== null && normalizedRangeMeters > hardRangeMeters) {
+    return {
+      slot,
+      displayText: '0',
+      title: `Weapon ${slot} ${headerLabel} at ${rangeText}: 0 (hard maximum range ${formatEngagementRangeMeters(hardRangeMeters)}, base ${baseText})`,
+      isAdjusted: true
     };
   }
 

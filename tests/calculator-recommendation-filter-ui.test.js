@@ -1115,7 +1115,7 @@ test('renderRecommendationPanel keeps high-shot targeted rows when max shots is 
         .map((row) => row.children[0]?.textContent || '');
     };
 
-    assert.deepEqual(getTargetedWeaponNames(renderPanelForTest(enemy)), ['One-Shot']);
+    assert.deepEqual(getTargetedWeaponNames(renderPanelForTest(enemy)), ['One-Shot', 'Scythe']);
 
     calculatorState.recommendationMaxShots = RECOMMENDATION_MAX_SHOTS_ANY;
 

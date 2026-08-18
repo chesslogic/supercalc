@@ -821,3 +821,54 @@ test('renderRecommendationPanel filters overall recommendations by the selected 
     weaponsState.groups = previousGroups;
   }
 });
+
+test('renderRecommendationPanel does not apply discrete shot filters to beam tick counts', () => {
+  const previousRangeFloor = calculatorState.recommendationRangeMeters;
+  const previousGroups = weaponsState.groups;
+  const previousSelectedZoneIndex = calculatorState.selectedZoneIndex;
+  const previousMinShots = calculatorState.recommendationMinShots;
+  const previousMaxShots = calculatorState.recommendationMaxShots;
+
+  try {
+    calculatorState.recommendationRangeMeters = 0;
+    calculatorState.selectedZoneIndex = null;
+    calculatorState.recommendationMinShots = 1;
+    calculatorState.recommendationMaxShots = 3;
+    weaponsState.groups = [
+      makeWeapon('Beam DPS', {
+        index: 0,
+        rpm: null,
+        role: 'energy',
+        sub: 'SPC',
+        rows: [{
+          ...makeAttackRow('Beam DPS', 240, 2),
+          'Atk Type': 'beam'
+        }]
+      }),
+      makeWeapon('Four-Shot', {
+        index: 1,
+        rows: [makeAttackRow('Four-Shot', 60, 2)]
+      })
+    ];
+
+    const container = renderPanelForTest({
+      name: 'Beam Shot Filter Dummy',
+      health: 240,
+      zones: [
+        makeZone('Main', { health: 240, av: 1, toMainPercent: 1 })
+      ]
+    });
+
+    const tables = collectElements(container, (element) => element.tagName === 'TABLE');
+    const overallRows = collectElements(tables[0], (element) => element.tagName === 'TR').slice(1);
+    const weaponNames = overallRows.map((row) => row.children[0]?.textContent || '');
+
+    assert.deepEqual(weaponNames, ['Beam DPS']);
+  } finally {
+    calculatorState.recommendationRangeMeters = previousRangeFloor;
+    calculatorState.selectedZoneIndex = previousSelectedZoneIndex;
+    calculatorState.recommendationMinShots = previousMinShots;
+    calculatorState.recommendationMaxShots = previousMaxShots;
+    weaponsState.groups = previousGroups;
+  }
+});

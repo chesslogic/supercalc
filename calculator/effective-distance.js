@@ -95,6 +95,31 @@ function getApplicationAttackResult(application) {
   return application?.attackResult || application || null;
 }
 
+function getHardRangeDistanceInfo(attackDetails, displayedKillPath) {
+  const damagingApplications = attackDetails.filter((application) => (
+    getDisplayedApplicationDamage(application, displayedKillPath) > 0
+  ));
+  if (damagingApplications.length === 0) {
+    return null;
+  }
+
+  const hardRanges = damagingApplications
+    .map((application) => toFiniteNumber(getApplicationAttackResult(application)?.hardRangeMeters))
+    .filter((meters) => meters !== null && meters > 0);
+  if (hardRanges.length !== damagingApplications.length) {
+    return null;
+  }
+
+  const meters = Math.min(...hardRanges);
+  return {
+    meters,
+    sortValue: meters,
+    text: formatEffectiveDistanceText(meters),
+    title: `This attack has a hard maximum range of ${formatEffectiveDistanceText(meters)} and deals no modeled damage beyond it.`,
+    isAvailable: true
+  };
+}
+
 function getApplicationHits(application) {
   const hits = toFiniteNumber(application?.hits) ?? toFiniteNumber(application?.attackResult?.hits);
   return hits === null || hits <= 0 ? 1 : hits;
@@ -271,6 +296,11 @@ export function calculateEffectiveDistanceInfo({
   }
 
   const attackDetails = Array.isArray(zoneSummary.attackDetails) ? zoneSummary.attackDetails : [];
+  const hardRangeDistanceInfo = getHardRangeDistanceInfo(attackDetails, displayedKillPath);
+  if (hardRangeDistanceInfo) {
+    return hardRangeDistanceInfo;
+  }
+
   const projectileApplications = attackDetails.filter((application) =>
     !application?.isExplosion && getDisplayedApplicationDamage(application, displayedKillPath) > 0
   );

@@ -3,7 +3,7 @@ import {
   getSelectedAttacks,
   getWeaponForSlot
 } from './data.js';
-import { isExplosiveAttack } from './attack-types.js';
+import { getAttackHardRangeMeters, isExplosiveAttack } from './attack-types.js';
 import { formatEngagementRangeMeters } from './engagement-range.js';
 import {
   PRACTICAL_MAX_RANGE_TOOLTIP_SUFFIX,
@@ -38,8 +38,26 @@ export function getEngagementRangeWarningInfo(slot = 'A') {
     return null;
   }
 
-  if (getCandidateProjectileRows(normalizedSlot, weapon).length === 0) {
+  const candidateRows = getCandidateProjectileRows(normalizedSlot, weapon);
+  if (candidateRows.length === 0) {
     return null;
+  }
+
+  const hardRanges = candidateRows
+    .map((row) => getAttackHardRangeMeters(row))
+    .filter((meters) => Number.isFinite(meters) && meters > 0);
+  const currentRangeMeters = getEngagementRangeMeters(normalizedSlot);
+  if (hardRanges.length === candidateRows.length) {
+    const hardMaxMeters = Math.min(...hardRanges);
+    if (currentRangeMeters > hardMaxMeters) {
+      const hardMaxText = formatEffectiveDistanceText(hardMaxMeters);
+      return {
+        text: `Warning: hard max ${hardMaxText}`,
+        title: `Current range ${formatEngagementRangeMeters(currentRangeMeters)} is beyond this weapon's hard maximum range (${hardMaxText}); modeled damage is zero.`,
+        currentRangeMeters,
+        hardMaxMeters
+      };
+    }
   }
 
   const falloffResolution = resolveBallisticFalloffProfileForWeapon(weapon);
@@ -52,7 +70,6 @@ export function getEngagementRangeWarningInfo(slot = 'A') {
     return null;
   }
 
-  const currentRangeMeters = getEngagementRangeMeters(normalizedSlot);
   if (currentRangeMeters < practicalMaxMeters) {
     return null;
   }

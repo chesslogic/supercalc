@@ -118,7 +118,7 @@ function createRecommendationShotRangeRow({
       createRecommendationShotSlider({
         labelText: minLabel,
         value: calculatorState.recommendationMinShots,
-        title: 'Filter displayed recommendation rows by minimum shots to kill.',
+        title: 'Filter displayed discrete-weapon recommendation rows by minimum shots to kill. Continuous beam rows remain visible because their displayed count is damage ticks, not trigger pulls.',
         onInput: (nextValue) => {
           if (!isRecommendationMaxShotsAny(calculatorState.recommendationMaxShots)
             && nextValue > calculatorState.recommendationMaxShots) {
@@ -132,7 +132,7 @@ function createRecommendationShotRangeRow({
         labelText: maxLabel,
         value: calculatorState.recommendationMaxShots,
         max: ANY_RECOMMENDATION_MAX_SHOT_SLIDER_VALUE,
-        title: 'Filter displayed recommendation rows by maximum shots to kill. Slide one step past 10 to keep any shot count.',
+        title: 'Filter displayed discrete-weapon recommendation rows by maximum shots to kill. Continuous beam rows remain visible because their displayed count is damage ticks, not trigger pulls. Slide one step past 10 to keep any discrete shot count.',
         toInputValue: (currentValue) => (
           isRecommendationMaxShotsAny(currentValue)
             ? ANY_RECOMMENDATION_MAX_SHOT_SLIDER_VALUE

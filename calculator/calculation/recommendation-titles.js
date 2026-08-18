@@ -27,6 +27,7 @@ function getBeamRecommendationAssumptionLines(row) {
     beamTicksPerSecond === null
       ? 'Recommendation preview assumes sustained beam contact for this row.'
       : `Recommendation preview assumes sustained beam contact for this row at ${beamTicksPerSecond} modeled damage ticks per second.`,
+    'TTK starts when sustained beam damage begins; charge-up, reload, and target acquisition time are not modeled.',
     '"Shots" counts modeled beam ticks, not trigger pulls.'
   ];
 }

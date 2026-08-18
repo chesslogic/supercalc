@@ -60,6 +60,12 @@ const RECOMMENDATION_PACKAGE_SUFFIX_PATTERNS = [
   /(?:[_\s]+)B$/i
 ];
 
+const ALWAYS_COMBINED_RECOMMENDATION_WEAPON_CODES = new Set(['p/40-k']);
+
+export function shouldIncludeCombinedRecommendationPackages(weapon) {
+  return ALWAYS_COMBINED_RECOMMENDATION_WEAPON_CODES.has(normalizeText(weapon?.code));
+}
+
 function getRecommendationAttackName(attackRow) {
   return String(attackRow?.['Atk Name'] || attackRow?.Name || '').trim();
 }

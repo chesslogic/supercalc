@@ -22,7 +22,8 @@ function appendFractionResult(display, {
   shotsToKill,
   shotsText,
   ttkSeconds,
-  hasRpm
+  hasRpm,
+  usesBeamCadence = false
 }) {
   const fraction = document.createElement('div');
   fraction.className = 'calc-fraction';
@@ -33,7 +34,9 @@ function appendFractionResult(display, {
 
   const denominator = document.createElement('div');
   denominator.className = 'calc-fraction-denominator';
-  denominator.textContent = `${formatDamageValue(denominatorValue)}`;
+  denominator.textContent = usesBeamCadence
+    ? `${formatDamageValue(denominatorValue)}/s`
+    : `${formatDamageValue(denominatorValue)}`;
 
   fraction.appendChild(numerator);
   fraction.appendChild(denominator);
@@ -43,7 +46,9 @@ function appendFractionResult(display, {
 
   const resultLine = document.createElement('div');
   resultLine.className = 'calc-result-line';
-  resultLine.textContent = `= ${ratioValue.toFixed(2)} (${shotsToKill}) shots`;
+  resultLine.textContent = usesBeamCadence
+    ? `= ${ratioValue.toFixed(2)}s (${shotsToKill}) beam ticks`
+    : `= ${ratioValue.toFixed(2)} (${shotsToKill}) shots`;
 
   const shotsLabel = document.createElement('div');
   shotsLabel.className = 'calc-result-text';
@@ -82,9 +87,10 @@ export function createFocusZoneDamageSection(results) {
       denominatorValue: totalDamagePerCycle,
       ratioValue: zoneHealth / totalDamagePerCycle,
       shotsToKill: killSummary.zoneShotsToKill,
-      shotsText: 'shots to destroy',
+      shotsText: killSummary.usesBeamCadence ? 'sustained contact to destroy' : 'shots to destroy',
       ttkSeconds: killSummary.zoneTtkSeconds,
-      hasRpm: killSummary.hasRpm
+      hasRpm: killSummary.hasRpm,
+      usesBeamCadence: killSummary.usesBeamCadence
     });
 
     if (zoneCon > 0 && killSummary.zoneShotsToKillWithCon !== null) {
@@ -93,9 +99,12 @@ export function createFocusZoneDamageSection(results) {
         denominatorValue: totalDamagePerCycle,
         ratioValue: (zoneHealth + zoneCon) / totalDamagePerCycle,
         shotsToKill: killSummary.zoneShotsToKillWithCon,
-        shotsText: 'shots to deplete constitution',
+        shotsText: killSummary.usesBeamCadence
+          ? 'sustained contact to deplete constitution'
+          : 'shots to deplete constitution',
         ttkSeconds: killSummary.zoneTtkSecondsWithCon,
-        hasRpm: killSummary.hasRpm
+        hasRpm: killSummary.hasRpm,
+        usesBeamCadence: killSummary.usesBeamCadence
       });
     }
 
@@ -133,9 +142,10 @@ export function createMainDamageSection(results) {
       denominatorValue: totalDamageToMainPerCycle,
       ratioValue: enemyMainHealth / totalDamageToMainPerCycle,
       shotsToKill: killSummary.mainShotsToKill,
-      shotsText: 'shots to destroy',
+      shotsText: killSummary.usesBeamCadence ? 'sustained contact to destroy' : 'shots to destroy',
       ttkSeconds: killSummary.mainTtkSeconds,
-      hasRpm: killSummary.hasRpm
+      hasRpm: killSummary.hasRpm,
+      usesBeamCadence: killSummary.usesBeamCadence
     });
     mainDamageDisplay.classList.add('calc-main-damage-value');
   } else {

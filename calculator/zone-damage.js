@@ -1,4 +1,8 @@
-import { isExplosiveAttack, resolveAttackCadenceModel } from './attack-types.js';
+import {
+  getAttackHardRangeMeters,
+  isExplosiveAttack,
+  resolveAttackCadenceModel
+} from './attack-types.js';
 import { buildKillSummary, calculateCadencedTtkSeconds } from './summary.js';
 import { roundDamagePacket } from './damage-rounding.js';
 import { hasZeroBleedConstitution } from './enemy-zone-display.js';
@@ -456,11 +460,27 @@ function calculateAttackAgainstZoneAtDistance(attack, zone, {
   }
 
   const normalizedDistance = Math.max(0, toFiniteNumber(distanceMeters) ?? 0);
+  const hardRangeMeters = getAttackHardRangeMeters(attack);
+  if (hardRangeMeters !== null && normalizedDistance > hardRangeMeters) {
+    return {
+      ...baseResult,
+      damage: 0,
+      damageToMain: 0,
+      rawDamage: 0,
+      rawDamageToMain: 0,
+      damageFalloffMultiplier: 0,
+      distanceMeters: normalizedDistance,
+      hardRangeMeters,
+      isBeyondHardRange: true
+    };
+  }
+
   if (normalizedDistance <= 0 || !falloffAttributes) {
     return {
       ...baseResult,
       damageFalloffMultiplier: 1,
-      distanceMeters: normalizedDistance
+      distanceMeters: normalizedDistance,
+      hardRangeMeters
     };
   }
 
@@ -488,7 +508,8 @@ function calculateAttackAgainstZoneAtDistance(attack, zone, {
     rawDamage,
     rawDamageToMain,
     damageFalloffMultiplier: falloffMultiplier,
-    distanceMeters: normalizedDistance
+    distanceMeters: normalizedDistance,
+    hardRangeMeters
   };
 }
 

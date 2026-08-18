@@ -4,6 +4,7 @@ node_modules/
 # Local reference-only notes
 tools/issues/
 tools/artifacts/
+/docs/prompts
 
 # Python cache artifacts
 __pycache__/

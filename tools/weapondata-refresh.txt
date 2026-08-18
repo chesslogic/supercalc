@@ -88,6 +88,48 @@ not modify `weapons\weapondata.csv` or `enemies\enemydata.json`.
 8. Run tests before committing.
 
 
+Patch 1.007.000 / Castellan's Creed audit
+-----------------------------------------
+The Castellan's Creed rows were audited against the current wiki.gg raw attack
+module revision 128924 (2026-08-14 04:29:32 UTC) on 2026-08-16:
+
+    https://helldivers.wiki.gg/wiki/Module:Decodedata-Attacks/weapons%20data.json?oldid=128924&action=raw
+
+The decoded records map to the CSV as follows:
+
+- `R/40-K_P` is one projectile at 275 DMG, 40 DUR, AP 3, and 10/20/14
+  demo/stun/push, with 210 RPM and no status. The Hot-Shot durable value is
+  specifically `R/40-K_P_dm.dmg2 = 40`; a blank durable field would be treated
+  as zero by the calculator. Its projectile has one pellet, and cleavage is not
+  multiplied because the calculator has no multi-target model.
+- `P/40-K_P` is 325/115/AP 4 with 20/35/15 forces, and its linked
+  `P/40-K_P_IE` explosion is 175/175/AP 3 with 10/35/5 forces. Both share the
+  weapon's 150 RPM and have no status.
+- `40-K MELTAGUN_B` is a 2600/2600/AP 7 beam with 30/40/40 forces and
+  `FlamerSlowed` plus `Fire_Panic`.
+- `G/40-K MELTA MINE_E` is one 2000/2000/AP 7 explosion with 40/40/40
+  forces and no status.
+
+The Meltagun row stores 2600 DMG/DUR as damage per second. Its raw
+`beam_fire_rate = 50` metadata is intentionally not written to the CSV RPM
+column: continuous beam rows use the calculator's beam tick cadence, while RPM
+is reserved for discrete firing cycles. The attack's decoded 15m beam range is
+modeled as a hard calculator limit. TTK starts when sustained beam damage
+begins; the decoded charge stages are not converted into an invented startup
+delay, and reload/target-acquisition time is also excluded.
+
+The Bolt Pistol keeps `P/40-K_P` and `P/40-K_P_IE` as separate projectile and
+explosion rows for armor and durable-zone resolution, then packages them once
+per trigger pull. The Melta Mine keeps only the decoded
+`G/40-K MELTA MINE_E` explosion; no second damage event is assumed from its
+visual sequence.
+
+The four current wiki weapon pages list only their 1.007.000 addition through
+2026-08-16, with no later balance entry. Armor passives such as True Grit and
+cosmetic Warbond items are intentionally omitted because this dataset and
+calculator do not model armor/passive or cosmetic effects.
+
+
 RPM column notes
 ----------------
 The loader already recognizes these header variants:

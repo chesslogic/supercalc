@@ -4,6 +4,10 @@ function getAttackTypeText(row) {
 
 export const DEFAULT_BEAM_TICKS_PER_SECOND = 67;
 
+const ATTACK_HARD_RANGE_METERS = new Map([
+  ['40 k meltagun b', 15]
+]);
+
 export function isExplosiveAttack(row) {
   const attackType = getAttackTypeText(row);
   return attackType.includes('explosion') || attackType === 'explosion';
@@ -11,6 +15,14 @@ export function isExplosiveAttack(row) {
 
 export function isBeamAttack(row) {
   return getAttackTypeText(row).includes('beam');
+}
+
+export function getAttackHardRangeMeters(row) {
+  const attackName = String(row?.['Atk Name'] ?? row?.Name ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ');
+  return ATTACK_HARD_RANGE_METERS.get(attackName) ?? null;
 }
 
 export function resolveAttackCadenceModel(selectedAttacks = []) {

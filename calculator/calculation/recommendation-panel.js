@@ -78,12 +78,16 @@ function buildNearMissDisplayRows(rows = []) {
     .sort(compareNearMissDisplayRows);
 }
 
-function filterRowsByShotRange(rows = [], minShots, maxShots) {
+export function filterRowsByShotRange(rows = [], minShots, maxShots) {
   if (!Array.isArray(rows)) {
     return [];
   }
   const hasUnlimitedMaxShots = isRecommendationMaxShotsAny(maxShots);
   return rows.filter((row) => {
+    if (row?.usesBeamCadence === true) {
+      return true;
+    }
+
     const shots = row?.shotsToKill;
     if (!Number.isFinite(shots)) {
       return true;

@@ -6,7 +6,8 @@ import {
 } from './candidates.js';
 import {
   buildRecommendationAttackPackages,
-  isStratagemRecommendationWeapon
+  isStratagemRecommendationWeapon,
+  shouldIncludeCombinedRecommendationPackages
 } from './packages.js';
 import {
   applyStratagemPrecisionFilter,
@@ -195,6 +196,7 @@ export function buildWeaponRecommendationRows({
   const rows = weapons
     .map((weapon) => {
       const attackRecommendations = buildRecommendationAttackPackages(weapon, {
+        includeCombinedPackages: shouldIncludeCombinedRecommendationPackages(weapon),
         instrumentation,
         analysisStage
       })

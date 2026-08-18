@@ -20,7 +20,9 @@ export function appendTotalCard(container, results) {
 
   const totalDamage = document.createElement('div');
   totalDamage.className = 'calc-total-damage';
-  totalDamage.textContent = 'Total Combined Damage per Cycle';
+  totalDamage.textContent = killSummary?.usesBeamCadence
+    ? 'Total Combined Damage per Second'
+    : 'Total Combined Damage per Cycle';
   totalCard.appendChild(totalDamage);
 
   if (hasProjectileAttacks || hasExplosiveAttacks) {

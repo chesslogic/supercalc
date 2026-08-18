@@ -33,6 +33,31 @@ function hasQualifiedRangePath(recommendation) {
   return Boolean(recommendation?.bestAttackRecommendation?.hasQualifiedPath);
 }
 
+function usesBeamRecommendationCadence(recommendation) {
+  return recommendation?.usesBeamCadence === true
+    || recommendation?.bestCandidate?.usesBeamCadence === true;
+}
+
+function getRecommendationTtkSeconds(recommendation) {
+  return recommendation?.bestCandidate?.ttkSeconds ?? recommendation?.ttkSeconds ?? null;
+}
+
+function compareRecommendationCadence(left, right) {
+  if (usesBeamRecommendationCadence(left) || usesBeamRecommendationCadence(right)) {
+    return compareNullableNumber(
+      getRecommendationTtkSeconds(left),
+      getRecommendationTtkSeconds(right),
+      'asc'
+    );
+  }
+
+  return compareNullableNumber(
+    left?.bestCandidate?.shotsToKill ?? left?.shotsToKill ?? null,
+    right?.bestCandidate?.shotsToKill ?? right?.shotsToKill ?? null,
+    'asc'
+  );
+}
+
 function getTargetRecommendationDisplaySignature(recommendation) {
   const bestCandidate = recommendation?.bestCandidate;
   return JSON.stringify({
@@ -105,11 +130,7 @@ function compareAttackRecommendationPriority(left, right, sortMode = 'default') 
     }
   }
 
-  const comparison = compareNullableNumber(
-    left.bestCandidate?.shotsToKill ?? null,
-    right.bestCandidate?.shotsToKill ?? null,
-    'asc'
-  );
+  const comparison = compareRecommendationCadence(left, right);
   if (comparison !== 0) {
     return comparison;
   }
@@ -128,7 +149,7 @@ function compareWeaponRecommendationPriority(left, right, sortMode = 'default') 
     }
   }
 
-  const comparison = compareNullableNumber(left.shotsToKill, right.shotsToKill, 'asc');
+  const comparison = compareRecommendationCadence(left, right);
   if (comparison !== 0) {
     return comparison;
   }
