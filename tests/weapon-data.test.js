@@ -420,17 +420,19 @@ test('checked-in stratagem wiki pass backfills adopted codes, statuses, stats, a
     && row['Atk Type'] === 'explosion'
     && row['Atk Name'] === '110mm E.M.S. CANNON ROUND_P_IE'
   ));
+  const antiTankMines = findWeaponRow(rows, {
+    code: 'MD-17',
+    attackType: 'explosion',
+    attackName: 'ANTI-TANK MINES_E'
+  });
 
   assert.ok(findWeaponRow(rows, {
     code: 'MD-6',
     attackType: 'explosion',
     attackName: 'ANTI-PERSONNEL MINEFIELD_E'
   }));
-  assert.ok(findWeaponRow(rows, {
-    code: 'MD-17',
-    attackType: 'explosion',
-    attackName: 'ANTI-TANK MINES_E'
-  }));
+  assert.ok(antiTankMines);
+  assert.equal(antiTankMines.DF, '40');
   assert.ok(findWeaponRow(rows, {
     code: 'MD-8',
     attackType: 'explosion',

@@ -149,7 +149,7 @@ Stratagem,EGL,ordnance,-,EAGLE STRAFING RUN,,explosion,23mm HE CANNON_P_IE,350,3
 Stratagem,EMP,automatic,A/G-16,Gatling Sentry,1600,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
 Stratagem,EMP,automatic,A/MG-43,Machine Gun Sentry,630,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
 Stratagem,EMP,ordnance,MD-6,ANTI-PERSONNEL MINEFIELD,,explosion,ANTI-PERSONNEL MINEFIELD_E,700,700,3,30,30,30,
-Stratagem,EMP,ordnance,MD-17,ANTI-TANK MINES,,explosion,ANTI-TANK MINES_E,2000,2000,5,30,30,40,
+Stratagem,EMP,ordnance,MD-17,ANTI-TANK MINES,,explosion,ANTI-TANK MINES_E,2000,2000,5,40,30,40,
 Stratagem,EMP,explosive,E/AT-12,Anti-Tank Emplacement,60,projectile,ET Cannon 75mm APHE ,1300,1300,6,30,50,25,
 Stratagem,EMP,explosive,E/AT-12,Anti-Tank Emplacement,60,explosion,ET Cannon 75mm APHE IE,150,150,3,30,60,40,
 Stratagem,EMP,ordnance,MD-8,GAS MINES,,explosion,GAS MINES_E,3,3,6,30,10,10,Gas • Gas_Confusion

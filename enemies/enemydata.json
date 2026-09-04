@@ -6637,7 +6637,6 @@
         {
           "AV": 1,
           "Dur%": 0,
-          "ExMult": 0,
           "ExTarget": "Main",
           "MainCap": 1,
           "ToMain%": 1,

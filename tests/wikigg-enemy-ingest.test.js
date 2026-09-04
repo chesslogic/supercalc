@@ -301,6 +301,7 @@ test('checked-in Vote Snatchers data matches wiki anatomy sidecar and provenance
   const wretch = enemydata.Illuminate.Wretch;
   assert.equal(wretch.health, 450);
   assert.deepEqual(wretch.scope_tags, ['medium']);
+  assert.equal(wretch.damageable_zones.find((zone) => zone.zone_name === 'Main')?.ExMult, undefined);
   assert.equal(wretch.damageable_zones.find((zone) => zone.zone_name === 'head')?.IsFatal, undefined);
   assert.equal(wretch.damageable_zones.find((zone) => zone.zone_name === 'claws')?.AV, 3);
 

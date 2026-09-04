@@ -15759,8 +15759,7 @@
           "Dur%": 0,
           "ToMain%": 1,
           "MainCap": true,
-          "ExTarget": "Main",
-          "ExMult": 0
+          "ExTarget": "Main"
         },
         {
           "zone_name": "head",
@@ -15833,8 +15832,7 @@
                 "Dur%": 0,
                 "ToMain%": 1,
                 "MainCap": true,
-                "ExTarget": "Main",
-                "ExMult": 0
+                "ExTarget": "Main"
               },
               {
                 "zone_name": "head",
