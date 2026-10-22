@@ -133,6 +133,8 @@ Stratagem,EGL,ordnance,-,EAGLE AIRSTRIKE,,projectile,100KG BOMB_P,1500,1500,7,40
 Stratagem,EGL,ordnance,-,EAGLE AIRSTRIKE,,explosion,100KG BOMB_P_IE,800,800,5,40,50,40,
 Stratagem,EGL,ordnance,-,EAGLE SMOKE STRIKE,,projectile,100KG BOMB_P1,1500,1500,7,40,20,15,
 Stratagem,EGL,ordnance,-,EAGLE SMOKE STRIKE,,explosion,100KG BOMB_P1_IE,,,0,,,,
+Stratagem,EGL,ordnance,-,EAGLE GAS AIRSTRIKE,,projectile,S_P6,1500,1500,7,40,20,15,
+Stratagem,EGL,ordnance,-,EAGLE GAS AIRSTRIKE,,explosion,S_P6_IE,0,0,6,50,10,40,Gas • Gas_Confusion
 Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,projectile,100KG CLUSTER BOMB_P,1500,1500,7,40,20,15,
 Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,explosion,100KG CLUSTER BOMB_P_E,350,350,3,30,50,40,
 Stratagem,EGL,ordnance,-,EAGLE 110MM ROCKET PODS,,projectile,110mm STANDARD ROCKET_P,600,600,7,40,40,15,

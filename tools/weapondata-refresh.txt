@@ -132,6 +132,10 @@ calculator do not model armor/passive or cosmetic effects.
 
 RPM column notes
 ----------------
+The campaign reward Eagle Gas Airstrike is a separate Eagle entry, not an
+alias for Orbital Gas Strike. Its reviewed attack rows and release history are
+documented in tools\research\patch-7.0.2-eagle-gas.md.
+
 The loader already recognizes these header variants:
 
 - `RPM`
