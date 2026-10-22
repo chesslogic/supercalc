@@ -4046,6 +4046,16 @@
           "zone_name": "head"
         },
         {
+          "AV": 2,
+          "Dur%": 0,
+          "ExTarget": "Main",
+          "IsFatal": true,
+          "MainCap": true,
+          "ToMain%": 0.5,
+          "health": 300,
+          "zone_name": "backpack"
+        },
+        {
           "AV": 1,
           "Dur%": 0,
           "ExTarget": "Main",

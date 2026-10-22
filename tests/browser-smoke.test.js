@@ -190,6 +190,20 @@ test('app boots without browser exceptions and attaches key dynamic UI', { timeo
   assert.ok(dynamicState.enemyFactionChips > 0, 'expected enemy faction chips to be attached');
   assert.ok(dynamicState.enemyTableRows > 0, 'expected enemy rows to be rendered');
 
+  await page.click('button[data-tab="calculator"]');
+  for (const [code, name] of [
+    ['R-40', 'Sightliner'],
+    ['P-44', 'Mist'],
+    ['AMW-20', 'Apex'],
+    ['LAS-44', 'Nova'],
+    ['G-11', 'Caltrops']
+  ]) {
+    await page.locator('#calculator-weapon-input').click();
+    await page.locator('#calculator-weapon-input').fill(name);
+    await page.locator('.weapon-dropdown-item').filter({ hasText: `${code} ${name}` }).first().click();
+    assert.ok((await page.locator('#calculator-weapon-input').inputValue()).includes(`${code} ${name}`));
+  }
+
   assert.deepEqual(pageErrors, []);
   assert.deepEqual(consoleErrors, []);
   assert.deepEqual(requestFailures, []);

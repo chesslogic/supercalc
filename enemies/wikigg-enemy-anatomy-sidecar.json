@@ -12275,6 +12275,17 @@
           "ExTarget": "Main"
         },
         {
+          "zone_name": "backpack",
+          "source_zone_name": "Backpack",
+          "health": 300,
+          "AV": 2,
+          "Dur%": 0,
+          "ToMain%": 0.5,
+          "MainCap": true,
+          "IsFatal": true,
+          "ExTarget": "Main"
+        },
+        {
           "zone_name": "chest_armor",
           "source_zone_name": "Chest Armor",
           "health": 150,
@@ -12354,6 +12365,13 @@
         "fetch_timestamp": "2026-04-25T20:24:10Z",
         "source_page_title": "Crescent Overseer",
         "source_page_url": "https://helldivers.wiki.gg/wiki/Crescent_Overseer",
+        "reviewed_zone_overrides": {
+          "backpack": {
+            "source_revision_id": 139398,
+            "source_revision_url": "https://helldivers.wiki.gg/wiki/Crescent_Overseer?oldid=139398",
+            "anatomy_extraction_method": "browser-rendered-anatomy-table"
+          }
+        },
         "source_parse_wikitext_url": "https://helldivers.wiki.gg/api.php?action=parse&page=Crescent+Overseer&prop=wikitext&format=json",
         "source_faction_page_title": "Illuminate",
         "source_faction_page_url": "https://helldivers.wiki.gg/wiki/Illuminate",
@@ -12384,6 +12402,17 @@
                 "AV": 3,
                 "Dur%": 0,
                 "ToMain%": 1,
+                "MainCap": true,
+                "IsFatal": true,
+                "ExTarget": "Main"
+              },
+              {
+                "zone_name": "backpack",
+                "source_zone_name": "Backpack",
+                "health": 300,
+                "AV": 2,
+                "Dur%": 0,
+                "ToMain%": 0.5,
                 "MainCap": true,
                 "IsFatal": true,
                 "ExTarget": "Main"

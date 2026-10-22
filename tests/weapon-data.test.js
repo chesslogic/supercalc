@@ -626,8 +626,8 @@ test('checked-in stratagem wiki pass includes adopted sentry and deployable rows
         Role: 'energy',
         Name: 'FLAME SENTRY',
         RPM: '',
-        DMG: '3',
-        DUR: '3',
+        DMG: '8',
+        DUR: '8',
         AP: '4',
         DF: '10',
         ST: '5',
@@ -992,7 +992,7 @@ test('checked-in selectable RPM weapons use their highest RPM setting', () => {
   );
 });
 
-test('patch 1.006.202 – CQC-30 Stun Baton and Flame Sentry regression', () => {
+test('checked-in Stun Baton and Flame Sentry keep their current damage values', () => {
   const rows = loadCheckedInWeaponRows();
 
   const stunBaton = rows.find((row) => row['Atk Name'] === 'CQC-30_M');
@@ -1002,8 +1002,8 @@ test('patch 1.006.202 – CQC-30 Stun Baton and Flame Sentry regression', () => 
 
   const flameSentry = rows.find((row) => row['Atk Name'] === 'SWP_FLAME SENTRY_S');
   assert.ok(flameSentry, 'Flame Sentry spray row should exist');
-  assert.equal(flameSentry.DMG, '3', 'Flame Sentry DMG buffed to 3 in patch 1.006.202');
-  assert.equal(flameSentry.DUR, '3', 'Flame Sentry DUR buffed to 3 in patch 1.006.202');
+  assert.equal(flameSentry.DMG, '8', 'Flame Sentry DMG buffed to 8 in patch 7.2.0');
+  assert.equal(flameSentry.DUR, '8', 'Flame Sentry DUR is 8 in the reviewed 7.2.0 attack table');
 });
 
 test('patch 1.006.300 adds Exo Experts, Supply FRV, and new weapon rows', () => {
@@ -1114,8 +1114,8 @@ test('patch 1.006.300 adds Exo Experts, Supply FRV, and new weapon rows', () => 
         Sub: 'VHL',
         Role: 'energy',
         RPM: '',
-        DMG: '3',
-        DUR: '3',
+        DMG: '8',
+        DUR: '8',
         AP: '4',
         DF: '10',
         ST: '5',

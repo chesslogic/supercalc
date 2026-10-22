@@ -44,7 +44,7 @@ test('Eagle Gas Airstrike keeps its impact and gas explosion separate from Orbit
       damage: '0',
       durable: '0',
       ap: '6',
-      demolition: '50',
+      demolition: '40',
       stagger: '10',
       push: '40',
       status: 'Gas • Gas_Confusion'

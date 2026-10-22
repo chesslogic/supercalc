@@ -9,6 +9,7 @@ Grenade,GR,explosive,G-6,Frag,,projectile,SHRAPNEL_P x35,110,35,3,10,10,20,
 Grenade,GR,explosive,TED-63,Dynamite,,explosion,TED-63 DYNAMITE_E,1000,1000,4,40,40,40,
 Grenade,GR,explosive,G-48,Giga Grenade,,explosion,G-48 GIGA GRENADE E,2000,2000,5,40,40,40,
 Grenade,SPC,special,G-109,Urchin,,explosion,G-109 URCHIN_E,0,0,6,0,50,0,Stun Large
+Grenade,SPC,special,G-11,Caltrops,,explosion,G-11 CALTROPS_E,50,10,3,10,30,0,Stun Small
 Grenade,SPC,special,G-123,Thermite,,explosion,G-123 THERMITE_E,2000,2000,7,30,20,40,
 Grenade,SPC,special,G-13,Incendiary Impact,,explosion,G-13 INCENDIARY IMPACT_E,150,150,3,30,20,15,Fire
 Grenade,SPC,special,G-142,Pyrotech,,explosion,G-142 PYROTECH_E,50,50,3,30,50,40,Fire
@@ -36,9 +37,10 @@ Primary,AR,automatic,AR-2,Coyote,600,projectile,AR-2_P,75,10,3,10,12,12,Fire
 Primary,AR,automatic,AR-32,Pacifier,700,projectile,AR-32_P,55,10,3,10,15,10,Stun Medium
 Primary,AR,automatic,AR-61,Tenderizer,850,projectile,AR-61_P,105,30,2,10,15,10,
 Primary,AR,automatic,AR/GL-21,One-Two (AR),650,projectile,AR/GL-21 P,95,24,2,10,15,12,
-Primary,AR,automatic,MA5C,UNSC Assault Rifle,640,projectile,MA5C_P,90,16,3,10,15,10,
+Primary,AR,automatic,MA5C,UNSC Assault Rifle,640,projectile,MA5C_P,90,20,3,10,15,10,
 Primary,DMR,precision,R-63,Diligence,350,projectile,9x70mm FULL METAL JACKET_P,165,45,2,10,15,14,
 Primary,DMR,precision,R-63CS,Diligence Counter Sniper,350,projectile,9x70mm HIGH VELOCITY_P,200,50,3,10,20,14,
+Primary,DMR,precision,R-40,Sightliner,40,projectile,R-40_P,350,205,4,10,20,25,
 Primary,DMR,precision,R-2,Amendment,480,projectile,R-2_P,200,50,2,10,20,14,
 Primary,DMR,precision,R-2124,Constitution,60,projectile,R-2124_P,180,50,3,10,20,14,
 Primary,DMR,precision,R-6,Deadeye,100,projectile,R-6_P,300,100,3,10,30,35,
@@ -63,7 +65,7 @@ Primary,NRG,automatic,LAS-17,Double-Edge Sickle,700,projectile,LASER_P (Stage 3)
 Primary,NRG,automatic,LAS-17,Double-Edge Sickle,700,projectile,LASER_P (Stage 4),70,7,4,10,10,10,
 Primary,NRG,automatic,PLAS-1,Scorcher,350,projectile,MEDIUM PLASMA BOLT_P,100,50,2,10,20,10,
 Primary,NRG,automatic,PLAS-1,Scorcher,350,explosion,MEDIUM PLASMA BOLT_P_IE,100,100,3,10,10,7,
-Primary,NRG,explosive,PLAS-39,Accelerator Rifle,550,projectile,MEDIUM PLASMA BOLT_P1,250,125,3,10,20,10,
+Primary,NRG,explosive,PLAS-39,Accelerator Rifle,550,projectile,MEDIUM PLASMA BOLT_P1,250,125,3,10,15,10,
 Primary,NRG,explosive,PLAS-39,Accelerator Rifle,550,explosion,MEDIUM PLASMA BOLT_P1_IE,100,100,3,10,10,7,
 Primary,NRG,explosive,PLAS-101,Purifier,1000,projectile,VOLATILE PLASMA BOLT_P,200,100,3,10,20,10,
 Primary,NRG,explosive,PLAS-101,Purifier,1000,explosion,VOLATILE PLASMA BOLT_P_IE,75,75,3,10,10,7,
@@ -71,11 +73,11 @@ Primary,SG,shotgun,SG-20,Halt (Flechettes),80,projectile,10g FLECHETTES_P x11,35
 Primary,SG,shotgun,SG-8S,Slugger,80,projectile,10g RIFLED SLUGS_P,330,90,3,10,30,35,
 Primary,SG,shotgun,SG-20,Halt (Stun),80,projectile,10g STUN ROUNDS_P x20,6,2,2,10,15,10,Stun Large
 Primary,SG,shotgun,LAS-13,Trident,750,beam,LAS-13 TRIDENT B x6,60,6,2,10,10,10,
-Primary,SG,shotgun,SG-225SP,Breaker Spray&Pray,330,projectile,12g BIRDSHOT_P x16,15,4,2,10,3,1,
-Primary,SG,shotgun,SG-225,Breaker,300,projectile,12g BUCKSHOT_P x11,30,6,2,10,15,10,
+Primary,SG,shotgun,SG-225SP,Breaker Spray&Pray,330,projectile,12g BIRDSHOT_P x16,18,5,2,10,3,1,
+Primary,SG,shotgun,SG-225,Breaker,300,projectile,12g BUCKSHOT_P x11,36,8,2,10,15,10,
 Primary,SG,shotgun,SG-225IE,Breaker Incendiary,300,projectile,12g LIBERTY FIRE_P x12,20,10,2,10,10,10,Fire
-Primary,SG,shotgun,M90A,UNSC Shotgun,80,projectile,BUCKSHOT_P x11,55,20,2,10,35,30,
-Primary,SG,shotgun,SG-8,Punisher,80,projectile,BUCKSHOT_P1 x9,45,12,2,10,35,30,
+Primary,SG,shotgun,M90A,UNSC Shotgun,80,projectile,BUCKSHOT_P x11,66,24,2,10,35,30,
+Primary,SG,shotgun,SG-8,Punisher,80,projectile,BUCKSHOT_P1 x9,54,15,2,10,35,30,
 Primary,SG,shotgun,DBS-2,Double Freedom,650,projectile,DBS-2 P x12,70,35,3,10,35,30,
 Primary,SG,shotgun,SG-451,Cookout,80,projectile,SG-451_P x20,16,3,2,10,35,20,Fire
 Primary,SG,shotgun,SG-97,Sweeper,150,projectile,SG-97 P x12,42,11,3,10,20,20,
@@ -83,7 +85,7 @@ Primary,SMG,automatic,SMG-32,Reprimand,490,projectile,12x25mm FULL METAL JACKET_
 Primary,SMG,automatic,SMG-37,Defender,520,projectile,12x25mm FULL METAL JACKET_P2,110,22,2,10,10,5,
 Primary,SMG,automatic,MP-98,Knight,1380,projectile,9x20mm FULL METAL JACKET_P,90,18,2,10,10,5,
 Primary,SMG,automatic,SMG-203,Gallant,1380,projectile,9x20mm HIGH VELOCITY_P,65,13,3,10,10,4,
-Primary,SMG,automatic,StA-11,StA SMG,1050,projectile,9x20mm FULL METAL JACKET_P,90,18,2,10,10,5,
+Primary,SMG,automatic,StA-11,StA SMG,1050,projectile,9x20mm FULL METAL JACKET_P,100,20,2,10,10,5,
 Primary,SMG,automatic,M7S,UNSC SMG,872,projectile,M7S_P,90,18,2,10,10,5,
 Primary,SMG,automatic,SMG-72,Pummeler,475,projectile,SMG-72_P,85,18,2,10,15,5,Stun Medium
 Primary,SMG,automatic,SMG/FLAM-34,Stoker (SMG),420,projectile,12x25mm FULL METAL JACKET P3,130,30,2,10,15,10,
@@ -102,6 +104,7 @@ Secondary,CQC,special,CQC-73,Entrenchment Tool,,melee,CQC-73_M,165,83,3,10,25,30
 Secondary,PDW,precision,P-113,Verdict,450,projectile,12x25mm FULL METAL JACKET_P,140,32,3,10,15,10,
 Secondary,PDW,precision,P-4,Senator,200,projectile,13x40mm FULL METAL JACKET_P,225,75,4,10,20,10,
 Secondary,PDW,automatic,P-19,Redeemer,1100,projectile,9x20mm FULL METAL JACKET_P1,70,12,2,10,10,4,
+Secondary,PDW,automatic,P-44,Mist,400,projectile,P-44_P,110,18,2,10,10,4,
 Secondary,PDW,precision,P-2,Peacemaker,900,projectile,9x20mm HOLLOW POINT_P,100,32,2,10,10,4,
 Secondary,PDW,precision,P-92,Warrant,450,projectile,Guided_P,80,20,3,10,15,10,
 Secondary,PDW,precision,P-69,Veto,750,projectile,15x100mm STANDARD ROCKET P1,105,35,3,10,35,15,
@@ -114,7 +117,7 @@ Secondary,SPC,explosive,P-33,Missile Pistol,60,projectile,Guided_P,1000,1000,5,3
 Secondary,SPC,explosive,P-33,Missile Pistol,60,projectile,Non-Guided_P,1000,1000,5,30,40,25,
 Secondary,SPC,explosive,P-33,Missile Pistol,60,explosion,Guided_P_IE,300,300,3,30,40,40,
 Secondary,SPC,special,P-35,Re-Educator,110,projectile,P-35_P,60,10,4,1,1,1,Gas • Gas_Confusion
-Secondary,SG,shotgun,SG-22,Bushwhacker,650,projectile,BUCKSHOT_P1 x9,45,12,2,10,35,30,
+Secondary,SG,shotgun,SG-22,Bushwhacker,650,projectile,BUCKSHOT_P1 x9,54,15,2,10,35,30,
 Secondary,SPC,explosive,GP-20,Ultimatum,900,projectile,GP-20_P,1000,1000,6,40,50,20,
 Secondary,SPC,explosive,GP-20,Ultimatum,900,explosion,GP-20_P_IE,2000,2000,6,40,70,60,
 Secondary,SPC,energy,LAS-7,Dagger,,beam,LAS-7 DAGGER_B,250,50,2,10,0,0,Fire
@@ -134,7 +137,7 @@ Stratagem,EGL,ordnance,-,EAGLE AIRSTRIKE,,explosion,100KG BOMB_P_IE,800,800,5,40
 Stratagem,EGL,ordnance,-,EAGLE SMOKE STRIKE,,projectile,100KG BOMB_P1,1500,1500,7,40,20,15,
 Stratagem,EGL,ordnance,-,EAGLE SMOKE STRIKE,,explosion,100KG BOMB_P1_IE,,,0,,,,
 Stratagem,EGL,ordnance,-,EAGLE GAS AIRSTRIKE,,projectile,S_P6,1500,1500,7,40,20,15,
-Stratagem,EGL,ordnance,-,EAGLE GAS AIRSTRIKE,,explosion,S_P6_IE,0,0,6,50,10,40,Gas • Gas_Confusion
+Stratagem,EGL,ordnance,-,EAGLE GAS AIRSTRIKE,,explosion,S_P6_IE,0,0,6,40,10,40,Gas • Gas_Confusion
 Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,projectile,100KG CLUSTER BOMB_P,1500,1500,7,40,20,15,
 Stratagem,EGL,ordnance,-,EAGLE CLUSTER BOMB,,explosion,100KG CLUSTER BOMB_P_E,350,350,3,30,50,40,
 Stratagem,EGL,ordnance,-,EAGLE 110MM ROCKET PODS,,projectile,110mm STANDARD ROCKET_P,600,600,7,40,40,15,
@@ -162,7 +165,7 @@ Stratagem,EMP,explosive,A/AC-8,AUTOCANNON SENTRY,160,explosion,40mm APHE CANNON_
 Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,projectile,EMS MORTAR SHELL_P,0,0,4,10,30,10,
 Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,explosion,EMS MORTAR SHELL_P_E,0,0,6,30,50,0,Stun Medium
 Stratagem,EMP,explosive,A/M-23,EMS MORTAR SENTRY,60,explosion,EMS MORTAR SHELL_P_IE,150,150,3,30,30,20,
-Stratagem,EMP,energy,A/FLAM-40,FLAME SENTRY,,spray,SWP_FLAME SENTRY_S,3,3,4,10,5,5,Fire
+Stratagem,EMP,energy,A/FLAM-40,FLAME SENTRY,,spray,SWP_FLAME SENTRY_S,8,8,4,10,5,5,Fire
 Stratagem,EMP,explosive,A/GM-17,GAS MORTAR SENTRY,80,projectile,GAS MORTAR SHELL_P,20,2,0,10,30,10,
 Stratagem,EMP,explosive,A/GM-17,GAS MORTAR SENTRY,80,explosion,GAS MORTAR SHELL_P_IE,0,0,6,30,10,20,Gas • Gas_Confusion
 Stratagem,EMP,explosive,E/GL-21,GRENADIER BATTLEMENT,160,projectile,40mm HE GRENADE_P,0,0,4,10,30,10,
@@ -208,16 +211,18 @@ Stratagem,VHL,explosive,EXO-49,Emancipator Exosuit (AC),175,explosion,30mm APHE 
 Stratagem,VHL,automatic,EXO-45,Patriot Exosuit (MG),1200,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
 Stratagem,VHL,explosive,EXO-45,Patriot Exosuit (Missile),90,explosion,Missile Exosuit ,400,400,3,30,60,70,
 Stratagem,VHL,explosive,EXO-45,Patriot Exosuit (Missile),90,projectile,Missile Exosuit ,1250,1250,6,30,40,25,
-Stratagem,VHL,energy,EXO-51,Lumberer Exosuit (Flamethrower),,spray,LUMBERER FLAMETHROWER_S,3,3,4,10,5,5,Fire
+Stratagem,VHL,energy,EXO-51,Lumberer Exosuit (Flamethrower),,spray,LUMBERER FLAMETHROWER_S,8,8,4,10,5,5,Fire
 Stratagem,VHL,explosive,EXO-51,Lumberer Exosuit (AT Cannon),30,projectile,75mm HEAT GRENADE_P1,1300,1300,6,30,50,25,
 Stratagem,VHL,explosive,EXO-51,Lumberer Exosuit (AT Cannon),30,explosion,75mm HEAT GRENADE_P1_IE,150,150,3,30,60,40,
 Stratagem,VHL,shotgun,EXO-55,Breakthrough Exosuit (Scattergun),180,projectile,P,90,30,4,20,40,30,
 Support,CAN,precision,APW-1,Anti-Materiel Rifle,400,projectile,12.5mm EIT ROUNDS_P,450,225,4,20,25,25,
+Support,CAN,precision,AMW-20,Apex,50,projectile,AMW-20_P,1550,930,5,15,40,25,
 Support,CAN,explosive,AC-8,Autocannon (APHET),190,projectile,20mm APHET ROUNDS_P,325,260,4,30,30,20,
 Support,CAN,explosive,AC-8,Autocannon (APHET),190,explosion,20mm APHET ROUNDS_P_IE,150,150,3,30,40,40,
 Support,CAN,explosive,AC-8,Autocannon (FLAK),190,projectile,20mm FLAK ROUNDS_P,150,150,2,20,30,30,
 Support,CAN,explosive,AC-8,Autocannon (FLAK),190,explosion,20mm FLAK ROUNDS_P_IE,190,190,3,20,25,40,
 Support,CAN,energy,LAS-98,Laser Cannon,,beam,LAS-98 LASER CANNON_B,350,200,4,20,0,0,Fire
+Support,CAN,precision,LAS-44,Nova,30,projectile,LAS-44_P,880,880,5,17,20,20,
 Support,SPC,energy,40-K,Meltagun,,beam,40-K MELTAGUN_B,2600,2600,7,30,40,40,FlamerSlowed • Fire_Panic
 Support,CAN,precision,LAS-99,Quasar Cannon,10,projectile,LASER_P2,2000,2000,6,30,50,40,
 Support,CAN,precision,LAS-99,Quasar Cannon,10,explosion,LASER_P2_IE,150,150,3,30,50,40,
@@ -240,7 +245,7 @@ Support,MG,automatic,MG-206,Heavy Machine Gun,750,projectile,12.5mm BCHP RIFLE R
 Support,MG,automatic,MGX-42,Bullet Storm,1300,projectile,MGX-42_P,100,25,2,10,20,10,
 Support,MG,automatic,M-105,Stalwart,1150,projectile,5.5x50mm FULL METAL JACKET_P,90,22,2,10,15,10,
 Support,MG,automatic,MG-43,Machine Gun,900,projectile,8x60mm FULL METAL JACKET_P1,90,23,3,10,20,12,
-Support,MG,automatic,M-1000,Maxigun,1500,projectile,8x60mm HIGH VELOCITY P,80,18,3,10,15,12,
+Support,MG,automatic,M-1000,Maxigun,1500,projectile,8x60mm HIGH VELOCITY P,80,18,3,10,20,24,
 Support,RL,explosive,EAT-700,Expendable Napalm,600,projectile,20mm FLAK ROUNDS_P1 x20,200,200,0,30,50,25,
 Support,RL,explosive,EAT-700,Expendable Napalm,600,explosion,20mm FLAK ROUNDS_P1_IE x20,50,50,3,30,50,25,BurningHeavy • Fire
 Support,RL,explosive,RL-77,Airburst Rocket Launcher (Flak),600,projectile,20mm FLAK ROUNDS_P2,350,350,3,30,50,40,

@@ -34,7 +34,9 @@ not modify `weapons\weapondata.csv` or `enemies\enemydata.json`.
 
        https://docs.google.com/spreadsheets/d/e/2PACX-1vTeLqZ5-maEmzrM6SUDMRXpHEhV0tQImiBdgMCil9lSA11IiY_nGdamE54W7DAiSXn1XuJljdF4P537/pub?gid=0&single=true&output=csv
 
-2. Replace `weapons\weapondata.csv` with that export.
+2. Keep the export as a candidate file outside the runtime dataset. Review
+   its differences before copying accepted rows into `weapons\weapondata.csv`.
+   Preserve local Role/RPM fields, attack grouping, and reviewed overrides.
 
 3. Generate a fresh `filediver` entity/component dump:
 
@@ -44,7 +46,7 @@ not modify `weapons\weapondata.csv` or `enemies\enemydata.json`.
 4. Merge RPM values from the dump into the checked-in CSV:
 
        Set-Location C:\GitHub\supercalc
-       python .\tools\merge_weapon_rpm_from_filediver.py --dump C:\temp\entity-component-settings.json --csv .\weapons\weapondata.csv
+       python .\tools\merge_weapon_rpm_from_filediver.py --dump C:\temp\entity-component-settings.json --csv .\weapons\weapondata.csv --output C:\temp\weapondata-with-rpm.csv
 
 5. Before editing checked-in datasets, run the report-first weapon refresh
    helpers with the checked-in override rules:
@@ -83,9 +85,29 @@ not modify `weapons\weapondata.csv` or `enemies\enemydata.json`.
 
    You can pass it directly to the merge helper when you want wiki backfills:
 
-       python .\tools\merge_weapon_rpm_from_filediver.py --dump C:\temp\entity-component-settings.json --csv .\weapons\weapondata.csv --wiki-url https://helldivers.wiki.gg/wiki/Module:Decodedata-Weapons/data.json?action=raw
+       python .\tools\merge_weapon_rpm_from_filediver.py --dump C:\temp\entity-component-settings.json --csv .\weapons\weapondata.csv --wiki-url https://helldivers.wiki.gg/wiki/Module:Decodedata-Weapons/data.json?action=raw --output C:\temp\weapondata-with-wiki-rpm.csv
 
 8. Run tests before committing.
+
+If the wiki raw module or API fails, open the normal weapon page through a
+browser. Playwright can read its rendered Detailed Weapon Statistics tables.
+Record the revision ID and distinguish detailed values from armory summaries.
+An HTTP error does not prove that the wiki lacks the data.
+
+The existing attack-ingest report compares stratagem rows. Review primary,
+secondary, grenade, and support rows separately.
+
+
+Patch 7.2.0 audit
+-----------------
+The accepted balance changes, Scope of Authority additions, physical falloff
+values, and source revisions are in tools\research\patch-7.2.0-combat-data.md.
+The new rows use the existing calculation model, without charge, heat, recoil,
+magazine, or reload simulation.
+
+Bushwhacker uses the detailed attack value of 54 DMG and 15 DUR per pellet,
+with nine pellets. Its actual total is 486/135, not the patch-note total 540.
+The Flame Sentry and Lumberer flamethrower both use reviewed 8/8 particle damage.
 
 
 Patch 1.007.000 / Castellan's Creed audit

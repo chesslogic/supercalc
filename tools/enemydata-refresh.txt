@@ -15,6 +15,24 @@ The repeatable workflow is now:
 5. Curate the checked-in file instead of blindly overwriting it
 
 
+Patch 7.2.0: Crescent Overseer
+------------------------------
+The runtime entry and wiki anatomy sidecar include the new fatal backpack:
+300 HP, AV 2, 0% durable, 50% transfer to Main, and a Main overflow cap.
+Its source reports 100% explosion resistance for the part. The existing
+ingest mapping therefore routes explosions to Main instead of the backpack.
+
+The sidecar keeps its original full-unit fetch timestamp. Its
+source_provenance.reviewed_zone_overrides.backpack entry records the newer
+browser-reviewed revision 139398. Other curated zones remain unchanged.
+
+The complete source audit is tools\research\patch-7.2.0-combat-data.md.
+
+If the raw wiki module or API fails, read the normal enemy page in a browser.
+Record the page revision and the exact anatomy rows. Do not replace the
+runtime dataset with an older export merely because its download succeeds.
+
+
 Important caveat
 ----------------
 `filediver`'s `entity-component-settings-json-dumper` does detect the local
